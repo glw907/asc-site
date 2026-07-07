@@ -44,15 +44,23 @@ redirect coverage, feeds (cleaner than live's).
 12. Facilities renders prose where live has the 9-item amenity list; the Season legend
     dot jams mid-sentence; footer missing Discord + Contact links.
 
-### Sanction needed (Geoff's calls, batched — the manifest's ambiguous lines)
-13. **The "What do we do?" Learn/Race/Relax band**: on live, absent from the blessed
-    north star. Restore or sanction the omission.
-14. **The hero image**: dev substituted a sunset for live's photo, and Geoff flagged the
-    build's crops as bad. Default: restore live's choices; re-crop only with sanction.
-15. **Guide/hub hero photos** (members group photo, the kayak hero, discord images):
-    dropped — intended editorial quieting or incomplete migration?
-16. **Post hero treatment**: dev's contained-image style vs live's full-bleed overlay —
-    an arguable improvement; sanction or revert.
+### Sanctions RESOLVED (Geoff, 2026-07-06)
+13. The "What do we do?" band: **RESTORE** (with its three icon images).
+14. The home hero: **RESTORE** live's photo and treatment. **BROADENED (Geoff): cropping
+    was wrong on ALL front-page images** — every home image (hero, fleet, facilities,
+    news cards when they land) gets the live site's asset AND crop/focal treatment
+    verified individually, not just "a photo loads."
+15. Guide/hub heroes: **RESTORE** (the members group photo, the kayak hero, the Discord
+    images).
+16. Post hero treatment: **KEEP dev's** (contained rounded image — the one sanctioned
+    improvement).
+
+### The events deep-look (Geoff: "look carefully at the events page")
+The completion pass treats live /events/ as its own mini-manifest: re-enumerate the page
+directly and exhaustively (the walk's 8-feature list is the floor, not the ceiling —
+filters, badges, statuses, descriptions, locations, register links, calendar-subscribe,
+the meetings section, plus anything the walk missed: per-event images? recurring-date
+history? empty-state behavior between seasons?) before building the listing.
 
 ### Noted, no action
 - The pirate post's empty gallery is live's own inherited TODO (parity).
