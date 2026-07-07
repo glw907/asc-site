@@ -16,7 +16,10 @@ import siteCss from './site.css?url';
 // Task 3 wires the club-grounds directive vocabulary (callout, passage, cards/card): the engine's
 // registry, not the bare default, so those directives dispatch to real markup instead of
 // rendering inert (Task 2's migration authored the content against this vocabulary already).
-const { renderMarkdown } = createRenderer(ascRegistry);
+// Exported so a site-owned, non-content markdown source (the events deep-look pass's D1
+// `long_description` rows, `$theme/events-data.ts`) renders through the same sanitized pipeline as
+// ordinary content, rather than a second, weaker renderer.
+export const { renderMarkdown } = createRenderer(ascRegistry);
 
 // The committed media manifest the public render resolver reads. A bare {} until an editor
 // uploads. Read through import.meta.glob so a fresh site with no committed media.json degrades
@@ -89,7 +92,7 @@ export const cairn = defineAdapter({
   },
   backend: githubApp({
     owner: 'glw907',
-    repo: 'asc-site',
+    repo: 'aksailingclub-org',
     branch: 'main',
     appId: '3847496',
     installationId: '135372268',

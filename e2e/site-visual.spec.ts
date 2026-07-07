@@ -56,12 +56,29 @@ test('education — light', async ({ page }) => {
   await expect(page).toHaveScreenshot('education-light.png', { fullPage: true });
 });
 
-// The D1-backed /events template: the same Season listing as the home page, C7-gold taxonomy
-// (a gold dot for a class or clinic, muted ink for a routine non-racing entry, plain ink for a
-// regatta) reading from the seeded fixture rows.
+// The D1-backed /events template: the events deep-look pass's full detailed listing (month
+// sections, Off-Season, Meetings & Governance, the calendar-subscribe bar) reading from the
+// seeded fixture rows in every card shape the live page's own re-enumeration found
+// (docs/events-manifest.md).
 test('events — light', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/events/');
   await expect(page.getByRole('heading', { level: 1, name: 'Events' })).toBeVisible();
+  // A card from each section, proving the full read/group/render pipeline, not just the shell.
+  await expect(page.getByRole('heading', { level: 3, name: 'Test Regatta' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Test Off-Season Social' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 3, name: 'Test Annual Meeting' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'iCal / Apple' })).toBeVisible();
   await expect(page).toHaveScreenshot('events-light.png', { fullPage: true });
+});
+
+// The real .ics feed the calendar-subscribe bar's links point at.
+test('events calendar.ics — real feed', async ({ page }) => {
+  const res = await page.request.get('/events/calendar.ics');
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toContain('text/calendar');
+  const body = await res.text();
+  expect(body).toContain('BEGIN:VCALENDAR');
+  expect(body).toContain('SUMMARY:Test Regatta');
+  expect(body).toContain('UID:test-regatta@aksailingclub.org');
 });

@@ -159,3 +159,15 @@ npx wrangler secret list
 - `docs/events-integration-findings.md`: the `EVENTS_DB` schema verification and taxonomy rules.
 - `docs/verification-findings.md`: the phase-1 verification pass, the pixel-diff rider, and the
   dev takeover record.
+
+
+## The repo family (renamed 2026-07-06)
+
+- **This repo (glw907/aksailingclub-org)** is the NEW site — cairn-based, the club's
+  future production site (formerly asc-site; the worker keeps the name `asc-site`).
+- **glw907/aksailingclub-legacy** (locally ~/Projects/aksailingclub-legacy) serves the
+  LIVE site today (Hugo/Blowfish + the ops/ dashboard) and stays authoritative until the
+  cutover; it archives after the soak. Its ops/ dashboard keeps running beside this site
+  through the whole phase-2 absorption (the coexistence strategy).
+- ~/Projects/aksailingclub-sveltekit is the retired experiment (see its RETIRED.md).
+- Claude sessions for ASC work launch HERE; this project has its own memory.

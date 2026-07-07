@@ -54,13 +54,16 @@ interface EventRow {
   date_history: string | null;
 }
 
-const DATE_TBD = 'Date TBD';
+/** The display text for an event with no resolvable current-year date. Shared with the full
+ *  `/events` listing (`$theme/events-data.ts`), which reads the same D1 rows. */
+export const DATE_TBD = 'Date TBD';
 
 // The racing season's own months; anything outside this range (including a genuinely undated
 // entry) groups into one trailing "Off-season" bucket instead of a named month, mirroring the
 // legacy main-site Worker's own `buildEventsPage` (its `buildSeasonCalendar`, used only for the
 // home teaser, silently dropped an out-of-range month instead; this module never drops an event).
-const SEASON_MONTHS: readonly { month: number; label: string }[] = [
+/** The season's own months, in order. Shared with the full `/events` listing. */
+export const SEASON_MONTHS: readonly { month: number; label: string }[] = [
   { month: 5, label: 'May' },
   { month: 6, label: 'June' },
   { month: 7, label: 'July' },
@@ -79,8 +82,9 @@ const CLASSES_QUERY = `SELECT name AS title, 'class' AS event_type, start_date, 
 
 /** The best available date for ordering an event with no current-year `start_date`: its most
  *  recent `date_history` entry, or null when the row carries no date at all (a genuinely TBD
- *  event). Ported from the legacy Worker's `getOrderingDate`. */
-function getOrderingDate(row: Pick<EventRow, 'start_date' | 'date_history'>): string | null {
+ *  event). Ported from the legacy Worker's `getOrderingDate`; exported for the full `/events`
+ *  listing, which reuses this exact fallback rather than a second copy of it. */
+export function getOrderingDate(row: Pick<EventRow, 'start_date' | 'date_history'>): string | null {
   if (row.start_date) return row.start_date;
   try {
     const history = JSON.parse(row.date_history ?? 'null') as Record<string, { start_date?: string }> | null;
@@ -97,8 +101,11 @@ function getOrderingDate(row: Pick<EventRow, 'start_date' | 'date_history'>): st
 /** The raw calendar month (1-12) and day-of-month to sort by, or `99`/`99` for a row with no
  *  resolvable date at all. `month` is the real month number even outside the May-September season,
  *  so the off-season bucket can still order Oct before Nov (see the header comment on months
- *  outside the range). */
-function monthAndDay(row: EventRow, currentYear: number): { month: number; sortDay: number } {
+ *  outside the range). Exported for the full `/events` listing. */
+export function monthAndDay(
+  row: Pick<EventRow, 'start_date' | 'date_history'>,
+  currentYear: number,
+): { month: number; sortDay: number } {
   if (row.start_date) {
     const d = new Date(`${row.start_date}T00:00:00`);
     if (d.getFullYear() === currentYear) return { month: d.getMonth() + 1, sortDay: d.getDate() };
@@ -115,7 +122,7 @@ function monthAndDay(row: EventRow, currentYear: number): { month: number; sortD
  *  year never appears (the template shows one season at a time), so a stray wrong-year value in a
  *  row's `end_date` cannot surface as a visibly broken range. Ported from the legacy Worker's
  *  `formatSeasonDate`. */
-function formatDateRange(startIso: string, endIso: string | null): string {
+export function formatDateRange(startIso: string, endIso: string | null): string {
   const start = new Date(`${startIso}T00:00:00`);
   const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
   if (!endIso || endIso === startIso) return `${startMonth} ${start.getDate()}`;
@@ -128,8 +135,9 @@ function formatDateRange(startIso: string, endIso: string | null): string {
 
 /** The C7-gold taxonomy: `dot` for a class or clinic, `muted` for everything routine and
  *  non-racing, plain ink for a regatta. See the header comment for how this resolves against the
- *  north star's actual rendered colors. */
-function categorize(eventType: string): Pick<SeasonEvent, 'dot' | 'muted'> {
+ *  north star's actual rendered colors. Exported for the full `/events` listing, whose type badge
+ *  reads the same three-way split rather than inventing a second taxonomy. */
+export function categorize(eventType: string): Pick<SeasonEvent, 'dot' | 'muted'> {
   if (eventType === 'class') return { dot: true };
   if (eventType === 'regatta') return {};
   return { muted: true };
