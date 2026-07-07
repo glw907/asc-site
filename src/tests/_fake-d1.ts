@@ -6,11 +6,16 @@
 // their own.
 import type { D1Database } from '@cloudflare/workers-types';
 
+/** A canned response, or a function of the call's bound args, for a query whose result must
+ *  vary within one test even though its SQL text matches the same substring key (a `... WHERE
+ *  email = ?1` a module queries twice, for two different emails, in one scenario). */
+type Responder<T> = T | ((args: unknown[]) => T);
+
 interface FakeD1Options {
   /** Rows `.all()` returns, keyed by a SQL substring match (first match wins). */
-  allResults?: Record<string, unknown[]>;
+  allResults?: Record<string, Responder<unknown[]>>;
   /** The single row `.first()` returns, keyed by a SQL substring match. */
-  firstResults?: Record<string, unknown>;
+  firstResults?: Record<string, Responder<unknown>>;
 }
 
 /** One recorded prepared-statement call: the SQL text and its bound arguments, in bind order. */
@@ -19,9 +24,11 @@ export interface FakeD1Call {
   args: unknown[];
 }
 
-function matchingResult<T>(sql: string, table: Record<string, T> | undefined, fallback: T): T {
+function matchingResult<T>(sql: string, table: Record<string, Responder<T>> | undefined, args: unknown[], fallback: T): T {
   const key = Object.keys(table ?? {}).find((candidate) => sql.includes(candidate));
-  return key !== undefined ? (table as Record<string, T>)[key] : fallback;
+  if (key === undefined) return fallback;
+  const value = (table as Record<string, Responder<T>>)[key];
+  return typeof value === 'function' ? (value as (args: unknown[]) => T)(args) : value;
 }
 
 /** Build a fake `D1Database` plus the ordered list of calls it recorded, so a test can both drive
@@ -39,7 +46,12 @@ export function fakeD1(opts: FakeD1Options = {}) {
       },
       async first<T>() {
         calls.push({ sql, args: stmt.args });
-        return matchingResult<T | null>(sql, opts.firstResults as Record<string, T | null> | undefined, null);
+        return matchingResult<T | null>(
+          sql,
+          opts.firstResults as Record<string, Responder<T | null>> | undefined,
+          stmt.args,
+          null,
+        );
       },
       async run() {
         calls.push({ sql, args: stmt.args });
@@ -47,7 +59,11 @@ export function fakeD1(opts: FakeD1Options = {}) {
       },
       async all<T>() {
         calls.push({ sql, args: stmt.args });
-        return { results: matchingResult<T[]>(sql, opts.allResults as Record<string, T[]> | undefined, []), success: true, meta: {} };
+        return {
+          results: matchingResult<T[]>(sql, opts.allResults as Record<string, Responder<T[]>> | undefined, stmt.args, []),
+          success: true,
+          meta: {},
+        };
       },
     };
     return stmt;

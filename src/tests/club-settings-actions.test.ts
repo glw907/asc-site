@@ -54,7 +54,12 @@ describe('club settings actions: owner gate', () => {
   });
 
   it('setRole succeeds for an owner and audits the grant', async () => {
-    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    // The same `FROM club_roles` query resolves twice in this action: once for the acting
+    // owner's own gate, once for the last-owner guard's read of the GRANTED email's current
+    // role (which holds nothing yet). The responder distinguishes them by bound email.
+    const { db, calls } = fakeD1({
+      allResults: { 'FROM club_roles': (args: unknown[]) => (args[0] === owner.email ? [{ role: 'owner' }] : []) },
+    });
     const sink = vi.fn();
     const result = await actions.setRole(
       postEvent(owner, { email: 'new@example.com', role: 'admin' }, { db, auditSink: sink }),
@@ -80,7 +85,13 @@ describe('club settings actions: owner gate', () => {
   });
 
   it('removeRole succeeds for an owner and audits the revoke', async () => {
-    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    // As above: the acting owner's own gate and the last-owner guard's read of the REVOKED
+    // email's current role ('club-admin', not 'owner') resolve to different rows.
+    const { db, calls } = fakeD1({
+      allResults: {
+        'FROM club_roles': (args: unknown[]) => (args[0] === owner.email ? [{ role: 'owner' }] : [{ role: 'club-admin' }]),
+      },
+    });
     const sink = vi.fn();
     const result = await actions.removeRole(postEvent(owner, { email: 'gone@example.com' }, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });
@@ -93,6 +104,38 @@ describe('club settings actions: owner gate', () => {
       entityId: 'gone@example.com',
       editor: owner.email,
     });
+  });
+
+  it('removeRole fails 400 when it would remove the club\'s last owner, still audited', async () => {
+    const { db } = fakeD1({
+      allResults: { 'FROM club_roles': [{ role: 'owner' }] },
+      firstResults: { 'COUNT(*)': { n: 1 } },
+    });
+    const sink = vi.fn();
+    const result = await actions.removeRole(postEvent(owner, { email: owner.email }, { db, auditSink: sink }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(400);
+    expect((result as { data: { error: string } }).data.error).toBe('the club must keep at least one owner');
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'remove-role', entity: 'club-role', editor: owner.email }),
+    );
+  });
+
+  it('setRole fails 400 when it would demote the club\'s last owner, still audited', async () => {
+    const { db } = fakeD1({
+      allResults: { 'FROM club_roles': [{ role: 'owner' }] },
+      firstResults: { 'COUNT(*)': { n: 1 } },
+    });
+    const sink = vi.fn();
+    const result = await actions.setRole(
+      postEvent(owner, { email: owner.email, role: 'admin' }, { db, auditSink: sink }),
+    );
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(400);
+    expect((result as { data: { error: string } }).data.error).toBe('the club must keep at least one owner');
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'set-role', entity: 'club-role', editor: owner.email }),
+    );
   });
 
   it('updateOfferWindow refuses a club admin (403)', async () => {

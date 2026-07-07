@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fakeD1 } from './_fake-d1';
-import { getClubRole, listClubRoles, removeClubRole, setClubRole } from '$admin-club/lib/club-roles';
+import { getClubRole, hasAnyClubRole, LastOwnerError, listClubRoles, removeClubRole, setClubRole } from '$admin-club/lib/club-roles';
 
 describe('getClubRole', () => {
   it('maps the stored "club-admin" row to the API role "admin"', async () => {
@@ -46,9 +46,23 @@ describe('listClubRoles', () => {
   });
 });
 
+describe('hasAnyClubRole', () => {
+  it('is true for an owner or an admin', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    await expect(hasAnyClubRole(db, 'owner@example.com')).resolves.toBe(true);
+  });
+
+  it('is false for an email with no grant (or an instructor-only one)', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    await expect(hasAnyClubRole(db, 'nobody@example.com')).resolves.toBe(false);
+  });
+});
+
 describe('setClubRole', () => {
   it('deletes any existing owner/admin row for the email, then inserts the new one', async () => {
-    const { db, calls } = fakeD1();
+    // The target already holds 'club-admin', so a re-grant of 'admin' never touches the
+    // owner-count guard at all (assertKeepsAnOwner short-circuits on a non-owner current role).
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
     await setClubRole(db, 'admin@example.com', 'admin', 'owner@example.com');
     expect(calls.some((c) => c.sql.startsWith('DELETE FROM club_roles') && c.args[0] === 'admin@example.com')).toBe(true);
     expect(
@@ -61,14 +75,47 @@ describe('setClubRole', () => {
       ),
     ).toBe(true);
   });
+
+  it('never needs the owner count when the grant keeps or gives owner', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
+    await setClubRole(db, 'admin@example.com', 'owner', 'owner@example.com');
+    expect(calls.some((c) => c.sql.includes('COUNT(*)'))).toBe(false);
+  });
+
+  it('refuses demoting the last owner to admin', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] }, firstResults: { 'COUNT(*)': { n: 1 } } });
+    await expect(setClubRole(db, 'owner@example.com', 'admin', 'owner@example.com')).rejects.toThrow(LastOwnerError);
+    expect(calls.some((c) => c.sql.startsWith('DELETE FROM club_roles') || c.sql.startsWith('INSERT INTO club_roles'))).toBe(
+      false,
+    );
+  });
+
+  it('allows demoting an owner when another owner remains', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] }, firstResults: { 'COUNT(*)': { n: 2 } } });
+    await expect(setClubRole(db, 'owner@example.com', 'admin', 'other-owner@example.com')).resolves.toBeUndefined();
+  });
 });
 
 describe('removeClubRole', () => {
   it('deletes only the owner/admin rows for the email', async () => {
-    const { db, calls } = fakeD1();
+    // removeClubRole first reads the email's current role (the last-owner guard's own check,
+    // which short-circuits here since 'club-admin' is not 'owner'), then issues the delete.
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
     await removeClubRole(db, 'admin@example.com');
-    expect(calls).toHaveLength(1);
-    expect(calls[0].sql).toContain("role IN ('owner','club-admin')");
-    expect(calls[0].args).toEqual(['admin@example.com']);
+    const deletes = calls.filter((c) => c.sql.startsWith('DELETE FROM club_roles'));
+    expect(deletes).toHaveLength(1);
+    expect(deletes[0].sql).toContain("role IN ('owner','club-admin')");
+    expect(deletes[0].args).toEqual(['admin@example.com']);
+  });
+
+  it('refuses removing the last owner', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] }, firstResults: { 'COUNT(*)': { n: 1 } } });
+    await expect(removeClubRole(db, 'owner@example.com')).rejects.toThrow(LastOwnerError);
+    expect(calls.some((c) => c.sql.startsWith('DELETE FROM club_roles'))).toBe(false);
+  });
+
+  it('allows removing an owner when another owner remains', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] }, firstResults: { 'COUNT(*)': { n: 2 } } });
+    await expect(removeClubRole(db, 'owner@example.com')).resolves.toBeUndefined();
   });
 });

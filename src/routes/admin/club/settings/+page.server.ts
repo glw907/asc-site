@@ -9,6 +9,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { adminAction, requireSession } from '@glw907/cairn-cms/sveltekit';
 import {
   getClubRole,
+  LastOwnerError,
   listClubRoles,
   removeClubRole,
   resolveClubDb,
@@ -53,7 +54,15 @@ export const actions: Actions = {
       return fail(400, { error: 'A valid email and role are required.' });
     }
     const grantedEmail = email.trim();
-    await setClubRole(db, grantedEmail, role, ctx.editor.email);
+    try {
+      await setClubRole(db, grantedEmail, role, ctx.editor.email);
+    } catch (err) {
+      if (err instanceof LastOwnerError) {
+        ctx.audit({ action: 'set-role', entity: 'club-role', entityId: grantedEmail, detail: 'rejected: last owner' });
+        return fail(400, { error: err.message });
+      }
+      throw err;
+    }
     ctx.audit({ action: 'set-role', entity: 'club-role', entityId: grantedEmail, detail: role });
     return { ok: true };
   }),
@@ -74,7 +83,15 @@ export const actions: Actions = {
       return fail(400, { error: 'An email is required.' });
     }
     const revokedEmail = email.trim();
-    await removeClubRole(db, revokedEmail);
+    try {
+      await removeClubRole(db, revokedEmail);
+    } catch (err) {
+      if (err instanceof LastOwnerError) {
+        ctx.audit({ action: 'remove-role', entity: 'club-role', entityId: revokedEmail, detail: 'rejected: last owner' });
+        return fail(400, { error: err.message });
+      }
+      throw err;
+    }
     ctx.audit({ action: 'remove-role', entity: 'club-role', entityId: revokedEmail });
     return { ok: true };
   }),

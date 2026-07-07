@@ -52,6 +52,17 @@ export async function getClubRole(db: D1Database, email: string): Promise<ClubRo
   return null;
 }
 
+/** True if `email` holds any club role at all (owner or admin). The section's routine, non-
+ *  owner-only actions (Task 5's events, Task 6's classes) gate their writes on this rather than
+ *  re-deriving it inline: the layout guard (`../+layout.server.ts`) only runs before a page's own
+ *  GET render, never before a POST action (SvelteKit dispatches a matched action directly, with
+ *  no preceding ancestor `load`; see `@sveltejs/kit`'s own `runtime/server/page/actions.js`), so a
+ *  routine write path needs this same check inside the action itself, the same way Settings'
+ *  owner-only actions already re-check `getClubRole` rather than trusting the layout alone. */
+export async function hasAnyClubRole(db: D1Database, email: string): Promise<boolean> {
+  return (await getClubRole(db, email)) !== null;
+}
+
 /** Every owner/admin grant, for the settings screen's role-management list. Ordered owners
  *  first, then alphabetically by email within a role, so the seat that can revoke everyone
  *  else's access always reads at the top. */
@@ -69,19 +80,45 @@ export async function listClubRoles(db: D1Database): Promise<ClubRoleGrant[]> {
   }));
 }
 
+/** Thrown when a role change would leave the club with zero owners. The settings screen's
+ *  actions (the only callers of `setClubRole`/`removeClubRole`) catch this specifically and
+ *  surface it as a `fail(400, ...)`, auditing the rejected attempt like any other refusal;
+ *  nothing else should ever let this escape as an unhandled 500. */
+export class LastOwnerError extends Error {
+  constructor() {
+    super('the club must keep at least one owner');
+  }
+}
+
+/** Refuses a change that would strip the club's last owner seat: if `email` currently holds
+ *  'owner' and `nextRole` is not also 'owner' (a demotion or an outright removal), the change
+ *  only proceeds when at least one OTHER email still carries 'owner'. A grant that keeps or
+ *  newly gives someone 'owner' never needs this check (the owner count can only grow). */
+async function assertKeepsAnOwner(db: D1Database, email: string, nextRole: ClubRole | null): Promise<void> {
+  if (nextRole === 'owner') return;
+  if ((await getClubRole(db, email)) !== 'owner') return;
+  const row = await db.prepare("SELECT COUNT(*) AS n FROM club_roles WHERE role = 'owner'").first<{ n: number }>();
+  const ownerCount = row?.n ?? 0;
+  if (ownerCount <= 1) throw new LastOwnerError();
+}
+
 /** Grant (or change) an email's owner/admin seat: any existing owner/admin row for that email is
  *  replaced, so a person holds exactly one of the two at a time even though the table's own
  *  primary key would allow both. An instructor row for the same email, if any, is untouched: the
- *  two axes (admin access, instructor assignment) are independent. */
+ *  two axes (admin access, instructor assignment) are independent. Refuses (see
+ *  {@link LastOwnerError}) a demotion that would leave the club with no owner at all. */
 export async function setClubRole(db: D1Database, email: string, role: ClubRole, grantedBy: string): Promise<void> {
+  await assertKeepsAnOwner(db, email, role);
   await db.batch([
     db.prepare("DELETE FROM club_roles WHERE email = ?1 AND role IN ('owner','club-admin')").bind(email),
     db.prepare('INSERT INTO club_roles (email, role, granted_by) VALUES (?1, ?2, ?3)').bind(email, STORED_ROLE[role], grantedBy),
   ]);
 }
 
-/** Revoke an email's owner/admin seat entirely (an instructor row, if any, is untouched). */
+/** Revoke an email's owner/admin seat entirely (an instructor row, if any, is untouched).
+ *  Refuses (see {@link LastOwnerError}) removing the club's last owner. */
 export async function removeClubRole(db: D1Database, email: string): Promise<void> {
+  await assertKeepsAnOwner(db, email, null);
   await db.prepare("DELETE FROM club_roles WHERE email = ?1 AND role IN ('owner','club-admin')").bind(email).run();
 }
 
