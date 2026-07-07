@@ -92,7 +92,7 @@ interface DefaultsRawRow {
   default_body: string;
 }
 
-/** One template plus its `default_subject`/`default_body` (migration 0012), or `null` if no such
+/** One template plus its `default_subject`/`default_body` (migration 0016), or `null` if no such
  *  row. */
 export async function getEmailTemplateWithDefaults(db: D1Database, id: string): Promise<EmailTemplateWithDefaults | null> {
   const [template, defaults] = await Promise.all([
@@ -124,9 +124,9 @@ export type ResetEmailTemplateResult = { ok: true; template: EmailTemplateRow } 
 
 /**
  * Restore a template's `subject`/`body` from its own `default_subject`/`default_body` (migration
- * 0012's backfill, or whatever an earlier import set them to). Fails closed, rather than write an
+ * 0016's backfill, or whatever an earlier import set them to). Fails closed, rather than write an
  * empty subject/body, when either default column reads `''`: a template inserted since without
- * its own defaults set (a hand-written `INSERT` that forgot the two columns migration 0012 added)
+ * its own defaults set (a hand-written `INSERT` that forgot the two columns migration 0016 added)
  * has no default recorded yet, and resetting it would be a silent content-destroying footgun, not
  * a real restore.
  */

@@ -4,7 +4,7 @@
 // rolling renewal boundary (`standing.ts`'s `renewalExpiryFrom`, Geoff's 2026-07-07 ruling: a
 // household's own `paid_at` plus one year, never a season boundary): 30 days before, 7 days
 // before, the day of, and 30 days after (the symmetry principle's own "the stated-final last
-// touch"). `renewal_reminders_sent` (migration 0011_job_runner) marks each touch exactly once per
+// touch"). `renewal_reminders_sent` (migration 0015_job_runner) marks each touch exactly once per
 // household so a daily tick never double-fires one a prior tick already sent.
 //
 // This module has no other consumer today (unlike `offers.ts`, which the admin's own "offer"
@@ -27,7 +27,7 @@ function toCivilDateString(date: Date): string {
 }
 
 /** The four-touch cadence's own vocabulary, matching `renewal_reminders_sent.touch`'s CHECK
- *  constraint (migration 0011_job_runner) exactly. */
+ *  constraint (migration 0015_job_runner) exactly. */
 export type RenewalTouch = '30_before' | '7_before' | 'day_of' | '30_after';
 
 /** Cadence order, earliest to latest: also `dueTouches`' own iteration order, so a household with

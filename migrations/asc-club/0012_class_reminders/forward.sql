@@ -3,7 +3,7 @@
 -- adversarial-review.md's item 2, "We'll follow up by email with anything you need before class /
 -- the weekend -- NO SENDER EXISTS", folded in as a mid-pass scope addition, Geoff 2026-07-08).
 --
--- `class_reminders_sent` mirrors `renewal_reminders_sent`'s own shape (migration 0011_job_runner),
+-- `class_reminders_sent` mirrors `renewal_reminders_sent`'s own shape (migration 0015_job_runner),
 -- keyed one level finer: PER ENROLLMENT (`class_enrollments.id`, a participant's own seat) rather
 -- than per household, since every touch here is about one person's own class, not a household-wide
 -- renewal boundary. `enrollment_id REFERENCES class_enrollments(id)` already has a real target

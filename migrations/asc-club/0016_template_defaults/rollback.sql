@@ -1,4 +1,4 @@
--- asc-club migration 0012 rollback: drop `default_subject`/`default_body`.
+-- asc-club migration 0016 rollback: drop `default_subject`/`default_body`.
 --
 -- SQLite (D1's engine) supports `DROP COLUMN` directly (no recreate-and-copy needed, unlike a
 -- `REFERENCES` clause change such as migration 0006's own rollback). Safe only before the Email

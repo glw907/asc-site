@@ -1,4 +1,4 @@
--- asc-club migration 0011 rollback: drop the reminder-tracking table and remove the seeded
+-- asc-club migration 0015 rollback: drop the reminder-tracking table and remove the seeded
 -- template.
 --
 -- Safe only before the renewal-reminders job has ever run for real (see this migration's own

@@ -74,9 +74,10 @@ header).
 
 ## Numbering note
 
-`0011`, `0012`, and `0013` are each already claimed by other concurrent worktrees
+`0011`, `0012`, and `0013` were each already claimed by other concurrent worktrees
 (`member-portal`'s `0011_member_portal`; `job-runner`'s `0011_job_runner`/`0012_class_reminders`;
-`email-editor`'s `0012_template_defaults`/`0013_class_custom_note`). This migration takes `0014`
-to avoid a fourth collision on the same few numbers; per this repo's own established convention
-(see the `0010_tier_prices` README), every one of these is still expected to renumber at merge
-time.
+`email-editor`'s `0012_template_defaults`/`0013_class_custom_note`). This migration took `0014`
+to avoid a fourth collision on the same few numbers. Resolved at merge time, earliest-merged
+keeps its number: `0011_member_portal` and `0012_class_reminders` kept theirs; `job-runner`'s
+`0011_job_runner` renumbered to `0015_job_runner`, and `email-editor`'s `0012_template_defaults`
+renumbered to `0016_template_defaults`.

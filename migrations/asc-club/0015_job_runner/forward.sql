@@ -1,4 +1,4 @@
--- asc-club migration 0011: the renewal-reminder job's own tracking table, plus the
+-- asc-club migration 0015: the renewal-reminder job's own tracking table, plus the
 -- `renewal_reminder` email template it sends (docs/2026-07-07-requirements-adversarial-review.md's
 -- "structural gap: nothing can act on time" -- the job runner pass).
 --
@@ -15,11 +15,12 @@
 -- inside the template text itself, the same "no conditional syntax" convention every ported
 -- template already follows (that README's own "Nothing to adapt" section).
 --
--- NUMBERED 0011 IN THIS WORKTREE ONLY: the `member-portal` worktree independently claims 0011
--- twice over (`0011_asset_requests`, `0011_member_portal`), unmerged as of this migration's own
--- authoring. Expect a merge-time renumbering the same way migration 0010's own header already
--- documents for an earlier collision; this migration adds no table any other worktree's own 0011
--- also touches, so the renumbering is a rename, not a conflict to resolve.
+-- RENUMBERED FROM 0011 TO 0015 AT MERGE TIME: this migration was authored as 0011 alongside
+-- `member-portal`'s own concurrent `0011_member_portal` claim, the same collision migration
+-- 0010's own header documents for an earlier three-way instance. `0011_member_portal` merged to
+-- main first (`portal-capstone`) and kept the number; this migration merged second
+-- (`job-runner`) and renumbers here, a pure rename since it adds no table any other worktree's
+-- own 0011 also touches.
 CREATE TABLE renewal_reminders_sent (
   household_id TEXT NOT NULL REFERENCES households(id),
   touch TEXT NOT NULL CHECK (touch IN ('30_before', '7_before', 'day_of', '30_after')),
@@ -46,4 +47,4 @@ aksailingclub.org',
 );
 
 INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES
-  ('system', 'migration.seed', 'email_template', 'renewal_reminder', '0011_job_runner: authored, no ops equivalent');
+  ('system', 'migration.seed', 'email_template', 'renewal_reminder', '0015_job_runner: authored, no ops equivalent');

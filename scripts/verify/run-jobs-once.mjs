@@ -41,8 +41,9 @@
  *      (`fee_paid = 0`) never does.
  *
  * Creates a fresh scratch database (`asc-club-scratch-<timestamp>` by default, or `--db-name` to
- * override), runs migrations 0001-0012 forward, exercises every job, and deletes the database
- * when done. Pass `--keep` to skip the final delete.
+ * override), runs the substrate migrations (0001-0010) plus 0012_class_reminders and
+ * 0015_job_runner forward, exercises every job, and deletes the database when done. Pass
+ * `--keep` to skip the final delete.
  *
  * Usage: node scripts/verify/run-jobs-once.mjs [--db-name NAME] [--keep]
  */
@@ -126,7 +127,7 @@ async function main() {
   wrangler(['d1', 'create', DB_NAME]);
 
   try {
-    console.log('\nApplying migrations 0001-0011 forward:');
+    console.log('\nApplying the substrate migrations plus the job-runner and class-reminders migrations forward:');
     for (const m of [
       '0001_substrate',
       '0002_instructor_display_name',
@@ -138,8 +139,8 @@ async function main() {
       '0008_asset_payment_method',
       '0009_member_auth',
       '0010_tier_prices',
-      '0011_job_runner',
       '0012_class_reminders',
+      '0015_job_runner',
     ]) {
       wrangler(['d1', 'execute', DB_NAME, '--remote', '--file', `migrations/asc-club/${m}/forward.sql`]);
       console.log(`  applied ${m}`);
