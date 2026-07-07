@@ -26,9 +26,13 @@ export const entries: EntryGenerator = () => [
 export const load: PageServerLoad = async ({ url, params }) => {
   // The old Hugo site nested governance and member pages under their own section path; cairn's
   // flat `pages` concept collapses that to one segment (see $theme/redirects.ts's header comment).
-  // A hit here is a permanent move, so it redirects before content resolution, not a 404.
+  // A hit here is a permanent move, so it redirects before content resolution, not a 404. The
+  // target carries no trailing slash: this project's default `trailingSlash: 'never'` already
+  // 307s a trailing-slash hit down to its bare form before this handler ever runs, so redirecting
+  // straight to the bare path lands on the real page in one hop instead of bouncing through a
+  // second trailing-slash redirect.
   const target = REDIRECTS[params.path];
-  if (target) redirect(301, `/${target}/`);
+  if (target) redirect(301, `/${target}`);
   const data = await routes.entryLoad({ url });
   // Same engine gap as above: entryLoad resolves an `embedded` concept's entry same as a routable
   // one. It has no public page by declared intent, so treat a direct hit as a miss.
