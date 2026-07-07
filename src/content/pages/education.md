@@ -11,7 +11,7 @@ The Alaska Sailing Club is an education-focused 501(c)(3). Each summer, we teach
 
 Registration is handled through MembershipWorks and requires an active ASC membership. See [How to Register](#how-to-register) below for details on joining and class credits.
 
-:::callout{tone="note"}
+:::callout{tone="interim"}
 [The class schedule table is moving to the new site]
 The live, up-to-date class schedule reads from the club's own class data and isn't wired up on
 this page yet (a separate build step). Ask in `#education` on [Discord](/discord-server/) for the
@@ -69,20 +69,17 @@ A rough schedule for the four-day Introduction to Dinghy Sailing course. We adju
 | Saturday | 10:00 a.m.–6:00 p.m. | Advanced drills; right-of-way, docking, telltales, heavy weather |
 | Sunday | 10:00 a.m.–5:00 p.m. | Racing basics and a few fun class races; ends an hour early |
 
-#### Arrival
-
+::::cards
+:::card[Arrival]
 Come any time before class starts; some students arrive a day early to set up camp and pitch in on rigging. Arriving the day of class, plan on 45 minutes to set up your tent or RV before start time.
-
-#### Day one (Thursday), 1:00-6:00 p.m.
-
+:::
+:::card[Day one (Thursday), 1:00-6:00 p.m.]
 Class starts at 1:00 p.m. with introductions and a walking tour, then hands-on rigging, where you'll learn the names of every part of a dinghy. Once the boats are launched, everyone runs the capsize drill. A short classroom session covers sailing theory and basic maneuvers (tacking and jibing), followed by dry-land tiller practice, a Q&A, and derigging.
-
-#### Day two (Friday) 10:00 a.m.-6:00 p.m.
-
+:::
+:::card[Day two (Friday), 10:00 a.m.-6:00 p.m.]
 As much water time as the wind allows. Rig and launch, a quick classroom review, then the first drill: beam reaching and tacking around two marks. After a classroom session on upwind and downwind technique and a lunch break, the rest of the day is upwind/downwind practice, typically the hardest skill for a beginner. Ends with Q&A and put-away.
-
-#### Day three (Saturday) 10:00 a.m.-6:00 p.m.
-
+:::
+:::card[Day three (Saturday), 10:00 a.m.-6:00 p.m.]
 More on-water time with harder drills: tack-on-the-whistle, jibe-on-the-whistle, follow the leader. After a classroom debrief and lunch, advanced topics:
 
 - Right-of-way
@@ -91,10 +88,11 @@ More on-water time with harder drills: tack-on-the-whistle, jibe-on-the-whistle,
 - Sailing in extreme conditions (too much wind, too little wind)
 
 Ends with Q&A and put-away.
-
-#### Day four (Sunday) 10:00 a.m.-5:00 p.m.
-
+:::
+:::card[Day four (Sunday), 10:00 a.m.-5:00 p.m.]
 Rig and launch, then straight into advanced drills, followed by a classroom session on the basics of sailboat racing (enough to join an ASC regatta). The afternoon is low-key racing drills and a few fun class races. Ends about an hour earlier than the other days.
+:::
+::::
 
 ### Youth Class Special Notes
 
@@ -114,6 +112,10 @@ Before taking this class, we recommend reading *Learning to Sail: The Annapolis 
 **Mid-June** (3 days), Free for all qualified members. No registration required, show up and sail!
 
 A great way to get tuned up for the season! Fleet Tune-Up Weekend is a free, three-day event featuring group drills, special topic clinics, and plenty of time on the water. It's open to any ASC member who has taken one of our classes or has equivalent sailing experience and has been checked out on ASC club boats.
+
+:::figure
+![Two sailors aboard the dinghy Mast Casualty, one at the helm, sailing on Big Lake.](media:mast-casualty-sailing.659b55426153c22e)
+:::
 
 ### What to Expect
 
@@ -160,25 +162,25 @@ Many members discover us through classes and stay for the boats, the racing, and
 
 ### Your Registration Path
 
-**For New Members:**
-
+::::cards
+:::card[For New Members]
 1. **Join the club:** [Apply and pay at aksailingclub.org/join/](/join/), membership is active immediately.
 2. **Check your welcome email** for your class credit. Use it when registering for your first class.
 3. **Register for your class:** Check the class schedule on our [events page](/events/) for open sessions and registration links.
 
 **Tip:** Classes fill quickly, join early. There's no waiting period between joining and registering.
-
-**For Current Members:**
-
+:::
+:::card[For Current Members]
 Ready to register! Check the class schedule on our [events page](/events/) and select your preferred session.
 
 **Have an unused class credit?** Mention it when registering: our membership committee tracks credits manually and will apply it to waive your $100 class fee.
-
-**For Returning Members (Expired Membership):**
-
+:::
+:::card[For Returning Members (Expired Membership)]
 **Renew first, then register:** [Renew your membership](/my-account/), then check the class schedule on our [events page](/events/) to register for a class.
 
 **Had an unused class credit?** Good news, it's still available! Credits remain valid even after membership lapses. Mention your credit when registering.
+:::
+::::
 
 ### Ready to Join?
 
@@ -240,7 +242,7 @@ If you need to cancel, please give us as much notice as possible. Courses at the
 
 Our Learn to Sail classes fill up quickly! If a class session is full, join the waitlist below. The Program Committee will contact you when a spot opens up. Cancellations are common in the weeks before class. Waitlisted students frequently get in.
 
-:::callout{tone="note"}
+:::callout{tone="interim"}
 [The waitlist form is moving to the new site]
 The class waitlist form isn't wired up here yet. In the meantime, email
 `program-committee@aksailingclub.org` with your name, contact info, and which class session you

@@ -105,6 +105,13 @@
   .prose .asc-card-body > * {
     margin: 0;
   }
+  /* A static feature card's body had only ever held one paragraph until the design-polish pass
+     (2026-07-07) reused the card grid for a multi-paragraph/list chunk (a day's agenda, a
+     registration path); with no gap declared, two block children pressed flush against each
+     other at zero margin. */
+  .prose .asc-card-body > * + * {
+    margin-top: var(--spacing-2xs);
+  }
   .prose .asc-card-arrow {
     display: inline-flex;
     margin-top: 0.5rem;

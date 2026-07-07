@@ -48,23 +48,77 @@
     level: 2 | 3;
   }
 
+  // Named HTML entities the render pipeline's stringify step can emit inside heading text (the
+  // five XML-predefined entities, plus the non-breaking space markdown sometimes carries).
+  const NAMED_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
+  /** Decode a numeric (`&#38;`/`&#x26;`) or named (`&amp;`) HTML entity back to its character.
+   *  extractToc pulls heading text out of already-serialized HTML by stripping tags with a plain
+   *  regex, which leaves any entity the stringifier wrote (rehype-stringify entity-encodes `&` in
+   *  text nodes) undecoded; left alone, that raw markup lands in a Svelte text expression and
+   *  prints literally ("Adult &amp; Teen Track") instead of the character it stands for. */
+  function decodeEntities(text: string): string {
+    return text.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, body: string) => {
+      if (body[0] === '#') {
+        const codePoint = body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+        return Number.isNaN(codePoint) ? match : String.fromCodePoint(codePoint);
+      }
+      return body in NAMED_ENTITIES ? NAMED_ENTITIES[body] : match;
+    });
+  }
+
   function extractToc(html: string): TocItem[] {
     const items: TocItem[] = [];
     const headingRe = /<h([23]) id="([^"]+)"[^>]*>([\s\S]*?)<\/h\1>/g;
     for (const match of html.matchAll(headingRe)) {
       const level = Number(match[1]) as 2 | 3;
-      const text = match[3].replace(/<[^>]*>/g, '').trim();
+      const text = decodeEntities(match[3].replace(/<[^>]*>/g, '').trim());
       if (text) items.push({ level, id: match[2], text });
     }
     return items;
   }
 
+  // The pitch/reference genre split (the design-polish pass, 2026-07-07): a page named here
+  // renders everything ABOVE the given heading id as a plain, photography-paced flow (no panels,
+  // no TOC, the persuasive pitch a prospective member reads start to finish), and scopes the
+  // density-gated panel + sticky-TOC treatment below to everything from that heading on (the
+  // reference material a reader navigates rather than reads straight through). Keyed by the
+  // pages concept's own flat slug, the same key GOVERNANCE_SUBPAGE_SLUGS uses. A page not listed
+  // here (every other long document, bylaws included) keeps the single-flow density-gated
+  // template unchanged.
+  const PITCH_SPLIT_HEADING_ID: Record<string, string> = {
+    education: 'swim-test-capsize-drill-and-life-jackets',
+  };
+
+  /** Splits rendered HTML immediately before the heading carrying `headingId`: everything before
+   *  that heading's own opening tag is `above`, that heading through the end of the document is
+   *  `below`. Falls back to putting the WHOLE document in `below` (never in `above`) when the id
+   *  is not found, so a content edit that renames or removes the split heading degrades to the
+   *  old single-flow, fully-panelized template rather than silently dropping the tail of the
+   *  page. */
+  function splitAtHeadingId(html: string, headingId: string): { above: string; below: string } {
+    const match = new RegExp(`<h[23] id="${headingId}"`).exec(html);
+    if (!match) return { above: '', below: html };
+    return { above: html.slice(0, match.index), below: html.slice(match.index) };
+  }
+
+  const pitchSplitId = $derived(
+    data.entry.concept === 'pages' ? PITCH_SPLIT_HEADING_ID[data.entry.slug] : undefined,
+  );
+  const pitchSplit = $derived(pitchSplitId ? splitAtHeadingId(data.html, pitchSplitId) : null);
+  // On a split page, only the material below the split heading is subject to the density gate
+  // and the panel/TOC treatment; on every other page `referenceHtml` is the whole document,
+  // matching the template's pre-split behavior exactly.
+  const referenceHtml = $derived(pitchSplit ? pitchSplit.below : data.html);
+  const pitchHtml = $derived(pitchSplit ? pitchSplit.above : '');
+
   // Gated on a heading count, not a hardcoded slug list, so this generalizes to any page that
   // grows into a long reference document rather than special-casing bylaws and the new-member
   // guide by name (spec B1: "in-page TOCs on the longest pages"). Eight or more h2/h3 headings is
   // the density where a document reads as a reference to navigate rather than prose to read
-  // straight through.
-  const toc = $derived(extractToc(data.html));
+  // straight through. Computed over `referenceHtml`, not the raw document, so a split page's TOC
+  // both scopes to and covers the material it actually governs, complete rather than truncated.
+  const toc = $derived(extractToc(referenceHtml));
   const showToc = $derived(toc.length >= 8);
   // The section-panel treatment (the presentation round's Strand 2) is the pages concept's own
   // template device, not a general density-gated feature: a long post or bulletin still earns the
@@ -94,8 +148,12 @@
     return `<section class="content-panel">${withLede}</section>`;
   }
 
-  const split = $derived(showToc ? splitAtH2(data.html) : null);
-  const preambleHtml = $derived(split ? split.preamble : data.html);
+  // Splits `referenceHtml`, not the raw document: on a split page that is already just the
+  // material below the pitch/reference boundary, so `preambleHtml` (rare there, since the split
+  // heading is itself an h2) and `sectionsHtml` only ever cover the reference material this
+  // template panelizes.
+  const split = $derived(showToc ? splitAtH2(referenceHtml) : null);
+  const preambleHtml = $derived(split ? split.preamble : referenceHtml);
   const sectionsHtml = $derived(
     split ? split.sections.map((section) => (showPanels ? toPanel(section) : section)).join('') : '',
   );
@@ -178,6 +236,11 @@
       </figure>
     {/if}
     {@render titleBlock()}
+  {/if}
+  {#if pitchSplitId}
+    <!-- The pitch: everything above the split heading, rendered as plain, photography-paced
+         flow with no panels and no TOC (the design-polish pass, 2026-07-07). -->
+    {@html pitchHtml}
   {/if}
   {#if showToc}
     <details class="toc mobile-toc">
@@ -411,20 +474,6 @@
      competing against the h2 immediately above it. */
   .prose :global(.content-panel .panel-lede) {
     font-weight: 450;
-  }
-  /* The craft pass's requiet (2026-07-07): a panelized page's FIRST panel is the first thing a
-     reader sees on scrolling past the title, so an interim "not built yet" callout sitting there
-     (education's Class Schedule opens with exactly one) reads as the page's loudest element even
-     though it already follows the panel's own lede sentence. The note tone's blue-tinted ground and
-     ink title are right for a callout competing with plain prose elsewhere on the page; muting them
-     here, scoped to only the first panel's own callout, keeps the notice honest (still a bordered
-     box, still says what it says) without letting it out-shout the page's own opening content. */
-  .article-sections > :global(.content-panel:first-child .callout-note) {
-    border-left-color: var(--color-card-border);
-    background: var(--color-base-200);
-  }
-  .article-sections > :global(.content-panel:first-child .callout-note .callout-title) {
-    color: var(--color-muted);
   }
   @media (min-width: 48rem) {
     .article-sections:has(:global(.content-panel)) {

@@ -6,15 +6,14 @@ sections (the sage News band, the navy-deep closing band), cards mark objects (t
 only), and the notification is an unboxed slim accent strip rather than a card. The Season band's
 gold dot is the C7 recipe (a class or clinic, never spending the amber/gold hue on anything
 else); its data is the club's live D1 events (`$theme/season-data.ts`, read at request time, so
-this page cannot be prerendered the way an ordinary content route is). The Fleet and Facilities
-photo compositions are the real club photography Task 3 pulled into the media library
+this page cannot be prerendered the way an ordinary content route is). Every photo composition
+(hero, What-do-we-do, Fleet, Facilities) is real club photography pulled into the media library
 (home-images.ts); a resolver miss degrades to the gradient placeholder the north star itself used
 before the photography existed, never a broken image. -->
 <script lang="ts">
   import type { PageData } from './$types';
   import { CairnHead } from '@glw907/cairn-cms/delivery/head';
   import SeasonList from '$theme/components/SeasonList.svelte';
-  import { ICON_PATHS } from '$theme/markdown/icons';
 
   let { data }: { data: PageData } = $props();
 
@@ -24,12 +23,13 @@ before the photography existed, never a broken image. -->
     return dateFmt.format(new Date(iso));
   }
 
-  // The What-do-we-do band's three photo placeholders (manifest item 13): the label, link, and
-  // the alt text the eventual real photo should carry, ready for Geoff to wire once uploaded.
+  // The What-do-we-do band's three tiles (design-polish pass, 2026-07-07): the placeholder
+  // "photo coming" boxes are gone, replaced by the real class-instruction, spinnaker, and grounds
+  // photography home-images.ts resolves; `key` picks each tile's own slot out of `data.images`.
   const WHAT_WE_DO = [
-    { label: 'Learn', cta: 'Courses & clinics', href: '/education/', altPreview: 'A sailing instructor coaching a student aboard a club dinghy.' },
-    { label: 'Race', cta: 'Regattas & events', href: '/racing/', altPreview: 'Club boats racing close together under spinnaker on Big Lake.' },
-    { label: 'Relax', cta: 'Facilities & membership', href: '/join/', altPreview: 'Members relaxing at the clubhouse grounds after a day on the water.' },
+    { label: 'Learn', cta: 'Courses & clinics', href: '/education/', key: 'learn' as const },
+    { label: 'Race', cta: 'Regattas & events', href: '/racing/', key: 'race' as const },
+    { label: 'Relax', cta: 'Facilities & membership', href: '/join/', key: 'relax' as const },
   ];
 </script>
 
@@ -44,7 +44,18 @@ before the photography existed, never a broken image. -->
   <!-- Ahoy! hero: the welcome unboxed (A1), the lede opening directly beneath the heading. The
        top keeps its own distinct treatment (a touch shallower than the band scale below, since
        nothing sits above it); the bottom joins the one band-padding rhythm (`pb-xl`) every other
-       full-width section uses, per the design-polish pass's section-rhythm fix. -->
+       full-width section uses, per the design-polish pass's section-rhythm fix.
+
+       The design-polish pass (2026-07-07) let the photography lead: the source photo
+       (site-header-4x3.jpeg, a tight action portrait with no calm ground anywhere in the frame)
+       ruled out a text-over-photo scrim treatment (WCAG contrast has nowhere honest to land on
+       it), so the fix is the decisively photo-dominant split the Facilities section already
+       proves works at this site (a photo given real size beside a scannable block), pushed
+       further here since the hero has no competing list to balance against. At 900px+ the photo
+       column now outweighs the text column (`.hero-grid`'s own ratio, below) instead of the
+       other way around, which grows its rendered height for free at the photo's true 4:3 ratio
+       (no crop). Below 900px the photo leads the stack (`order: -1`) rather than following the
+       text, so a mobile reader meets the photography first. -->
   <section class="pb-xl pt-l md:pt-xl">
     <div class="hero-grid mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m">
       <!-- The text column measures to ~54ch (the north star's own balance target, restored from
@@ -137,11 +148,11 @@ before the photography existed, never a broken image. -->
   </section>
 
   <!-- What do we do?: restored from live (manifest item 13), sanctioned with one change. Live's
-       three icon tiles read weak in the walkthrough; Geoff's call replaces them with real
-       photography instead, and since that photography does not exist yet, each tile ships as a
-       clearly-labeled placeholder (a dashed frame, the "photo coming" glyph, and the alt text the
-       real shot will carry) rather than a silent gradient like the hero/fleet/facilities panels
-       use for the same gap. Geoff drops the real photo into each slot through the media library. -->
+       three icon tiles read weak in the walkthrough; the design-polish pass (2026-07-07) replaces
+       them with the real class-instruction, spinnaker, and grounds photography home-images.ts
+       resolves, closing the "photo coming" gap that was the page's loudest unfinished signal. A
+       resolver miss (never expected in production) degrades to the same silent gradient the
+       hero/fleet/facilities panels use, not a placeholder box. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-base-content">What do we do?</h2>
@@ -153,13 +164,16 @@ before the photography existed, never a broken image. -->
       </p>
       <div class="what-we-do-grid mt-m grid grid-cols-1 gap-l sm:grid-cols-3">
         {#each WHAT_WE_DO as tile (tile.label)}
+          {@const photo = data.images[tile.key]}
           <div class="what-we-do-tile">
-            <div class="photo-placeholder aspect-[4/3] rounded-box border border-dashed border-card-border bg-base-200">
-              <svg class="h-8 w-8 text-muted" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"
-                ><path d={ICON_PATHS.image} /></svg
-              >
-              <span class="text-step--1 font-semibold text-muted">Photo coming</span>
-              <span class="photo-placeholder-alt text-step--2 text-muted">{tile.altPreview}</span>
+            <div class="what-we-do-figure aspect-[4/3] rounded-box" class:has-photo={!!photo}>
+              {#if photo}
+                <!-- data-crop="4/3": the design probe's deliberate-editorial-crop opt-out, the
+                     same recipe the News grid's own cards use just above. The three source photos
+                     carry three different natural ratios; this band crops all of them to one
+                     uniform tile shape on purpose. -->
+                <img src={photo.url} alt={photo.alt} class="h-full w-full rounded-box object-cover" data-crop="4/3" />
+              {/if}
             </div>
             <h3 class="what-we-do-label mt-xs mb-0 font-display text-step-1 leading-tight text-base-content">{tile.label}</h3>
             <p class="mt-3xs">
@@ -334,6 +348,16 @@ before the photography existed, never a broken image. -->
   .hero-figure {
     aspect-ratio: 4 / 3;
     background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
+    /* Photo-first below the two-column breakpoint (the design-polish pass): a mobile reader meets
+       the photography before the welcome text, not after. Reset to source order at 900px+, where
+       the two columns already sit side by side and reordering would only scramble the DOM's own
+       reading order for no visual gain. */
+    order: -1;
+  }
+  @media (min-width: 56.25rem) {
+    .hero-figure {
+      order: 0;
+    }
   }
   .panel-figure {
     aspect-ratio: 2 / 1;
@@ -357,21 +381,14 @@ before the photography existed, never a broken image. -->
     object-position: 25% center;
   }
 
-  /* The What-do-we-do band's placeholder tiles (manifest item 13): a dashed frame distinct from
-     the hero/fleet/facilities panels' silent gradient, since these are genuinely waiting on a
-     photo rather than degrading gracefully from one that may never come. */
-  .photo-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    text-align: center;
-    padding: var(--spacing-s);
+  /* The What-do-we-do band's tiles (design-polish pass, 2026-07-07): the same silent-gradient
+     degrade the hero/fleet/facilities panels use for a resolver miss, so three real photos never
+     have a "waiting on art" moment in production. */
+  .what-we-do-figure {
+    background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
   }
-  .photo-placeholder-alt {
-    max-width: 22ch;
-    font-style: italic;
+  .what-we-do-figure.has-photo {
+    background: none;
   }
 
   /* The label reads as the tile's own caption, not a plain semibold heading (the craft pass's fix,
@@ -492,11 +509,13 @@ before the photography existed, never a broken image. -->
   /* The family's 900px collapse threshold (the north star's own `.twocol`/`.cols2` breakpoint):
      below it every two-column section stacks to one. */
   @media (min-width: 56.25rem) {
-    /* Slightly favors the photo over the north star's own 1.25fr:1fr split (46% vs 44%), since
-       this site's narrower `--container-measure-wide` (58rem, vs the north star's 1120px shell)
-       otherwise renders the photo smaller in absolute pixels for the same ratio. */
+    /* The design-polish pass's photo-dominant split (2026-07-07), replacing the north star's own
+       text-favoring 1.15fr:1fr ratio: the photo column now outweighs the text column (58% vs 42%
+       of the row), so the photo's own 4:3 ratio renders substantially taller at this container's
+       58rem measure, with no crop, letting the photography lead the section the way the
+       Facilities panel already does further down the page. */
     .hero-grid {
-      grid-template-columns: 1.15fr 1fr;
+      grid-template-columns: 0.75fr 1fr;
       /* Anchors the CTA to the photo's own lower edge (the craft pass's hero-balance fix,
          2026-07-07), overriding the row's shared `items-center` utility (an unlayered scoped rule
          already outranks any Tailwind utility class regardless of specificity, the same mechanism

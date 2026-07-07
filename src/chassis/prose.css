@@ -316,16 +316,26 @@
      Table: a bordered head rule and zebra body rows, at the caption size. The
      table itself stays `display: table`, a real table in the accessibility
      tree (WCAG 1.3.1: `display: block` on a table strips its row/cell roles
-     in every current engine). The scroll container is a wrapper the
-     showcase's own render step emits around every table (table-scroll.ts,
-     called from cairn.config.ts's rendering.render): `.table-scroll` carries
-     `display: block; overflow-x: auto`, `role="region"`, a `tabindex` and an
-     `aria-label` naming the table, so a keyboard user can tab to the region
-     and scroll it. Cells stay `nowrap` so a narrow viewport cannot satisfy
-     the table's own `width: 100%` by wrapping words inside a cell; the auto
-     table-layout algorithm then grows the table past its specified width to
-     fit the unbroken content, and the wrapper's `overflow-x: auto` turns
-     that into a horizontal scroll instead of a squeezed, word-broken column.
+     in every current engine). The scroll container is a wrapper the render
+     pipeline emits around every table by default (cairn-cms's own
+     rehypeTableScroll, see cairn.config.ts's rendering.render): `.table-scroll`
+     carries `display: block; overflow-x: auto`, `role="region"`, a `tabindex`
+     and an `aria-label` naming the table, so a keyboard user can tab to the
+     region and scroll it.
+
+     Cells WRAP (`white-space: normal`), not `nowrap`: an earlier version of
+     this rule kept cells unbroken so a narrow viewport would horizontally
+     scroll the whole table rather than squeeze a word mid-token, but this
+     site's own tables (a day-by-day class schedule, a gear list) carry full
+     sentences in their last column, and nobody horizontal-scrolls a page to
+     read a sentence (the design-polish pass's fix, 2026-07-07, restoring how
+     the old site's own tables read: prose wrapped across two or three lines,
+     never a horizontal scrollbar). The auto table-layout algorithm still
+     gives a short cell (a day, a time) only the width its content needs and
+     lets a long one wrap, so a table degrades gracefully at any width; the
+     `.table-scroll` wrapper stays in place as the honest fallback for a
+     genuinely wide, unwrappable table (a dense numeric grid), not the
+     default reading path.
      -------------------------------------------------------------------------- */
   .prose .table-scroll {
     display: block;
@@ -348,12 +358,19 @@
     font-weight: 600;
     border-bottom: 2px solid var(--color-base-300);
     padding: 0.55rem 0.7rem;
-    white-space: nowrap;
+    /* Overrides the `.prose` root's inherited `overflow-wrap: anywhere` (that rule exists for a
+       bare URL with nowhere to break; see its own comment above). A table cell's minimum content
+       width comes from its narrowest unbreakable word, and `anywhere` lets the browser's auto
+       table-layout treat that minimum as near zero, which collapsed a short label like "Thursday"
+       into a mid-word break ("Thur-sday") the moment a neighboring cell's own long sentence
+       wanted the room. `break-word` still protects against a genuinely unbreakable token (there
+       is no such token in this site's own tables) without sacrificing an ordinary short word. */
+    overflow-wrap: break-word;
   }
   .prose tbody td {
     padding: 0.55rem 0.7rem;
     border-bottom: var(--border) solid var(--color-card-border);
-    white-space: nowrap;
+    overflow-wrap: break-word;
   }
   .prose tbody tr:nth-child(even) {
     background: color-mix(in oklab, var(--color-base-200) 60%, transparent);
@@ -427,6 +444,15 @@
     border-left-color: var(--cairn-warning-ink);
     background: color-mix(in oklab, var(--color-warning) 9%, var(--color-base-100));
   }
+  /* 'interim': a "not built yet" placeholder notice (the design-polish pass, 2026-07-07, unifying
+     two coming-soon notes that had drifted onto two different treatments, a plain gray box and a
+     blue-tinted alert). No colored ink, no tinted ground: the card-border/muted tokens every other
+     quiet UI element already reads, so the notice stays honest (still a bordered box, still says
+     what it says) without out-shouting real content around it. */
+  .prose .callout-interim {
+    border-left-color: var(--color-card-border);
+    background: var(--color-base-200);
+  }
   .prose .callout-title {
     font-weight: 650;
     margin: 0 0 0.3rem;
@@ -439,6 +465,9 @@
   }
   .prose .callout-warning .callout-title {
     color: var(--cairn-warning-ink);
+  }
+  .prose .callout-interim .callout-title {
+    color: var(--color-muted);
   }
   .prose .callout-body > * {
     margin: 0;

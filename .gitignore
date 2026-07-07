@@ -33,3 +33,8 @@ Thumbs.db
 
 # Playwright
 test-results/
+
+# Ad hoc review/debug scripts and their output (an underscore-prefixed `-tmp` script is a
+# scratch tool for the pass that wrote it, not shipped tooling).
+scripts/_*-tmp.mjs
+.review-shots/

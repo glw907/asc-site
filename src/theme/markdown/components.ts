@@ -43,7 +43,11 @@ const callout = defineComponent({
       h('ul', { className: ['callout-points'] }, ctx.items('points').map((item) => h('li', item))),
     ]),
   attributes: {
-    tone: fields.select({ label: 'Tone', required: true, options: ['note', 'tip', 'warning'] }),
+    // 'interim' (the design-polish pass, 2026-07-07): a quiet, deliberately unremarkable tone for
+    // a "not built yet" placeholder notice, so a page with real content around it doesn't read as
+    // broken. The note/tip/warning tones are all right for a callout competing with plain prose;
+    // an interim notice is not competing for the reader's attention, it is apologizing for a gap.
+    tone: fields.select({ label: 'Tone', required: true, options: ['note', 'tip', 'warning', 'interim'] }),
     icon: fields.icon({ label: 'Icon' }),
   },
   slots: [

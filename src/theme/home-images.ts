@@ -19,6 +19,9 @@ export interface HomeImages {
   hero?: HomeImage;
   fleet?: HomeImage;
   facilities?: HomeImage;
+  learn?: HomeImage;
+  race?: HomeImage;
+  relax?: HomeImage;
 }
 
 // The completion pass's restore (manifest item 14): the live site's own home hero
@@ -27,6 +30,15 @@ export interface HomeImages {
 const HERO_TOKEN = 'media:site-header-big-lake.eb71d593c9eaf136';
 const FLEET_TOKEN = 'media:fleet-racing-spinnakers.aced8df0a45f9553';
 const FACILITIES_TOKEN = 'media:clubhouse-and-grounds.ead9645a4e60dd76';
+// The design-polish pass's placements (2026-07-07), replacing the What-do-we-do band's "photo
+// coming" placeholders: a class-instruction shot, a spinnaker/regatta shot, and a grounds shot.
+// LEARN_TOKEN reuses education.md's own Youth Track photo (its alt text, checked against the
+// actual pixels, is the accurate one of the two intro-class candidates in the library; the other,
+// adult-intro-class-2, carries a stale "at the tiller" alt on what is actually a dockside
+// knot-tying moment) rather than ship a mismatched alt onto the home page.
+const LEARN_TOKEN = 'media:youth-intro-class-1.9c08687cac54de80';
+const RACE_TOKEN = 'media:racing-hero.ff77ce74df7d2570';
+const RELAX_TOKEN = 'media:green-lakeside-grounds.6345a50f183c0900';
 
 /** Resolve one fixed token against the manifest and resolver, or undefined on any miss (an
  * unresolvable reference degrades to no image rather than a broken one; the section keeps its
@@ -46,5 +58,8 @@ export function homeImages(manifest: MediaManifest, resolveMedia: MediaResolve):
     hero: resolveHomeImage(HERO_TOKEN, manifest, resolveMedia),
     fleet: resolveHomeImage(FLEET_TOKEN, manifest, resolveMedia),
     facilities: resolveHomeImage(FACILITIES_TOKEN, manifest, resolveMedia),
+    learn: resolveHomeImage(LEARN_TOKEN, manifest, resolveMedia),
+    race: resolveHomeImage(RACE_TOKEN, manifest, resolveMedia),
+    relax: resolveHomeImage(RELAX_TOKEN, manifest, resolveMedia),
   };
 }

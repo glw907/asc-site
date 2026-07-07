@@ -51,11 +51,19 @@ state. -->
   /**
    * Whether a nav item points at the page being viewed. The home link matches only the exact
    * root; a deeper link matches its own path or anything nested under it.
+   *
+   * Both sides are compared with their trailing slash stripped: `site.config.yaml`'s own nav
+   * entries all carry one (`/education/`), but this project's default `trailingSlash: 'never'`
+   * 307s that hit down to its bare form before a page ever renders, so `page.url.pathname` is
+   * always bare (`/education`). Comparing the raw strings never matched a single subpage, the
+   * design-polish pass's fix (2026-07-07): every non-home nav link showed no active state at all,
+   * regardless of which page was current.
    */
   function isCurrent(href: string): boolean {
     const path = page.url.pathname;
     if (href === '/') return path === '/';
-    return path === href || path.startsWith(`${href}/`);
+    const bareHref = href.replace(/\/$/, '');
+    return path === bareHref || path.startsWith(`${bareHref}/`);
   }
 
   function closeMobile(): void {
