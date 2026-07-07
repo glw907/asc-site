@@ -54,6 +54,12 @@ export interface ClassRow {
   location: string | null;
   description: string | null;
   instructorNotes: string | null;
+  /** A short, member-facing aside this one class wants surfaced in its own reminder email
+   *  (migration 0013): "bring your own PFD", "meet at the north dock this week". The reminder
+   *  templates interpolate it as `{{class_note}}`; that send is a later pass's own consumer
+   *  (the job runner), so this column exists here purely as an editable field. `null` (the
+   *  common case) sends no override. */
+  customNote: string | null;
   heroImage: string | null;
   heroImageAlt: string | null;
   visible: boolean;
@@ -85,6 +91,7 @@ export interface ClassWrite {
   location: string | null;
   description: string | null;
   instructorNotes: string | null;
+  customNote: string | null;
   visible: boolean;
 }
 
@@ -135,6 +142,7 @@ interface ClassRawRow {
   location: string | null;
   description: string | null;
   instructor_notes: string | null;
+  custom_note: string | null;
   hero_image: string | null;
   hero_image_alt: string | null;
   visible: 0 | 1;
@@ -156,6 +164,7 @@ function toClassRow(row: ClassRawRow): ClassRow {
     location: row.location,
     description: row.description,
     instructorNotes: row.instructor_notes,
+    customNote: row.custom_note,
     heroImage: row.hero_image,
     heroImageAlt: row.hero_image_alt,
     visible: row.visible === 1,
@@ -165,8 +174,8 @@ function toClassRow(row: ClassRawRow): ClassRow {
 }
 
 const SELECT_COLUMNS = `id, season, name, slug, track, capacity, fee, start_date, end_date,
-  location, description, instructor_notes, hero_image, hero_image_alt, visible, created_at,
-  updated_at`;
+  location, description, instructor_notes, custom_note, hero_image, hero_image_alt, visible,
+  created_at, updated_at`;
 
 const ORDER_BY = 'ORDER BY start_date IS NULL, start_date ASC, name ASC';
 
@@ -249,8 +258,8 @@ export async function createClass(db: D1Database, id: string, season: number, wr
   await db
     .prepare(
       `INSERT INTO classes (id, season, name, slug, track, capacity, fee, start_date, end_date,
-        location, description, instructor_notes, visible)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)`,
+        location, description, instructor_notes, custom_note, visible)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`,
     )
     .bind(
       id,
@@ -265,6 +274,7 @@ export async function createClass(db: D1Database, id: string, season: number, wr
       write.location,
       write.description,
       write.instructorNotes,
+      write.customNote,
       write.visible ? 1 : 0,
     )
     .run();
@@ -275,9 +285,9 @@ export async function updateClass(db: D1Database, id: string, write: ClassWrite)
   await db
     .prepare(
       `UPDATE classes SET name = ?1, slug = ?2, track = ?3, capacity = ?4, fee = ?5, start_date = ?6,
-        end_date = ?7, location = ?8, description = ?9, instructor_notes = ?10, visible = ?11,
-        updated_at = datetime('now')
-       WHERE id = ?12`,
+        end_date = ?7, location = ?8, description = ?9, instructor_notes = ?10, custom_note = ?11,
+        visible = ?12, updated_at = datetime('now')
+       WHERE id = ?13`,
     )
     .bind(
       write.name,
@@ -290,6 +300,7 @@ export async function updateClass(db: D1Database, id: string, write: ClassWrite)
       write.location,
       write.description,
       write.instructorNotes,
+      write.customNote,
       write.visible ? 1 : 0,
       id,
     )

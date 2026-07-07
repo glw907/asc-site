@@ -165,6 +165,28 @@ export function renderTemplatePreviewHtml(body: string): string {
   return markdownToHtml(body);
 }
 
+/** One rendered template, ready to send or to preview. */
+export interface RenderedTemplate {
+  subject: string;
+  /** The rendered markdown, pre-HTML: the plaintext send body. */
+  text: string;
+  html: string;
+}
+
+/**
+ * Render a subject/body pair against `vars` through the exact two steps `sendClubEmail` itself
+ * runs (`renderVariables`, then `markdownToHtml`), exported so the email edit screen's own
+ * sample-data preview calls the identical code path a real send does rather than a parallel
+ * reimplementation that could drift from it. `sendClubEmail` below calls this same function
+ * rather than duplicating its steps; a draft subject/body pair (not yet saved) works exactly the
+ * same as a stored template's, so the edit screen can preview unsaved changes too.
+ */
+export function renderTemplateWithVariables(subject: string, body: string, vars: Record<string, string>): RenderedTemplate {
+  const renderedSubject = renderVariables(subject, vars);
+  const text = renderVariables(body, vars);
+  return { subject: renderedSubject, text, html: markdownToHtml(text) };
+}
+
 /** Write one `email_log` row for a send attempt, whatever its outcome. Logged unconditionally
  *  (including a missing-binding refusal): the row records "we tried to notify X about Y", which is
  *  useful history independent of whether the binding happened to be wired at the time. */
@@ -225,9 +247,7 @@ export async function sendClubEmail(db: D1Database, env: EmailBindingEnv, args: 
     return { ok: false, error: errorDetail };
   }
 
-  const subject = renderVariables(source.subject, args.vars);
-  const bodyMarkdown = renderVariables(source.body, args.vars);
-  const html = markdownToHtml(bodyMarkdown);
+  const { subject, text: bodyMarkdown, html } = renderTemplateWithVariables(source.subject, source.body, args.vars);
 
   if (!env.EMAIL) {
     await writeEmailLog(db, {

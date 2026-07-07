@@ -25,6 +25,7 @@ carried.
     location = $bindable(),
     description = $bindable(),
     instructorNotes = $bindable(),
+    customNote = $bindable(),
     visible = $bindable(),
     heroImage = null,
     heroImageAlt = null,
@@ -39,6 +40,7 @@ carried.
     location: string;
     description: string;
     instructorNotes: string;
+    customNote: string;
     visible: boolean;
     heroImage?: string | null;
     heroImageAlt?: string | null;
@@ -79,6 +81,14 @@ carried.
     <textarea class="textarea textarea-sm w-full" name="instructorNotes" rows="3" bind:value={instructorNotes}
     ></textarea>
   </FieldLabel>
+  <FieldLabel label="Reminder note override">
+    <textarea class="textarea textarea-sm w-full" name="customNote" rows="2" bind:value={customNote}
+    ></textarea>
+  </FieldLabel>
+  <p class="text-xs text-muted">
+    A member-facing aside this class's own reminder email includes ("bring your own PFD"). Blank
+    sends no override.
+  </p>
 </div>
 
 {#if heroImage}

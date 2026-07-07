@@ -33,6 +33,7 @@ const RAW_ROW = {
   location: 'Clubhouse',
   description: 'Learn to sail.',
   instructor_notes: null,
+  custom_note: null,
   hero_image: 'adult-intro-class-1.jpg',
   hero_image_alt: 'Student at the tiller with an instructor.',
   visible: 1 as const,
@@ -51,6 +52,7 @@ const WRITE: ClassWrite = {
   location: 'Clubhouse',
   description: 'Get your boat race-ready.',
   instructorNotes: 'Bring spare rigging.',
+  customNote: 'Bring your own PFD.',
   visible: true,
 };
 
@@ -107,6 +109,7 @@ describe('createClass', () => {
       'Clubhouse',
       'Get your boat race-ready.',
       'Bring spare rigging.',
+      'Bring your own PFD.',
       1,
     ]);
   });
@@ -122,6 +125,27 @@ describe('updateClass', () => {
     expect(calls[0].sql).not.toContain('hero_image');
     expect(calls[0].args.at(-1)).toBe('fleet-tune-up-weekend');
     expect(calls[0].args.at(-2)).toBe(0);
+  });
+});
+
+describe('custom_note round-trip (migration 0013)', () => {
+  it('reads a stored note off getClass, camelCased', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': { ...RAW_ROW, custom_note: 'Bring your own PFD.' } } });
+    await expect(getClass(db, '1st_adult_teen_intro')).resolves.toEqual(
+      expect.objectContaining({ customNote: 'Bring your own PFD.' }),
+    );
+  });
+
+  it('reads null when no note has ever been set', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': RAW_ROW } });
+    await expect(getClass(db, '1st_adult_teen_intro')).resolves.toEqual(expect.objectContaining({ customNote: null }));
+  });
+
+  it('updateClass writes a cleared note as null, not an empty string', async () => {
+    const { db, calls } = fakeD1();
+    await updateClass(db, 'fleet-tune-up-weekend', { ...WRITE, customNote: null });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE classes SET'));
+    expect(update?.args).toContain(null);
   });
 });
 

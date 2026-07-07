@@ -1,7 +1,6 @@
-// The Club section's Email screen (pass 2.2's email port): the template list (office idiom) and
-// the send log, both read-only this pass. Template EDITING in the cairn editor with a variables
-// palette is 2.3's own full feature (the design suite's own naming); this pass's detail route
-// (`email/[id]`) is a read-only preview only, and says so on-screen.
+// The Club section's Email screen: the template list and the send log. The detail route
+// (`email/[id]`) is the edit screen (pass 2.3): subject/body, a variable palette, a sample-data
+// preview, and reset-to-default.
 import type { PageServerLoad } from './$types';
 import { requireSession } from '@glw907/cairn-cms/sveltekit';
 import { resolveClubDb } from '$admin-club/lib/club-roles';

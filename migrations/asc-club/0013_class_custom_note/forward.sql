@@ -1,0 +1,15 @@
+-- asc-club migration 0013: `classes` gains `custom_note`, a nullable per-class override the
+-- class reminder templates interpolate as `{{class_note}}`.
+--
+-- `classes.instructor_notes` (0007's own predecessor schema) is a private, instructor-facing
+-- field, never sent to a member; this is the opposite: a short, admin-authored, member-facing
+-- aside a specific class wants surfaced in its own reminder email ("bring your own PFD", "meet
+-- at the north dock this week"), which no other class shares and no template body should
+-- hard-code. NULL is the common case (most classes need no override); the reminder templates
+-- that read `{{class_note}}` are a later pass's own consumer (the job runner's cron-driven
+-- sends), so this migration lands only the column and the Classes edit screen's own field, per
+-- this pass's own scope.
+--
+-- Plain `ALTER TABLE ... ADD COLUMN`, nullable, no `REFERENCES`, no backfill needed (a brand new
+-- concept with no prior column to derive it from).
+ALTER TABLE classes ADD COLUMN custom_note TEXT;

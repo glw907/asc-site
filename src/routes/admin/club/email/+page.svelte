@@ -1,11 +1,9 @@
 <!--
 @component
-The Club section's Email screen (pass 2.2's email port): the template list (office idiom, one row
-per `email_templates` row, linking to a read-only detail preview) and the send log (a filterable-
-by-eye list of `email_log` rows, newest first). Editing a template IN the cairn editor with a
-variables palette is 2.3's own full feature; this pass's detail route is read-only, and the list
-row's own affordance says "Preview", not "Edit", so an editor never expects more than this pass
-ships.
+The Club section's Email screen: the template list (office idiom, one row per `email_templates`
+row, linking to its edit screen, pass 2.3's own subject/body form with a variable palette and a
+sample-data preview) and the send log (a filterable-by-eye list of `email_log` rows, newest
+first).
 -->
 <script lang="ts">
   import type { PageData } from './$types';

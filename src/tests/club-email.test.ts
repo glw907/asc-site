@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getEmailTemplate, listEmailLog, listEmailTemplates, sendClubEmail } from '../admin-club/lib/club-email';
+import { getEmailTemplate, listEmailLog, listEmailTemplates, renderTemplateWithVariables, sendClubEmail } from '../admin-club/lib/club-email';
 import { fakeD1 } from './_fake-d1';
 
 const CLASS_OFFER_TEMPLATE = {
@@ -131,6 +131,19 @@ describe('sendClubEmail', () => {
     const logWrite = calls.find((c) => c.sql.startsWith('INSERT INTO email_log'));
     expect(logWrite?.args[5]).toBe('failed');
     expect(logWrite?.args[6]).toBe('E_SENDER_NOT_VERIFIED');
+  });
+
+  it('renderTemplateWithVariables produces exactly what a real send transmits (the edit ' +
+    'screen\'s own preview parity guarantee)', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM email_templates': CLASS_OFFER_TEMPLATE } });
+    const send = vi.fn().mockResolvedValue(undefined);
+    await sendClubEmail(db, { EMAIL: { send } }, { to, templateId: 'class_offer', vars });
+    const sent = send.mock.calls[0][0];
+
+    const preview = renderTemplateWithVariables(CLASS_OFFER_TEMPLATE.subject, CLASS_OFFER_TEMPLATE.body, vars);
+    expect(preview.subject).toBe(sent.subject);
+    expect(preview.html).toBe(sent.html);
+    expect(preview.text).toBe(sent.text);
   });
 
   it('answers a failed result for an unknown templateId, logging the attempt', async () => {

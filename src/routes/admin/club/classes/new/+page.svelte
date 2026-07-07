@@ -21,6 +21,7 @@ a bare form over `ClassForm`'s shared fields, posting to this route's own `creat
   let location = $state('');
   let description = $state('');
   let instructorNotes = $state('');
+  let customNote = $state('');
   let visible = $state(true);
 </script>
 
@@ -46,6 +47,7 @@ a bare form over `ClassForm`'s shared fields, posting to this route's own `creat
       bind:location
       bind:description
       bind:instructorNotes
+      bind:customNote
       bind:visible
     />
     <div class="flex justify-end gap-2 border-t border-[var(--cairn-card-border)] p-6">
