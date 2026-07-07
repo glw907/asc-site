@@ -48,8 +48,16 @@ separate act gated on Geoff's before/after review, per the design spec.
   this build's lessons (the NOTIFICATIONS concept, the D1-beside-cairn read pattern, the A1/B1/C7
   recipes, the fixture-media gap the pixel-diff rider surfaced) are ready to triage into the
   chassis and engine.
+- **GitHub Actions cannot run yet.** Both `ci.yml` and `deploy.yml` fail immediately on push
+  ("recent account payments have failed or your spending limit needs to be increased"), a
+  pre-existing account-billing block, not something this repo's workflows caused (Tasks 1 and 2's
+  earlier pushes hit the identical failure). The CI rider is proven locally against a clean
+  `.wrangler/` state (`docs/verification-findings.md`); it needs Geoff to clear GitHub's billing
+  block before it runs for real.
 
 ## Next action
 
 Land the ASC harvest review (see `pre-beta-harvest.md` in cairn-cms), then wait for Geoff's
-before/after review of dev before scoping the apex cutover as its own small task.
+before/after review of dev before scoping the apex cutover as its own small task. Clearing the
+GitHub Actions billing block is a standing prerequisite for either CI or the deploy workflow to
+run automatically again.
