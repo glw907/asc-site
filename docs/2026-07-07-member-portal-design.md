@@ -146,6 +146,12 @@ and class signup proceed as short single-question steps rather than one long for
 - Full session → one-click waitlist join; the member's waitlist position and any live offer
   (with its 72-hour countdown) render here; claiming an offer lands in the same confirmation
   flow.
+- **Withdraw (Geoff, 2026-07-07): a member drops their own class registration from
+  my-classes** (confirm-gated, honest copy about timing per the cancellation policy).
+  Withdrawal frees the spot, appends a reversing credit grant when the enrollment redeemed
+  one (ledger discipline: never delete the redemption), and triggers the AUTO-OFFER
+  (unparked today): the first waitlisted person gets the emailed claim link automatically;
+  decline or expiry passes it down the queue. Leaving a waitlist is likewise self-service.
 - After registration: "My classes" rows (dates, location, what to bring link). A member
   holding the instructor role additionally sees their assigned classes' rosters here (2.2+,
   the privacy-floor fields only).
