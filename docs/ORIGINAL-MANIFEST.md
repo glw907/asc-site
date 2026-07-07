@@ -39,6 +39,10 @@ redirect coverage, feeds (cleaner than live's).
 ### Must-fix before "done"
 8. Header feature gaps: **site search absent** (/search 404s), the **Donate heart
    shortcut** gone, live's **Members dropdown** flattened to a link.
+   **RAISED (Geoff, 2026-07-06): search must be TOP NOTCH** — the family Pagefind pattern
+   (ecxc's implementation is the precedent) with a fast keyboard-first overlay, quality
+   result grouping, and the five-viewport composure; a search that feels like the site's
+   own feature, not a bolt-on.
 9. **The packing-checklist table overflows at 390** on visiting-the-club (the one hard
    responsive break; the family standard fails there).
 10. **In-page TOCs missing on the longest pages** — spec B1 calls for them; the 18k-px
