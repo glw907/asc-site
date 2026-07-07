@@ -159,13 +159,13 @@ Many members discover us through classes and stay for the boats, the racing, and
 
 **For Current Members:**
 
-Ready to register! Head to the [class schedule](#class-schedule) above and select your preferred session.
+Ready to register! Check the class schedule on our [events page](/events/) and select your preferred session.
 
 **Have an unused class credit?** Mention it when registering: our membership committee tracks credits manually and will apply it to waive your $100 class fee.
 
 **For Returning Members (Expired Membership):**
 
-**Renew first, then register:** [Renew your membership](/my-account/), then head to the [class schedule](#class-schedule) to register for a class.
+**Renew first, then register:** [Renew your membership](/my-account/), then check the class schedule on our [events page](/events/) to register for a class.
 
 **Had an unused class credit?** Good news, it's still available! Credits remain valid even after membership lapses. Mention your credit when registering.
 
@@ -232,7 +232,7 @@ The class waitlist form isn't wired up here yet. In the meantime, email
 want, and we'll add you to the list.
 :::
 
-You can also check the [class schedule](#class-schedule) above to see which sessions still have openings.
+You can also check the class schedule on our [events page](/events/) to see which sessions still have openings.
 
 ## Questions?
 
