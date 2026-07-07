@@ -24,6 +24,9 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
   }
 
   const dateFmt = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  /** An ops date is a civil date ("the regatta is on the 24th"), not an instant, so it parses
+   *  as local midnight on purpose: appending T00:00:00 keeps Date from reading a bare
+   *  YYYY-MM-DD as UTC and shifting it a day west of Greenwich. */
   function formatDate(iso: string | null): string {
     if (!iso) return 'TBD';
     const parsed = new Date(`${iso}T00:00:00`);
@@ -52,6 +55,10 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
   );
 </script>
 
+<!-- The subtitle carries the visible count; this mirror announces filter changes to
+     assistive tech without re-reading the whole table. -->
+<span class="sr-only" role="status">{filtered.length} of {data.events.length} events shown</span>
+
 <OfficeList title="Events" {subtitle}>
   {#snippet action()}
     {#if typeOptions.length > 1}
@@ -59,6 +66,7 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
     {/if}
   {/snippet}
   <table class="table">
+    <caption class="sr-only">Club events from the ops calendar, filterable by type</caption>
     <thead>
       <tr>
         <th class="{headerCell} w-28">Date</th>

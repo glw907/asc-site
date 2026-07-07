@@ -17,7 +17,8 @@ export interface ClubEventRow {
   event_type: string;
   start_date: string | null;
   end_date: string | null;
-  visible: number;
+  /** SQLite boolean: 1 visible, 0 hidden (the schema has no BOOLEAN type). */
+  visible: 0 | 1;
 }
 
 const EVENTS_QUERY = `SELECT rowid AS id, title, slug, event_type, start_date, end_date, visible
