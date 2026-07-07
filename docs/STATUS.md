@@ -4,10 +4,11 @@
 docs/ORIGINAL-MANIFEST.md is the completion pass's checklist — 7 go-live blockers
 (events stub, dead forms, notifications unwired, the WRONG LOGO, home news images,
 bulletins missing, news wayfinding), 5 must-fixes, 4 sanction questions for Geoff. **All
-7 go-live blockers and the 3 sanctioned photo restores are now done** (2026-07-06); the 5
-must-fixes (search, the responsive table, TOCs, the legacy RSS redirect, facilities/footer
-gaps) are what remains before the apex cutover. NOTHING ships to Geoff's eyes until every
-manifest line is checked.**
+7 go-live blockers, the 3 sanctioned photo restores, and all 5 must-fixes (items 8-12:
+search/Donate/Members dropdown, the 390 table overflow, TOCs plus governance
+breadcrumbs/subtitles, the legacy RSS redirect, and the facilities/Season/footer copy
+fixes) are now done** (2026-07-06). NOTHING ships to Geoff's eyes until every manifest
+line is checked.**
 
 
 Rolling status for the Alaska Sailing Club's cairn rebuild. Canonical plan:
@@ -60,14 +61,23 @@ the News & Updates cards resolve each post's real hero photo and a reading time;
 bar, Browse-by-Topic grid, and per-topic `/tags/[tag]/` pages; and the What-do-we-do band,
 the home hero, and the guide/hub heroes all restore their live photography (the crop rule
 verified image by image). See `docs/ORIGINAL-MANIFEST.md` for each item's own resolution
-note. The remaining must-fixes (search, the packing-checklist table, in-page TOCs, the
-legacy RSS redirect, the facilities amenity list and footer links) stay open.
+note.
+
+**Items 8 through 12 (the must-fixes) are also done (2026-07-06).** The header carries the
+Pagefind search modal (Cmd/Ctrl+K or its trigger), the Donate heart, and a Members popover
+dropdown with its seven live sub-links; the 390 packing-checklist overflow traced to
+`.site-main` missing the flex-item `width: 100%; min-width: 0` fix the chassis's own
+`.cairn-site-main` documents, now applied; the catch-all template grows a collapsible
+table of contents on any long entry (eight-plus headings) and governance subpages regain
+their "back to Governance" link and a frontmatter-driven subtitle; `/index.xml` redirects
+to `/feed.xml`; and the home page's facilities list, Season legend copy, and footer
+Discord/Contact links are restored. See `docs/ORIGINAL-MANIFEST.md` for each item's own
+resolution note.
 
 ## What is NOT done yet
 
-- **The remaining must-fixes** in `docs/ORIGINAL-MANIFEST.md` (search, the responsive
-  packing-checklist table, in-page TOCs, the `/index.xml` redirect, and the facilities
-  amenity list and footer links).
+- **Every manifest line is now resolved.** `docs/ORIGINAL-MANIFEST.md` carries no open
+  must-fix or go-live blocker as of 2026-07-06.
 - **The apex cutover.** `aksailingclub.org` still serves the old Hugo/GCE site. This is Geoff's
   call, not an engineering task: the design spec gates it on his explicit go after a live review
   of dev, and the GCE origin retires only after a soak period following that cutover.
@@ -94,9 +104,9 @@ legacy RSS redirect, the facilities amenity list and footer links) stay open.
 
 ## Next action
 
-**The remaining must-fixes in `docs/ORIGINAL-MANIFEST.md`** (search, the responsive
-packing-checklist table, in-page TOCs, the legacy `/index.xml` redirect, and the
-facilities/footer gaps), then **the production apex cutover, on Geoff's explicit go**, per
-the design spec's before/after-approval gate — never bundled with a routine push to
-`main`. Clearing the GitHub Actions billing block is a standing prerequisite for either CI
-or the deploy workflow to run automatically again, independent of the above.
+**A fresh-context verification pass** over the full manifest (every line now marked
+resolved but Task 5's own loop ran self-graded), then **the production apex cutover, on
+Geoff's explicit go**, per the design spec's before/after-approval gate — never bundled
+with a routine push to `main`. Clearing the GitHub Actions billing block is a standing
+prerequisite for either CI or the deploy workflow to run automatically again, independent
+of the above.

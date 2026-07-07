@@ -1,8 +1,7 @@
 ---
 title: "Mat-Su Borough Land Management Agreement"
+description: "25-year land management agreement between the Mat-Su Borough and the Alaska Sailing Club governing the tenting area, Trailer Row, and trailered boat parking."
 ---
-*25-year land management agreement between the Mat-Su Borough and the Alaska Sailing Club governing the tenting area, Trailer Row, and trailered boat parking.*
-
 **Document:** Management Agreement MSB006789  
 **Effective:** June 22, 2022  
 **Expires:** June 22, 2047  

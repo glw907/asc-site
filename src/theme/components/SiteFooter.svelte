@@ -4,11 +4,11 @@ ASC's public site footer: the club-grounds "closing band" (Task 3), matching the
 Task 1's placeholder base-200 band. The same fixed navy-deep ground the home page's own closing CTA
 section uses; both read `--color-neutral`/`--color-neutral-content` directly rather than through a
 shared component, since they are two independent templates (the footer chrome, the home page's own
-markup) that happen to want the same brand device. "News" has no public archive page yet (Task 2's
-migration finding: cairn's site resolver has no concept-level index route), so it points at the
-home page's own News & Updates band instead of a dead link. The footer row boxes to
-`max-w-measure-wide`, the same width SiteHeader and the home page's own bands use, so the whole
-page reads as one aligned column top to bottom. -->
+markup) that happen to want the same brand device. The footer row boxes to `max-w-measure-wide`,
+the same width SiteHeader and the home page's own bands use, so the whole page reads as one
+aligned column top to bottom. Discord and Contact restore the two links the completion pass found
+missing (manifest item 12); the full list and its order follow the live site's own footer menu
+weights. -->
 <script lang="ts">
   import { siteConfig } from '$theme/cairn.config';
 
@@ -18,8 +18,10 @@ page reads as one aligned column top to bottom. -->
   const nav: NavItem[] = [
     { label: 'Join', href: '/join/' },
     { label: 'Events', href: '/events/' },
-    { label: 'News', href: '/#news' },
+    { label: 'News', href: '/posts/' },
+    { label: 'Discord', href: '/discord-server/' },
     { label: 'Governance', href: '/governance/' },
+    { label: 'Contact', href: '/contact/' },
     { label: '♥ Donate', href: '/donate/' },
   ];
 </script>

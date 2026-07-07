@@ -1,8 +1,7 @@
 ---
 title: "Bylaws"
+description: "Complete text of the Bylaws governing The Alaska Sailing Club, Inc."
 ---
-*Complete text of the Bylaws governing The Alaska Sailing Club, Inc.*
-
 **Document:** Bylaws of The Alaska Sailing Club, Inc.  
 **Adopted:** January 30, 2024  
 **Authority:** Board of Directors ([Article XV](#article-xv--amendments-to-bylaws))

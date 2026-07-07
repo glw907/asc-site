@@ -40,4 +40,18 @@ export const REDIRECTS: Record<string, string> = {
   // Cairn's dated-concept id/slug split strips the date prefix uniformly, with no per-entry
   // exception, so this single post's URL also changes; see the migration findings doc.
   'posts/2026-02-welcome-new-website': 'posts/welcome-new-website',
+  // The old Hugo site's default RSS output path; existing subscribers still hit it. This project's
+  // own feed lives at the SvelteKit-owned /feed.xml route, not under [...path], so the target here
+  // is that route's bare path rather than a content slug.
+  'index.xml': 'feed.xml',
 };
+
+// The old nested `governance/*` keys already name exactly the pages the live site grouped under
+// its Governance section (see the header comment above); reusing them here means this set can
+// never drift from REDIRECTS itself. `[...path]/+page.svelte` reads it to restore the "back to
+// Governance" link the completion pass found missing (manifest item 10).
+export const GOVERNANCE_SUBPAGE_SLUGS = new Set(
+  Object.entries(REDIRECTS)
+    .filter(([from]) => from.startsWith('governance/'))
+    .map(([, to]) => to),
+);

@@ -116,15 +116,53 @@ state. -->
     <nav class="desktop-nav items-center gap-s text-step--1" aria-label="Primary">
       {#each nav as item (item.url ?? item.label)}
         {@const current = item.url ? isCurrent(item.url) : false}
-        <a
-          href={item.url}
-          class="nav-link"
-          class:active={current}
-          aria-current={current ? 'page' : undefined}
-        >
-          {item.label}
-        </a>
+        {#if hasChildren(item)}
+          <!-- Members: a real link to /members/ plus a caret that opens its seven sub-links as a
+               DaisyUI v5 popover dropdown (the EditorToolbar recipe: popovertarget/anchor-name on
+               the trigger, popover="auto"/position-anchor on the panel), so Escape and light-dismiss
+               come from the Popover API for free. A plain link list, not an ARIA menu: nothing here
+               behaves like a menu command. -->
+          <div class="nav-item-dropdown inline-flex items-center">
+            <a href={item.url} class="nav-link" class:active={current} aria-current={current ? 'page' : undefined}>
+              {item.label}
+            </a>
+            <button
+              type="button"
+              class="nav-caret inline-flex h-6 w-6 items-center justify-center text-muted hover:text-base-content"
+              aria-label="{item.label} menu"
+              aria-expanded={membersMenuOpen}
+              popovertarget="members-menu"
+              style="anchor-name:--members-menu"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            <ul
+              popover="auto"
+              id="members-menu"
+              style="position-anchor:--members-menu"
+              ontoggle={(e) => (membersMenuOpen = e.newState === 'open')}
+              class="members-dropdown menu menu-sm rounded-box border border-card-border bg-base-100 p-1 shadow-[var(--cairn-shadow)]"
+            >
+              {#each item.children as child (child.url ?? child.label)}
+                <li><a href={child.url}>{child.label}</a></li>
+              {/each}
+            </ul>
+          </div>
+        {:else}
+          <a
+            href={item.url}
+            class="nav-link"
+            class:active={current}
+            aria-current={current ? 'page' : undefined}
+          >
+            {item.label}
+          </a>
+        {/if}
       {/each}
+      {@render donateLink()}
+      <SearchModal />
       <button
         type="button"
         onclick={toggleTheme}
@@ -136,6 +174,8 @@ state. -->
     </nav>
 
     <div class="mobile-controls items-center gap-1">
+      {@render donateLink()}
+      <SearchModal />
       <button
         type="button"
         onclick={toggleTheme}
@@ -179,10 +219,36 @@ state. -->
         >
           {item.label}
         </a>
+        {#if hasChildren(item)}
+          <!-- No toggle needed here: the drawer is already a full-screen overlay, so the seven
+               sub-links inline directly under their parent rather than hiding behind a second tap. -->
+          <div class="mobile-submenu">
+            {#each item.children as child (child.url ?? child.label)}
+              <a href={child.url} class="mobile-sublink" onclick={closeMobile}>{child.label}</a>
+            {/each}
+          </div>
+        {/if}
       {/each}
     </div>
   {/if}
 </header>
+
+{#snippet donateLink()}
+  <!-- The live site's own Donate heart shortcut (Phosphor "heart", assets/icons/heart.svg),
+       restored beside the search trigger in the same position the old header used. -->
+  <a
+    href="/donate/"
+    aria-label="Donate"
+    title="Donate"
+    class="donate-link inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-field text-muted hover:text-primary"
+  >
+    <svg class="h-5 w-5" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
+      <path
+        d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"
+      />
+    </svg>
+  </a>
+{/snippet}
 
 <style>
   .site-logo {
@@ -238,16 +304,61 @@ state. -->
     box-shadow: 0 2px 0 var(--color-secondary);
   }
 
-  .theme-toggle {
+  .theme-toggle,
+  .donate-link,
+  .nav-caret {
     transition: color 0.15s ease;
   }
-  .theme-toggle:focus-visible {
+  .theme-toggle:focus-visible,
+  .donate-link:focus-visible,
+  .nav-caret:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
 
+  .nav-item-dropdown {
+    position: relative;
+  }
+  /* The dropdown panel: a plain link list (not an ARIA menu), positioned under its own caret via
+     the popover anchor pair set inline above. */
+  .members-dropdown {
+    min-width: 12rem;
+  }
+  .members-dropdown a {
+    text-decoration: none;
+    color: var(--color-base-content);
+  }
+
   .mobile-controls {
     display: flex;
+  }
+
+  /* A parent link immediately followed by its own submenu drops its divider, so the group reads
+     as one block with a single rule below the last sub-link instead of two close-together lines. */
+  .mobile-link:has(+ .mobile-submenu) {
+    border-bottom: none;
+  }
+  .mobile-submenu {
+    display: flex;
+    flex-direction: column;
+    padding-left: var(--spacing-s);
+    border-bottom: 1px solid var(--color-card-border);
+  }
+  .mobile-submenu:last-child {
+    border-bottom: none;
+  }
+  .mobile-sublink {
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+    text-decoration: none;
+    padding-block: 0.6rem;
+  }
+  .mobile-sublink:hover {
+    color: var(--color-primary);
+  }
+  .mobile-sublink:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
   }
 
   .hamburger:focus-visible {

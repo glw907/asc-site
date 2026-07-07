@@ -32,6 +32,16 @@ html {
   max-width: var(--container-measure);
   margin-inline: auto;
   padding: var(--spacing-l) var(--spacing-m);
+  /* `main` is a flex item in the layout's column flex (`.flex.flex-col`); a flex item's own width
+     is auto on the cross axis, and auto does not resolve against the flex line the way a plain
+     block's width does. A descendant intrinsically wider than the column (the packing-checklist
+     table on visiting-the-club, wrapped in its own `.table-scroll { overflow-x: auto }`) makes
+     `main` shrink-to-fit that descendant's content width instead of stretching, and the growth
+     bubbles up through the viewport (manifest item 9). `min-width: 0` alone does not fix this
+     (confirmed by bisection, the same finding the chassis's own `.cairn-site-main` documents);
+     the explicit `width: 100%` is what forces the shrink. */
+  width: 100%;
+  min-width: 0;
 }
 
 /* The home template breaks the shared reading-column contract deliberately: the north star's

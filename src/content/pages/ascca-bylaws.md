@@ -1,8 +1,7 @@
 ---
 title: "ASCCA Bylaws"
+description: "Bylaws of the Alaska Sailing Club Condominiums Owners Association, Inc., the condominium association that governs the property on which the club operates."
 ---
-*Bylaws of the Alaska Sailing Club Condominiums Owners Association, Inc., the condominium association that governs the property on which the club operates.*
-
 **Document:** Bylaws of Alaska Sailing Club Condominiums Owners Association, Inc.  
 **Adopted:** 2011  
 **Authority:** Per Article XV of the Declaration

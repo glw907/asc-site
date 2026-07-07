@@ -76,6 +76,10 @@ export const cairn = defineAdapter({
         // entry's `image` field with no per-concept wiring, the same free seam the posts
         // concept's own hero already uses.
         image: fields.image({ label: 'Hero image', seo: true }),
+        // Optional, a one-line subtitle shown under the title (completion-pass manifest item 10,
+        // restoring live's own governance-subpage description). Most pages carry none; the
+        // catch-all template renders it only when a page sets it.
+        description: fields.textarea({ label: 'Subtitle' }),
       }),
     }),
     // The bulletins concept: short, time-sensitive announcements with their own permalinked page

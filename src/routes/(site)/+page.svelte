@@ -155,10 +155,9 @@ before the photography existed, never a broken image. -->
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">The Season</h2>
       <p class="mt-[-0.4rem] mb-m text-step--1 text-muted">
-        Racing runs May through September. Social events bookend the year.
-        <span class="whitespace-nowrap">
-          <span class="season-dot mr-[0.4rem] inline-block"></span>classes and clinics.
-        </span>
+        Racing runs May through September. Social events bookend the year, and the
+        <span class="whitespace-nowrap"><span class="season-dot mr-[0.3rem] inline-block"></span>gold dot</span>
+        marks classes and clinics.
         <a href="/events/" class="font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
       </p>
       <SeasonList months={data.season} />
@@ -199,11 +198,21 @@ before the photography existed, never a broken image. -->
       <div>
         <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">Our facilities</h2>
         <p class="mt-xs text-step-0 text-base-content">
-          The northernmost sailing club in the United States &mdash; with facilities that would be
-          the envy of any: a clubhouse with a sauna, a nine-mooring harbor, an electric hoist,
-          year-round dinghy parking, tenting and RV space, a campfire spot, and park-style grounds
-          with beautiful lake views.
+          To the best of our knowledge, the ASC is the northernmost sailing club in the United
+          States. But despite this (or maybe because of it?) we have facilities that would be the
+          envy of any sailing club in the world. Our facilities include:
         </p>
+        <ul class="amenity-list mt-xs text-step-0 text-base-content">
+          <li>A clubhouse with a sauna and storage shed</li>
+          <li>A harbor with nine mooring spots for small keelboats</li>
+          <li>Year-round parking for trailered dinghies</li>
+          <li>An electric hoist with 2000 lb capacity</li>
+          <li>Trailer and RV parking available for members</li>
+          <li>A tenting area for overnight stays</li>
+          <li>A campfire spot and firewood storage</li>
+          <li>A small boat rack for kayaks and canoes</li>
+          <li>Park-style grounds with beautiful lake views</li>
+        </ul>
         <a href="/join/" class="mt-xs inline-block font-semibold text-primary underline underline-offset-[3px]">
           Learn about membership &rarr;
         </a>
@@ -332,6 +341,26 @@ before the photography existed, never a broken image. -->
     border-radius: 999px;
     background: var(--color-secondary);
     vertical-align: 1px;
+  }
+
+  /* The facilities amenity list (manifest item 12): the live site's own 9-item list, restored in
+     place of the summarizing paragraph the theme build had substituted. A compact two-column
+     layout once there is room for it, one column below that. */
+  .amenity-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    list-style: disc;
+    columns: 1;
+    column-gap: var(--spacing-m);
+  }
+  .amenity-list li {
+    break-inside: avoid;
+    padding-block: 0.15rem;
+  }
+  @media (min-width: 40rem) {
+    .amenity-list {
+      columns: 2;
+    }
   }
 
   /* The family's 900px collapse threshold (the north star's own `.twocol`/`.cols2` breakpoint):

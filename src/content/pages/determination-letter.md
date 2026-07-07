@@ -1,8 +1,7 @@
 ---
 title: "IRS Determination Letter"
+description: "IRS letter confirming the Alaska Sailing Club's tax-exempt status under Section 501(c)(3) of the Internal Revenue Code."
 ---
-*IRS letter confirming the Alaska Sailing Club's tax-exempt status under Section 501(c)(3) of the Internal Revenue Code.*
-
 **Document:** IRS Determination Letter 947  
 **Effective:** April 28, 2008  
 **Issued:** February 23, 2009  

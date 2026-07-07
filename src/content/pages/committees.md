@@ -1,5 +1,6 @@
 ---
 title: "Board and Committees"
+description: "Board structure, committee assignments, and how members get involved."
 ---
 
 The Board of Directors manages the affairs of the corporation. Between 4 and 7 directors serve at any time, with terms staggered to ensure continuity. Elections are held at the annual membership meeting each fall.

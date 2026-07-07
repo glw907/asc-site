@@ -1,5 +1,6 @@
 ---
 title: "Director Elections"
+description: "How the nomination process, electronic voting, and annual results work."
 ---
 
 ASC is a member-governed nonprofit. The directors you elect set the club's direction, manage the budget, and make decisions on behalf of the membership. Elections happen each fall. Here's how the whole process works.

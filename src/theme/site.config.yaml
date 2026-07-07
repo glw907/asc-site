@@ -13,6 +13,21 @@ menus:
       url: /join/
     - label: Members
       url: /members/
+      children:
+        - label: New Member Guide
+          url: /new-member-guide/
+        - label: My Account
+          url: /my-account/
+        - label: Member Directory
+          url: /directory/
+        - label: Visiting the Club
+          url: /visiting-the-club/
+        - label: Issues & Support
+          url: /issues-and-support/
+        - label: Get Involved
+          url: /get-involved/
+        - label: Discord Server
+          url: /discord-server/
     - label: Contact
       url: /contact/
 vocabulary:

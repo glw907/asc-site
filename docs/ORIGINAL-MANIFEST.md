@@ -71,14 +71,40 @@ redirect coverage, feeds (cleaner than live's).
    (ecxc's implementation is the precedent) with a fast keyboard-first overlay, quality
    result grouping, and the five-viewport composure; a search that feels like the site's
    own feature, not a bolt-on.
+   **RESOLVED (2026-07-06):** `SearchModal.svelte` (ecxc's own Pagefind component, family
+   pattern) is wired into the header, opened by its trigger or Cmd/Ctrl+K, deploying
+   through the existing `build:search`/`pagefind` step. The Donate heart (the live site's
+   own Phosphor icon path) sits beside it. The Members entry keeps its own link plus a
+   caret that opens its seven live sub-links as a DaisyUI v5 popover dropdown on desktop
+   (`popovertarget`/`anchor-name`, the EditorToolbar recipe) and inlines them under the
+   parent link in the mobile drawer.
 9. **The packing-checklist table overflows at 390** on visiting-the-club (the one hard
    responsive break; the family standard fails there).
+   **RESOLVED (2026-07-06):** the engine's own default table-scroll wrap (0.81.0) already
+   sandboxed the table's internal overflow; the actual break was `.site-main` (a flex item
+   in the layout's column flex) lacking the explicit `width: 100%; min-width: 0` the
+   chassis's own `.cairn-site-main` documents as the real fix for a wide descendant
+   blowing out a flex-item ancestor. Verified at 390 with Playwright: the packing table's
+   own scroll region now stays inside the viewport.
 10. **In-page TOCs missing on the longest pages** — spec B1 calls for them; the 18k-px
     bylaws and the new-member guide need them most (breadcrumbs + subtitles dropped on
     governance subpages too).
+    **RESOLVED (2026-07-06):** the catch-all template extracts a collapsible table of
+    contents from any entry with eight or more h2/h3 headings (a density gate, not a
+    slug list, so it generalizes past the two named pages to every long reference
+    document), the astropaper-theme's own family pattern. Governance subpages (derived
+    from `redirects.ts`'s own `governance/*` keys, so the set can't drift from the
+    redirect map) restore their "back to Governance" link and a `description`
+    frontmatter field renders as the subtitle under the title.
 11. **Legacy /index.xml RSS** needs a redirect to /feed.xml (existing subscribers 404).
+    **RESOLVED (2026-07-06):** added to `redirects.ts`; prerenders as a real redirect
+    page, verified in the build output.
 12. Facilities renders prose where live has the 9-item amenity list; the Season legend
     dot jams mid-sentence; footer missing Discord + Contact links.
+    **RESOLVED (2026-07-06):** the home page's facilities section restores the live
+    9-item list; the Season legend now reads as one sentence ("...the gold dot marks
+    classes and clinics"); the footer adds Discord and Contact, in the live footer menu's
+    own weight order.
 
 ### Sanctions RESOLVED (Geoff, 2026-07-06)
 13. The "What do we do?" band: **RESTORE, IMPROVED (Geoff, 2026-07-06): the live icons
