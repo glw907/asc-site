@@ -121,8 +121,10 @@ export async function hashOfferToken(token: string): Promise<string> {
 
 /** A SQLite `datetime('now')`-shaped UTC string ("YYYY-MM-DD HH:MM:SS", no offset), so an offer's
  *  `expires_at` compares lexicographically against a database-read timestamp exactly like the
- *  rest of this schema's own datetimes already do. */
-function toSqliteDatetime(date: Date): string {
+ *  rest of this schema's own datetimes already do. Exported for the public claim page's own `load`
+ *  (Task 8), which needs the same comparison to decide whether to show the expired state without
+ *  itself mutating anything (see {@link previewOffer}). */
+export function toSqliteDatetime(date: Date): string {
   return date.toISOString().slice(0, 19).replace('T', ' ');
 }
 
@@ -208,6 +210,37 @@ export async function offerSpot(
     .run();
 
   return { token, expiresAt };
+}
+
+/** {@link previewOffer}'s success shape: just enough for the public claim page to show the class
+ *  and expiry before the visitor decides, without resolving anything itself. */
+export interface OfferPreview {
+  classId: string;
+  className: string;
+  expiresAt: string;
+  resolved: OfferResolution | null;
+}
+
+/**
+ * A read-only look at one offer by its plaintext token, for the public claim page's own `load`
+ * (Task 8): unlike {@link claimOffer}, this never mutates (no lazy-expiry write), so viewing the
+ * page before deciding never itself resolves the offer. The page compares `expiresAt` against
+ * `toSqliteDatetime(new Date())` itself to decide whether to show the expired state; the actual
+ * claim or decline (which does mutate, and does lazily expire a stale row) still goes through
+ * {@link claimOffer} or {@link declineOffer}.
+ */
+export async function previewOffer(db: D1Database, token: string): Promise<OfferPreview | OfferActionError> {
+  const tokenHash = await hashOfferToken(token);
+  const row = await db
+    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE token = ?1`)
+    .bind(tokenHash)
+    .first<OfferRawRow>();
+  if (!row) return { error: 'This claim link is not valid.' };
+
+  const classRow = await getClass(db, row.class_id);
+  if (!classRow) return { error: 'The class for this offer no longer exists.' };
+
+  return { classId: row.class_id, className: classRow.name, expiresAt: row.expires_at, resolved: row.resolved };
 }
 
 /**

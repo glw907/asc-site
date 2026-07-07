@@ -170,12 +170,17 @@ async function toEventCard(
   currentYear: number,
   resolveMedia: MediaResolve,
   renderMarkdown: (md: string) => Promise<string>,
+  classSignupUrls: Map<string, string>,
 ): Promise<EventCard> {
   const isTbd =
     !row.start_date || new Date(`${row.start_date}T00:00:00`).getFullYear() !== currentYear;
   const dateDisplay = isTbd ? DATE_TBD : formatDateRange(row.start_date as string, row.end_date);
 
   const imageUrl = resolveEventImageUrl(row.hero_image, resolveMedia);
+  // A class's registration link points at the public signup route once asc-club has a matching
+  // current-season row for this slug (Task 8); every other row's registration_url (an events row,
+  // or a class with no asc-club match yet) is left exactly as ops reported it.
+  const classSignupUrl = row.event_type === 'class' ? classSignupUrls.get(row.slug) : undefined;
   const card: EventCard = {
     slug: row.slug,
     title: row.title,
@@ -186,7 +191,7 @@ async function toEventCard(
     isTbd,
     location: row.location ?? undefined,
     shortDescription: row.short_description ?? undefined,
-    registrationUrl: row.registration_url ?? undefined,
+    registrationUrl: classSignupUrl ?? row.registration_url ?? undefined,
     image: imageUrl && row.hero_image ? { url: imageUrl, alt: row.hero_image_alt ?? row.title } : undefined,
   };
   if (row.long_description) {
@@ -214,15 +219,20 @@ export async function buildEventsPage(
     currentYear?: number;
     resolveMedia: MediaResolve;
     renderMarkdown: (md: string) => Promise<string>;
+    /** This season's asc-club `classes.slug -> classes.id` map (Task 8), already resolved into
+     *  full signup-route URLs by the caller; empty (the default) leaves every class's
+     *  `registrationUrl` as whatever ops reported, unchanged. */
+    classSignupUrls?: Map<string, string>;
   },
 ): Promise<EventsPageData> {
   const currentYear = opts.currentYear ?? new Date().getFullYear();
+  const classSignupUrls = opts.classSignupUrls ?? new Map<string, string>();
 
   const enriched = await Promise.all(
     rows.map(async (row) => ({
       row,
       ...monthAndDay(row, currentYear),
-      card: await toEventCard(row, currentYear, opts.resolveMedia, opts.renderMarkdown),
+      card: await toEventCard(row, currentYear, opts.resolveMedia, opts.renderMarkdown, classSignupUrls),
     })),
   );
 

@@ -17,6 +17,7 @@
 // until 2.2): this module's `ClassInstructor` type names that column `email`, not `memberId`, so
 // the admin screen never has to re-explain the pre-2.2 workaround at its own call sites.
 import type { D1Database } from '@cloudflare/workers-types';
+import { getCurrentSeason } from './club-settings';
 
 /** The `classes.track` CHECK constraint's exact vocabulary (forward.sql). */
 export const CLASS_TRACKS = ['adult-teen', 'youth'] as const;
@@ -269,6 +270,21 @@ export async function updateClass(db: D1Database, id: string, write: ClassWrite)
  *  the same recipe `events-store.ts`'s `deleteEvent` documents. */
 export async function deleteClass(db: D1Database, id: string): Promise<void> {
   await db.prepare('DELETE FROM classes WHERE id = ?1').bind(id).run();
+}
+
+/** This season's `classes.slug -> classes.id` map (Task 8): the public `/events` listing still
+ *  reads its class rows from asc-ops (Task 9 repoints it), whose own `slug` column is the only
+ *  value the two databases still share for a given class, `id` and `registration_url` having no
+ *  ops-side equivalent worth trusting (`ops-classes.mjs`'s own header: registration is now this
+ *  database's internal machine, not an external link). The events page joins by slug against this
+ *  map to build a class's public signup-route id without asc-club ever reading ops. */
+export async function listCurrentSeasonSlugToId(db: D1Database): Promise<Map<string, string>> {
+  const season = await getCurrentSeason(db);
+  const { results } = await db
+    .prepare('SELECT slug, id FROM classes WHERE season = ?1')
+    .bind(season)
+    .all<{ slug: string; id: string }>();
+  return new Map(results.map((row) => [row.slug, row.id]));
 }
 
 /** Every instructor assigned to a class, alphabetical by name (an unnamed row, which should not

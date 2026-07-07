@@ -86,6 +86,44 @@ describe('buildEventsPage', () => {
     expect(regatta.registrationUrl).toBe('https://example.com');
   });
 
+  it('points a class row\'s registrationUrl at its asc-club signup route when the slug matches, leaving other rows alone', async () => {
+    const data = await buildEventsPage(
+      [
+        row({
+          title: 'Intro Class',
+          slug: 'intro-class',
+          event_type: 'class',
+          start_date: '2026-06-18',
+          registration_url: 'https://old-membershipworks-link.example.com',
+        }),
+        row({
+          title: 'Unmatched Class',
+          slug: 'unmatched-class',
+          event_type: 'class',
+          start_date: '2026-06-19',
+          registration_url: 'https://old-membershipworks-link.example.com',
+        }),
+        row({
+          title: 'A Regatta',
+          slug: 'intro-class', // same slug as the class above; only a 'class' row is ever overridden
+          event_type: 'regatta',
+          start_date: '2026-06-20',
+          registration_url: 'https://example.com',
+        }),
+      ],
+      {
+        currentYear: CURRENT_YEAR,
+        resolveMedia: NO_IMAGE,
+        renderMarkdown: IDENTITY_MARKDOWN,
+        classSignupUrls: new Map([['intro-class', '/classes/abc123/signup']]),
+      },
+    );
+    const [intro, unmatched, regatta] = data.monthSections[0].events;
+    expect(intro.registrationUrl).toBe('/classes/abc123/signup');
+    expect(unmatched.registrationUrl).toBe('https://old-membershipworks-link.example.com');
+    expect(regatta.registrationUrl).toBe('https://example.com');
+  });
+
   it('only lists a TOC link for a section that actually has events, in order', async () => {
     const data = await buildEventsPage(
       [
