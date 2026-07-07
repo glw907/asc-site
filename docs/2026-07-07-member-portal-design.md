@@ -143,6 +143,16 @@ and class signup proceed as short single-question steps rather than one long for
 - Open sessions listed with seats-remaining honesty; a member with an unspent credit sees
   the credit APPLIED by default at confirmation ("Using 1 class credit — $0 due today");
   no credit = the $100 fee line and Checkout.
+- **Who's taking this class? (Geoff, 2026-07-07): a parent enrolls their kids.** The
+  member signup flow selects the enrollee from the household's members, filtered by the
+  track's age gate (youth 8-12, teen/adult 13+, computed from birthdate; a member with
+  no birthdate on file gets asked for it here — the field's concrete consumer).
+  Defaults to self when eligible. The enrollment records the CHILD as the member; contact
+  routes to the guardian; the youth roster carries the guardian-contact line (the
+  suite's privacy floor). Withdrawal is symmetric: the parent drops the kid.
+- **Leave the club (the symmetry rule applied to join):** a portal action recording the
+  household's departure intent — reminders stop immediately, the admin's attention strip
+  shows it, and archival remains the admin's deliberate, reversible act.
 - Full session → one-click waitlist join; the member's waitlist position and any live offer
   (with its 72-hour countdown) render here; claiming an offer lands in the same confirmation
   flow.
