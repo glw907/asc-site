@@ -25,3 +25,16 @@ export async function setOfferWindowHours(db: D1Database, hours: number, updated
     .bind(String(hours), updatedBy)
     .run();
 }
+
+/** The current UTC year: used only as a last-resort fallback for `getCurrentSeason`, which
+ *  should not happen post-migration (the 0001 migration always seeds a `current_season` row). */
+const FALLBACK_SEASON = new Date().getUTCFullYear();
+
+/** The active season a new class is created into (Task 6): classes are per-season instances
+ *  (`classes.season`), and the season rollover that creates the next one is a later pass's own
+ *  write path; this module only ever reads the current value. */
+export async function getCurrentSeason(db: D1Database): Promise<number> {
+  const row = await db.prepare("SELECT value FROM settings WHERE key = 'current_season'").first<{ value: string }>();
+  const parsed = row ? Number(row.value) : NaN;
+  return Number.isFinite(parsed) ? parsed : FALLBACK_SEASON;
+}

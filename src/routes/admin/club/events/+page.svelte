@@ -6,14 +6,12 @@ column called "category" here to match the schema's own CHECK-constrained column
 than the mockup's looser "type" wording.
 
 There is deliberately no "edited by" column, though the ratified mockup's triage table has one:
-`adminAction`'s `ctx.audit` only logs structurally (`log.info`) and calls a site-supplied
-`event.locals.auditSink`, and no Club route wires one through to asc-club's own `audit_log` table
-yet (Task 3's signup queue and Task 4's settings screen share this same gap; a persisted sink is
-a cross-cutting change outside this task's own files). The only real `audit_log` rows against
-`entity = 'event'` today come from the ops-import script's own direct writes (Task 2), so joining
-them here would show "import:ops" for every row and never update again once anyone edits an event
-through this screen, a misleading column, not an honest one. Omitted per the task's own escape
-hatch ("edited-by from audit data if cheap, else omit and say so") until a real sink exists.
+`hooks.server.ts` now wires a persisted `event.locals.auditSink` for `/admin/club/**` (Task 6's
+rider 2), so a real `entity = 'event'` row lands per edit going forward, but every row up to that
+point is still only the ops-import script's own direct write (Task 2). Joining today would show
+"import:ops" for every never-yet-edited row, a misleading column, not an honest one, until enough
+real edits accumulate. Omitted per the task's own escape hatch ("edited-by from audit data if
+cheap, else omit and say so") for this same reason.
 -->
 <script lang="ts">
   import type { PageData } from './$types';

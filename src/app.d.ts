@@ -3,12 +3,18 @@ import type { ExecutionContext, D1Database } from '@cloudflare/workers-types';
 // The binding-shaped types ship from the /sveltekit subpath, so the Platform block intersects
 // them rather than restating every engine binding by hand. CairnMediaBindings adds
 // MEDIA_BUCKET, present because this site turns media on.
-import type { CairnPlatformBindings, CairnMediaBindings } from '@glw907/cairn-cms/sveltekit';
+import type { CairnPlatformBindings, CairnMediaBindings, AdminActionAuditSink } from '@glw907/cairn-cms/sveltekit';
 // App.Locals.editor (set by the engine's auth guard) ships with the engine.
 import '@glw907/cairn-cms/ambient';
 
 declare global {
   namespace App {
+    interface Locals {
+      // Set by hooks.server.ts's wireClubAuditSink for /admin/club/** requests only (pass 2.1
+      // Task 6's rider 2): the Club section's own persisted audit_log sink, which adminAction
+      // calls per ctx.audit emit. Absent everywhere else; adminAction tolerates a missing sink.
+      auditSink?: AdminActionAuditSink;
+    }
     interface Platform {
       // EVENTS_DB is this site's own binding (Task 4), not a cairn-cms one: the club's ops-stack
       // D1, read (never written) for the Season section and /events. See

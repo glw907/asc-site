@@ -1,12 +1,10 @@
-// The Events create screen (Task 5). The layout guard (../../+layout.server.ts) only runs
-// before this page's own GET render, never before the POST below (SvelteKit dispatches a
-// matched action directly; see club-roles.ts's hasAnyClubRole comment for the traced source),
-// so the action re-checks the acting editor's club role itself: events are the routine domain
-// (any club role suffices; owner is not required, unlike Settings' role-management writes).
+// The Events create screen (Task 5, migrated onto `clubAdminAction` in Task 6's rider 1): the
+// club-role precondition (any club role suffices; owner is not required, unlike Settings' own
+// role-management writes) is now the wrapper's own check, not a hand-rolled one here.
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { adminAction, requireSession } from '@glw907/cairn-cms/sveltekit';
-import { hasAnyClubRole, resolveClubDb } from '$admin-club/lib/club-roles';
+import { requireSession } from '@glw907/cairn-cms/sveltekit';
+import { clubAdminAction } from '$admin-club/lib/club-action';
 import { createEvent, getEvent } from '$admin-club/lib/events-store';
 import { parseEventForm } from '../event-form-input';
 
@@ -16,28 +14,22 @@ export const load: PageServerLoad = (event) => {
 };
 
 export const actions: Actions = {
-  create: adminAction(async ({ event, form, ctx }) => {
-    const db = resolveClubDb(event.platform?.env);
-    if (!db) {
-      ctx.audit({ action: 'create', entity: 'event', detail: 'rejected: CLUB_DB not bound' });
-      return fail(500, { error: 'CLUB_DB is not bound.' });
-    }
-    if (!(await hasAnyClubRole(db, ctx.editor.email))) {
-      ctx.audit({ action: 'create', entity: 'event', detail: 'rejected: no club role' });
-      return fail(403, { error: 'A club role is required to manage events.' });
-    }
-    const parsed = parseEventForm(form);
-    if ('error' in parsed) {
-      ctx.audit({ action: 'create', entity: 'event', detail: `rejected: ${parsed.error}` });
-      return fail(400, { error: parsed.error });
-    }
-    const id = parsed.write.slug;
-    if (await getEvent(db, id)) {
-      ctx.audit({ action: 'create', entity: 'event', entityId: id, detail: 'rejected: slug already exists' });
-      return fail(400, { error: 'An event with that slug already exists.' });
-    }
-    await createEvent(db, id, parsed.write);
-    ctx.audit({ action: 'create', entity: 'event', entityId: id });
-    throw redirect(303, `/admin/club/events/${id}`);
-  }),
+  create: clubAdminAction(
+    async ({ form, ctx }) => {
+      const parsed = parseEventForm(form);
+      if ('error' in parsed) {
+        ctx.audit({ action: 'create', entity: 'event', detail: `rejected: ${parsed.error}` });
+        return fail(400, { error: parsed.error });
+      }
+      const id = parsed.write.slug;
+      if (await getEvent(ctx.db, id)) {
+        ctx.audit({ action: 'create', entity: 'event', entityId: id, detail: 'rejected: slug already exists' });
+        return fail(400, { error: 'An event with that slug already exists.' });
+      }
+      await createEvent(ctx.db, id, parsed.write);
+      ctx.audit({ action: 'create', entity: 'event', entityId: id });
+      throw redirect(303, `/admin/club/events/${id}`);
+    },
+    { action: 'create', entity: 'event', deniedMessage: 'A club role is required to manage events.' },
+  ),
 };

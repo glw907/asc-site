@@ -1,0 +1,13 @@
+-- asc-club migration 0002: instructor display name (Task 6's instructor-assignment rider).
+--
+-- The ratified `class_instructors` table (0001_substrate) carries only `member_id`, a
+-- `REFERENCES members(id)` column: correct once 2.2 lands real member rows, but Task 6's
+-- classes admin assigns instructors by email today, before any members table exists. Rather
+-- than widen `member_id`'s constraint (a SQLite recreate-and-copy 0001 deliberately avoided for
+-- the same reason when it added the 'owner' club_roles enum value, see that migration's own
+-- header) or invent a synthetic id, this rider reuses `member_id` AS the instructor's own email:
+-- the same natural-key move `club_roles.email` already makes, since an email is unique and
+-- stable. 2.2's own migration can backfill a real `member_id` once one exists, keyed by
+-- matching email. The one new column, `member_name`, is nullable free text for the display name
+-- the assignment form also collects; there is nothing else to add or constrain.
+ALTER TABLE class_instructors ADD COLUMN member_name TEXT;
