@@ -1,15 +1,15 @@
 ---
 title: "Donate"
+image:
+  src: "media:site-header-big-lake.eb71d593c9eaf136"
+  alt: "Sailing on Big Lake, Alaska"
 ---
 
 Sailing under the Midnight Sun, on Big Lake's clear waters, is one of Alaska's great joys. Since 1972, the Alaska Sailing Club has been sharing that experience, teaching hundreds of Alaskans to sail, maintaining a fleet of club boats any member can take out on the lake, and building a community of sailors that stretches across generations. Your donation helps us keep it going.
 
 ## Make a Donation
 
-:::callout{tone="note"}
-[Online giving is moving to the new site]
-The donation form isn't wired up here yet. In the meantime, email `board@aksailingclub.org` and
-we'll help you make a gift.
+:::donate-form
 :::
 
 ## Your Donation at Work

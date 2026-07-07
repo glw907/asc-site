@@ -4,10 +4,10 @@ title: "Contact"
 
 ## Send Us a Message
 
-:::callout{tone="note"}
-[The contact form is moving to the new site]
-The contact form isn't wired up here yet. In the meantime, email `board@aksailingclub.org` and
-we'll route your message to the right volunteer committee. We typically respond within a few days.
+Use the form below and choose a topic; we'll route your message to the right volunteer
+committee. We typically respond within a few days.
+
+:::contact-form
 :::
 
 ## Our Location

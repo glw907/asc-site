@@ -87,12 +87,20 @@ before the photography existed, never a broken image. -->
         <div class="news-grid mt-m grid grid-cols-1 gap-m">
           {#each data.news as post (post.id)}
             <a href={post.permalink} class="news-card block overflow-hidden rounded-box border border-card-border bg-base-100">
-              <div class="news-card-art"></div>
+              {#if post.image}
+                <img src={post.image.url} alt={post.image.alt} class="news-card-art h-28 w-full object-cover" />
+              {:else}
+                <div class="news-card-art"></div>
+              {/if}
               <div class="px-m py-s">
                 <strong class="text-step-0 text-base-content">{post.title}</strong>
-                {#if post.date}
-                  <div class="mt-[0.2rem] text-step--1 text-muted"><time datetime={post.date}>{formatDate(post.date)}</time></div>
-                {/if}
+                <div class="mt-[0.2rem] text-step--1 text-muted">
+                  {#if post.date}
+                    <time datetime={post.date}>{formatDate(post.date)}</time>
+                    <span aria-hidden="true"> &middot; </span>
+                  {/if}
+                  <span title="Reading time">{post.readMinutes} min read</span>
+                </div>
               </div>
             </a>
           {/each}

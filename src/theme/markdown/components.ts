@@ -180,4 +180,46 @@ const membershipworks = defineComponent({
   preview: { attributes: { open: '!event-list' } },
 });
 
-export const ascRegistry = defineRegistry({ components: [callout, passage, cards, card, membershipworks] });
+// ─── Contact / donate forms: hydrated islands (completion-pass manifest item 2) ─
+// Both are content-authored placements with no attributes: build() emits only the no-JavaScript
+// fallback (a plain mailto link), and the live, interactive form (ContactForm.svelte,
+// DonateForm.svelte) mounts over it once the island runtime hydrates (see cairn.config.ts's
+// `rendering.islands`). A reader with JavaScript disabled never sees an empty loading state,
+// only this fallback, permanently.
+const contactForm = defineComponent({
+  name: 'contact-form',
+  label: 'Contact form',
+  description: "The routed contact form (name, email, phone, category, message), live-mounted over a mailto fallback.",
+  use: 'Let a reader send a message that routes to the right volunteer committee.',
+  insertTemplate: ':::contact-form\n:::',
+  hydrate: true,
+  build: () =>
+    h('p', { className: ['contact-form-fallback'] }, [
+      'Email ',
+      h('a', { href: 'mailto:board@aksailingclub.org' }, ['board@aksailingclub.org']),
+      " and we'll route your message to the right volunteer committee.",
+    ]),
+  group: 'Page structure',
+  icon: 'envelope-simple',
+});
+
+const donateForm = defineComponent({
+  name: 'donate-form',
+  label: 'Donate form',
+  description: 'The preset/custom donation amount form, live-mounted over a mailto fallback.',
+  use: 'Let a reader make a one-time donation.',
+  insertTemplate: ':::donate-form\n:::',
+  hydrate: true,
+  build: () =>
+    h('p', { className: ['donate-form-fallback'] }, [
+      'Email ',
+      h('a', { href: 'mailto:board@aksailingclub.org' }, ['board@aksailingclub.org']),
+      " and we'll help you make a gift.",
+    ]),
+  group: 'Page structure',
+  icon: 'heart',
+});
+
+export const ascRegistry = defineRegistry({
+  components: [callout, passage, cards, card, membershipworks, contactForm, donateForm],
+});

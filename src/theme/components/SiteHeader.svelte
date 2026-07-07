@@ -1,8 +1,9 @@
 <!-- @component
 ASC's public site header: the club-grounds chrome (Task 3), replacing Task 1's placeholder. A
-sticky white band over a hairline border, the boat-and-pennant mark from the north star
-(docs/superpowers/specs/assets/2026-07-06-asc-home-northstar.html in the cairn-cms repo) on the
-left, the primary nav (site.config.yaml's committed menu) on the right. The current route's link
+sticky white band over a hairline border, the club's real logo (aksailingclub.org's own
+/img/logo.png, restored from the north star's invented placeholder mark; see the completion
+pass's manifest item 4) on the left, the primary nav (site.config.yaml's committed menu) on the
+right. The current route's link
 gets the story's gold active-nav mark (flag-navy text plus a star-gold underline, via
 `box-shadow`, matching the north star's own `.nav a.active` rule) and `aria-current="page"`.
 Seven nav items plus the theme toggle do not comfortably wrap at 320px, so a hamburger drawer
@@ -11,6 +12,15 @@ structural device ecxc.ski and 907.life's own headers use. The nav row boxes to
 `max-w-measure-wide`, the same width the home page's own full-bleed bands use (Task 3's page-shell
 fix), so the header, the home content, and the footer read as one aligned column, matching the
 north star's single `.shell` measure used everywhere.
+
+Three header features restore from the live site (completion pass, manifest item 8): the
+**Members** nav entry carries its seven live sub-links again, opened as a DaisyUI v5 popover
+dropdown on desktop (the `EditorToolbar` recipe: `popover="auto"` plus an anchor-name/
+position-anchor pair, so Escape and light-dismiss come from the Popover API for free, never the
+ARIA-menu role, since this is a plain link list) and inlined under its own parent link in the
+mobile drawer; a **Donate** heart icon (the live site's own Phosphor heart path) sits beside the
+search trigger; and **search** is the family's Pagefind pattern (`SearchModal.svelte`, ecxc's own
+component, opened by its trigger or Cmd/Ctrl+K).
 
 The theme toggle sets `data-theme` on `<html>` between `asc` (light) and `asc-dark`, and persists
 the choice to an `asc-site-theme` cookie (path `/`, a year) so it survives a reload; the inline
@@ -22,13 +32,20 @@ state. -->
 <script lang="ts">
   import { page } from '$app/state';
   import { browser } from '$app/environment';
-  import { extractMenu } from '@glw907/cairn-cms';
+  import { extractMenu, type NavNode } from '@glw907/cairn-cms';
   import { resolveTheme, toggleTheme as chassisToggleTheme, type ThemeToggleConfig } from '$chassis/theme-toggle.js';
   import { siteConfig } from '$theme/cairn.config';
+  import SearchModal from './SearchModal.svelte';
 
   const nav = extractMenu(siteConfig, 'primary', 2);
 
   let mobileOpen = $state(false);
+  let membersMenuOpen = $state(false);
+
+  /** True for the one nav item (Members) that carries a live sub-link list. */
+  function hasChildren(item: NavNode): item is NavNode & { children: NavNode[] } {
+    return !!item.children && item.children.length > 0;
+  }
 
   /**
    * Whether a nav item points at the page being viewed. The home link matches only the exact
@@ -76,12 +93,20 @@ state. -->
 
 <header class="site-header sticky top-0 z-30 border-b border-card-border bg-base-100">
   <div class="nav-inner mx-auto flex max-w-measure-wide items-center justify-between gap-m px-m py-xs">
-    <a href="/" class="site-logo inline-flex items-center gap-[0.6rem] no-underline" onclick={closeMobile}>
-      <svg width="32" height="32" viewBox="0 0 34 34" aria-hidden="true">
-        <circle cx="17" cy="17" r="16" class="fill-flag-navy-deep" />
-        <path d="M10 22 L17 7 L19 22 Z" class="fill-white" />
-        <path d="M8 24 h18 l-2.5 3 h-13 Z" class="fill-star-gold" />
-      </svg>
+    <a
+      href="/"
+      class="site-logo inline-flex items-center gap-[0.6rem] no-underline"
+      aria-label="{siteConfig.siteName} home"
+      onclick={closeMobile}
+    >
+      <!-- The club's real mark (aksailingclub.org's own /img/logo.png): a crescent sail hull under
+           a star trail. Two fixed raster variants, not an inline recreation: the source has no
+           vector original, and this is a brand-identity restoration, not a reinterpretation, so
+           the actual asset is the faithful choice. `logo-white` shows only under the dark theme
+           (see theme.css's `[data-theme='asc-dark']` convention). Decorative (alt=""): the
+           adjacent site-name text already carries the link's accessible name via aria-label. -->
+      <img src="/img/logo.png" alt="" width="52" height="32" class="logo-mark logo-mark-light" />
+      <img src="/img/logo-white.png" alt="" width="52" height="32" class="logo-mark logo-mark-dark" />
       <span class="whitespace-nowrap font-display text-step-1 font-semibold tracking-tight text-base-content">
         {siteConfig.siteName}
       </span>
@@ -170,6 +195,20 @@ state. -->
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
     border-radius: 4px;
+  }
+
+  .logo-mark {
+    height: 2rem;
+    width: auto;
+  }
+  .logo-mark-dark {
+    display: none;
+  }
+  :global([data-theme='asc-dark']) .logo-mark-light {
+    display: none;
+  }
+  :global([data-theme='asc-dark']) .logo-mark-dark {
+    display: block;
   }
 
   .desktop-nav {

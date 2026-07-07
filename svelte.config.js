@@ -26,5 +26,10 @@ export default {
     // runs ahead of any handle and would reject that POST first, so hand the authority over
     // (see docs/guides/deploy-to-cloudflare.md#disable-checkorigin in the cairn-cms repo).
     csrf: { checkOrigin: false },
+    experimental: {
+      // The contact and donate forms (completion-pass manifest items 2/3) post through remote
+      // functions (contact.remote.ts, donate.remote.ts).
+      remoteFunctions: true,
+    },
   },
 };
