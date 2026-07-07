@@ -79,8 +79,7 @@ We also follow the [Discord Community Guidelines](https://discord.com/guidelines
 
 ## Invitation Request
 
-:::callout{tone="note"}
-[Requesting an invite]
+:::callout[Requesting an Invite]{tone="interim"}
 The invite-request form is being rebuilt on the new site. In the meantime, email
 `board@aksailingclub.org` with your name and membership status and we'll send an invite,
 usually within a day or two.
