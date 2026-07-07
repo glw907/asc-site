@@ -69,6 +69,12 @@ task-list/receipts/household composition is a later pass's own work). -->
           {MEMBERSHIP_TIER_LABEL[data.standing.tier]} membership · {data.standing.season} season
         </p>
       {/if}
+      <!-- SEAM (portal-capstone): a 'grace'/'lapsed' standing's own "Renew now" action lands here,
+           once the join/renewal flow creates an unpaid `memberships` row to pay against --
+           `createCheckout({ kind: 'dues', refId: membership.id, ... })` (`payments.ts`'s own
+           header names this exact seam). Not wired in this worktree; the webhook's own dues
+           reconciliation (`stripe-reconcile.ts`) already handles whatever session that call
+           creates. -->
     </div>
   {/if}
 

@@ -26,16 +26,19 @@ declare global {
       // src/theme/season-data.ts's header comment. CLUB_DB is pass 2.1's own domain store (the
       // asc-club side of the two-database strategy; migrations/asc-club/), read AND written by
       // the Club section's own screens and its club-role authorization layer
-      // (src/admin-club/lib/club-roles.ts). TURNSTILE_SECRET_KEY and STRIPE_SECRET_KEY are
-      // site-owned Worker secrets (contact.remote.ts, donate.remote.ts), set with `wrangler
-      // secret put`, never committed; both are optional here because neither is set yet in this
-      // environment, and each remote function degrades gracefully when its own secret is absent.
+      // (src/admin-club/lib/club-roles.ts). TURNSTILE_SECRET_KEY, STRIPE_SECRET_KEY, and
+      // STRIPE_WEBHOOK_SECRET are site-owned Worker secrets (contact.remote.ts,
+      // donate.remote.ts, payments.ts, the api/stripe/webhook route), set with `wrangler secret
+      // put`, never committed; each is optional here so the site keeps degrading gracefully
+      // wherever the secret is absent, rather than every caller having to satisfy a required
+      // field this environment has not always provisioned.
       env: CairnPlatformBindings &
         CairnMediaBindings & {
           EVENTS_DB: D1Database;
           CLUB_DB: D1Database;
           TURNSTILE_SECRET_KEY?: string;
           STRIPE_SECRET_KEY?: string;
+          STRIPE_WEBHOOK_SECRET?: string;
         };
       context: ExecutionContext;
       caches: CacheStorage & { default: Cache };

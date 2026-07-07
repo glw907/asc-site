@@ -5,9 +5,11 @@ the same `joinClass` remote function (class-signup.remote.ts), which decides the
 server-side (this page never guesses). Turnstile-gated, degrading gracefully with no secret
 configured, matching the family's own ContactForm/DonateForm precedent. -->
 <script lang="ts">
+  import { browser } from '$app/environment';
   import type { PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
   import { joinClass } from '$theme/class-signup.remote';
+  import { payClassFee } from '$theme/class-fee-checkout.remote';
   import { CLASS_TRACK_LABEL } from '$admin-club/lib/classes-store';
   import { WAIVER_RELEASE_TEXT } from '$theme/waiver-text';
   import { DATE_TBD, formatDateRange } from '$theme/season-data';
@@ -19,6 +21,11 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
   const spotsLeft = $derived(Math.max(0, data.cls.capacity - data.cls.enrolledCount));
 
   const { name, email, phone, waiverAccepted } = joinClass.fields;
+
+  $effect(() => {
+    const url = payClassFee.result && 'url' in payClassFee.result ? payClassFee.result.url : undefined;
+    if (browser && url) window.location.href = url;
+  });
 </script>
 
 <svelte:head>
@@ -52,18 +59,37 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
 {#if joinClass.result?.outcome === 'enrolled'}
   <div class="mt-l max-w-measure-wide rounded-box border border-success bg-success/10 p-m">
     <p class="m-0 font-semibold text-base-content">You're signed up for {data.cls.name}.</p>
-    <p class="mt-xs mb-0 text-step--1 text-base-content">
-      {#if data.cls.fee > 0}
-        The ${data.cls.fee} class fee is due before your first day, paid the same way as membership
-        dues today; online payment is coming with the member portal. We'll follow up by email with
+    {#if data.cls.fee > 0}
+      <p class="mt-xs mb-0 text-step--1 text-base-content">
+        The ${data.cls.fee} class fee is due before your first day. We'll follow up by email with
         anything else you need before class.
+      </p>
+      {#if payClassFee.result && 'stub' in payClassFee.result}
+        <p class="mt-xs mb-0 text-step--1 text-base-content">
+          Online payment isn't available yet; the club will follow up by email with how to pay.
+        </p>
       {:else}
-        <!-- The free-clinic journey (Geoff, 2026-07-07): the signup IS the roster, so the
-             confirmation says so instead of inventing a fee. -->
+        {#each payClassFee.fields.allIssues() ?? [] as issue (issue.message)}
+          <p class="mt-xs rounded-field border border-error bg-error/10 px-s py-xs text-step--1 text-error">
+            {issue.message}
+          </p>
+        {/each}
+        <form {...payClassFee} class="mt-s">
+          <input type="hidden" name="enrollmentId" value={joinClass.result.enrollmentId} />
+          <input type="hidden" name="classId" value={data.cls.id} />
+          <button type="submit" class="btn btn-primary btn-sm" disabled={!!payClassFee.pending}>
+            {payClassFee.pending ? 'Redirecting…' : `Pay $${data.cls.fee} now`}
+          </button>
+        </form>
+      {/if}
+    {:else}
+      <!-- The free-clinic journey (Geoff, 2026-07-07): the signup IS the roster, so the
+           confirmation says so instead of inventing a fee. -->
+      <p class="mt-xs mb-0 text-step--1 text-base-content">
         It's free; signing up just lets us know you're coming. We'll follow up by email with
         anything you need before the weekend.
-      {/if}
-    </p>
+      </p>
+    {/if}
   </div>
 {:else if joinClass.result?.outcome === 'waitlisted'}
   <div class="mt-l max-w-measure-wide rounded-box border border-info bg-info/10 p-m">

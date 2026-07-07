@@ -68,10 +68,11 @@ describe('signUpForClass', () => {
       'enrolled-branch waiver acceptance in the same batch, auditing public:signup', async () => {
       const { db, calls } = fakeDbFreeCapacity();
       const result = await signUpForClass(db, INPUT);
-      expect(result).toEqual({ outcome: 'enrolled' });
+      expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
 
       const enrollInsert = calls.find((c) => c.sql.startsWith('INSERT INTO class_enrollments'));
       expect(enrollInsert?.args).toEqual([expect.any(String), CLASS_ROW.id, MEMBER_ROW.id]);
+      expect((result as { enrollmentId: string }).enrollmentId).toBe((enrollInsert?.args as unknown[])[0]);
 
       const audit = calls.find((c) => c.sql.startsWith('INSERT INTO audit_log'));
       // The phone is not folded into the audit detail (a phone number is PII with no place in a
@@ -105,7 +106,7 @@ describe('signUpForClass', () => {
         },
       });
       const result = await signUpForClass(db, INPUT);
-      expect(result).toEqual({ outcome: 'enrolled' });
+      expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
 
       const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
       expect(memberInsert?.args).toEqual([expect.any(String), expect.any(String), INPUT.name, INPUT.email, INPUT.phone]);

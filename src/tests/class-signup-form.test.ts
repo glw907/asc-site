@@ -61,7 +61,7 @@ describe('handleClassSignup (the Turnstile degrade path)', () => {
 
     const result = await handleClassSignup(INPUT, { CLUB_DB: db }, '203.0.113.5');
 
-    expect(result).toEqual({ outcome: 'enrolled' });
+    expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -91,7 +91,7 @@ describe('handleClassSignup (the Turnstile degrade path)', () => {
       { CLUB_DB: db, TURNSTILE_SECRET_KEY: 'secret' },
       '203.0.113.5',
     );
-    expect(result).toEqual({ outcome: 'enrolled' });
+    expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
   });
 
   it('refuses when CLUB_DB is not bound', async () => {

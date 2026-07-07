@@ -24,8 +24,12 @@ import { getClassWithCounts } from './classes-store';
 import { ensureMember } from './people';
 
 /** A signup's outcome: `'enrolled'` when the class had a free spot, `'waitlisted'` (with the new
- *  entry's queue position) when it was already full. */
-export type SignUpResult = { outcome: 'enrolled' } | { outcome: 'waitlisted'; position: number };
+ *  entry's queue position) when it was already full. `enrollmentId` (the `class_enrollments` row
+ *  this call just created) lets the public signup page offer to pay a fee-bearing class's own
+ *  fee immediately: `payments.ts`'s `CreateCheckoutArgs.refId` for `kind: 'class-fee'` IS this
+ *  id, and the webhook (`stripe-reconcile.ts`'s `reconcileClassFee`) only ever flips the row
+ *  this same id names. */
+export type SignUpResult = { outcome: 'enrolled'; enrollmentId: string } | { outcome: 'waitlisted'; position: number };
 
 /** A user-facing refusal (an unknown or invisible class, one not accepting signups), matching
  *  `offers.ts`'s own `OfferActionError` shape so every public write path in the Club section
@@ -115,7 +119,7 @@ export async function signUpForClass(
         waiverAcceptanceInsert(db, input),
       ]);
 
-      return { outcome: 'enrolled' };
+      return { outcome: 'enrolled', enrollmentId };
     }
 
     const alreadyWaitlisted = await db
