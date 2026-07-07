@@ -136,7 +136,16 @@
      all. Corrected to a genuine ascending clamp that lands at 0.95rem (15.2px), the nav/CTA's own
      established size, so every UI-link element now shares one real token. */
   --text-step--1: clamp(0.86rem, 0.83rem + 0.14vw, 0.95rem);
-  --text-step-0: clamp(1.06rem, 1.06rem, 1.0625rem);
+  /* Body copy, reworked by the 2026-07-07 readability research (presentation-round, Strand 1):
+     GOV.UK's own 19px body-text precedent, the aging-vision legibility evidence the club's own
+     membership skews toward, and the WCAG 1.4.4/1.4.8 resize floors all point the same direction,
+     a bigger reading size than this token's prior near-constant ~17px. This is the token every
+     ordinary paragraph now reads directly (prose.css's `.prose` base rule), not an unused sibling
+     of the ambient browser size the way it was before this pass: a fluid clamp anchored to the two
+     breakpoints the research names, 17px at a 390px viewport and 18px at 1440px and wider, holding
+     the root element at its own steady 16px across that range (verified against site.css's html
+     clamp, so the rem math below assumes a 16px root, not a second compounding one). */
+  --text-step-0: clamp(1.0625rem, 1.0393rem + 0.0952vw, 1.125rem);
   /* The meta step (footer, the Season legend, the Season date column): one step below the UI-link
      family, added by the same audit (2026-07-07). A `text-step--2` utility class already appeared
      on one home-page placeholder before this token existed, a silent no-op since Tailwind never
@@ -158,7 +167,9 @@
   --spacing-xl: clamp(3rem, 2.83rem + 0.87vw, 3.5rem);
   --spacing-2xl: clamp(4rem, 3.74rem + 1.3vw, 4.75rem);
 
-  --leading-body: 1.65;
+  /* 1.6, the same readability research: body text's own comfortable-reading line-height, distinct
+     from the tighter snug/tight steps headings and UI labels keep (untouched by this pass). */
+  --leading-body: 1.6;
   --leading-snug: 1.4;
   --leading-tight: 1.12;
   --tracking-tight: -0.011em;

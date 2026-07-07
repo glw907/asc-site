@@ -19,10 +19,12 @@
 html {
   font-size: clamp(1rem, 0.7631rem + 0.2631vw, 1.125rem);
 
-  /* The sticky-header scroll offset; sized from the header's own touch-target height plus its
-     vertical padding, so an in-page anchor jump or a focused heading clears the band (WCAG
-     2.4.11). */
-  scroll-padding-top: calc(2.75rem + 2 * var(--spacing-xs) + 1rem);
+  /* The sticky header's own touch-target height plus its vertical padding, plus a little air: an
+     in-page anchor jump or a focused heading clears the band (WCAG 2.4.11), and the presentation
+     round's sticky gutter TOC ([...path]/+page.svelte) reuses the same number for its own `top`
+     offset, so the two stay in lockstep with no duplicated math. */
+  --header-clearance: calc(2.75rem + 2 * var(--spacing-xs) + 1rem);
+  scroll-padding-top: var(--header-clearance);
 }
 
 .site-main {
@@ -69,6 +71,18 @@ html {
   max-width: none;
   margin-inline: 0;
   padding: 0;
+}
+
+/* The presentation round's second exception to the "no bands, plain reading column" rule above:
+   a long reference page's sticky gutter TOC (B1's density-gated device, [...path]/+page.svelte)
+   needs room beside the reading column for its aside, past 1200px where the gutter has space to
+   sit without crowding the text. Below that width the page is a plain single column, same as
+   every other content page, so the exception only applies inside the same media query the TOC
+   itself switches on. */
+@media (min-width: 1200px) {
+  .site-main:has(.article-toc-shell) {
+    max-width: var(--container-measure-wide);
+  }
 }
 
 /* cairn figure placement: the default reader CSS for the :::figure role classes. cairn defines

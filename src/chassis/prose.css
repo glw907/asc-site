@@ -49,6 +49,13 @@
      -------------------------------------------------------------------------- */
   .prose {
     max-width: var(--container-measure);
+    /* The reading size and its line-height, read from the theme's own tokens rather than the
+       ambient browser default: every element below that needs a different size (a heading, the
+       lead, a blockquote, a table) sets its own `font-size`/`line-height` and out-specifies this
+       base; plain flow content (a paragraph, a list item, a table cell with no override) is the
+       one this rule is for. */
+    font-size: var(--text-step-0);
+    line-height: var(--leading-body);
     /* A long unbroken token (a bare URL with no spaces) is wider than the column and has nowhere to
        break; the ancestor body's `overflow-x: clip` (site.css, the full-bleed-figure guard) then hides
        the overflow instead of showing it, so the token silently vanishes past the edge. Breaking

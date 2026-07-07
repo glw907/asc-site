@@ -1,5 +1,8 @@
 ---
 title: "Racing"
+image:
+  src: "media:racing-hero.ff77ce74df7d2570"
+  alt: "A dozen club dinghies racing under colorful spinnakers on Big Lake, with the Chugach mountains in the distance."
 ---
 
 Racing at the ASC picks up where our sailing classes leave off, giving experienced sailors a fleet to plug into when they move to Anchorage. Graduates of our [Introduction to Dinghy Sailing](/education/) course step straight into real racing alongside veteran competitors who remember being new. Whether you're after relaxed weeknight racing, tight one-design starts, or a national championship, the program scales to meet you.

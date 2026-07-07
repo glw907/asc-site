@@ -1,5 +1,8 @@
 ---
 title: "Education"
+image:
+  src: "media:education-hero.b48f26c871d0aa34"
+  alt: "Three sailors tying a knot on a dock line together at the club, with the lake behind them."
 ---
 
 The Alaska Sailing Club is an education-focused 501(c)(3). Each summer, we teach a four-day beginner sailing course in two tracks, one for adults and teens and one for youth, making it easy for whole families to learn together. We also host a free Fleet Tune-Up Weekend for experienced sailors looking to sharpen their skills before the racing season. Our volunteer instructors are passionate sailors with decades of combined experience teaching sailing; several are nationally competitive racers.
@@ -27,11 +30,19 @@ Our four-day *Introduction to Dinghy Sailing* class is designed for beginners an
 
 Our four-day beginner course for adults and teens covers all the fundamentals of dinghy sailing, from basic boat handling to racing starts. No prior experience required.
 
+:::figure
+![Student at the tiller of a club Buccaneer sailboat with an instructor, sailing on the lake during class](media:adult-intro-class-1.a660579bd31517ff)
+:::
+
 ### Youth Track (ages 8-12)
 
 A kid-friendly version of our intro course, with more hands-on time, on-water games, and shorter practice sessions designed for younger learners. Parents are welcome to take the adult class simultaneously or enjoy time on our grounds.
 
 Note that we require parents to be on-premises during our youth classes.
+
+:::figure
+![Sailing instructor celebrating with arms raised alongside a group of youth students on a Buccaneer at the dock](media:youth-intro-class-1.9c08687cac54de80)
+:::
 
 ### What You'll Learn
 
@@ -204,6 +215,10 @@ We recommend the following gear for all of our classes:
 ## Camping at the ASC
 
 We welcome class members to camp during the class. Staying the night saves you time and gas, and you can spend more time with your classmates and instructors. If we have decent wind, we'll also take some time during the evenings to informally explore the lake and take a few "round the island" tours.
+
+:::figure
+![Two club members relaxing in camp chairs strapped to a van's roof rack, laughing under summer trees.](media:van-roof-camp-chairs.6af6b0768d544d48)
+:::
 
 ### Tenting and RV parking information
 

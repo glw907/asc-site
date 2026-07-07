@@ -1,5 +1,8 @@
 ---
 title: "Join the Club"
+image:
+  src: "media:join-hero.7fc9675a17c7a38e"
+  alt: "Two members crouched beside a covered club dinghy named \"Duck, Duck, BOOM!\", smiling for the camera."
 ---
 
 The Alaska Sailing Club is a community of sailors, families, and friends who share a beautiful lakeside property on Big Lake (about an hour north of Anchorage). Whether you're here to learn to sail, get on the water with club boats, race on summer evenings, or camp by the lake and watch the sunset over Denali, we'd love to have you.

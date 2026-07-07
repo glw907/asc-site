@@ -335,6 +335,20 @@
     "height": null,
     "createdAt": "2026-07-06T22:30:41.217Z"
   },
+  "7fc9675a17c7a38e": {
+    "hash": "7fc9675a17c7a38e",
+    "sha256": "7fc9675a17c7a38ef465939eb30e27b76e0e02b1bc1174d370a8e9034328c733",
+    "slug": "join-hero",
+    "displayName": "join-hero",
+    "originalFilename": "join-hero.jpg",
+    "alt": "Two members crouched beside a covered club dinghy named \"Duck, Duck, BOOM!\", smiling for the camera.",
+    "ext": "jpg",
+    "contentType": "image/jpeg",
+    "bytes": 645377,
+    "width": null,
+    "height": null,
+    "createdAt": "2026-07-07T18:17:23.898Z"
+  },
   "80aada3ca9cc0d0a": {
     "hash": "80aada3ca9cc0d0a",
     "sha256": "80aada3ca9cc0d0ad33e0070fb0959bf6abeb2fcde900746f9a8b03433cb00c3",
@@ -488,6 +502,20 @@
     "width": null,
     "height": null,
     "createdAt": "2026-07-07T02:53:51.198Z"
+  },
+  "b48f26c871d0aa34": {
+    "hash": "b48f26c871d0aa34",
+    "sha256": "b48f26c871d0aa34b66a2e8562fe6918f838d2ade943ab56294965ff15af7bc6",
+    "slug": "education-hero",
+    "displayName": "education-hero",
+    "originalFilename": "education-hero.jpg",
+    "alt": "Three sailors tying a knot on a dock line together at the club, with the lake behind them.",
+    "ext": "jpg",
+    "contentType": "image/jpeg",
+    "bytes": 118212,
+    "width": null,
+    "height": null,
+    "createdAt": "2026-07-07T18:17:23.898Z"
   },
   "c90f78621e7639ae": {
     "hash": "c90f78621e7639ae",
@@ -670,5 +698,19 @@
     "width": null,
     "height": null,
     "createdAt": "2026-07-06T22:30:41.219Z"
+  },
+  "ff77ce74df7d2570": {
+    "hash": "ff77ce74df7d2570",
+    "sha256": "ff77ce74df7d25709c7a3317f5bea2359f4208cd867dd1b19007776c9890fa51",
+    "slug": "racing-hero",
+    "displayName": "racing-hero",
+    "originalFilename": "racing-hero.jpg",
+    "alt": "A dozen club dinghies racing under colorful spinnakers on Big Lake, with the Chugach mountains in the distance.",
+    "ext": "jpg",
+    "contentType": "image/jpeg",
+    "bytes": 120670,
+    "width": null,
+    "height": null,
+    "createdAt": "2026-07-07T18:17:23.898Z"
   }
 }
