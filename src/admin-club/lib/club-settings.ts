@@ -3,8 +3,12 @@
 // the same row shape rather than a new migration. `offer_window_hours` has a reader/writer pair;
 // `waiver_text_version` (Task 8) has a reader only, since the wording it stamps lives in
 // `$theme/waiver-text.ts`, not this table (editing that wording is a manual, deliberate act, not
-// a Club settings-screen write path this pass).
+// a Club settings-screen write path this pass). `getCurrentSeason` is also the season rollover's
+// own read of "the season closing" (`rollover.ts`); the rollover itself writes `current_season`
+// directly rather than through a setter here, since its write must ride the same `db.batch()` as
+// its audit row (see `rollover.ts`'s own header on why).
 import type { D1Database } from '@cloudflare/workers-types';
+import type { MembershipTier } from './demo-members';
 
 /** The ratified default (Geoff, 2026-07-07), also the migration's own seed value: used only if
  *  the row is ever missing, which should not happen post-migration. */
@@ -51,4 +55,45 @@ const DEFAULT_WAIVER_TEXT_VERSION = '2026-01';
 export async function getWaiverTextVersion(db: D1Database): Promise<string> {
   const row = await db.prepare("SELECT value FROM settings WHERE key = 'waiver_text_version'").first<{ value: string }>();
   return row?.value ?? DEFAULT_WAIVER_TEXT_VERSION;
+}
+
+/** The `settings.key` each tier's price is stored under (migration 0010_tier_prices). */
+const TIER_PRICE_KEY: Record<MembershipTier, string> = {
+  individual: 'tier_price_individual',
+  family: 'tier_price_family',
+  'young-adult': 'tier_price_young_adult',
+};
+
+/** The migration's own seed values: used only if a row is ever missing, which should not happen
+ *  post-migration. Matches `demo-members.ts`'s `TIER_PRICING` fixture exactly, though that
+ *  constant stays fixture-only; this is the real, admin-editable source once a caller reads it. */
+const DEFAULT_TIER_PRICE: Record<MembershipTier, number> = { individual: 250, family: 500, 'young-adult': 100 };
+
+/** The three membership tiers' current prices, whole dollars: the join/renewal flow's own read
+ *  (a later pass), never a code constant, per the design suite's own ruling. Reads all three in
+ *  one query rather than three round trips, since the settings screen always shows all three
+ *  together. */
+export async function getTierPrices(db: D1Database): Promise<Record<MembershipTier, number>> {
+  const { results } = await db
+    .prepare("SELECT key, value FROM settings WHERE key IN ('tier_price_individual', 'tier_price_family', 'tier_price_young_adult')")
+    .all<{ key: string; value: string }>();
+  const byKey = new Map(results.map((row) => [row.key, row.value]));
+  const prices = {} as Record<MembershipTier, number>;
+  for (const tier of Object.keys(TIER_PRICE_KEY) as MembershipTier[]) {
+    const raw = byKey.get(TIER_PRICE_KEY[tier]);
+    const parsed = raw == null ? NaN : Number(raw);
+    prices[tier] = Number.isFinite(parsed) ? parsed : DEFAULT_TIER_PRICE[tier];
+  }
+  return prices;
+}
+
+/** Update one tier's price. The caller validates `dollars` (a positive integer) before this ever
+ *  runs, matching {@link setOfferWindowHours}'s own trust boundary. A price change here only ever
+ *  affects a MEMBERSHIP CREATED AFTER this write: every existing `memberships.price_paid` row is
+ *  a snapshot taken at purchase and never re-reads this setting. */
+export async function setTierPrice(db: D1Database, tier: MembershipTier, dollars: number, updatedBy: string): Promise<void> {
+  await db
+    .prepare("UPDATE settings SET value = ?1, updated_at = datetime('now'), updated_by = ?2 WHERE key = ?3")
+    .bind(String(dollars), updatedBy, TIER_PRICE_KEY[tier])
+    .run();
 }
