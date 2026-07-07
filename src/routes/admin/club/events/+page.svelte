@@ -78,7 +78,7 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
     <tbody>
       {#each filtered as row (row.id)}
         <tr class="transition-colors hover:bg-base-200/60">
-          <td class="text-sm tabular-nums text-muted">{formatDate(row.start_date)}</td>
+          <td class="whitespace-nowrap text-sm tabular-nums text-muted">{formatDate(row.start_date)}</td>
           <td class="font-semibold">{row.title}</td>
           <td><span class="badge badge-ghost badge-sm font-medium">{typeLabel(row.event_type)}</span></td>
           <td>

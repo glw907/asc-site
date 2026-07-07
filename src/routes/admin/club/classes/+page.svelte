@@ -63,7 +63,7 @@ without opening anything. Pass 2.1 makes the status editable through this same s
         <tr class="transition-colors hover:bg-base-200/60">
           <td class="font-semibold">{row.name}</td>
           <td><span class="badge {chip.cls}">{chip.label}</span></td>
-          <td class="text-sm tabular-nums text-muted">{formatDate(row.start_date)}</td>
+          <td class="whitespace-nowrap text-sm tabular-nums text-muted">{formatDate(row.start_date)}</td>
           <td class="text-sm tabular-nums text-muted">{formatFee(row.fee)}</td>
           <td class="text-sm text-muted">{row.location ?? '—'}</td>
           <td>
