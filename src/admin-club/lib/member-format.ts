@@ -3,7 +3,7 @@
 // recipe): the chip vocabularies and the two formatters both screens read off demo-members.ts's
 // data. Kept out of demo-members.ts itself, which stays data-and-derivation only, no markup or
 // CSS class strings.
-import type { DirectoryVisibility, SeasonStanding } from './demo-members';
+import type { DirectoryVisibility, MemberSegment, MembershipTier } from './demo-members';
 
 /** One chip's display: the label it reads, and the badge classes carrying its color. */
 export interface ChipStyle {
@@ -11,14 +11,31 @@ export interface ChipStyle {
   cls: string;
 }
 
-/** Season-standing chips, following the same vocabulary the Events/Classes screens already
- *  established (`docs/club-admin-scaffold.md`'s chip vocabulary): the one state a volunteer can
- *  act on (paid and current) gets the filled primary tint, the state that needs attention
- *  (invoiced but unpaid) warns, and the dormant state stays a plain ghost chip. */
-export const STANDING_CHIP: Record<SeasonStanding, ChipStyle> = {
+/** Segment chips, following the same vocabulary the Events/Classes screens already established
+ *  (`docs/club-admin-scaffold.md`'s chip vocabulary): the one state a volunteer can act on
+ *  (an active renewal) gets the filled primary tint, and `lapsed` (still a renewal prospect)
+ *  stays a plain ghost chip. `archived` reads deliberately quieter still (a lower-opacity ghost
+ *  chip): it isn't a state to act on at all, just a record of someone the club no longer
+ *  contacts, and the dimmer treatment should read as "put away," not "needs attention." */
+export const SEGMENT_CHIP: Record<MemberSegment, ChipStyle> = {
   current: { label: 'Current', cls: 'badge-sm border-transparent bg-primary/10 font-medium text-primary' },
-  pending: { label: 'Payment pending', cls: 'badge-sm border-transparent bg-warning/15 font-medium text-warning-content' },
   lapsed: { label: 'Lapsed', cls: 'badge-ghost badge-sm font-medium' },
+  archived: { label: 'Archived', cls: 'badge-ghost badge-sm font-medium opacity-60' },
+};
+
+/** The small "payment due" note shown beside a `current`-segment member whose this-season
+ *  invoice is unpaid: styled in the timeline/stats warning language (see the Member detail
+ *  page's own header comment), not the segment chip's primary/ghost/opacity vocabulary above,
+ *  since owing money this season is a different fact from which segment a member is in. */
+export const PAYMENT_PENDING_LABEL = 'Payment due';
+export const PAYMENT_PENDING_CLS = 'text-warning font-medium';
+
+/** Display labels for the three membership tiers (the household's own membership tier, not a
+ *  per-member fact; see demo-members.ts's design choice 2). */
+export const TIER_LABEL: Record<MembershipTier, string> = {
+  individual: 'Individual',
+  family: 'Family',
+  'young-adult': 'Young Adult',
 };
 
 /** Directory-visibility chips, mirroring MembershipWorks's own three states. */
