@@ -39,19 +39,17 @@ single highest-leverage missing piece.**
 6. **Withdraw / drop everywhere**: member self-withdrawal (contracted today, reversing
    credit grant, auto-offer chain), an admin drop action on the roster, and self-service
    leave-the-waitlist. Rides the portal chain.
-7. **Per-asset payment windows**: the RV page publishes a 15-day deposit deadline; the
-   generic ruling was 30 days. The window becomes a PER-ASSET-TYPE setting (default 30;
-   RV 15 per its own published guideline).
+7. **Payment windows: RULED (Geoff) one global 30-day window**; the RV page's published
+   15-day deposit language edited to 30 to match (the symmetry principle cutting the
+   other way: when the system rule wins, the prose updates).
 8. **The storage confirm-your-spot email** (bulletin promise, verbatim the retention
    machinery + tokened link): being built; the email template joins the port.
 
 ## Real gaps filed forward (named scope, not silent)
 
-9. **Participation tracking** (2.4): "Active Participating Member" and "members who
-   actively contribute get priority" are PUBLISHED eligibility criteria for storage —
-   but no participation records exist anywhere. The merit gate currently runs on memory.
-   2.4 adds a lean participation log (work parties, volunteer roles, race committee;
-   admin-entered) feeding storage priority and the merit gate's history panel.
+9. **Participation tracking: RULED (Geoff) DEFERRED ENTIRELY.** The merit gate and the
+   published storage-priority criteria stay leadership judgment, on purpose. Recorded so
+   the silence is a choice; revisit only if leadership asks.
 10. **Race registration** (2.3/2.4): the NOR bulletin runs entries through MW with real
     fees and deadlines — an MW function the migration inventory missed. The per-event
     pages are its natural home post-payment-integration.
@@ -119,7 +117,7 @@ opt-out (bulk classes of mail only; transactional confirmations always send).
 
 ## Decisions for Geoff
 
-A. Bless the cron/job-runner build now (recommended; unlocks items in three sections).
-B. The early-access window's length (suggest: members get 7 days before public).
-C. Per-asset payment windows as settings (RV 15 / others 30) — confirm.
-D. Participation tracking's 2.4 scope (lean admin-entered log vs anything richer).
+All four RULED (Geoff, 2026-07-07): A. the job runner builds now (blessed via the
+auto-email principle); B. early access = 7 days, a Club setting; C. one global 30-day
+payment window (the RV prose edited to match); D. participation tracking deferred
+entirely.

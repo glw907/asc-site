@@ -14,7 +14,7 @@ To hold a long-term space, you must:
 2. Have dues paid in full by the specified seasonal deadline
 3. Be in compliance with all ASC bylaws and rules
 4. Have signed the Trailer Row Use Guidelines for the current season
-5. Have your security deposit paid in full (new occupants must pay within 15 days of being offered a space)
+5. Have your security deposit paid in full (new occupants must pay within 30 days of being offered a space)
 6. Agree to follow all Matanuska-Susitna Borough land use permit conditions
 
 ## Applying and Renewing

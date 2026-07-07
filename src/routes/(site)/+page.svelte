@@ -151,7 +151,7 @@ before the photography existed, never a broken image. -->
         your skills, compete on the water, or enjoy our facilities and community, the ASC offers
         something for everyone under the midnight sun.
       </p>
-      <div class="what-we-do-grid mt-m grid grid-cols-1 gap-m sm:grid-cols-3">
+      <div class="what-we-do-grid mt-m grid grid-cols-1 gap-l sm:grid-cols-3">
         {#each WHAT_WE_DO as tile (tile.label)}
           <div class="what-we-do-tile">
             <div class="photo-placeholder aspect-[4/3] rounded-box border border-dashed border-card-border bg-base-200">
@@ -161,8 +161,8 @@ before the photography existed, never a broken image. -->
               <span class="text-step--1 font-semibold text-muted">Photo coming</span>
               <span class="photo-placeholder-alt text-step--2 text-muted">{tile.altPreview}</span>
             </div>
-            <h3 class="mt-xs mb-0 font-display text-step-1 font-semibold leading-tight text-base-content">{tile.label}</h3>
-            <p class="mt-s">
+            <h3 class="what-we-do-label mt-xs mb-0 font-display text-step-1 leading-tight text-base-content">{tile.label}</h3>
+            <p class="mt-3xs">
               <a href={tile.href} class="arrow-link font-semibold text-primary underline underline-offset-[3px]">{tile.cta} &rarr;</a>
             </p>
           </div>
@@ -343,11 +343,18 @@ before the photography existed, never a broken image. -->
   .panel-figure.has-photo {
     background: none;
   }
-  /* Facilities' own crop focus once the desktop rule below lets the box grow taller than the
-     source photo's natural 2:1: centered a touch above the vertical midpoint, keeping the
-     clubhouse and treeline in frame rather than the water at the shot's bottom edge. */
+  /* Facilities' own crop focus (retuned, craft pass 2026-07-07): the desktop rule below stretches
+     this box so much taller than the source photo's natural 2:1 that the vertical axis never
+     actually crops (the box's height alone drives `object-fit: cover`'s scale, so the full image
+     height always shows, top to bottom, whatever the Y offset reads). The real crop is entirely
+     horizontal: at that scale only about a third of the frame's WIDTH survives. Centering that
+     narrow slice (the default 50%) landed it on open water with just a sliver of the shot's one
+     real subject, the small treed island with its dock and boathouse; 25% shifts the slice left to
+     keep the island centered instead, the least-destructive framing this fixed aspect ratio and
+     this landscape source photo can give a column this tall. The real fix is a portrait asset for
+     this slot (a tall crop of the shoreline or the clubhouse itself); filed as a photo request. */
   .facilities-photo {
-    object-position: center 35%;
+    object-position: 25% center;
   }
 
   /* The What-do-we-do band's placeholder tiles (manifest item 13): a dashed frame distinct from
@@ -365,6 +372,14 @@ before the photography existed, never a broken image. -->
   .photo-placeholder-alt {
     max-width: 22ch;
     font-style: italic;
+  }
+
+  /* The label reads as the tile's own caption, not a plain semibold heading (the craft pass's fix,
+     2026-07-07): a touch heavier than `font-semibold` (600) binds it visually to the tile above,
+     while `.arrow-link` right beneath keeps its own lighter weight so the pair reads as label, then
+     action, rather than two headings stacked. */
+  .what-we-do-label {
+    font-weight: 650;
   }
 
   /* News cards: the one place body content gets real chrome (A1); the gentle hover lift is the
@@ -407,6 +422,7 @@ before the photography existed, never a broken image. -->
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
   }
 
@@ -481,6 +497,13 @@ before the photography existed, never a broken image. -->
        otherwise renders the photo smaller in absolute pixels for the same ratio. */
     .hero-grid {
       grid-template-columns: 1.15fr 1fr;
+      /* Anchors the CTA to the photo's own lower edge (the craft pass's hero-balance fix,
+         2026-07-07), overriding the row's shared `items-center` utility (an unlayered scoped rule
+         already outranks any Tailwind utility class regardless of specificity, the same mechanism
+         `.facilities-row`'s own `align-items` override relies on below): plain centering left an
+         identical sliver of white above the heading and below the button, which read as the text
+         block floating apart from the photo rather than settling against it. */
+      align-items: end;
     }
     .twocol-panel {
       grid-template-columns: 1fr 1fr;

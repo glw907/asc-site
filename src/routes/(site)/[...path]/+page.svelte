@@ -302,8 +302,14 @@
       flex: 1 1 auto;
       min-width: 0;
     }
+    /* A percentage basis, not a fixed rem, so the split holds steady whether the row measures the
+       plain reading column (44rem) or the wider one a long TOC page earns (58rem): the craft
+       pass's fix (2026-07-07), replacing a fixed 20rem that read as a small photo pinned to the
+       row's right edge on a wide page (education among them) with acres of near-empty title
+       column beside it. 44% gives the photo real presence, matching the old education page's own
+       photo-beside-the-title device, without letting it dominate a short one- or two-line title. */
     .page-title-hero-figure {
-      flex: 0 0 20rem;
+      flex: 0 0 44%;
     }
   }
 
@@ -383,6 +389,14 @@
     margin-top: var(--spacing-xl);
   }
   .prose :global(.content-panel) {
+    /* Redeclared here, the same owl-selector idiom `.toc` uses on itself just above: with no
+       redeclaration this custom property inherits `.article-toc-shell`'s own `--spacing-xl`,
+       matching the panel-to-panel gutter exactly and reading as one loose, undifferentiated gap
+       from a heading straight through to its own lede (the panel-rhythm sweep's finding,
+       2026-07-07). Half the gutter, per the site's own "large fixed inter-section rhythm, half
+       within sections" spacing rule (docs/2026-07-06-asc-phase-1-design.md), binds a panel's
+       heading to its own content while the panel-to-panel gap stays the more decisive break. */
+    --flow-space: var(--spacing-m);
     background: var(--color-base-100);
     border: var(--border) solid var(--color-card-border);
     border-radius: var(--radius-box);
@@ -397,6 +411,20 @@
      competing against the h2 immediately above it. */
   .prose :global(.content-panel .panel-lede) {
     font-weight: 450;
+  }
+  /* The craft pass's requiet (2026-07-07): a panelized page's FIRST panel is the first thing a
+     reader sees on scrolling past the title, so an interim "not built yet" callout sitting there
+     (education's Class Schedule opens with exactly one) reads as the page's loudest element even
+     though it already follows the panel's own lede sentence. The note tone's blue-tinted ground and
+     ink title are right for a callout competing with plain prose elsewhere on the page; muting them
+     here, scoped to only the first panel's own callout, keeps the notice honest (still a bordered
+     box, still says what it says) without letting it out-shout the page's own opening content. */
+  .article-sections > :global(.content-panel:first-child .callout-note) {
+    border-left-color: var(--color-card-border);
+    background: var(--color-base-200);
+  }
+  .article-sections > :global(.content-panel:first-child .callout-note .callout-title) {
+    color: var(--color-muted);
   }
   @media (min-width: 48rem) {
     .article-sections:has(:global(.content-panel)) {
