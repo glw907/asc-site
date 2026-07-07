@@ -7,7 +7,8 @@ right. The current route's link
 gets the story's gold active-nav mark (flag-navy text plus a star-gold underline, via
 `box-shadow`, matching the north star's own `.nav a.active` rule) and `aria-current="page"`.
 Seven nav items plus the theme toggle do not comfortably wrap at 320px, so a hamburger drawer
-replaces the desktop row below 640px (the family five-viewport responsive standard), the same
+replaces the desktop row below 46rem/736px (a fine-grained width sweep's own honest floor; see the
+breakpoint's own comment below for why it is not the family's usual 640px default), the same
 structural device ecxc.ski and 907.life's own headers use. The nav row boxes to
 `max-w-measure-wide`, the same width the home page's own full-bleed bands use (Task 3's page-shell
 fix), so the header, the home content, and the footer read as one aligned column, matching the
@@ -95,8 +96,10 @@ state. -->
       <path d="M12 3v2M12 19v2M5.64 5.64l1.42 1.42M16.94 16.94l1.42 1.42M3 12h2M19 12h2M5.64 18.36l1.42-1.42M16.94 7.06l1.42-1.42" />
     </svg>
   {:else}
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M20.4 14.9A8.5 8.5 0 1 1 9.6 4.1a7 7 0 0 0 10.8 10.8z" />
+    <!-- Stroke-drawn like the sun and every other header glyph; a filled moon reads as a
+         different icon set beside them. -->
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
     </svg>
   {/if}
 {/snippet}
@@ -113,19 +116,22 @@ state. -->
            a star trail. Two fixed raster variants, not an inline recreation: the source has no
            vector original, and this is a brand-identity restoration, not a reinterpretation, so
            the actual asset is the faithful choice. `logo-white` shows only under the dark theme
-           (see theme.css's `[data-theme='asc-dark']` convention). Decorative (alt=""): the
-           adjacent site-name text already carries the link's accessible name via aria-label. -->
+           (see theme.css's `[data-theme='asc-dark']` convention). The mark carries the header
+           alone (Geoff's live-page finding, 2026-07-07: the live site drops the "Alaska Sailing
+           Club" wordmark next to it, and this restoration had kept a wordmark the live site
+           doesn't); both imgs stay decorative (alt=""), since the surrounding link's own
+           `aria-label` is the accessible name regardless of what sits inside it. Sized up from the
+           asset's own 52x32 (`.logo-mark`'s CSS height, below) now that the mark is the header's
+           sole brand anchor. -->
       <img src="/img/logo.png" alt="" width="52" height="32" class="logo-mark logo-mark-light" />
       <img src="/img/logo-white.png" alt="" width="52" height="32" class="logo-mark logo-mark-dark" />
-      <span class="whitespace-nowrap font-display text-step-1 font-semibold tracking-tight text-base-content">
-        {siteConfig.siteName}
-      </span>
     </a>
 
     <!-- Desktop nav: hidden below the collapse breakpoint, replaced by the hamburger drawer.
-         Sized directly (not `text-step--1`, too tight per the design-polish pass's measured
-         render: 13.44px text read cramped), matching the north star's own `.nav a` recipe
-         (0.95rem, a touch of letter-spacing). Item rhythm is `gap-s`, not the still-too-generous
+         Reads `--text-step--1` directly in the stylesheet below (the design-scale audit's fix,
+         2026-07-07, corrected that token's own broken clamp so it now lands at the same 0.95rem
+         the north star's own `.nav a` recipe always used, plus a touch of letter-spacing). Item
+         rhythm is `gap-s`, not the still-too-generous
          `gap-m` a first pass tried: with the logo's own true width protected (see `.site-logo`'s
          `flex-shrink: 0` below) and eleven flex children (seven links, Members' own caret, the
          donate/search/theme-toggle icons) all sharing this one gap, `gap-m` alone pushed the
@@ -252,20 +258,6 @@ state. -->
           {/if}
         {/each}
       </div>
-      <!-- Below 420px the header row collapses Donate and the theme toggle out of
-           `.mobile-controls` (the full club name cannot shrink, and the row has no other
-           slack); this section restores both as reachable drawer entries, shown only at
-           that same narrow range (see the `.mobile-menu-actions` media query below). -->
-      <div class="mobile-menu-actions">
-        <a href="/donate/" class="mobile-link mobile-action" onclick={closeMobile}>
-          {@render donateHeart()}
-          Donate
-        </a>
-        <button type="button" class="mobile-link mobile-action" onclick={toggleTheme}>
-          {@render themeIcon()}
-          {theme === 'asc-dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        </button>
-      </div>
     </div>
   {/if}
 </header>
@@ -298,7 +290,7 @@ state. -->
   }
 
   .logo-mark {
-    height: 2rem;
+    height: 2.5rem;
     width: auto;
   }
   .logo-mark-dark {
@@ -319,7 +311,7 @@ state. -->
     color: var(--color-base-content);
     text-decoration: none;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: var(--text-step--1);
     letter-spacing: 0.01em;
     padding-block: 0.25rem;
     line-height: 1;
@@ -374,34 +366,6 @@ state. -->
 
   .mobile-controls {
     display: flex;
-  }
-
-  /* The club name (whitespace-nowrap, the brand, never truncated) plus the full four-button
-     row overflow the viewport below ~420px. Donate and the theme toggle drop out of the row
-     there; `.mobile-menu-actions` below restores both as drawer entries in that same range. */
-  @media (max-width: 419px) {
-    .mobile-controls .donate-link,
-    .mobile-controls .theme-toggle {
-      display: none;
-    }
-  }
-
-  .mobile-menu-actions {
-    display: none;
-  }
-  @media (max-width: 419px) {
-    .mobile-menu-actions {
-      display: flex;
-      flex-direction: column;
-    }
-  }
-  .mobile-action {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-  }
-  .mobile-action:last-child {
-    border-bottom: none;
   }
 
   /* A parent link immediately followed by its own submenu drops its divider, so the group reads
@@ -464,51 +428,36 @@ state. -->
     font-weight: 650;
   }
 
-  /* Lowered to 768px (the completion pass's fix, manifest item 12): the north star's own 7-item
-     text nav fits there, so the prior 960px hamburger-only floor rendered too eagerly across the
-     upper half of the tablet band. A width sweep at 640/700/768/800/900/959 found the honest
-     crossover: even with the Members caret/dropdown dropped (the next block's own tightening),
-     640 and 700px still overflowed (by 112px and 53px), so the floor stops at 768px, the first
-     width that measured clean, rather than the full 640px range the mockup's own divergence note
-     asked to check. Below 768px, the hamburger drawer still carries every nav entry. */
-  @media (min-width: 48rem) {
+  /* Re-derived after the wordmark span was removed above (Geoff's live-page finding, 2026-07-07):
+     a fine-grained sweep (every 4px from 600 to 1024, forcing the desktop row on to measure it
+     honestly) found the row does NOT simply fit far lower without the wordmark, the plausible
+     assumption removing a whole text label invites. The row's overflow is non-monotonic: clean
+     from 656-668px, overflowing again from 672-724px (a rendering artifact of the nav's own flex
+     wrapping math at those widths, not the wordmark), and only clean continuously from 728px on.
+     46rem/736px is that stable floor plus a small cross-browser safety margin, a real but modest
+     ~32px improvement on the pre-removal 768px floor, not the family's usual round 640px default.
+     The same sweep, re-run with the Members caret/dropdown dropped (the prior 768-959px "tablet
+     step-down"), found its own stable floor at 696px, a further ~32-40px than the un-tightened
+     row's 736px; too small a win for a second breakpoint tier, so that state is gone rather than
+     carried forward for a marginal gain ("prefer the simplest state machine the measurements
+     allow"). Below 736px, the hamburger drawer still carries every nav entry, Members' seven
+     sub-links included. */
+  @media (min-width: 46rem) {
     .desktop-nav {
       display: flex;
     }
     .mobile-controls {
       display: none;
     }
-    /* Scoped to the row-shown breakpoint alone: nav-inner is a two-item flex row (logo, nav) under
-       `justify-content: space-between`, and without this the browser's flex-shrink math
-       (site-logo is itself a nested inline-flex container) can compress the logo's own box below
-       its content's real width once nav-inner's cap is tighter than the row's natural total.
-       Since overflow stays visible, a shrunk box does not clip its own content, it lets the
-       wordmark's `<span>` paint past the box's right edge and INTO the nav's own territory
-       (measured: the wordmark's true right edge landed inside the nav's box at every width from
-       640 to 2560, the design-polish pass's own regression this fixes). A global flex-shrink: 0
-       instead broke the much narrower mobile row (logo + search + hamburger) at 320px, which
-       relies on the same shrink to fit; scoping it here keeps that row's prior, working
-       behavior untouched. */
+    /* A defensive floor, not a fix for an active bug the way the pre-wordmark-removal version of
+       this rule was: nav-inner is a two-item flex row (logo, nav) under
+       `justify-content: space-between`, and flex's default shrink math could still compress the
+       logo's own box if a future content change ever pushed the row tight again. A global
+       flex-shrink: 0 instead broke the much narrower mobile row (logo + search + hamburger) at
+       320px, which relies on the same shrink to fit; scoping it to this breakpoint keeps that
+       row's own behavior untouched. */
     .site-logo {
       flex-shrink: 0;
-    }
-  }
-
-  /* The tablet step-down (768-959px, manifest item 12): the same nav row above, tightened, with
-     the Members caret/dropdown affordance dropped (Members reads as a plain link to /members/
-     instead) to reclaim the width its own hit target and popover panel would otherwise cost.
-     Verified by the same width sweep: the full row (logo, seven links, donate, search, theme
-     toggle) fits with zero horizontal overflow from 768 through 959px at this size. */
-  @media (min-width: 48rem) and (max-width: 59.9375rem) {
-    .desktop-nav {
-      gap: var(--spacing-3xs);
-    }
-    .desktop-nav .nav-link {
-      font-size: 0.875rem;
-    }
-    .nav-caret,
-    .members-dropdown {
-      display: none;
     }
   }
 

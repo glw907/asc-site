@@ -17,7 +17,7 @@ factored out for the second caller. -->
       {#each month.events as event (event.dateRange + event.name)}
         <div class="season-row">
           <span class="season-date">{event.dateRange}</span>
-          <span class={event.muted ? 'text-muted' : 'text-base-content'}>
+          <span class="text-step-0 {event.muted ? 'text-muted' : 'text-base-content'}">
             {#if event.dot}<span class="season-dot mr-[0.5rem] inline-block align-middle" aria-hidden="true"
               ></span><span class="sr-only">Class or clinic: </span>{/if}{event.name}
           </span>
@@ -49,7 +49,7 @@ factored out for the second caller. -->
   }
   .season-month-label {
     font-family: var(--font-display);
-    font-size: 0.9rem;
+    font-size: var(--text-step--1);
     font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -65,7 +65,7 @@ factored out for the second caller. -->
   .season-date {
     color: var(--color-muted);
     font-variant-numeric: tabular-nums;
-    font-size: 0.85rem;
+    font-size: var(--text-step--2);
   }
 
   /* The family's 900px collapse threshold (the north star's own breakpoint): two columns above it. */

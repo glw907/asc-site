@@ -27,7 +27,7 @@ weights. -->
 </script>
 
 <footer class="site-footer border-t border-white/10 bg-flag-navy-deep py-l">
-  <div class="mx-auto flex max-w-measure-wide flex-wrap items-center justify-between gap-s px-m text-step--1 text-footer-ink">
+  <div class="mx-auto flex max-w-measure-wide flex-wrap items-center justify-between gap-s px-m text-step--2 text-footer-ink">
     <span>&copy; {new Date().getFullYear()} {siteConfig.siteName} &middot; a 501(c)(3) nonprofit</span>
     <nav class="flex flex-wrap items-center gap-m" aria-label="Footer">
       {#each nav as item (item.href)}

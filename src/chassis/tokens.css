@@ -46,6 +46,7 @@
   /* A modest, non-fluid default scale (no clamp math of its own): legible, but a theme almost
      always wants its own fluid formula here. The named utilities (`text-step-*`) generate from
      these keys regardless of whose values are active. */
+  --text-step--2: 0.75rem;
   --text-step--1: 0.85rem;
   --text-step-0: 1rem;
   --text-step-1: 1.125rem;

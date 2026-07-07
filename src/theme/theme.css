@@ -126,8 +126,23 @@
   --font-body: 'Source Sans 3 Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Source Code Pro Variable', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  --text-step--1: clamp(0.84rem, 0.84rem, 0.8rem);
+  /* The UI-link family (nav, the CTA buttons, arrow links, the Season month label): a fluid step
+     below body text. The prior clamp's min (0.84rem) exceeded its own max (0.8rem), which the CSS
+     clamp() algorithm resolves by ignoring the max and the preferred value entirely, collapsing this
+     token to a constant 0.84rem (13.44px at this site's root size) regardless of viewport, a
+     measured stray a design-scale audit caught (2026-07-07): the nav and CTA button, unable to use
+     a token that read 13.44px as "cramped," had drifted onto their own literal 0.95rem instead,
+     leaving every OTHER UI-link element (the arrow links, the Season month label) on no token at
+     all. Corrected to a genuine ascending clamp that lands at 0.95rem (15.2px), the nav/CTA's own
+     established size, so every UI-link element now shares one real token. */
+  --text-step--1: clamp(0.86rem, 0.83rem + 0.14vw, 0.95rem);
   --text-step-0: clamp(1.06rem, 1.06rem, 1.0625rem);
+  /* The meta step (footer, the Season legend, the Season date column): one step below the UI-link
+     family, added by the same audit (2026-07-07). A `text-step--2` utility class already appeared
+     on one home-page placeholder before this token existed, a silent no-op since Tailwind never
+     generated the utility with no backing key; this key is both the fix for that gap and the new
+     meta-role size the audit calls for. */
+  --text-step--2: clamp(0.76rem, 0.73rem + 0.13vw, 0.82rem);
   --text-step-1: clamp(1.27rem, 1.25rem + 0.1vw, 1.33rem);
   --text-step-2: clamp(1.27rem, 1.25rem + 0.1vw, 1.33rem);
   --text-step-3: clamp(1.52rem, 1.47rem + 0.24vw, 1.66rem);

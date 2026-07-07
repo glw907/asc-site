@@ -55,12 +55,12 @@ before the photography existed, never a broken image. -->
         <h1 class="m-0 font-display text-step-5 font-semibold italic leading-tight tracking-tight text-base-content">
           Ahoy!
         </h1>
-        <p class="mt-2xs text-base-content">
+        <p class="mt-xs text-step-0 text-base-content">
           &hellip;and welcome to the Alaska Sailing Club. Founded in 1967, we&rsquo;re an engaged,
           community-involved 501(c)(3) with an active yearly schedule of classes, regattas, and
           family-friendly events &mdash; fun, friends, and sailing under the midnight sun.
         </p>
-        <a href="/education/" class="cta-btn mt-m">Take a sailing class &rarr;</a>
+        <a href="/education/" class="cta-btn mt-s">Take a sailing class &rarr;</a>
       </div>
       <div class="hero-figure" class:has-photo={!!data.images.hero}>
         {#if data.images.hero}
@@ -89,9 +89,9 @@ before the photography existed, never a broken image. -->
   <!-- News & updates: cards mark objects (A1); the one place body content gets real card chrome. -->
   <section id="news" class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">News &amp; updates</h2>
+      <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-base-content">News &amp; updates</h2>
       {#if data.news.length > 0}
-        <div class="news-grid mt-m grid grid-cols-1 gap-m">
+        <div class="news-grid mt-xs grid grid-cols-1 gap-m">
           {#each data.news as post (post.id)}
             <a href={post.permalink} class="news-card block overflow-hidden rounded-box border border-card-border bg-base-100">
               {#if post.image}
@@ -115,7 +115,7 @@ before the photography existed, never a broken image. -->
                      title in a sibling card would otherwise leave that card's meta line sitting
                      higher than a two-line neighbor's, breaking the row's baseline alignment
                      (the completion pass's measured finding, manifest item 6). -->
-                <strong class="news-card-title block text-step-0 text-base-content">{post.title}</strong>
+                <strong class="news-card-title block text-step-1 text-base-content">{post.title}</strong>
                 <div class="mt-[0.2rem] text-step--1 text-muted">
                   {#if post.date}
                     <time datetime={post.date}>{formatDate(post.date)}</time>
@@ -130,7 +130,7 @@ before the photography existed, never a broken image. -->
       {:else}
         <p class="mt-m text-muted">No news yet.</p>
       {/if}
-      <p class="mt-m">
+      <p class="mt-s">
         <a href="/posts/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">View all news &rarr;</a>
       </p>
     </div>
@@ -144,8 +144,8 @@ before the photography existed, never a broken image. -->
        use for the same gap. Geoff drops the real photo into each slot through the media library. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">What do we do?</h2>
-      <p class="mt-xs max-w-[65ch] text-base-content">
+      <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-base-content">What do we do?</h2>
+      <p class="mt-xs max-w-[65ch] text-step-0 text-base-content">
         The Alaska Sailing Club is a welcoming environment with beautiful lakeside grounds and
         plenty to do for new sailors and old salts alike. Whether you&rsquo;re here to develop
         your skills, compete on the water, or enjoy our facilities and community, the ASC offers
@@ -161,8 +161,8 @@ before the photography existed, never a broken image. -->
               <span class="text-step--1 font-semibold text-muted">Photo coming</span>
               <span class="photo-placeholder-alt text-step--2 text-muted">{tile.altPreview}</span>
             </div>
-            <h3 class="mt-xs mb-0 font-display text-step-1 font-semibold text-base-content">{tile.label}</h3>
-            <p class="mt-[0.2rem]">
+            <h3 class="mt-xs mb-0 font-display text-step-1 font-semibold leading-tight text-base-content">{tile.label}</h3>
+            <p class="mt-s">
               <a href={tile.href} class="arrow-link font-semibold text-primary underline underline-offset-[3px]">{tile.cta} &rarr;</a>
             </p>
           </div>
@@ -175,8 +175,8 @@ before the photography existed, never a broken image. -->
        is an educational 501(c)(3)). Live D1 events (Task 4), same markup Task 3 built. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">The Season</h2>
-      <p class="mt-[-0.4rem] mb-m text-step--1 text-muted">
+      <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-base-content">The Season</h2>
+      <p class="mt-xs mb-m text-step--2 text-muted">
         Racing runs May through September. Social events bookend the year, and a
         <span class="season-dot mr-[0.3rem] inline-block" aria-hidden="true"></span>marks classes and clinics.
         <a href="/events/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
@@ -189,14 +189,14 @@ before the photography existed, never a broken image. -->
   <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel">
       <div>
-        <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">Our fleet</h2>
+        <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-base-content">Our fleet</h2>
         <p class="mt-xs text-step-0 text-base-content">
           The ASC has a well-maintained collection of club boats for sailors of all ages and
           abilities: six Lido 14s, three Lasers, a Laser II, five Optimists &mdash; plus a
           Buccaneer 18, a Catalina 16.5, a Skipjack 15, and an Ensign 22. All available to
           qualified club members.
         </p>
-        <a href="/club-boat-use-and-qualification/" class="mt-xs inline-block font-semibold text-primary underline underline-offset-[3px]">
+        <a href="/club-boat-use-and-qualification/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
           Learn about club boat use &rarr;
         </a>
       </div>
@@ -210,26 +210,35 @@ before the photography existed, never a broken image. -->
 
   <!-- Our facilities: image first at desktop width (order swaps via the panel-figure-first class).
        `facilities-row` is the scoped variant of `twocol-panel` (the completion pass's composition
-       fix, manifest item 9): the amenity list runs noticeably taller than the fleet section's own
-       three-line paragraph, so the shared `items-center` alignment left the photo floating in a
-       band of empty space above and below it; this row top-aligns instead and gives the photo a
-       touch more width, so it reads as a deliberate, fuller presence next to the list rather than
-       a smaller panel adrift beside it. -->
+       fix, manifest item 9). The amenity list runs noticeably taller than the fleet section's own
+       three-line paragraph; an earlier top-aligned, fixed-2:1 photo left a tall empty region below
+       it (Geoff's live-page finding, 2026-07-07). The desktop rule below now stretches the figure
+       to the row's full height instead (`.facilities-row .panel-figure`'s own `aspect-ratio: auto;
+       height: 100%`), so the photo fills the column beside the list with no gap; `data-crop` opts
+       it out of the design probe's natural-ratio check, since filling the column deliberately
+       diverges from the source photo's own 2:1 shot. Below the 900px breakpoint the row stacks to
+       one column and this override never applies, so the photo keeps its natural-ish 2:1 shape
+       there instead of towering. -->
   <section class="py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel facilities-row">
       <div class="panel-figure panel-figure-first" class:has-photo={!!data.images.facilities}>
         {#if data.images.facilities}
-          <img src={data.images.facilities.url} alt={data.images.facilities.alt} class="h-full w-full rounded-box object-cover" />
+          <img
+            src={data.images.facilities.url}
+            alt={data.images.facilities.alt}
+            class="h-full w-full rounded-box object-cover facilities-photo"
+            data-crop="fill"
+          />
         {/if}
       </div>
       <div>
-        <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">Our facilities</h2>
+        <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-base-content">Our facilities</h2>
         <p class="mt-xs text-step-0 text-base-content">
           To the best of our knowledge, the ASC is the northernmost sailing club in the United
           States. But despite this (or maybe because of it?) we have facilities that would be the
           envy of any sailing club in the world. Our facilities include:
         </p>
-        <ul class="amenity-list mt-xs text-step-0 text-base-content">
+        <ul class="amenity-list text-step-0 text-base-content">
           <li class="amenity-item">A clubhouse with a sauna and storage shed</li>
           <li class="amenity-item">A harbor with nine mooring spots for small keelboats</li>
           <li class="amenity-item">Year-round parking for trailered dinghies</li>
@@ -240,7 +249,7 @@ before the photography existed, never a broken image. -->
           <li class="amenity-item">A small boat rack for kayaks and canoes</li>
           <li class="amenity-item">Park-style grounds with beautiful lake views</li>
         </ul>
-        <a href="/join/" class="mt-xs inline-block font-semibold text-primary underline underline-offset-[3px]">
+        <a href="/join/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
           Learn about membership &rarr;
         </a>
       </div>
@@ -251,7 +260,7 @@ before the photography existed, never a broken image. -->
   <section class="closing-band bg-flag-navy-deep py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m closing-grid">
       <div>
-        <h2 class="m-0 font-display text-step-3 font-semibold text-white">Interested in learning more?</h2>
+        <h2 class="m-0 font-display text-step-3 font-semibold leading-tight text-white">Interested in learning more?</h2>
         <p class="mt-xs max-w-[50ch] text-step-0 text-footer-ink">
           Whether you&rsquo;re brand-new to sailing or looking for a community of fellow sailors,
           we&rsquo;d love to meet you.
@@ -271,7 +280,7 @@ before the photography existed, never a broken image. -->
     background: var(--color-fireweed);
     color: white;
     font-weight: 650;
-    font-size: 0.95rem;
+    font-size: var(--text-step--1);
     padding: 0.6rem 1.25rem;
     border-radius: var(--radius-field);
     text-decoration: none;
@@ -299,7 +308,7 @@ before the photography existed, never a broken image. -->
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: var(--radius-field);
     padding: 0.6rem 1.25rem;
-    font-size: 0.95rem;
+    font-size: var(--text-step--1);
     text-decoration: none;
     transition: background 0.15s ease;
   }
@@ -333,6 +342,12 @@ before the photography existed, never a broken image. -->
   .hero-figure.has-photo,
   .panel-figure.has-photo {
     background: none;
+  }
+  /* Facilities' own crop focus once the desktop rule below lets the box grow taller than the
+     source photo's natural 2:1: centered a touch above the vertical midpoint, keeping the
+     clubhouse and treeline in frame rather than the water at the shot's bottom edge. */
+  .facilities-photo {
+    object-position: center 35%;
   }
 
   /* The What-do-we-do band's placeholder tiles (manifest item 13): a dashed frame distinct from
@@ -373,12 +388,17 @@ before the photography existed, never a broken image. -->
   .news-card-art {
     background: linear-gradient(140deg, #7ba7d9, #4a7fb5);
   }
-  /* Reserves two title lines at the 3-up (1440px) grid (the completion pass's fix, manifest item
-     6): without it, a one-line title left its card's meta line sitting higher than a two-line
-     sibling's, breaking the row's baseline alignment. `line-height` here is the same 1.4 the
-     `text-step-0` line naturally sets; 2 lines' worth reserves the space a wrapped title needs
-     without changing a one-line card's own rendered text position. */
+  /* Sized to `text-step-1` at weight 650 (the design-scale audit's fix, 2026-07-07): a card title
+     at plain `text-step-0`/700 read the same size as the card's own body copy, once every stray
+     16px paragraph on the page joined the same step-0 token, a collision this weight-and-size step
+     up resolves without reaching for a heading-sized token that would fight the card's own
+     compact chrome. Reserves two title lines at the 3-up (1440px) grid (the completion pass's fix,
+     manifest item 6): without it, a one-line title left its card's meta line sitting higher than a
+     two-line sibling's, breaking the row's baseline alignment. `min-height` is `em`-relative to
+     this rule's own `line-height`, so it keeps reserving exactly two lines' worth of space at the
+     new, larger size with no separate edit. */
   .news-card-title {
+    font-weight: 650;
     min-height: calc(1.4em * 2);
     line-height: 1.4;
   }
@@ -404,8 +424,14 @@ before the photography existed, never a broken image. -->
      specifically, and a second, unrelated list reusing the same mark would spend that meaning on
      housekeeping instead. One column below 640px, matching the family's own 900px-vs-640px
      two-tier collapse for a list this short. */
+  /* margin-top set here, not the markup's own `mt-xs` (there was one, and it did nothing): this
+     unlayered scoped rule already outranks any Tailwind utility class regardless of specificity
+     (the same mechanism `.facilities-row`'s `align-items` override relies on above), so a `margin:
+     0` here had silently zeroed that utility's own margin-top too, leaving no gap at all between
+     the intro paragraph and the list (the design-scale audit's finding, 2026-07-07). */
   .amenity-list {
     margin: 0;
+    margin-top: var(--spacing-xs);
     padding: 0;
     list-style: none;
     display: grid;
@@ -452,12 +478,25 @@ before the photography existed, never a broken image. -->
     .twocol-panel {
       grid-template-columns: 1fr 1fr;
     }
-    /* Facilities gives its photo a touch more width than the fleet section's own even split, and
-       top-aligns it against the list instead of vertically centering it in the list's own taller
-       box (the completion pass's composition fix, manifest item 9a). */
+    /* Facilities gives its photo a touch more width than the fleet section's own even split
+       (the completion pass's composition fix, manifest item 9a) and, since the fix below, fills
+       the row's full height rather than top-aligning at its own natural 2:1 shape (Geoff's
+       live-page finding, 2026-07-07: a top-aligned fixed-ratio photo left a tall empty region
+       under it beside the taller amenity list). `align-items: stretch` overrides the row's own
+       inline `items-center` utility (this unlayered scoped rule already outranks any Tailwind
+       utility class regardless of specificity, the same mechanism the prior `align-items: start`
+       relied on), so the figure's cross-size matches the list column's own height. */
     .facilities-row {
       grid-template-columns: 1.08fr 1fr;
-      align-items: start;
+      align-items: stretch;
+    }
+    /* Cancels the generic `.panel-figure` aspect-ratio so the stretched cross-size (above) can
+       actually take effect: with both dimensions definite (the grid track's width, the stretched
+       row's height), the browser has nothing left for `aspect-ratio` to resolve, and the img's own
+       `object-fit: cover` crops the source photo to fill that box exactly. */
+    .facilities-row .panel-figure {
+      aspect-ratio: auto;
+      height: 100%;
     }
     .closing-grid {
       grid-template-columns: 1.2fr 1fr;
@@ -476,9 +515,14 @@ before the photography existed, never a broken image. -->
      the 24px minimum, since a plain inline link's hit area is just its line box. Vertical padding
      on an inline (not inline-block) element does not affect line-height at all per the CSS spec,
      so this grows the clickable/paintable box without shifting any surrounding text, a pixel or
-     two of visual overlap into the line above/below aside. */
+     two of visual overlap into the line above/below aside. The Fleet and Facilities "Learn about
+     ..." links share this class too (added by the design-scale audit, 2026-07-07), the same
+     UI-link family as the class's other five users. `font-size` joins that family here rather than
+     on `.news-card` alone: every arrow link on the page had been rendering at the browser's own
+     default 1rem (16px), a stray the audit caught, with no token backing it at all. */
   .arrow-link {
     padding-block: 0.3rem;
+    font-size: var(--text-step--1);
   }
 
   @media (prefers-reduced-motion: reduce) {
