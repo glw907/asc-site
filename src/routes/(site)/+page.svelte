@@ -401,6 +401,13 @@ before the photography existed, never a broken image. -->
     font-weight: 650;
     min-height: calc(1.4em * 2);
     line-height: 1.4;
+    /* Two lines exactly: the reserve handles a short title's meta alignment, and the clamp
+       handles a long one's (a third wrapped line pushed the middle card's meta below its
+       siblings at the step-1 size). The full title lives on the post's own page. */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
 
   /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only.

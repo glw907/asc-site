@@ -6,6 +6,14 @@ from Geoff's picks. Awaiting his ratification read of this document, then writin
 Drafted during the 2026-07-06 brainstorm (Geoff + the main loop; the Fable-native format).
 The highest bar of the ladder: a real member base. The full visual-fidelity method binds.
 
+> **Image orientation rule (Geoff, 2026-07-07):** every image slot declares the orientation
+> the composition wants — landscape for wide panels and heroes, square for tiles, portrait
+> for tall columns and title-adjacent slots — and the asset is chosen (or requested) to fit
+> the slot, never force-cropped against its own composition. The club's photo archive is
+> deep and Geoff supplies appropriate shots on request, so every design pass's report
+> includes a photo-request list (slot, wanted orientation, subject suggestion) wherever the
+> library lacks a fitting image.
+
 ## What this is
 
 The club's public site rebuilt on cairn (`@glw907/cairn-cms` >= 0.81.0, the chassis
