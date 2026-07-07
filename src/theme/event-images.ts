@@ -3,7 +3,7 @@
 // a cairn `media:` reference, since the photo lives in the club's read-only ops D1
 // (`$theme/events-data.ts`), not this site's own content; there is no frontmatter field to hang a
 // `fields.image` on, the same reasoning `home-images.ts` documents for the home page's fixed
-// photography. The 14 source files (`~/Projects/aksailingclub-org/static/events/images/`) are
+// photography. The 14 source files (`~/Projects/aksailingclub-legacy/static/events/images/`) are
 // pulled into the media library once, content-hashed; one of them (`end-of-season-party.jpg`)
 // turned out to be the exact same bytes already uploaded as the home hero photo
 // (`sunset-sail-dock`), so it reuses that entry rather than duplicating it, the dedup working as

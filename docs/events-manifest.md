@@ -2,7 +2,7 @@
 
 The completion pass's events deep-look (Geoff: "look carefully at the events page"). This
 re-enumerates the live page directly (`https://aksailingclub.org/events/`, Playwright,
-2026-07-06) and cross-checks every feature against its source (`~/Projects/aksailingclub-org`:
+2026-07-06) and cross-checks every feature against its source (`~/Projects/aksailingclub-legacy`:
 `src/lib/events-page.js`, `src/lib/calendar.js`, `src/lib/ics.js`, `src/lib/injection.js`,
 `assets/css/custom.css`) and the live `asc-ops` D1 schema (`wrangler d1 execute asc-ops --remote`).
 The walk's 8-feature list is the floor; everything below is the ceiling this pass builds against.
@@ -120,7 +120,7 @@ fetch of the real feed returns exactly this shape with real event data.
 14 of the 22 visible rows (12 events + 5 classes, excluding `annual-meeting` and
 `pre-spring-work-party`, which have none, and `fleet-tune-up-weekend`, a class with none) carry a
 real `hero_image` filename plus `hero_image_alt` text. The source bytes live in the Hugo repo at
-`~/Projects/aksailingclub-org/static/events/images/<hero_image>`, one file per row, matching the
+`~/Projects/aksailingclub-legacy/static/events/images/<hero_image>`, one file per row, matching the
 `hero_image` column exactly. This pass pulls all 14 into cairn's media library (content-hashed,
 alt text preserved verbatim from the D1 column) the same way Task 3 pulled the home and post
 photography.
