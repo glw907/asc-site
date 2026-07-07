@@ -43,14 +43,23 @@ export function formatDollars(amount: number | null): string {
   return amount == null ? '—' : `$${amount}`;
 }
 
-const utcTimestampFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+// Pinned to the club's own timezone rather than `undefined` (the runtime's local zone): this
+// renders on the server, and a Cloudflare Worker's runtime zone is UTC, not Alaska's. `undefined`
+// would print a SQLite UTC timestamp as if it were already Anchorage wall-clock, nine or eight
+// hours off (depending on daylight saving) for the one audience who actually reads this, the
+// club's own admins.
+const clubTimestampFmt = new Intl.DateTimeFormat(undefined, {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'America/Anchorage',
+});
 
-/** Format a SQLite `datetime('now')`-shaped UTC string ("YYYY-MM-DD HH:MM:SS", no offset) as a
- *  local date and time: swapping the space for `T` and appending `Z` keeps `Date` reading it as
- *  UTC rather than local time, the same reasoning `formatCivilDate`'s own comment gives for a
- *  bare calendar day. The waitlist offer's countdown (`class_offers.expires_at`) is this
- *  module's own consumer. */
-export function formatUtcTimestamp(sqliteDatetime: string): string {
+/** Format a SQLite `datetime('now')`-shaped UTC string ("YYYY-MM-DD HH:MM:SS", no offset) as an
+ *  Anchorage-local date and time: swapping the space for `T` and appending `Z` keeps `Date`
+ *  reading the input as UTC rather than local time, the same reasoning `formatCivilDate`'s own
+ *  comment gives for a bare calendar day. The waitlist offer's countdown
+ *  (`class_offers.expires_at`) is this module's own consumer. */
+export function formatClubTimestamp(sqliteDatetime: string): string {
   const parsed = new Date(`${sqliteDatetime.replace(' ', 'T')}Z`);
-  return Number.isNaN(parsed.getTime()) ? sqliteDatetime : utcTimestampFmt.format(parsed);
+  return Number.isNaN(parsed.getTime()) ? sqliteDatetime : clubTimestampFmt.format(parsed);
 }

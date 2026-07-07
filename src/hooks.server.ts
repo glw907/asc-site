@@ -17,7 +17,11 @@ import { createClubAuditSink } from '$admin-club/lib/audit-sink';
 const wireClubAuditSink: Handle = ({ event, resolve }) => {
   if (event.url.pathname.startsWith('/admin/club')) {
     const db = resolveClubDb(event.platform?.env);
-    if (db) event.locals.auditSink = createClubAuditSink(db);
+    // `waitUntil` keeps the sink's fire-and-forget insert alive past this response (audit-sink.ts's
+    // own header); fall back to none outside a real execution context (e.g. a bare unit test),
+    // where the sink still runs, just without that extension.
+    const waitUntil = event.platform?.context?.waitUntil?.bind(event.platform.context);
+    if (db) event.locals.auditSink = createClubAuditSink(db, waitUntil);
   }
   return resolve(event);
 };

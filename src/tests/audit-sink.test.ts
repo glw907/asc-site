@@ -50,4 +50,22 @@ describe('createClubAuditSink', () => {
     expect(errorSpy).toHaveBeenCalledWith('admin/club: audit_log insert failed', expect.any(Error));
     errorSpy.mockRestore();
   });
+
+  it('hands its in-flight write to waitUntil when one is provided, so a real Worker keeps the ' +
+    "insert alive past the response the sink's own synchronous type can't await", async () => {
+    const { db } = fakeD1();
+    const waitUntil = vi.fn();
+    const sink = createClubAuditSink(db, waitUntil);
+    sink(RECORD);
+    expect(waitUntil).toHaveBeenCalledTimes(1);
+    await expect(waitUntil.mock.calls[0][0]).resolves.toEqual(expect.objectContaining({ success: true }));
+  });
+
+  it('never throws when no waitUntil is provided (a bare unit test, or any caller with no real ' +
+    'execution context)', async () => {
+    const { db } = fakeD1();
+    const sink = createClubAuditSink(db);
+    expect(() => sink(RECORD)).not.toThrow();
+    await Promise.resolve();
+  });
 });

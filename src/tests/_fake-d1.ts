@@ -16,6 +16,11 @@ interface FakeD1Options {
   allResults?: Record<string, Responder<unknown[]>>;
   /** The single row `.first()` returns, keyed by a SQL substring match. */
   firstResults?: Record<string, Responder<unknown>>;
+  /** The `meta` a `.run()` call returns, keyed by a SQL substring match; defaults to
+   *  `{ changes: 1 }` for any call with no matching key, so an ordinary write needs no fixture.
+   *  A test simulating a lost race against a conditional write (a compare-and-set that matched
+   *  zero rows) overrides this to `{ changes: 0 }` for that statement's own key. */
+  runResults?: Record<string, Responder<{ changes?: number }>>;
 }
 
 /** One recorded prepared-statement call: the SQL text and its bound arguments, in bind order. */
@@ -55,7 +60,8 @@ export function fakeD1(opts: FakeD1Options = {}) {
       },
       async run() {
         calls.push({ sql, args: stmt.args });
-        return { results: [], success: true, meta: { changes: 1 } };
+        const meta = matchingResult<{ changes?: number }>(sql, opts.runResults, stmt.args, { changes: 1 });
+        return { results: [], success: true, meta };
       },
       async all<T>() {
         calls.push({ sql, args: stmt.args });

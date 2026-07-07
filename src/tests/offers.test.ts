@@ -182,6 +182,61 @@ describe('claimOffer', () => {
     const result = await claimOffer(db, 'no-such-token');
     expect(result).toEqual({ error: expect.stringContaining('not valid') });
   });
+
+  it('refuses when the class has filled up since this offer was made (a different waitlist ' +
+    'entry claimed the last spot first)', async () => {
+    const { db, calls } = fakeD1({
+      firstResults: {
+        'FROM class_offers WHERE token': ACTIVE_OFFER_ROW,
+        'FROM classes WHERE id': CLASS_ROW,
+        'FROM class_enrollments WHERE class_id': { n: CLASS_ROW.capacity }, // now full
+      },
+    });
+    const result = await claimOffer(db, 'plaintext-token');
+    expect(result).toEqual({ error: expect.stringContaining('filled up') });
+    expect(calls.some((c) => c.sql.startsWith("UPDATE class_offers SET resolved = 'claimed'"))).toBe(false);
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO class_enrollments'))).toBe(false);
+  });
+
+  it('refuses a concurrent double-claim: the losing call sees changes=0 from the atomic ' +
+    'consume UPDATE and refuses cleanly instead of double-enrolling', async () => {
+    const { db, calls } = fakeD1({
+      firstResults: {
+        'FROM class_offers WHERE token': ACTIVE_OFFER_ROW,
+        'FROM classes WHERE id': CLASS_ROW,
+      },
+      // The preview read still sees the offer as pending (a stale, pre-race snapshot); the
+      // atomic consume itself is what reports the loss, because by the time IT runs the
+      // winning call has already flipped `resolved`.
+      runResults: { "UPDATE class_offers SET resolved = 'claimed'": { changes: 0 } },
+    });
+    const result = await claimOffer(db, 'plaintext-token');
+    expect(result).toEqual({ error: expect.stringContaining('already been used') });
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO class_enrollments'))).toBe(false);
+    expect(calls.some((c) => c.sql === 'DELETE FROM class_waitlist WHERE id = ?1')).toBe(false);
+  });
+
+  it('answers a clean refusal, not a 500, when the enrollment batch fails after a committed ' +
+    'consume (e.g. the person is already enrolled some other way)', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        'FROM class_offers WHERE token': ACTIVE_OFFER_ROW,
+        'FROM class_waitlist WHERE id': {
+          id: WAITLIST_ID,
+          applicant_name: 'Jamie Rivera',
+          applicant_email: 'jamie@example.com',
+          member_id: null,
+        },
+        'FROM classes WHERE id': CLASS_ROW,
+      },
+    });
+    db.batch = () =>
+      Promise.reject(new Error('UNIQUE constraint failed: class_enrollments.class_id, class_enrollments.member_id'));
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const result = await claimOffer(db, 'plaintext-token');
+    expect(result).toEqual({ error: expect.stringContaining('already enrolled') });
+    errorSpy.mockRestore();
+  });
 });
 
 describe('declineOffer', () => {

@@ -30,7 +30,7 @@ export const actions: Actions = {
       const season = await getCurrentSeason(ctx.db);
       await createClass(ctx.db, id, season, parsed.write);
       ctx.audit({ action: 'create', entity: 'class', entityId: id });
-      throw redirect(303, `/admin/club/classes/${id}`);
+      redirect(303, `/admin/club/classes/${id}`);
     },
     { action: 'create', entity: 'class', deniedMessage: 'A club role is required to manage classes.' },
   ),

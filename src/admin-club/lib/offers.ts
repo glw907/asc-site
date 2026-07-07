@@ -130,16 +130,22 @@ export function toSqliteDatetime(date: Date): string {
 
 /** Insert one `audit_log` row directly (mirrors `audit-sink.ts`'s own insert shape): the
  *  mechanism `claimOffer`, `declineOffer`, and the lazy sweep use in place of `ctx.audit`, since
- *  none of them run inside an `adminAction`-wrapped route (see this module's own header). A
- *  failed write must never break the state transition it is auditing, which already committed;
- *  it only logs loudly, the same tradeoff `audit-sink.ts` makes. */
-function writeAudit(db: D1Database, actor: string, action: string, entityId: string, detail?: string): void {
-  db.prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
-    .bind(actor, action, 'offer', entityId, detail ?? null)
-    .run()
-    .catch((err: unknown) => {
-      console.error('admin/club: offer audit_log insert failed', err);
-    });
+ *  none of them run inside an `adminAction`-wrapped route (see this module's own header). Awaited
+ *  by every call site (each already runs inside an `async` function its own caller awaits, unlike
+ *  `audit-sink.ts`'s engine-typed, synchronous `AdminActionAuditSink`, which has no such chain to
+ *  ride and needs `waitUntil` instead): an un-awaited `.run()` races the Worker's own response,
+ *  which can tear the request context down mid-write and silently drop the row. A failed write
+ *  must still never break the state transition it is auditing, which already committed by the
+ *  time this runs; it only logs loudly, the same tradeoff `audit-sink.ts` makes. */
+async function writeAudit(db: D1Database, actor: string, action: string, entityId: string, detail?: string): Promise<void> {
+  try {
+    await db
+      .prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
+      .bind(actor, action, 'offer', entityId, detail ?? null)
+      .run();
+  } catch (err) {
+    console.error('admin/club: offer audit_log insert failed', err);
+  }
 }
 
 /** Resolve one offer row as `'expired'` and audit it as `actor` (`'system'` for both the lazy
@@ -150,7 +156,7 @@ async function markExpired(db: D1Database, tokenHash: string, waitlistId: string
     .prepare("UPDATE class_offers SET resolved = 'expired', resolved_at = ?1 WHERE token = ?2")
     .bind(now, tokenHash)
     .run();
-  writeAudit(db, actor, 'expire', waitlistId);
+  await writeAudit(db, actor, 'expire', waitlistId);
 }
 
 /** The one unresolved offer for a waitlist entry, if any, after lazily expiring it in place when
@@ -159,7 +165,7 @@ async function markExpired(db: D1Database, tokenHash: string, waitlistId: string
  *  none was ever made or because this call just expired the only one that existed. */
 async function activeOfferForWaitlist(db: D1Database, waitlistId: string, now: string): Promise<OfferRawRow | null> {
   const row = await db
-    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE waitlist_id = ?1 AND resolved IS NULL`)
+    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE waitlist_id = ?1 AND resolved IS NULL LIMIT 1`)
     .bind(waitlistId)
     .first<OfferRawRow>();
   if (!row) return null;
@@ -232,7 +238,7 @@ export interface OfferPreview {
 export async function previewOffer(db: D1Database, token: string): Promise<OfferPreview | OfferActionError> {
   const tokenHash = await hashOfferToken(token);
   const row = await db
-    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE token = ?1`)
+    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE token = ?1 LIMIT 1`)
     .bind(tokenHash)
     .first<OfferRawRow>();
   if (!row) return { error: 'This claim link is not valid.' };
@@ -245,57 +251,93 @@ export async function previewOffer(db: D1Database, token: string): Promise<Offer
 
 /**
  * Claim a spot with its offer's plaintext token: refuses an unknown token, one already resolved
- * (claimed, declined, or expired), or one past its window (lazily marking it `'expired'` first, so
- * a late claim attempt is also what sweeps it). On success, enrolls the waitlisted person and
- * removes their waitlist row (the schema carries no status column to flip instead, see
- * `classes-store.ts`'s own header on `class_enrollments`), audited as `'public:claim'`.
+ * (claimed, declined, or expired), one past its window (lazily marking it `'expired'` first, so a
+ * late claim attempt is also what sweeps it), or a class that has filled up since the offer was
+ * made (a second, independent offer to a different waitlist entry on the same class can resolve
+ * first; `offerSpot` only ever blocks a SECOND offer to the SAME entry, not a second offer on the
+ * class as a whole). On success, enrolls the waitlisted person and removes their waitlist row (the
+ * schema carries no status column to flip instead, see `classes-store.ts`'s own header on
+ * `class_enrollments`), audited as `'public:claim'`.
+ *
+ * The state transition itself is one atomic compare-and-set UPDATE, run and checked (`meta.changes
+ * === 1`) BEFORE the enrollment write, not folded into one `db.batch()` with it: D1's `batch()`
+ * runs every statement regardless of an earlier one's own effect, so a batched conditional UPDATE
+ * gives no way to detect "this call lost the race" before the enrollment INSERT already ran too.
+ * Two concurrent claims of the same token can't both see `changes === 1` (D1 serializes writes to
+ * one SQLite file, the same reasoning `club-roles.ts`'s last-owner guard documents for an
+ * identical shape); whichever loses sees `changes === 0` and refuses cleanly instead of double-
+ * enrolling.
  */
 export async function claimOffer(db: D1Database, token: string): Promise<OfferClaimResult | OfferActionError> {
   const tokenHash = await hashOfferToken(token);
-  const row = await db
-    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE token = ?1`)
+  const now = toSqliteDatetime(new Date());
+
+  // A read-only preview for a specific, friendly refusal (unknown / already-used / expired)
+  // before touching anything. This read can go stale before the atomic consume below runs; that
+  // is fine, since the consume re-checks the same conditions in the SAME statement that performs
+  // the write, which is what actually closes the race, not this read.
+  const preview = await db
+    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE token = ?1 LIMIT 1`)
     .bind(tokenHash)
     .first<OfferRawRow>();
-  if (!row) return { error: 'This claim link is not valid.' };
-  if (row.resolved !== null) return { error: 'This offer has already been used.' };
-
-  const now = toSqliteDatetime(new Date());
-  if (row.expires_at <= now) {
-    await markExpired(db, row.token_hash, row.waitlist_id, now);
+  if (!preview) return { error: 'This claim link is not valid.' };
+  if (preview.resolved !== null) return { error: 'This offer has already been used.' };
+  if (preview.expires_at <= now) {
+    await markExpired(db, preview.token_hash, preview.waitlist_id, now);
     return { error: 'This offer has expired.' };
   }
 
-  const waitlistRow = await db
-    .prepare('SELECT id, applicant_name, applicant_email, member_id FROM class_waitlist WHERE id = ?1')
-    .bind(row.waitlist_id)
-    .first<{ id: string; applicant_name: string | null; applicant_email: string | null; member_id: string | null }>();
-  if (!waitlistRow) return { error: 'The waitlist entry for this offer no longer exists.' };
+  const cls = await getClassWithCounts(db, preview.class_id);
+  if (!cls) return { error: 'The class for this offer no longer exists.' };
+  if (cls.isFull) return { error: 'This class has filled up since this offer was made.' };
 
-  const classRow = await getClass(db, row.class_id);
-  if (!classRow) return { error: 'The class for this offer no longer exists.' };
-
-  // Pre-2.2, `class_enrollments.member_id` reuses the person's own email as a natural key, the
-  // same workaround migration 0002's header documents for `class_instructors.member_id`: there is
-  // no real `members` row yet to reference, and an email is unique and stable in its place.
-  const enrollMemberId = waitlistRow.member_id ?? waitlistRow.applicant_email;
-  if (!enrollMemberId) return { error: 'This waitlist entry has no member or applicant identity to enroll.' };
-
-  const enrollmentId = crypto.randomUUID();
-  await db
-    .prepare('INSERT INTO class_enrollments (id, class_id, member_id) VALUES (?1, ?2, ?3)')
-    .bind(enrollmentId, row.class_id, enrollMemberId)
-    .run();
-  await db.prepare('DELETE FROM class_waitlist WHERE id = ?1').bind(row.waitlist_id).run();
-  await db
-    .prepare("UPDATE class_offers SET resolved = 'claimed', resolved_at = ?1 WHERE token = ?2")
+  const consume = await db
+    .prepare(
+      "UPDATE class_offers SET resolved = 'claimed', resolved_at = ?1 " +
+        'WHERE token = ?2 AND resolved IS NULL AND expires_at > ?1',
+    )
     .bind(now, tokenHash)
     .run();
-  writeAudit(db, 'public:claim', 'claim', row.waitlist_id, `class=${row.class_id}`);
+  if ((consume.meta.changes ?? 0) !== 1) return { error: 'This offer has already been used.' };
+
+  const waitlistRow = await db
+    .prepare('SELECT id, applicant_name, applicant_email, member_id FROM class_waitlist WHERE id = ?1 LIMIT 1')
+    .bind(preview.waitlist_id)
+    .first<{ id: string; applicant_name: string | null; applicant_email: string | null; member_id: string | null }>();
+  // Pre-2.2, `class_enrollments.member_id` reuses the person's own email as a natural key, the
+  // same workaround migration 0002's header documents for `class_instructors.member_id`: there is
+  // no real `members` row yet to reference, and an email is unique and stable in its place. The
+  // offer is already marked claimed at this point (the consume above committed); a missing
+  // waitlist row or identity here is an inconsistent-data edge case, not a normal refusal, so this
+  // still answers honestly rather than pretending to succeed.
+  const enrollMemberId = waitlistRow?.member_id ?? waitlistRow?.applicant_email;
+  if (!waitlistRow || !enrollMemberId) {
+    console.error('admin/club: claimOffer consumed a token with no valid waitlist identity', preview.waitlist_id);
+    return { error: 'Something went wrong completing your claim. Contact the club for help.' };
+  }
+
+  const enrollmentId = crypto.randomUUID();
+  try {
+    await db.batch([
+      db
+        .prepare('INSERT INTO class_enrollments (id, class_id, member_id) VALUES (?1, ?2, ?3)')
+        .bind(enrollmentId, preview.class_id, enrollMemberId),
+      db.prepare('DELETE FROM class_waitlist WHERE id = ?1').bind(preview.waitlist_id),
+    ]);
+  } catch (err) {
+    // Most likely `UNIQUE(class_id, member_id)`: this person is already enrolled some other way.
+    // The offer stays marked claimed (the consume above already committed); log loudly so an
+    // admin can reconcile the now-stale waitlist row, and answer honestly rather than a 500.
+    console.error('admin/club: claimOffer enrollment batch failed after a committed consume', err);
+    return { error: 'You are already enrolled in this class.' };
+  }
+
+  await writeAudit(db, 'public:claim', 'claim', preview.waitlist_id, `class=${preview.class_id}`);
 
   return {
     enrollmentId,
-    classId: row.class_id,
-    className: classRow.name,
+    classId: preview.class_id,
+    className: cls.name,
     personName: waitlistRow.applicant_name,
     personEmail: waitlistRow.applicant_email,
   };
@@ -312,7 +354,7 @@ export async function claimOffer(db: D1Database, token: string): Promise<OfferCl
 export async function declineOffer(db: D1Database, token: string): Promise<{ ok: true } | OfferActionError> {
   const tokenHash = await hashOfferToken(token);
   const row = await db
-    .prepare('SELECT waitlist_id, resolved FROM class_offers WHERE token = ?1')
+    .prepare('SELECT waitlist_id, resolved FROM class_offers WHERE token = ?1 LIMIT 1')
     .bind(tokenHash)
     .first<{ waitlist_id: string; resolved: OfferResolution | null }>();
   if (!row) return { error: 'This claim link is not valid.' };
@@ -323,7 +365,7 @@ export async function declineOffer(db: D1Database, token: string): Promise<{ ok:
     .prepare("UPDATE class_offers SET resolved = 'declined', resolved_at = ?1 WHERE token = ?2")
     .bind(now, tokenHash)
     .run();
-  writeAudit(db, 'public:decline', 'decline', row.waitlist_id);
+  await writeAudit(db, 'public:decline', 'decline', row.waitlist_id);
 
   return { ok: true };
 }
@@ -338,7 +380,7 @@ export async function declineOffer(db: D1Database, token: string): Promise<{ ok:
  */
 export async function cancelActiveOffer(db: D1Database, waitlistId: string): Promise<{ ok: true } | OfferActionError> {
   const row = await db
-    .prepare('SELECT token FROM class_offers WHERE waitlist_id = ?1 AND resolved IS NULL')
+    .prepare('SELECT token FROM class_offers WHERE waitlist_id = ?1 AND resolved IS NULL LIMIT 1')
     .bind(waitlistId)
     .first<{ token: string }>();
   if (!row) return { error: 'There is no active offer to cancel.' };

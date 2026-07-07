@@ -66,12 +66,15 @@ describe('signUpForClass', () => {
       expect(enrollInsert?.args).toEqual([expect.any(String), CLASS_ROW.id, INPUT.email]);
 
       const audit = calls.find((c) => c.sql.startsWith('INSERT INTO audit_log'));
+      // The phone is never retained on the enrolled path: no column to write it to, and not
+      // folded into the audit detail either (a phone number is PII with no place in a log meant
+      // to be safe to paste).
       expect(audit?.args).toEqual([
         'public:signup',
         'enroll',
         'enrollment',
         (enrollInsert?.args as unknown[])[0],
-        `class=${CLASS_ROW.id} phone=${INPUT.phone}`,
+        `class=${CLASS_ROW.id}`,
       ]);
 
       const waiverInsert = calls.find((c) => c.sql.startsWith('INSERT INTO waiver_acceptances'));
@@ -138,6 +141,19 @@ describe('signUpForClass', () => {
       const result = await signUpForClass(db, INPUT);
       expect(result).toEqual({ error: expect.stringContaining('already on the waitlist') });
       expect(calls.some((c) => c.sql.startsWith('INSERT'))).toBe(false);
+    });
+
+    it('answers the same clean refusal, not the generic fallback, when a raced double-join loses ' +
+      "to migration 0004's uq_waitlist_class_email constraint after the pre-check already passed", async () => {
+      const { db } = fakeDbFull();
+      db.batch = () =>
+        Promise.reject(
+          new Error(
+            'UNIQUE constraint failed: class_waitlist.class_id, class_waitlist.applicant_email: SQLITE_CONSTRAINT',
+          ),
+        );
+      const result = await signUpForClass(db, INPUT);
+      expect(result).toEqual({ error: expect.stringContaining('already on the waitlist') });
     });
   });
 

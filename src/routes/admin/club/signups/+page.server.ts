@@ -9,10 +9,15 @@
 // This is the first Club screen with a real write path, so it is also the first live consumer of
 // the engine's `adminAction` (Part C item 3): both actions verify the signed-in editor and emit a
 // typed audit record through it, the mutation exemplar every later phase-2 write flow (renewals,
-// the season rollover, asset assignments) is meant to copy.
+// the season rollover, asset assignments) is meant to copy. Both actions also run through
+// `clubAdminAction` (the pass 2.1 close reviewer fan-out's own finding: this was the one Club
+// write that never migrated off the engine's bare `adminAction`, so a signed-in editor with no
+// club role could still approve or deny a signup); any club role suffices here, the same routine-
+// domain gate Events and Classes both use, since neither action is owner-scoped.
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { adminAction, requireSession } from '@glw907/cairn-cms/sveltekit';
+import { requireSession } from '@glw907/cairn-cms/sveltekit';
+import { clubAdminAction } from '$admin-club/lib/club-action';
 import {
   CURRENT_SEASON,
   getCreditGrantsForHousehold,
@@ -78,46 +83,54 @@ function requireReviewId(formData: FormData) {
   return typeof id === 'string' && id ? id : null;
 }
 
+const DENIED_MESSAGE = 'A club role is required to review signups.';
+
 export const actions: Actions = {
   // Approve is design choice 10's acknowledging no-op: the common case, no data beyond who acted
-  // and when. It simply clears the row from the queue. `adminAction` requires an audit emit on
-  // every path through the handler, a rejected attempt included, so a stripped or hand-crafted
-  // post still leaves a record of what was tried.
-  approve: adminAction(async ({ form, ctx }) => {
-    const id = requireReviewId(form);
-    if (!id) {
-      ctx.audit({ action: 'approve', entity: 'signup', detail: 'rejected: missing review id' });
-      return fail(400, { error: 'Missing review id.' });
-    }
-    if (!getSignupReview(id)) {
-      ctx.audit({ action: 'approve', entity: 'signup', entityId: id, detail: 'rejected: no such review' });
-      return fail(404, { error: 'No such signup review.' });
-    }
-    resolveSignupReview(id, 'approved', { reviewedBy: ctx.editor.email });
-    ctx.audit({ action: 'approve', entity: 'signup', entityId: id });
-    throw redirect(303, '/admin/club/signups');
-  }),
+  // and when. It simply clears the row from the queue. `adminAction` (which `clubAdminAction`
+  // composes) requires an audit emit on every path through the handler, a rejected attempt
+  // included, so a stripped or hand-crafted post still leaves a record of what was tried.
+  approve: clubAdminAction(
+    async ({ form, ctx }) => {
+      const id = requireReviewId(form);
+      if (!id) {
+        ctx.audit({ action: 'approve', entity: 'signup', detail: 'rejected: missing review id' });
+        return fail(400, { error: 'Missing review id.' });
+      }
+      if (!getSignupReview(id)) {
+        ctx.audit({ action: 'approve', entity: 'signup', entityId: id, detail: 'rejected: no such review' });
+        return fail(404, { error: 'No such signup review.' });
+      }
+      resolveSignupReview(id, 'approved', { reviewedBy: ctx.editor.email });
+      ctx.audit({ action: 'approve', entity: 'signup', entityId: id });
+      redirect(303, '/admin/club/signups');
+    },
+    { action: 'approve', entity: 'signup', deniedMessage: DENIED_MESSAGE },
+  ),
   // Deny is the rare path (the dialog confirm on the screen): it requires a reason and records it
   // for the audit trail. Telling the member what happened is a manual step today; a real
   // member-communication send is a TODO for pass 2.2's real store.
-  deny: adminAction(async ({ form, ctx }) => {
-    const id = requireReviewId(form);
-    if (!id) {
-      ctx.audit({ action: 'deny', entity: 'signup', detail: 'rejected: missing review id' });
-      return fail(400, { error: 'Missing review id.' });
-    }
-    const reason = form.get('reason');
-    if (typeof reason !== 'string' || !reason.trim()) {
-      ctx.audit({ action: 'deny', entity: 'signup', entityId: id, detail: 'rejected: missing reason' });
-      return fail(400, { error: 'A reason is required to deny a signup.', id });
-    }
-    const trimmedReason = reason.trim();
-    if (!getSignupReview(id)) {
-      ctx.audit({ action: 'deny', entity: 'signup', entityId: id, detail: 'rejected: no such review' });
-      return fail(404, { error: 'No such signup review.' });
-    }
-    resolveSignupReview(id, 'denied', { reason: trimmedReason, reviewedBy: ctx.editor.email });
-    ctx.audit({ action: 'deny', entity: 'signup', entityId: id, detail: trimmedReason });
-    throw redirect(303, '/admin/club/signups');
-  }),
+  deny: clubAdminAction(
+    async ({ form, ctx }) => {
+      const id = requireReviewId(form);
+      if (!id) {
+        ctx.audit({ action: 'deny', entity: 'signup', detail: 'rejected: missing review id' });
+        return fail(400, { error: 'Missing review id.' });
+      }
+      const reason = form.get('reason');
+      if (typeof reason !== 'string' || !reason.trim()) {
+        ctx.audit({ action: 'deny', entity: 'signup', entityId: id, detail: 'rejected: missing reason' });
+        return fail(400, { error: 'A reason is required to deny a signup.', id });
+      }
+      const trimmedReason = reason.trim();
+      if (!getSignupReview(id)) {
+        ctx.audit({ action: 'deny', entity: 'signup', entityId: id, detail: 'rejected: no such review' });
+        return fail(404, { error: 'No such signup review.' });
+      }
+      resolveSignupReview(id, 'denied', { reason: trimmedReason, reviewedBy: ctx.editor.email });
+      ctx.audit({ action: 'deny', entity: 'signup', entityId: id, detail: trimmedReason });
+      redirect(303, '/admin/club/signups');
+    },
+    { action: 'deny', entity: 'signup', deniedMessage: DENIED_MESSAGE },
+  ),
 };

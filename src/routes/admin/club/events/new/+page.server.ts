@@ -28,7 +28,7 @@ export const actions: Actions = {
       }
       await createEvent(ctx.db, id, parsed.write);
       ctx.audit({ action: 'create', entity: 'event', entityId: id });
-      throw redirect(303, `/admin/club/events/${id}`);
+      redirect(303, `/admin/club/events/${id}`);
     },
     { action: 'create', entity: 'event', deniedMessage: 'A club role is required to manage events.' },
   ),

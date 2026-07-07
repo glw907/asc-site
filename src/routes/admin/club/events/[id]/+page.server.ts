@@ -60,7 +60,7 @@ export const actions: Actions = {
       }
       await deleteEvent(ctx.db, id);
       ctx.audit({ action: 'delete', entity: 'event', entityId: id });
-      throw redirect(303, '/admin/club/events');
+      redirect(303, '/admin/club/events');
     },
     { action: 'delete', entity: 'event', deniedMessage: DENIED_MESSAGE },
   ),

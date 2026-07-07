@@ -33,13 +33,25 @@ export interface SignUpForClassInput {
   /** Optional: the schema's own only truly optional field. Asc-club's `class_enrollments` table
    *  carries no phone column at all (pre-2.2, a real member row does not exist yet to hold one;
    *  `guardian_contact` is a distinct youth-track field, not a general contact number), so an
-   *  enrolled signup's phone has nowhere to persist as data and is folded into the audit detail
-   *  instead, for a human reading the log, not for later querying. A waitlisted signup's phone
-   *  DOES have a home (`class_waitlist.applicant_phone`), and is stored there in full. */
+   *  enrolled signup's phone is simply not retained: no column to write it to, and never folded
+   *  into the audit log either (a phone number is PII that has no place in a log meant to be safe
+   *  to read and paste, per `docs/reference/log-events.md`'s own convention). A waitlisted
+   *  signup's phone DOES have a home (`class_waitlist.applicant_phone`), and is stored there in
+   *  full. */
   phone?: string;
   /** The wording version to stamp the `waiver_acceptances` row with: the caller reads this from
    *  `club-settings.ts`'s `getWaiverTextVersion` at the moment of submission, never here. */
   waiverVersion: string;
+}
+
+/** True when `err` is a SQLite `UNIQUE` constraint failure naming `table`: the shape both a
+ *  concurrent double-enrollment (`class_enrollments`'s own uniqueness) and a concurrent double-
+ *  waitlist-join (`class_waitlist`'s own `uq_waitlist_class_email` index, migration
+ *  0004_waitlist_integrity) throw when two submissions of the same form race each other past the
+ *  pre-check `SELECT` above and both reach the `INSERT`. D1 error messages are plain strings, not
+ *  a typed error code, so this is a substring match rather than an `instanceof` check. */
+function isUniqueViolation(err: unknown, table: string): boolean {
+  return err instanceof Error && err.message.includes('UNIQUE') && err.message.includes(table);
 }
 
 /** The `waiver_acceptances` insert both branches below add to their own `db.batch()`: unlike
@@ -75,13 +87,13 @@ export async function signUpForClass(
   try {
     if (!cls.isFull) {
       const already = await db
-        .prepare('SELECT 1 AS n FROM class_enrollments WHERE class_id = ?1 AND member_id = ?2')
+        .prepare('SELECT 1 AS n FROM class_enrollments WHERE class_id = ?1 AND member_id = ?2 LIMIT 1')
         .bind(input.classId, input.email)
         .first<{ n: number }>();
       if (already) return { error: 'You are already enrolled in this class.' };
 
       const enrollmentId = crypto.randomUUID();
-      const detail = input.phone ? `class=${input.classId} phone=${input.phone}` : `class=${input.classId}`;
+      const detail = `class=${input.classId}`;
       await db.batch([
         db
           .prepare('INSERT INTO class_enrollments (id, class_id, member_id) VALUES (?1, ?2, ?3)')
@@ -96,7 +108,7 @@ export async function signUpForClass(
     }
 
     const alreadyWaitlisted = await db
-      .prepare('SELECT 1 AS n FROM class_waitlist WHERE class_id = ?1 AND applicant_email = ?2')
+      .prepare('SELECT 1 AS n FROM class_waitlist WHERE class_id = ?1 AND applicant_email = ?2 LIMIT 1')
       .bind(input.classId, input.email)
       .first<{ n: number }>();
     if (alreadyWaitlisted) return { error: 'You are already on the waitlist for this class.' };
@@ -123,6 +135,11 @@ export async function signUpForClass(
 
     return { outcome: 'waitlisted', position };
   } catch (err) {
+    // A race lost to the pre-check above (two submissions of the same form, both past the
+    // "already enrolled/waitlisted?" read before either INSERT lands) surfaces as the same clean
+    // refusal the pre-check itself gives, rather than the generic fallback below.
+    if (isUniqueViolation(err, 'class_enrollments')) return { error: 'You are already enrolled in this class.' };
+    if (isUniqueViolation(err, 'class_waitlist')) return { error: 'You are already on the waitlist for this class.' };
     console.error('admin/club: class signup batch failed', err);
     return { error: 'Something went wrong recording your signup. You can email board@aksailingclub.org instead.' };
   }

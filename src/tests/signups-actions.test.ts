@@ -5,6 +5,7 @@ import type { Editor } from '@glw907/cairn-cms';
 import type { AdminActionAuditRecord } from '@glw907/cairn-cms/sveltekit';
 import { actions } from '../routes/admin/club/signups/+page.server';
 import { getSignupReview } from '$admin-club/lib/demo-members';
+import { fakeD1 } from './_fake-d1';
 
 const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'owner' };
 
@@ -17,17 +18,25 @@ const CSRF_TOKEN = 'test-csrf-token';
  *  so this stays correct if the route's generated types ever change. */
 type SignupsActionEvent = Parameters<typeof actions.approve>[0];
 
+/** A `CLUB_DB` fixture that grants any club role: every existing test below reaches its own
+ *  handler through `clubAdminAction`'s role gate first, so it needs a role to pass, the same way
+ *  `club-action.test.ts` and `events-actions.test.ts` set one up. */
+function anyClubRoleDb() {
+  return fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } }).db;
+}
+
 /**
- * A fake POST event carrying exactly what `adminAction` and these handlers read: an https URL (so
- * the CSRF cookie name matches production), a matching cookie/field pair, `locals.editor`, and an
- * optional `auditSink` to capture the emitted records. The cast is narrow and explained, not a
- * blanket `any`: neither handler touches any of the real event's other properties (`params`,
- * `platform`, and so on), so a full mock would be padding, not signal.
+ * A fake POST event carrying exactly what `adminAction`, `clubAdminAction`, and these handlers
+ * read: an https URL (so the CSRF cookie name matches production), a matching cookie/field pair,
+ * `locals.editor`, a `CLUB_DB` binding for `clubAdminAction`'s own role gate, and an optional
+ * `auditSink` to capture the emitted records. The cast is narrow and explained, not a blanket
+ * `any`: neither handler touches any of the real event's other properties (`params`, `caches`),
+ * so a full mock would be padding, not signal.
  */
 function postEvent(
   editor: Editor | null,
   fields: Record<string, string>,
-  opts: { auditSink?: (record: AdminActionAuditRecord) => void } = {},
+  opts: { auditSink?: (record: AdminActionAuditRecord) => void; db?: unknown } = {},
 ): SignupsActionEvent {
   const formData = new FormData();
   formData.set('csrf', CSRF_TOKEN);
@@ -42,6 +51,7 @@ function postEvent(
       set: () => undefined,
       delete: () => undefined,
     },
+    platform: { env: { CLUB_DB: opts.db ?? anyClubRoleDb() } },
     locals: { editor, auditSink: opts.auditSink },
   } as unknown as SignupsActionEvent;
 }
@@ -57,7 +67,8 @@ async function catchThrown(value: unknown): Promise<unknown> {
 describe('signups actions: adminAction guard', () => {
   // The CSRF token itself is also verified by the engine's route-agnostic guard (see
   // adminAction's own doc comment); what this exercises is adminAction's defense-in-depth
-  // editor gate, thrown as an AdminActionError before either handler runs.
+  // editor gate, thrown as an AdminActionError before either handler (or clubAdminAction's own
+  // role check) ever runs.
   it('rejects approve with no signed-in editor', async () => {
     await expect(
       actions.approve(postEvent(null, { id: 'review-marchetti-2026' })),
@@ -68,6 +79,25 @@ describe('signups actions: adminAction guard', () => {
     await expect(
       actions.deny(postEvent(null, { id: 'review-marchetti-2026', reason: 'x' })),
     ).rejects.toThrow();
+  });
+});
+
+describe('signups actions: club role guard', () => {
+  // The ship-blocker this wrap closes: before `clubAdminAction`, a signed-in editor with no club
+  // role could still approve or deny a signup, since this was the one Club write left on the
+  // engine's bare `adminAction`.
+  it('rejects approve for a signed-in editor with no club role', async () => {
+    const db = fakeD1({ allResults: { 'FROM club_roles': [] } }).db;
+    const result = await actions.approve(postEvent(owner, { id: 'review-marchetti-2026' }, { db }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(403);
+  });
+
+  it('rejects deny for a signed-in editor with no club role', async () => {
+    const db = fakeD1({ allResults: { 'FROM club_roles': [] } }).db;
+    const result = await actions.deny(postEvent(owner, { id: 'review-marchetti-2026', reason: 'x' }, { db }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(403);
   });
 });
 

@@ -94,6 +94,24 @@ describe('setClubRole', () => {
     const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] }, firstResults: { 'COUNT(*)': { n: 2 } } });
     await expect(setClubRole(db, 'owner@example.com', 'admin', 'other-owner@example.com')).resolves.toBeUndefined();
   });
+
+  it('refuses via the atomic guard even when the cheap pre-check saw two owners: the race the ' +
+    'conditional DELETE closes (a concurrent demotion already dropped the count to one by the ' +
+    'time this write actually runs)', async () => {
+    const { db, calls } = fakeD1({
+      allResults: { 'FROM club_roles': [{ role: 'owner' }] },
+      firstResults: { 'COUNT(*)': { n: 2 } }, // the stale pre-check: still sees two owners
+      runResults: { "DELETE FROM club_roles WHERE email = ?1 AND role = 'owner'": { changes: 0 } },
+    });
+    await expect(setClubRole(db, 'owner@example.com', 'admin', 'other-owner@example.com')).rejects.toThrow(
+      LastOwnerError,
+    );
+    // The guarded DELETE ran (and lost the race); the follow-up club-admin delete/insert never did.
+    expect(calls.some((c) => c.sql.startsWith("DELETE FROM club_roles WHERE email = ?1 AND role = 'owner'"))).toBe(
+      true,
+    );
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO club_roles'))).toBe(false);
+  });
 });
 
 describe('removeClubRole', () => {
@@ -117,5 +135,18 @@ describe('removeClubRole', () => {
   it('allows removing an owner when another owner remains', async () => {
     const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] }, firstResults: { 'COUNT(*)': { n: 2 } } });
     await expect(removeClubRole(db, 'owner@example.com')).resolves.toBeUndefined();
+  });
+
+  it('refuses via the atomic guard even when the cheap pre-check saw two owners (same race as ' +
+    "setClubRole's own guard test)", async () => {
+    const { db, calls } = fakeD1({
+      allResults: { 'FROM club_roles': [{ role: 'owner' }] },
+      firstResults: { 'COUNT(*)': { n: 2 } },
+      runResults: { "DELETE FROM club_roles WHERE email = ?1 AND role = 'owner'": { changes: 0 } },
+    });
+    await expect(removeClubRole(db, 'owner@example.com')).rejects.toThrow(LastOwnerError);
+    expect(calls.some((c) => c.sql.startsWith("DELETE FROM club_roles WHERE email = ?1 AND role = 'club-admin'"))).toBe(
+      false,
+    );
   });
 });

@@ -8,17 +8,28 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { AdminActionAuditRecord, AdminActionAuditSink } from '@glw907/cairn-cms/sveltekit';
 
-/** Build the Club section's `auditSink`: a fire-and-forget insert into `audit_log`. A persist
- *  failure must never fail the user's action (the write it is auditing already ran, or the
- *  action already decided its own outcome on other terms), so this only logs loudly: a broken
- *  sink is then visible in Workers Logs rather than silently dropping rows. */
-export function createClubAuditSink(db: D1Database): AdminActionAuditSink {
+/** Build the Club section's `auditSink`: a fire-and-forget insert into `audit_log`, kept alive
+ *  past the response with `waitUntil` when the caller provides one (the real Cloudflare runtime,
+ *  and its dev platform proxy, both do). `AdminActionAuditSink`'s own type is synchronous
+ *  (`(record) => void`; the engine's `ctx.audit` calls it without awaiting), so this can never
+ *  simply `await` the insert the way `offers.ts`'s own `writeAudit` does for its own,
+ *  fully-`async` callers; `waitUntil` is the documented way to keep an in-flight write alive after
+ *  the handler that triggered it has already returned, without blocking that handler on it. A
+ *  persist failure must never fail the user's action (the write it is auditing already ran, or the
+ *  action already decided its own outcome on other terms), so this only logs loudly: a broken sink
+ *  is then visible in Workers Logs rather than silently dropping rows. */
+export function createClubAuditSink(
+  db: D1Database,
+  waitUntil?: (promise: Promise<unknown>) => void,
+): AdminActionAuditSink {
   return (record: AdminActionAuditRecord) => {
-    db.prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
+    const write = db
+      .prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
       .bind(record.editor, record.action, record.entity, record.entityId ?? null, record.detail ?? null)
       .run()
       .catch((err: unknown) => {
         console.error('admin/club: audit_log insert failed', err);
       });
+    waitUntil?.(write);
   };
 }

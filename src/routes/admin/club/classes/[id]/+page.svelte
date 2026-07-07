@@ -12,7 +12,7 @@ section posts to this route's own actions, independent of the main edit form bel
   import { CsrfField, OfficeList } from '@glw907/cairn-cms/components';
   import ClassForm from '../ClassForm.svelte';
   import type { ClassTrack } from '$admin-club/lib/classes-store';
-  import { formatUtcTimestamp } from '$admin-club/lib/ui';
+  import { formatClubTimestamp } from '$admin-club/lib/ui';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -64,6 +64,11 @@ section posts to this route's own actions, independent of the main edit form bel
     </p>
   </div>
 {:else}
+  <!-- Keyed on the class's own id: without this, navigating from one class's detail screen
+       straight to another's (both matching this same dynamic route) reuses the component
+       instance, and the `$state(untrack(...))` seeds above only ever run once, leaving the
+       form showing the PREVIOUS class's values under the new class's own submit actions. -->
+  {#key data.class.id}
   <OfficeList
     eyebrow="Club"
     title={data.class.name}
@@ -180,7 +185,7 @@ section posts to this route's own actions, independent of the main edit form bel
 
           {#if activeOffer}
             <div class="flex flex-wrap items-center justify-between gap-2 rounded-box bg-base-200/60 px-3 py-2 text-sm">
-              <span>Offered, expires {formatUtcTimestamp(activeOffer.expiresAt)}.</span>
+              <span>Offered, expires {formatClubTimestamp(activeOffer.expiresAt)}.</span>
               <form method="post" action="?/cancelOffer">
                 <CsrfField />
                 <input type="hidden" name="waitlistId" value={entry.id} />
@@ -225,4 +230,5 @@ section posts to this route's own actions, independent of the main edit form bel
       </form>
     </div>
   </dialog>
+  {/key}
 {/if}

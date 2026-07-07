@@ -88,7 +88,7 @@ export const actions: Actions = {
       }
       await deleteClass(ctx.db, id);
       ctx.audit({ action: 'delete', entity: 'class', entityId: id });
-      throw redirect(303, '/admin/club/classes');
+      redirect(303, '/admin/club/classes');
     },
     { action: 'delete', entity: 'class', deniedMessage: DENIED_MESSAGE },
   ),
