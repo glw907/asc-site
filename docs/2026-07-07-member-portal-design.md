@@ -43,6 +43,35 @@ its own dogfood). One surface, five jobs, frequency-ordered:
    member's directory listing — Geoff's 2026-07-07 ruling — and hold the renewal/payment
    power; non-primary adults self-serve their own profile and visibility only).
 
+### The assets section (Geoff, 2026-07-07; unlocked by unification — builds after 2.4's
+asset domain meets 2.2's member auth)
+
+The portal gains "Your assets" once both halves exist:
+- **See current assets**: the household's assignments (mooring, RV, trailer, rack) with
+  season and payment status, on the landing beside the household card.
+- **See the waitlists**: the member's own queue positions, plus each queue's honest length
+  ("7 households ahead of you"), since the continuous multi-year queues are exactly the
+  thing members most want visibility into.
+- **Request an asset**: pick a type, one-line note, submit. The request lands in the
+  admin's review inbox (the signup queue's exact pattern, entity 'asset-request'):
+  approve places the household into the queue (or assigns directly when the type has a
+  free slot), deny carries a required reason. Every transition audited. When an asset
+  frees, the grant-to-next-in-queue reuses the offer machine's token discipline (a
+  time-limited claim, decline passes it down) rather than inventing a third mechanism.
+- Model note: requests are a small state machine in front of the existing asset_waitlist
+  (pending → queued | assigned | denied); the waitlist itself stays the continuous,
+  never-reset queue the suite mandates.
+- **Year-to-year retention (Geoff, 2026-07-07): assets carry over by REQUEST, not
+  automatically.** Requests carry a kind: 'retention' or 'new'. A renewing member who
+  held an asset last season gets the retention option surfaced IN the renewal flow
+  ("Request your mooring again for 2027?"), and per the suite's asset-fees-ride-the-
+  membership rule, an approved retention's fee joins the same payment context. The admin
+  inbox shows every request WITH the household's prior-holding history ("held mooring,
+  2023 through 2026, paid each season" — derivable from the assignment/payment rows), so
+  approving a returning holder is one informed click. Denial carries a reason; nothing
+  renews silently, which is exactly the admin-approval control Geoff wants over the
+  de-facto tradition of retention.
+
 Explicitly NOT in the portal: payment-method vaulting (annual manual renewal is the club's
 rhythm; no stored cards in v1), invoice archaeology beyond simple receipts, any admin
 function, any content function.
