@@ -1,5 +1,16 @@
 # The member portal design suite (pass 2.2's member-facing face)
 
+**RATIFIED (Geoff, 2026-07-07, from his mockup review): "The basic UI looks clean, it
+just needs to incorporate the additional functionality."** The structure and voice are
+the contract as drawn; the amendments are the functionality his review streamed, all
+folded below: the assets section (see/request/waitlists), retention with the
+merit-gate-then-pay sequence, ROLLING renewals (standing = paid_at + 1 year; grace 30
+days as a Club setting; the renewal notification carries the asset-loss warning),
+gap-years = continuous holders only, any adult member may request assets, the
+join-then-class continuity, and the free-clinic RSVP framing. The four drafted defaults
+(in-portal receipts, Stripe Checkout, grace-window settings, contact-mechanism
+neutrality) stand unobjected. The build incorporates directly; no mockup v2.
+
 Authored on Fable, 2026-07-07 (the extended window's overnight run), against the phase-2
 design suite's member-model rulings, Geoff's 2026-07-07 rulings (episodic use; lean data;
 primary-controls-household-listings; retention-without-pestering reminders), the
