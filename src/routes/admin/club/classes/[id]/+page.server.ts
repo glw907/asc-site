@@ -135,7 +135,17 @@ export const actions: Actions = {
         ctx.audit({ action: 'offer', entity: 'offer', entityId: id, detail: 'rejected: missing waitlistId' });
         return fail(400, { error: 'A waitlist entry is required.' });
       }
-      const result = await offerSpot(ctx.db, { classId: id, waitlistId, actorEmail: ctx.editor.email });
+      // `PUBLIC_ORIGIN` (never a request header, per that binding's own doc comment) builds the
+      // claim link; `EMAIL` may be unbound in some environments, and `offerSpot`'s own `notify`
+      // handling degrades gracefully either way (this module's own header on why).
+      const platformEnv = event.platform?.env;
+      const origin = platformEnv?.PUBLIC_ORIGIN;
+      const result = await offerSpot(ctx.db, {
+        classId: id,
+        waitlistId,
+        actorEmail: ctx.editor.email,
+        notify: platformEnv && origin ? { env: platformEnv, origin } : undefined,
+      });
       if ('error' in result) {
         ctx.audit({ action: 'offer', entity: 'offer', entityId: waitlistId, detail: `rejected: ${result.error}` });
         return fail(400, { error: result.error });

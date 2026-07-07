@@ -1,11 +1,21 @@
 <!--
 @component
-The Club section's Settings screen (Task 4): who holds an owner or admin seat, and how long a
-waitlist offer stays open before it expires. Both are the kind of setting an owner touches
-rarely, so one screen suits them better than two. Every write is owner-only (see the route's own
-header comment); an admin still sees the roster and the current window, just not the forms to
-change either, the same "sees the section, some actions still refuse" posture Signups already
-uses for its own audit-gated writes.
+The Club section's Settings screen (Task 4, extended pass 2.2): who holds an owner or admin seat,
+how long a waitlist offer stays open before it expires, the three membership tier prices, and the
+season rollover. All are the kind of setting an owner touches rarely, so one screen suits them
+better than several. Every write is owner-only (see the route's own header comment); an admin
+still sees the roster and every current value, just not the forms to change any of them, the same
+"sees the section, some actions still refuse" posture Signups already uses for its own audit-gated
+writes.
+
+The rollover section is this screen's one DESTRUCTIVE action (per the design suite's own naming:
+"the type-to-confirm gate every serious admin uses"): a `<dialog>` asking the owner to type the
+NEW season year exactly, the same confirm-dialog recipe `classes/[id]/+page.svelte`'s delete
+dialog uses, adapted from a plain Cancel/Delete choice to a typed match. The client-side
+`matchesExpectedYear` check is pure UX (a disabled button before the owner has finished typing);
+the server's own `runSeasonRollover` re-validates the exact same string, and that check is the
+only one that actually matters (see `rollover.ts`'s own header on why the confirm gate and the
+forward-only check collapse into the one comparison).
 -->
 <script lang="ts">
   import { untrack } from 'svelte';
@@ -22,8 +32,25 @@ uses for its own audit-gated writes.
   // would otherwise clobber whatever the owner just typed); `untrack` marks that deliberately, the
   // same idiom the engine's own settings screens use (CairnTidySettings.svelte).
   let offerWindowHours = $state(untrack(() => (data.offerWindowHours == null ? '' : String(data.offerWindowHours))));
+  let individualPrice = $state(untrack(() => (data.tierPrices == null ? '' : String(data.tierPrices.individual))));
+  let familyPrice = $state(untrack(() => (data.tierPrices == null ? '' : String(data.tierPrices.family))));
+  let youngAdultPrice = $state(untrack(() => (data.tierPrices == null ? '' : String(data.tierPrices['young-adult']))));
 
-  const subtitle = $derived(data.error ?? 'Club roles and the waitlist offer window.');
+  let rolloverDialog: HTMLDialogElement | undefined = $state();
+  let typedYear = $state('');
+  const matchesExpectedYear = $derived(data.rollover != null && typedYear.trim() === String(data.rollover.nextSeason));
+
+  // A successful rollover re-runs `load` (SvelteKit's own post-action behavior), so `data.rollover`
+  // already reflects the new season by the time this fires; the dialog itself has no reason to stay
+  // open once that has happened, and the typed year is now stale against the new `nextSeason`.
+  $effect(() => {
+    if (form && 'rollover' in form && form.rollover) {
+      rolloverDialog?.close();
+      typedYear = '';
+    }
+  });
+
+  const subtitle = $derived(data.error ?? 'Club roles, the waitlist offer window, tier prices, and the season.');
 </script>
 
 <OfficeList eyebrow="Club" title="Settings" {subtitle}>
@@ -94,5 +121,84 @@ uses for its own audit-gated writes.
         <p class="mt-3 text-sm font-semibold">{data.offerWindowHours} hours</p>
       {/if}
     </section>
+
+    <section>
+      <h2 class={HEADER_CELL}>Membership tier prices</h2>
+      <p class="mt-1 text-sm text-muted">
+        Whole dollars. A change here only affects a membership purchased AFTER this save; every
+        past season's own price stays exactly what was paid.
+      </p>
+      {#if data.isOwner}
+        <form method="post" action="?/updateTierPrices" class="mt-3 flex flex-wrap items-end gap-3">
+          <TextField label="Individual" name="individual" bind:value={individualPrice} />
+          <TextField label="Family" name="family" bind:value={familyPrice} />
+          <TextField label="Young adult" name="youngAdult" bind:value={youngAdultPrice} />
+          <CsrfField />
+          <button type="submit" class="btn btn-sm">Save</button>
+        </form>
+      {:else if data.tierPrices}
+        <p class="mt-3 text-sm font-semibold">
+          Individual ${data.tierPrices.individual} &middot; Family ${data.tierPrices.family} &middot; Young adult ${data
+            .tierPrices['young-adult']}
+        </p>
+      {/if}
+    </section>
+
+    <section>
+      <h2 class={HEADER_CELL}>Season</h2>
+      {#if data.rollover}
+        <p class="mt-1 text-sm text-muted">
+          The current season is <span class="font-semibold text-base-content">{data.rollover.currentSeason}</span>.
+          Rolling over to {data.rollover.nextSeason} lets
+          {data.rollover.classesFallingOutOfCurrency}
+          {data.rollover.classesFallingOutOfCurrency === 1 ? 'class' : 'classes'} and
+          {data.rollover.waitlistFallingOutOfCurrency}
+          waitlist {data.rollover.waitlistFallingOutOfCurrency === 1 ? 'entry' : 'entries'}
+          fall out of currency. Nothing is deleted: past-season rows stay exactly as they are, and
+          next season's classes are set up fresh through the Classes screen.
+        </p>
+        {#if data.isOwner}
+          <button type="button" class="btn btn-outline btn-error btn-sm mt-3" onclick={() => rolloverDialog?.showModal()}>
+            Roll over to {data.rollover.nextSeason}
+          </button>
+        {/if}
+      {:else}
+        <p class="mt-1 text-sm text-muted">The season could not be read.</p>
+      {/if}
+    </section>
   </div>
 </OfficeList>
+
+{#if data.rollover}
+  <dialog bind:this={rolloverDialog} class="modal" oncancel={(event) => event.preventDefault()}>
+    <div class="modal-box">
+      <h2 class="text-lg font-bold">Roll over to {data.rollover.nextSeason}?</h2>
+      <p class="py-2 text-sm text-muted">
+        This advances the current season and nothing else: memberships and asset waitlists are
+        untouched (neither is season-bound), and no class or waitlist row is deleted or edited.
+        Type <span class="font-mono font-semibold">{data.rollover.nextSeason}</span> to confirm.
+      </p>
+      <form method="dialog">
+        <label class="flex flex-col gap-1 text-sm" for="rollover-typed-year">
+          New season year
+          <input
+            id="rollover-typed-year"
+            class="input input-sm font-mono"
+            type="text"
+            inputmode="numeric"
+            name="typedYear"
+            bind:value={typedYear}
+          />
+        </label>
+        <CsrfField />
+        <div class="modal-action">
+          <!-- svelte-ignore a11y_autofocus -->
+          <button type="submit" class="btn" autofocus formnovalidate>Cancel</button>
+          <button type="submit" class="btn btn-error" formmethod="post" formaction="?/rollover" disabled={!matchesExpectedYear}>
+            Roll over the season
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+{/if}

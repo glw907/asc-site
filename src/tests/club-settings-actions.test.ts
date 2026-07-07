@@ -174,4 +174,85 @@ describe('club settings actions: owner gate', () => {
       editor: owner.email,
     });
   });
+
+  it('updateTierPrices refuses a club admin (403)', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
+    const result = await actions.updateTierPrices(
+      postEvent(admin, { individual: '250', family: '500', youngAdult: '100' }, { db }),
+    );
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(403);
+  });
+
+  it('updateTierPrices fails 400 on a non-positive-integer tier price, still audited, and writes nothing', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    const sink = vi.fn();
+    const result = await actions.updateTierPrices(
+      postEvent(owner, { individual: '250', family: 'not-a-number', youngAdult: '100' }, { db, auditSink: sink }),
+    );
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(400);
+    expect(sink).toHaveBeenCalledWith(expect.objectContaining({ action: 'update-tier-prices', editor: owner.email }));
+    expect(calls.some((c) => c.sql.startsWith('UPDATE settings'))).toBe(false);
+  });
+
+  it('updateTierPrices succeeds for an owner, writing all three tiers and auditing once', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    const sink = vi.fn();
+    const result = await actions.updateTierPrices(
+      postEvent(owner, { individual: '275', family: '525', youngAdult: '110' }, { db, auditSink: sink }),
+    );
+    expect(result).toEqual({ ok: true });
+    const writes = calls.filter((c) => c.sql.startsWith('UPDATE settings'));
+    expect(writes).toHaveLength(3);
+    expect(writes.map((w) => w.args[0]).sort()).toEqual(['110', '275', '525']);
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'update-tier-prices',
+        entity: 'setting',
+        detail: 'individual=275, family=525, young-adult=110',
+        editor: owner.email,
+      }),
+    );
+  });
+
+  it('rollover refuses a club admin (403)', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
+    const result = await actions.rollover(postEvent(admin, { typedYear: '2027' }, { db }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(403);
+  });
+
+  it('rollover fails 400 on a mismatched typed year, still audited, and writes nothing', async () => {
+    const { db, calls } = fakeD1({
+      allResults: { 'FROM club_roles': [{ role: 'owner' }] },
+      firstResults: { "key = 'current_season'": { value: '2026' }, 'FROM classes': { n: 0 }, 'FROM class_waitlist': { n: 0 } },
+    });
+    const sink = vi.fn();
+    const result = await actions.rollover(postEvent(owner, { typedYear: '2099' }, { db, auditSink: sink }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(400);
+    expect(sink).toHaveBeenCalledWith(expect.objectContaining({ action: 'season-rollover', editor: owner.email }));
+    expect(calls.some((c) => c.sql.startsWith('UPDATE settings') || c.sql.startsWith('INSERT INTO audit_log'))).toBe(
+      false,
+    );
+  });
+
+  it('rollover succeeds for an owner with the correctly typed year, auditing the advance', async () => {
+    const { db, calls } = fakeD1({
+      allResults: { 'FROM club_roles': [{ role: 'owner' }] },
+      firstResults: { "key = 'current_season'": { value: '2026' }, 'FROM classes': { n: 4 }, 'FROM class_waitlist': { n: 9 } },
+    });
+    const sink = vi.fn();
+    const result = await actions.rollover(postEvent(owner, { typedYear: '2027' }, { db, auditSink: sink }));
+    expect(result).toEqual({
+      ok: true,
+      rollover: { nextSeason: 2027, classesFallingOutOfCurrency: 4, waitlistFallingOutOfCurrency: 9 },
+    });
+    expect(calls.some((c) => c.sql.startsWith('UPDATE settings') && c.args[0] === '2027')).toBe(true);
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO audit_log') && c.args[1] === 'season-rollover')).toBe(true);
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'season-rollover', entityId: '2027', editor: owner.email }),
+    );
+  });
 });

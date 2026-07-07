@@ -19,6 +19,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { getClass, getClassWithCounts } from './classes-store';
 import { getOfferWindowHours } from './club-settings';
 import { ensureMember } from './people';
+import { sendClubEmail, type EmailBindingEnv } from './club-email';
+import { formatClubTimestamp } from './ui';
 
 /** How an offer was last resolved; `null` (the `class_offers.resolved` column's own default)
  *  means it is still pending. */
@@ -180,6 +182,22 @@ async function activeOfferForWaitlist(db: D1Database, waitlistId: string, now: s
   return row;
 }
 
+/** One waitlist entry's contact, resolved for the offer notification: either edge the row's own
+ *  `CHECK` guarantees (`classes-store.ts`'s `WaitlistRow` header), a member row joined for its
+ *  stored email/name, or the applicant fields a not-yet-a-member public signup carries directly. A
+ *  member with no email on file (the schema allows it; `people.ts`'s header names the covered-child
+ *  case) resolves to `null`: nothing to notify, not an error. */
+async function resolveWaitlistContact(
+  db: D1Database,
+  row: { member_id: string | null; applicant_name: string | null; applicant_email: string | null },
+): Promise<{ email: string; name: string } | null> {
+  if (row.member_id) {
+    const member = await db.prepare('SELECT name, email FROM members WHERE id = ?1').bind(row.member_id).first<{ name: string; email: string | null }>();
+    return member?.email ? { email: member.email, name: member.name } : null;
+  }
+  return row.applicant_email ? { email: row.applicant_email, name: row.applicant_name ?? row.applicant_email } : null;
+}
+
 /**
  * Offer the freed spot to one waitlist entry: refuses (never throws) when the class has no free
  * capacity (`enrolled >= capacity`, i.e. there is nothing to offer) or an active offer already
@@ -187,19 +205,26 @@ async function activeOfferForWaitlist(db: D1Database, waitlistId: string, now: s
  * `settings.offer_window_hours` and returns its plaintext once; only the hash reaches storage. No
  * audit write here: the caller is always an admin route wrapped in `clubAdminAction`, whose own
  * `ctx.audit` is the required emit (this module's own header).
+ *
+ * `notify`, if given, best-effort emails the waitlisted person their claim link through the
+ * `class_offer` template (`sendClubEmail`), alongside the admin's own copyable-link fallback (the
+ * return value, unchanged either way): a missing `EMAIL` binding, a missing `origin`, an unresolved
+ * contact (no email on file), or the send itself failing all degrade silently, logged but never
+ * thrown, since a notification failure must never undo or fail the offer it is announcing (the
+ * offer already exists in storage by the time this runs).
  */
 export async function offerSpot(
   db: D1Database,
-  args: { classId: string; waitlistId: string; actorEmail: string },
+  args: { classId: string; waitlistId: string; actorEmail: string; notify?: { env: EmailBindingEnv; origin: string } },
 ): Promise<OfferMintResult | OfferActionError> {
   const cls = await getClassWithCounts(db, args.classId);
   if (!cls) return { error: 'No such class.' };
   if (cls.isFull) return { error: 'This class has no free spot to offer.' };
 
   const waitlistRow = await db
-    .prepare('SELECT class_id FROM class_waitlist WHERE id = ?1')
+    .prepare('SELECT class_id, member_id, applicant_name, applicant_email FROM class_waitlist WHERE id = ?1')
     .bind(args.waitlistId)
-    .first<{ class_id: string }>();
+    .first<{ class_id: string; member_id: string | null; applicant_name: string | null; applicant_email: string | null }>();
   if (!waitlistRow || waitlistRow.class_id !== args.classId) {
     return { error: 'No such waitlist entry for this class.' };
   }
@@ -218,6 +243,30 @@ export async function offerSpot(
     .prepare('INSERT INTO class_offers (token, waitlist_id, class_id, offered_by, expires_at) VALUES (?1, ?2, ?3, ?4, ?5)')
     .bind(tokenHash, args.waitlistId, args.classId, args.actorEmail, expiresAt)
     .run();
+
+  if (args.notify) {
+    try {
+      const contact = await resolveWaitlistContact(db, waitlistRow);
+      if (contact) {
+        await sendClubEmail(db, args.notify.env, {
+          to: contact.email,
+          templateId: 'class_offer',
+          vars: {
+            person_name: contact.name,
+            item_display_name: cls.name,
+            claim_url: `${args.notify.origin}/classes/offer/${token}`,
+            expires_at: formatClubTimestamp(expiresAt),
+            committee_email: 'program-committee@aksailingclub.org',
+          },
+        });
+      }
+    } catch (err) {
+      // Never let a notification failure undo or fail the offer itself (this function's own
+      // header): the token above is already committed, and the admin's copyable-link fallback
+      // still works regardless of whether this email ever sends.
+      console.error('admin/club: offer notification email failed', err);
+    }
+  }
 
   return { token, expiresAt };
 }
