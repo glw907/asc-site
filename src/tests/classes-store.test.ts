@@ -328,6 +328,7 @@ describe('isPubliclyOpen (the freed-spot rule)', () => {
     location: null,
     description: null,
     instructorNotes: null,
+    customNote: null,
     heroImage: null,
     heroImageAlt: null,
     visible: true,
