@@ -14,6 +14,18 @@ import { createAuthGuard } from '@glw907/cairn-cms/sveltekit';
 import { resolveClubDb } from '$admin-club/lib/club-roles';
 import { createClubAuditSink } from '$admin-club/lib/audit-sink';
 
+// The root `_headers` file covers static assets only: on Cloudflare, Worker-rendered (SSR)
+// responses never pass through it, so the same four headers are set here for every rendered
+// page. Referrer-Policy matters most on the token-bearing /classes/offer/ URLs.
+const securityHeaders: Handle = async ({ event, resolve }) => {
+  const response = await resolve(event);
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000');
+  response.headers.set('Referrer-Policy', 'no-referrer');
+  return response;
+};
+
 const wireClubAuditSink: Handle = ({ event, resolve }) => {
   if (event.url.pathname.startsWith('/admin/club')) {
     const db = resolveClubDb(event.platform?.env);
@@ -26,4 +38,4 @@ const wireClubAuditSink: Handle = ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(wireClubAuditSink, createAuthGuard());
+export const handle = sequence(securityHeaders, wireClubAuditSink, createAuthGuard());
