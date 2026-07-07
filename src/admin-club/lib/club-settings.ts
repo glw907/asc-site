@@ -96,6 +96,7 @@ export async function setTierPrice(db: D1Database, tier: MembershipTier, dollars
     .prepare("UPDATE settings SET value = ?1, updated_at = datetime('now'), updated_by = ?2 WHERE key = ?3")
     .bind(String(dollars), updatedBy, TIER_PRICE_KEY[tier])
     .run();
+}
 
 /** The migration's own seed value (`migrations/asc-club/0009_member_auth`): used only if the row
  *  is ever missing, which should not happen post-migration. */
