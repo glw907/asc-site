@@ -220,6 +220,8 @@ on-screen, per this task's own instruction. -->
   <p class="mt-l max-w-measure-wide text-step--1">
     <a href="/my-account/classes" class="text-primary underline-offset-2 hover:underline">Classes</a>
     <span class="text-muted"> · </span>
+    <a href="/my-account/directory" class="text-primary underline-offset-2 hover:underline">Member directory</a>
+    <span class="text-muted"> · </span>
     <a href="/my-account/profile" class="text-primary underline-offset-2 hover:underline">Profile</a>
     {#if data.isPrimary}
       <span class="text-muted"> · </span>
