@@ -122,11 +122,18 @@ state. -->
       </span>
     </a>
 
-    <!-- Desktop nav: hidden below 640px, replaced by the hamburger drawer. Sized and spaced
-         directly (not `text-step--1`/`gap-s`, both too tight per the design-polish pass's
-         measured render: 13.44px text with 18px gaps read cramped), matching the north star's
-         own `.nav a` recipe (0.95rem, a touch of letter-spacing) with `gap-m` as the item rhythm. -->
-    <nav class="desktop-nav items-center gap-m" aria-label="Primary">
+    <!-- Desktop nav: hidden below the collapse breakpoint, replaced by the hamburger drawer.
+         Sized directly (not `text-step--1`, too tight per the design-polish pass's measured
+         render: 13.44px text read cramped), matching the north star's own `.nav a` recipe
+         (0.95rem, a touch of letter-spacing). Item rhythm is `gap-s`, not the still-too-generous
+         `gap-m` a first pass tried: with the logo's own true width protected (see `.site-logo`'s
+         `flex-shrink: 0` below) and eleven flex children (seven links, Members' own caret, the
+         donate/search/theme-toggle icons) all sharing this one gap, `gap-m` alone pushed the
+         row's honest total past `nav-inner`'s own capped width at every tested breakpoint from
+         640 to 2560, which is what the shrink-driven overlap bug (this pass's regression) was
+         actually compensating for. `gap-s` plus the raised breakpoint below keeps the row
+         genuinely fitting, verified by a width sweep. -->
+    <nav class="desktop-nav items-center gap-s" aria-label="Primary">
       {#each nav as item (item.url ?? item.label)}
         {@const current = item.url ? isCurrent(item.url) : false}
         {#if hasChildren(item)}
@@ -135,7 +142,7 @@ state. -->
                the trigger, popover="auto"/position-anchor on the panel), so Escape and light-dismiss
                come from the Popover API for free. A plain link list, not an ARIA menu: nothing here
                behaves like a menu command. The small `gap-3xs` keeps the caret optically tight to
-               its own label, while the pair still reads as one `gap-m` item next to its neighbors. -->
+               its own label, while the pair still reads as one `gap-s` item next to its neighbors. -->
           <div class="nav-item-dropdown inline-flex items-center gap-3xs">
             <a href={item.url} class="nav-link" class:active={current} aria-current={current ? 'page' : undefined}>
               {item.label}
@@ -457,12 +464,31 @@ state. -->
     font-weight: 650;
   }
 
-  @media (min-width: 640px) {
+  /* Raised from 640px (the design-polish pass's own regression): a width sweep with the logo's
+     box protected from shrinking (`.site-logo` below) showed the full desktop row's honest total
+     (logo + gap-s + all eleven nav/icon items) first fits with zero horizontal overflow at
+     ~920px; 960px keeps a clear margin above that measured floor rather than shipping the exact
+     crossover point. Below it, the hamburger drawer carries every nav entry instead. */
+  @media (min-width: 60rem) {
     .desktop-nav {
       display: flex;
     }
     .mobile-controls {
       display: none;
+    }
+    /* Scoped to the desktop row alone: nav-inner is a two-item flex row (logo, nav) under
+       `justify-content: space-between`, and without this the browser's flex-shrink math
+       (site-logo is itself a nested inline-flex container) can compress the logo's own box below
+       its content's real width once nav-inner's cap is tighter than the row's natural total.
+       Since overflow stays visible, a shrunk box does not clip its own content, it lets the
+       wordmark's `<span>` paint past the box's right edge and INTO the nav's own territory
+       (measured: the wordmark's true right edge landed inside the nav's box at every width from
+       640 to 2560, the design-polish pass's own regression this fixes). A global flex-shrink: 0
+       instead broke the much narrower mobile row (logo + search + hamburger) at 320px, which
+       relies on the same shrink to fit; scoping it here keeps that row's prior, working
+       behavior untouched. */
+    .site-logo {
+      flex-shrink: 0;
     }
   }
 
