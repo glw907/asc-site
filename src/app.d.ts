@@ -31,7 +31,12 @@ declare global {
       // donate.remote.ts, payments.ts, the api/stripe/webhook route), set with `wrangler secret
       // put`, never committed; each is optional here so the site keeps degrading gracefully
       // wherever the secret is absent, rather than every caller having to satisfy a required
-      // field this environment has not always provisioned.
+      // field this environment has not always provisioned. DISCORD_WEBHOOK_ASSETS and
+      // DISCORD_WEBHOOK_CLASSES are the same kind of optional Worker secret, read by
+      // admin-club/lib/discord.ts's notifyDiscord (docs/discord-notifications-wiring.md); this
+      // declaration is not required for a notifyDiscord call site to type-check (its own
+      // DiscordBindingEnv is a structural subset any superset already satisfies), but keeps this
+      // environment's own type declarations in sync with what `wrangler secret list` names.
       env: CairnPlatformBindings &
         CairnMediaBindings & {
           EVENTS_DB: D1Database;
@@ -39,6 +44,8 @@ declare global {
           TURNSTILE_SECRET_KEY?: string;
           STRIPE_SECRET_KEY?: string;
           STRIPE_WEBHOOK_SECRET?: string;
+          DISCORD_WEBHOOK_ASSETS?: string;
+          DISCORD_WEBHOOK_CLASSES?: string;
         };
       context: ExecutionContext;
       caches: CacheStorage & { default: Cache };

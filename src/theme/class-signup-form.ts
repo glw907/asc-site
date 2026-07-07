@@ -33,11 +33,15 @@ export type ClassSignupSubmission = v.InferOutput<typeof classSignupSchema>;
  *  cast internally, so a caller (or a test) never has to satisfy the engine's full
  *  `CairnPlatformBindings` shape just to exercise this one form. `EMAIL` threads through to
  *  `signUpForClass`'s own optional `notify` (the class-reminder set's `welcome` touch); missing
- *  it (no binding wired) is a normal, silent no-op there, never a signup failure. */
+ *  it (no binding wired) is a normal, silent no-op there, never a signup failure.
+ *  `DISCORD_WEBHOOK_CLASSES` threads through to `signUpForClass`'s own optional `discord` (the
+ *  classes-channel committee ping, `docs/discord-notifications-wiring.md`); missing it is
+ *  `notifyDiscord`'s own silent no-op, same as a missing `EMAIL`. */
 interface ClassSignupEnv {
   CLUB_DB?: D1Database;
   TURNSTILE_SECRET_KEY?: string;
   EMAIL?: EmailBindingEnv['EMAIL'];
+  DISCORD_WEBHOOK_CLASSES?: string;
 }
 
 /** Sign up for a class from the public form's own submission: Turnstile-gated (degrading
@@ -69,7 +73,12 @@ export async function handleClassSignup(
     phone: input.phone || undefined,
     waiverVersion,
   };
-  const result = await signUpForClass(db, signupInput, platformEnv?.EMAIL ? { EMAIL: platformEnv.EMAIL } : undefined);
+  const result = await signUpForClass(
+    db,
+    signupInput,
+    platformEnv?.EMAIL ? { EMAIL: platformEnv.EMAIL } : undefined,
+    { DISCORD_WEBHOOK_CLASSES: platformEnv?.DISCORD_WEBHOOK_CLASSES },
+  );
   if ('error' in result) invalid(result.error);
 
   return result;

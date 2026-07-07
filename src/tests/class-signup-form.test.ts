@@ -100,4 +100,20 @@ describe('handleClassSignup (the Turnstile degrade path)', () => {
       (err: unknown) => isValidationError(err) && issueMessages(err).some((message) => message.includes('not available')),
     );
   });
+
+  it('forwards DISCORD_WEBHOOK_CLASSES through to the class-filled Discord notice', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+    vi.stubGlobal('fetch', fetchSpy);
+    const { db } = freeCapacityDb();
+
+    const result = await handleClassSignup(
+      INPUT,
+      { CLUB_DB: db, DISCORD_WEBHOOK_CLASSES: 'https://discord.com/api/webhooks/classes' },
+      '203.0.113.5',
+    );
+
+    // freeCapacityDb enrolls the 10th of 10 seats: this signup fills the class.
+    expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
+    expect(fetchSpy).toHaveBeenCalledWith('https://discord.com/api/webhooks/classes', expect.anything());
+  });
 });

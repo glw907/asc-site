@@ -25,6 +25,7 @@ import { hasActiveOfferForClass } from './offers';
 import { ensureMember } from './people';
 import { sendClassWelcomeEmail } from './class-welcome';
 import type { EmailBindingEnv } from './club-email';
+import { notifyDiscord, buildClassFilledNotice, buildWaitlistSignupNotice, type DiscordBindingEnv } from './discord';
 
 /** A signup's outcome: `'enrolled'` when the class had a free spot, `'waitlisted'` (with the new
  *  entry's queue position) when it was already full. `enrollmentId` (the `class_enrollments` row
@@ -66,6 +67,13 @@ export interface SignUpForClassInput {
  *  signup itself either way). */
 export type SignUpNotify = EmailBindingEnv;
 
+/** `signUpForClass`'s optional Discord binding (`discord.ts`'s own `DiscordBindingEnv`), kept as
+ *  its own parameter rather than folded into `SignUpNotify`: `EMAIL` being absent means "skip the
+ *  welcome email entirely" ({@link sendClassWelcomeEmail}'s own header), a distinction this
+ *  function's caller relies on, whereas a missing Discord webhook secret is `notifyDiscord`'s own
+ *  no-op to handle, so passing an empty object here is always safe. */
+export type SignUpNotifyDiscord = DiscordBindingEnv;
+
 /** True when `err` is a SQLite `UNIQUE` constraint failure naming `table`: the shape both a
  *  concurrent double-enrollment (`class_enrollments`'s own uniqueness) and a concurrent double-
  *  waitlist-join (`class_waitlist`'s own `uq_waitlist_class_email` index, migration
@@ -102,12 +110,17 @@ function waiverAcceptanceInsert(db: D1Database, input: SignUpForClassInput) {
  * A batch failure (a constraint violation, a transient D1 error) surfaces as a refusal rather than
  * a false "you're in" success. An immediate enrollment also sends the class-reminder set's own
  * `welcome` touch (best-effort, after the batch has committed, `notify` optional); a waitlist join
- * has no enrollment yet to welcome, so the waitlist branch never touches `notify` at all.
+ * has no enrollment yet to welcome, so the waitlist branch never touches `notify` at all. Both
+ * branches also post a best-effort Discord notification after their own batch commits (the
+ * classes-channel committee ping, `docs/discord-notifications-wiring.md`): a waitlist join always
+ * posts, and an enrollment posts only when it just brought the class to capacity; `discord` missing
+ * or its webhook secret unset is `notifyDiscord`'s own silent no-op, never a signup failure.
  */
 export async function signUpForClass(
   db: D1Database,
   input: SignUpForClassInput,
   notify?: SignUpNotify,
+  discord?: SignUpNotifyDiscord,
 ): Promise<SignUpResult | SignUpActionError> {
   const cls = await getClassWithCounts(db, input.classId);
   if (!cls || !cls.visible) return { error: 'This class is not open for signup.' };
@@ -134,6 +147,10 @@ export async function signUpForClass(
           .bind('public:signup', 'enroll', 'enrollment', enrollmentId, detail),
         waiverAcceptanceInsert(db, input),
       ]);
+
+      if (cls.enrolledCount + 1 === cls.capacity) {
+        await notifyDiscord(discord ?? {}, buildClassFilledNotice({ className: cls.name, capacity: cls.capacity }));
+      }
 
       await sendClassWelcomeEmail(db, notify, {
         enrollmentId,
@@ -170,6 +187,8 @@ export async function signUpForClass(
         .bind('public:signup', 'waitlist', 'waitlist', waitlistId, `class=${input.classId} position=${position}`),
       waiverAcceptanceInsert(db, input),
     ]);
+
+    await notifyDiscord(discord ?? {}, buildWaitlistSignupNotice({ className: cls.name, applicantName: input.name, position }));
 
     return { outcome: 'waitlisted', position };
   } catch (err) {

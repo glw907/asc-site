@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeD1 } from './_fake-d1';
 import { signUpForClass } from '$admin-club/lib/enrollments';
 
@@ -249,5 +249,95 @@ describe('signUpForClass', () => {
     db.batch = () => Promise.reject(new Error('D1 is unavailable'));
     const result = await signUpForClass(db, INPUT);
     expect(result).toEqual({ error: expect.stringContaining('Something went wrong') });
+  });
+
+  describe('the optional Discord notification', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('posts a class-filled notice to the classes webhook when an enrollment brings the class to capacity', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        // 9 already enrolled of 10 capacity: this signup is the one that fills it.
+        firstResults: {
+          'FROM classes WHERE id': CLASS_ROW,
+          'FROM members WHERE email': MEMBER_ROW,
+          'FROM class_enrollments WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 9 }),
+          'FROM class_waitlist WHERE class_id': { n: 0 },
+        },
+      });
+
+      const result = await signUpForClass(db, INPUT, undefined, { DISCORD_WEBHOOK_CLASSES: 'https://discord.com/api/webhooks/classes' });
+      expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('https://discord.com/api/webhooks/classes');
+      const body = JSON.parse(init.body as string) as { embeds: Array<{ title: string }> };
+      expect(body.embeds[0].title).toBe(`Class filled: ${CLASS_ROW.name}`);
+    });
+
+    it('does not notify when the enrollment leaves the class short of capacity', async () => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        // 5 already enrolled of 10 capacity: plenty of room left after this signup.
+        firstResults: {
+          'FROM classes WHERE id': CLASS_ROW,
+          'FROM members WHERE email': MEMBER_ROW,
+          'FROM class_enrollments WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 5 }),
+          'FROM class_waitlist WHERE class_id': { n: 0 },
+        },
+      });
+
+      const result = await signUpForClass(db, INPUT, undefined, { DISCORD_WEBHOOK_CLASSES: 'https://discord.com/api/webhooks/classes' });
+      expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('posts a waitlist-signup notice to the classes webhook when the class is full', async () => {
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        firstResults: {
+          'FROM classes WHERE id': CLASS_ROW,
+          'FROM class_enrollments WHERE class_id': { n: 10 },
+          "COALESCE(MAX(position)": { next_position: 3 },
+          'FROM class_waitlist WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 2 }),
+        },
+      });
+
+      const result = await signUpForClass(db, INPUT, undefined, { DISCORD_WEBHOOK_CLASSES: 'https://discord.com/api/webhooks/classes' });
+      expect(result).toEqual({ outcome: 'waitlisted', position: 3 });
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('https://discord.com/api/webhooks/classes');
+      const body = JSON.parse(init.body as string) as { embeds: Array<{ title: string; fields: Array<{ name: string; value: string }> }> };
+      expect(body.embeds[0].title).toBe(`New waitlist signup: ${CLASS_ROW.name}`);
+      expect(body.embeds[0].fields).toEqual([
+        { name: 'Name', value: INPUT.name },
+        { name: 'Position', value: '3' },
+      ]);
+    });
+
+    it('degrades silently (no fetch, no throw) when no discord binding is passed at all', async () => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        firstResults: {
+          'FROM classes WHERE id': CLASS_ROW,
+          'FROM class_enrollments WHERE class_id': { n: 10 },
+          "COALESCE(MAX(position)": { next_position: 1 },
+          'FROM class_waitlist WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 0 }),
+        },
+      });
+
+      const result = await signUpForClass(db, INPUT);
+      expect(result).toEqual({ outcome: 'waitlisted', position: 1 });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
   });
 });

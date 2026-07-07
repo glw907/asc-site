@@ -226,6 +226,75 @@ describe('offerSpot', () => {
       expect(calls.some((c) => c.sql.startsWith('INSERT INTO email_log') && c.args[5] === 'failed')).toBe(true);
     });
   });
+
+  describe('the optional Discord notification', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('posts an offer-sent notice to the classes webhook once a contact resolves', async () => {
+      const send = vi.fn().mockResolvedValue(undefined);
+      const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 204 });
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        firstResults: {
+          ...NOT_FULL,
+          'FROM class_waitlist WHERE id': { class_id: CLASS_ROW.id, member_id: null, applicant_name: 'Jamie Rivera', applicant_email: 'jamie@example.com' },
+          'FROM class_offers WHERE waitlist_id': null,
+          "'offer_window_hours'": { value: '72' },
+          'FROM email_templates': CLASS_OFFER_TEMPLATE_ROW,
+        },
+      });
+
+      const notify = { env: { EMAIL: { send }, DISCORD_WEBHOOK_CLASSES: 'https://discord.com/api/webhooks/classes' }, origin: 'https://dev.aksailingclub.org' };
+      const result = await offerSpot(db, { classId: CLASS_ROW.id, waitlistId: WAITLIST_ID, actorEmail: 'admin@example.com', notify });
+      expect('token' in result).toBe(true);
+
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+      expect(url).toBe('https://discord.com/api/webhooks/classes');
+      const body = JSON.parse(init.body as string) as { embeds: Array<{ title: string; fields: Array<{ name: string; value: string }> }> };
+      expect(body.embeds[0].title).toBe(`Offer sent: ${CLASS_ROW.name}`);
+      expect(body.embeds[0].fields[0]).toEqual({ name: 'Offered to', value: 'Jamie Rivera' });
+    });
+
+    it('never fetches when no contact resolves (a member with no email on file)', async () => {
+      const send = vi.fn().mockResolvedValue(undefined);
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        firstResults: {
+          ...NOT_FULL,
+          'FROM class_waitlist WHERE id': { class_id: CLASS_ROW.id, member_id: 'mem-42', applicant_name: null, applicant_email: null },
+          'FROM class_offers WHERE waitlist_id': null,
+          "'offer_window_hours'": { value: '72' },
+          'FROM members WHERE id': { name: 'Casey Nguyen', email: null },
+        },
+      });
+
+      const notify = { env: { EMAIL: { send }, DISCORD_WEBHOOK_CLASSES: 'https://discord.com/api/webhooks/classes' }, origin: 'https://dev.aksailingclub.org' };
+      const result = await offerSpot(db, { classId: CLASS_ROW.id, waitlistId: WAITLIST_ID, actorEmail: 'admin@example.com', notify });
+      expect('token' in result).toBe(true);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('degrades silently (no fetch, no throw) when notify is not given at all', async () => {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+      const { db } = fakeD1({
+        firstResults: {
+          ...NOT_FULL,
+          'FROM class_waitlist WHERE id': { class_id: CLASS_ROW.id, member_id: null, applicant_name: 'Jamie', applicant_email: 'jamie@example.com' },
+          'FROM class_offers WHERE waitlist_id': null,
+          "'offer_window_hours'": { value: '72' },
+        },
+      });
+
+      const result = await offerSpot(db, { classId: CLASS_ROW.id, waitlistId: WAITLIST_ID, actorEmail: 'admin@example.com' });
+      expect('token' in result).toBe(true);
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('claimOffer', () => {

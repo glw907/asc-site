@@ -22,6 +22,7 @@ import { ensureMember } from './people';
 import { sendClubEmail, type EmailBindingEnv } from './club-email';
 import { sendClassWelcomeEmail } from './class-welcome';
 import { formatClubTimestamp } from './ui';
+import { notifyDiscord, buildOfferSentNotice, type DiscordBindingEnv } from './discord';
 
 /** How an offer was last resolved; `null` (the `class_offers.resolved` column's own default)
  *  means it is still pending. */
@@ -230,11 +231,16 @@ async function resolveWaitlistContact(
  * return value, unchanged either way): a missing `EMAIL` binding, a missing `origin`, an unresolved
  * contact (no email on file), or the send itself failing all degrade silently, logged but never
  * thrown, since a notification failure must never undo or fail the offer it is announcing (the
- * offer already exists in storage by the time this runs).
+ * offer already exists in storage by the time this runs). Once a contact resolves, `notify.env`
+ * also drives a best-effort Discord post to the classes channel
+ * (`docs/discord-notifications-wiring.md`); `notify.env` intersects `DiscordBindingEnv` alongside
+ * `EmailBindingEnv` for this reason, both satisfied at the real call site by the same
+ * `platform.env`. A missing webhook secret is `notifyDiscord`'s own silent no-op, the same degrade
+ * as the email above.
  */
 export async function offerSpot(
   db: D1Database,
-  args: { classId: string; waitlistId: string; actorEmail: string; notify?: { env: EmailBindingEnv; origin: string } },
+  args: { classId: string; waitlistId: string; actorEmail: string; notify?: { env: EmailBindingEnv & DiscordBindingEnv; origin: string } },
 ): Promise<OfferMintResult | OfferActionError> {
   const cls = await getClassWithCounts(db, args.classId);
   if (!cls) return { error: 'No such class.' };
@@ -278,6 +284,10 @@ export async function offerSpot(
             committee_email: 'program-committee@aksailingclub.org',
           },
         });
+        await notifyDiscord(
+          args.notify.env,
+          buildOfferSentNotice({ className: cls.name, applicantName: contact.name, expiresAt: formatClubTimestamp(expiresAt) }),
+        );
       }
     } catch (err) {
       // Never let a notification failure undo or fail the offer itself (this function's own
