@@ -2,13 +2,11 @@
 title: "Class Registration"
 ---
 
-Class registration is moving from MembershipWorks to the new site as part of the club's phase-2 work, and isn't ready yet.
+Sign in to your MembershipWorks account below to register for a class. Not yet a member? [Join first](/join/), since membership is required for all classes.
 
-:::callout{tone="note"}
-[In the meantime]
-Not yet a member? [Join first](/join/), since membership is required for all classes. Already a
-member? Email `board@aksailingclub.org` to register, and check the [Education](/education/) page
-for class details, schedules, and what to bring.
+For class details, schedules, and what to bring, see the [Education](/education/) page.
+
+:::membershipworks{open="!event-list"}
 :::
 
 **Questions about classes?** Ask in `#education` on [Discord](/discord-server/). **Technical issues?** [Submit an IT request](/it-request/).

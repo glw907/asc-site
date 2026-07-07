@@ -1,27 +1,11 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, EntryGenerator } from './$types';
-import { createPublicRoutes } from '@glw907/cairn-cms/delivery';
-import { site, ORIGIN, SITE_DESCRIPTION } from '$chassis/content';
-import { cairn, publicMediaResolver, mediaEnabled, siteConfig } from '$theme/cairn.config';
+import { site } from '$chassis/content';
 import { REDIRECTS } from '$theme/redirects';
 import { isRoutable } from '$theme/routable-concepts';
+import { routes } from '$theme/public-routes';
 
 export const prerender = true;
-
-const routes = createPublicRoutes({
-  site,
-  render: cairn.rendering.render,
-  origin: ORIGIN,
-  siteName: siteConfig.siteName,
-  description: SITE_DESCRIPTION,
-  feeds: { rss: ORIGIN + '/feed.xml', json: ORIGIN + '/feed.json' },
-  // The same resolver the body render path uses, so the read path resolves a frontmatter `image`
-  // hero into the `heroImage` projection the template and the SEO head read.
-  resolveMedia: publicMediaResolver,
-  // Arms the engine's media.resolver_absent diagnostic: with media on, dropping resolveMedia
-  // above logs a warning instead of silently shipping a broken hero image.
-  assetsEnabled: mediaEnabled,
-});
 
 export const entries: EntryGenerator = () => [
   // routes.entries() is site.entries(), which (a cairn-cms engine gap; see
@@ -30,6 +14,9 @@ export const entries: EntryGenerator = () => [
   ...site
     .all()
     .filter(isRoutable)
+    // '/events' is shadowed by (site)/events/+page.server.ts (Task 4's live D1 route, which
+    // cannot be prerendered), so this route must never try to generate it.
+    .filter((summary) => summary.permalink !== '/events')
     .map((summary) => ({ path: summary.permalink.replace(/^\//, '') })),
   // Prerender the old redirect sources too, so the crawler bakes a static redirect page for each
   // rather than skipping a path `routes.entries()` never lists.

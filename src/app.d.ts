@@ -1,5 +1,5 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
-import type { ExecutionContext } from '@cloudflare/workers-types';
+import type { ExecutionContext, D1Database } from '@cloudflare/workers-types';
 // The binding-shaped types ship from the /sveltekit subpath, so the Platform block intersects
 // them rather than restating every engine binding by hand. CairnMediaBindings adds
 // MEDIA_BUCKET, present because this site turns media on.
@@ -10,7 +10,10 @@ import '@glw907/cairn-cms/ambient';
 declare global {
   namespace App {
     interface Platform {
-      env: CairnPlatformBindings & CairnMediaBindings;
+      // EVENTS_DB is this site's own binding (Task 4), not a cairn-cms one: the club's ops-stack
+      // D1, read (never written) for the Season section and /events. See
+      // src/theme/season-data.ts's header comment.
+      env: CairnPlatformBindings & CairnMediaBindings & { EVENTS_DB: D1Database };
       context: ExecutionContext;
       caches: CacheStorage & { default: Cache };
     }

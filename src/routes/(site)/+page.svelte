@@ -1,18 +1,19 @@
 <!-- @component
-ASC's home page (Task 3): the north star made real, section for section
-(docs/superpowers/specs/assets/2026-07-06-asc-home-northstar.html in the cairn-cms repo, the
-build's design contract). A1's quieting recipe governs every section here: bands mark sections
-(the sage News band, the navy-deep closing band), cards mark objects (the news grid only), and
-the notification is an unboxed slim accent strip rather than a card. The Season band's gold dot
-is the C7 recipe (a class or clinic, never spending the amber/gold hue on anything else); its data
-is still static (season-2026.ts), pending Task 4's live D1 wiring. The Fleet and Facilities photo
-compositions are the real club photography Task 3 pulled into the media library
+ASC's home page (Task 3, live-data-wired in Task 4): the north star made real, section for
+section (docs/superpowers/specs/assets/2026-07-06-asc-home-northstar.html in the cairn-cms repo,
+the build's design contract). A1's quieting recipe governs every section here: bands mark
+sections (the sage News band, the navy-deep closing band), cards mark objects (the news grid
+only), and the notification is an unboxed slim accent strip rather than a card. The Season band's
+gold dot is the C7 recipe (a class or clinic, never spending the amber/gold hue on anything
+else); its data is the club's live D1 events (`$theme/season-data.ts`, read at request time, so
+this page cannot be prerendered the way an ordinary content route is). The Fleet and Facilities
+photo compositions are the real club photography Task 3 pulled into the media library
 (home-images.ts); a resolver miss degrades to the gradient placeholder the north star itself used
 before the photography existed, never a broken image. -->
 <script lang="ts">
   import type { PageData } from './$types';
   import { CairnHead } from '@glw907/cairn-cms/delivery/head';
-  import { SEASON_2026 } from '$theme/season-2026';
+  import SeasonList from '$theme/components/SeasonList.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -97,8 +98,7 @@ before the photography existed, never a broken image. -->
   </section>
 
   <!-- The Season: C7's gold-dot taxonomy, mission-first (education most prominent, since the club
-       is an educational 501(c)(3)). Static data for Task 3; Task 4 replaces season-2026.ts with the
-       club's live D1 events, same markup. -->
+       is an educational 501(c)(3)). Live D1 events (Task 4), same markup Task 3 built. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">The Season</h2>
@@ -109,21 +109,7 @@ before the photography existed, never a broken image. -->
         </span>
         <a href="/events/" class="font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
       </p>
-      <div class="season-columns">
-        {#each SEASON_2026 as month (month.label)}
-          <div class="season-month">
-            <div class="season-month-label">{month.label}</div>
-            {#each month.events as event (event.dateRange + event.name)}
-              <div class="season-row">
-                <span class="season-date">{event.dateRange}</span>
-                <span class={event.muted ? 'text-muted' : 'text-base-content'}>
-                  {#if event.dot}<span class="season-dot mr-[0.5rem] inline-block align-middle"></span>{/if}{event.name}
-                </span>
-              </div>
-            {/each}
-          </div>
-        {/each}
-      </div>
+      <SeasonList months={data.season} />
     </div>
   </section>
 
@@ -268,7 +254,9 @@ before the photography existed, never a broken image. -->
     background: linear-gradient(140deg, #7ba7d9, #4a7fb5);
   }
 
-  /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only. */
+  /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only.
+     Shared with SeasonList.svelte's own copy of this rule (the intro legend above uses the dot
+     outside that component, so this page still needs its own). */
   .season-dot {
     width: 8px;
     height: 8px;
@@ -276,36 +264,9 @@ before the photography existed, never a broken image. -->
     background: var(--color-secondary);
     vertical-align: 1px;
   }
-  .season-columns {
-    columns: 1;
-  }
-  .season-month {
-    break-inside: avoid;
-    margin-bottom: 1.8rem;
-  }
-  .season-month-label {
-    font-family: var(--font-display);
-    font-size: 0.9rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--color-base-content);
-    margin: 0 0 0.5rem;
-  }
-  .season-row {
-    display: grid;
-    grid-template-columns: 5.8rem 1fr;
-    align-items: baseline;
-    padding: 0.18rem 0;
-  }
-  .season-date {
-    color: var(--color-muted);
-    font-variant-numeric: tabular-nums;
-    font-size: 0.85rem;
-  }
 
   /* The family's 900px collapse threshold (the north star's own `.twocol`/`.cols2` breakpoint):
-     below it every two-column section stacks to one, including the Season's two text columns. */
+     below it every two-column section stacks to one. */
   @media (min-width: 56.25rem) {
     .hero-grid {
       grid-template-columns: 1.25fr 1fr;
@@ -318,10 +279,6 @@ before the photography existed, never a broken image. -->
     }
     .news-grid {
       grid-template-columns: repeat(3, 1fr);
-    }
-    .season-columns {
-      columns: 2;
-      column-gap: 5rem;
     }
     /* Image-first on wide screens only; the mobile order is the natural DOM order (text first). */
     .panel-figure-first {

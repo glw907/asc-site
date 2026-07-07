@@ -35,6 +35,16 @@ binding = "AUTH_DB"
 database_name = "cairn-asc-auth"
 database_id = "e8ebb275-bd87-4e9f-b1f8-685c460e7629"
 
+# Task 4 (events integration): a read-only binding onto the club's own ops stack D1 (`asc-ops`,
+# the same database ops.aksailingclub.org's dashboard writes to). This site's own code only ever
+# SELECTs from it (see src/theme/season-data.ts's header comment); ops keeps every write, per the
+# phase-1 design spec's coexistence strategy. Not this site's database: do not add a migration for
+# it here.
+[[d1_databases]]
+binding = "EVENTS_DB"
+database_name = "asc-ops"
+database_id = "59a1f106-71f4-4a4c-acbf-c1dba9ed5a16"
+
 # cairn-cms: R2 bucket backing the media library. The /media delivery route streams
 # content-addressed image bytes from here; the adapter's assets block names this binding.
 [[r2_buckets]]

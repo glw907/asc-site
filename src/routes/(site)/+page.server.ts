@@ -3,8 +3,11 @@ import { buildSeoMeta } from '@glw907/cairn-cms/delivery';
 import { posts, notifications, ORIGIN, SITE_DESCRIPTION } from '$chassis/content';
 import { mediaManifest, publicMediaResolver, siteConfig } from '$theme/cairn.config';
 import { homeImages } from '$theme/home-images';
+import { loadSeasonMonths } from '$theme/season-data';
 
-export const prerender = true;
+// The Season section reads the club's live D1 at request time (Task 4), so the home page can no
+// longer be baked into the static build the way an ordinary content route is; `prerender` is
+// therefore left at its project default (false, dynamic SSR), same as the /admin routes.
 
 /** One notification's home-banner projection: title, body, and its date for the "posted" line. */
 interface ActiveNotification {
@@ -32,12 +35,15 @@ function activeNotification(today: string): ActiveNotification | undefined {
   return undefined;
 }
 
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = async ({ platform }) => {
   const images = homeImages(mediaManifest, publicMediaResolver);
+  const db = platform?.env.EVENTS_DB;
+  const season = db ? await loadSeasonMonths(db) : [];
   return {
     news: posts.all().slice(0, 3),
     notification: activeNotification(new Date().toISOString().slice(0, 10)),
     images,
+    season,
     seo: buildSeoMeta({
       title: siteConfig.siteName,
       description: SITE_DESCRIPTION,
