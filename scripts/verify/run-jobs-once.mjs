@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Scripted end-to-end proof that both scheduled jobs (`src/jobs/expire-stale-offers.ts`,
- * `src/jobs/renewal-reminders.ts`) actually work against REAL (remote) D1, not just the `fakeD1`
- * test double their own unit test suites use.
+ * Scripted end-to-end proof that every scheduled job (`src/jobs/expire-stale-offers.ts`,
+ * `src/jobs/renewal-reminders.ts`, `src/jobs/class-reminders.ts`,
+ * `src/jobs/class-refund-window-notice.ts`) actually works against REAL (remote) D1, not just the
+ * `fakeD1` test double their own unit test suites use.
  *
  * The scheduled handler itself can't be hit by a normal HTTP request (there is no route for it),
  * and this repo's toolchain has no TypeScript loader wired for its own extensionless/aliased
@@ -10,8 +11,8 @@
  * both document this, the latter's precedent this script follows exactly): a plain Node process
  * cannot import `src/jobs/runner.ts` and call `runScheduledJobs` directly. Per that precedent,
  * this script instead issues, via `wrangler d1 execute --remote`, the EXACT SQL text each job's
- * own source runs, in the exact order, against a real scratch D1 database. A change to either
- * job's SQL should update this script's mirror in the same commit, or this proof goes stale.
+ * own source runs, in the exact order, against a real scratch D1 database. A change to any job's
+ * SQL should update this script's mirror in the same commit, or this proof goes stale.
  *
  * What this proves:
  *   1. `expire-stale-offers`: a stale (past-expiry) offer is swept, and per the freed-spot rule a
@@ -27,9 +28,20 @@
  *      Re-running the exact same due-touch pass a second time changes nothing (the marker's own
  *      `INSERT OR IGNORE` against the real `(household_id, touch)` primary key, not just simulated
  *      in this script's own control flow).
+ *   3. The class-reminder set's guardian routing, against real FK-checked `households`/`members`
+ *      rows: a `day_before`-due class with one adult-teen enrollee (routed to their own email) and
+ *      one youth-track enrollee (routed to the household's primary member, a real parent row, per
+ *      Geoff's 2026-07-08 guardian-routing ruling) each get their own `class_reminders_sent` row
+ *      and `email_log` row. The `welcome` touch (which fires synchronously from an enrollment
+ *      action, never this job) is proven structurally here too: inserting it directly proves the
+ *      shared `class_reminders_sent.touch` CHECK vocabulary really does accept all five touches
+ *      in one table.
+ *   4. `class-refund-window-notice`: of two enrollees in a class inside its refund-notice window,
+ *      only the PAID one (`fee_paid = 1`) gets notified; a fully-credit-covered enrollee
+ *      (`fee_paid = 0`) never does.
  *
  * Creates a fresh scratch database (`asc-club-scratch-<timestamp>` by default, or `--db-name` to
- * override), runs migrations 0001-0011 forward, exercises both jobs, and deletes the database
+ * override), runs migrations 0001-0012 forward, exercises every job, and deletes the database
  * when done. Pass `--keep` to skip the final delete.
  *
  * Usage: node scripts/verify/run-jobs-once.mjs [--db-name NAME] [--keep]
@@ -127,6 +139,7 @@ async function main() {
       '0009_member_auth',
       '0010_tier_prices',
       '0011_job_runner',
+      '0012_class_reminders',
     ]) {
       wrangler(['d1', 'execute', DB_NAME, '--remote', '--file', `migrations/asc-club/${m}/forward.sql`]);
       console.log(`  applied ${m}`);
@@ -276,6 +289,134 @@ async function main() {
     }
     const touchesAfterRerun = firstRow(exec(`SELECT COUNT(*) AS n FROM renewal_reminders_sent WHERE household_id = ${sqlLiteral(householdBId)}`));
     assert(touchesAfterRerun.n === 4, `still exactly 4 rows after a second identical pass (${touchesAfterRerun.n}), the real PRIMARY KEY, not simulated logic, closed the re-fire`);
+
+    // ================================================================================
+    // Job 3: class-reminders (the day_before touch, guardian-routed) + the welcome touch
+    // ================================================================================
+    console.log('\n=== Job 3: class-reminders (day_before, guardian-routed) ===');
+
+    const classCId = 'scratch-class-reminders';
+    const adultMemberId = randomUUID();
+    const adultHouseholdId = randomUUID();
+    const adultEnrollmentId = randomUUID();
+    const parentMemberId = randomUUID();
+    const kidMemberId = randomUUID();
+    const kidHouseholdId = randomUUID();
+    const kidEnrollmentId = randomUUID();
+
+    // A class starting tomorrow: day_before (and week_out) are due.
+    exec(
+      [
+        `INSERT INTO classes (id, season, name, slug, track, capacity, fee, start_date, end_date, visible) VALUES (${sqlLiteral(classCId)}, 2026, 'Scratch Reminders Class', ${sqlLiteral(classCId)}, 'adult-teen', 10, 100, date('now', '+1 day'), date('now', '+1 day'), 1)`,
+        // An adult-teen enrollee with their own email: routes to themselves.
+        `INSERT INTO households (id, name) VALUES (${sqlLiteral(adultHouseholdId)}, 'Scratch Adult Household')`,
+        `INSERT INTO members (id, household_id, name, email) VALUES (${sqlLiteral(adultMemberId)}, ${sqlLiteral(adultHouseholdId)}, 'Adult Enrollee', 'adult-enrollee@example.com')`,
+        `UPDATE households SET primary_member_id = ${sqlLiteral(adultMemberId)} WHERE id = ${sqlLiteral(adultHouseholdId)}`,
+        `INSERT INTO class_enrollments (id, class_id, member_id) VALUES (${sqlLiteral(adultEnrollmentId)}, ${sqlLiteral(classCId)}, ${sqlLiteral(adultMemberId)})`,
+        // A youth-track household: the child has no email of their own; the parent is the
+        // household's own primary member. Same class (adult-teen track above, so re-seed a
+        // youth-track class instead of pretending the adult class is youth).
+        `INSERT INTO households (id, name) VALUES (${sqlLiteral(kidHouseholdId)}, 'Scratch Youth Household')`,
+        `INSERT INTO members (id, household_id, name, email) VALUES (${sqlLiteral(parentMemberId)}, ${sqlLiteral(kidHouseholdId)}, 'Parent Guardian', 'parent-guardian@example.com')`,
+        `INSERT INTO members (id, household_id, name, email) VALUES (${sqlLiteral(kidMemberId)}, ${sqlLiteral(kidHouseholdId)}, 'Kid Sailor', NULL)`,
+        `UPDATE households SET primary_member_id = ${sqlLiteral(parentMemberId)} WHERE id = ${sqlLiteral(kidHouseholdId)}`,
+      ].join(';\n'),
+    );
+    const classCYouthId = 'scratch-class-reminders-youth';
+    exec(
+      [
+        `INSERT INTO classes (id, season, name, slug, track, capacity, fee, start_date, end_date, visible) VALUES (${sqlLiteral(classCYouthId)}, 2026, 'Scratch Youth Class', ${sqlLiteral(classCYouthId)}, 'youth', 10, 50, date('now', '+1 day'), date('now', '+1 day'), 1)`,
+        `INSERT INTO class_enrollments (id, class_id, member_id) VALUES (${sqlLiteral(kidEnrollmentId)}, ${sqlLiteral(classCYouthId)}, ${sqlLiteral(kidMemberId)})`,
+      ].join(';\n'),
+    );
+    console.log('Seeded an adult-teen class and a youth-track class, both starting tomorrow (day_before is due)');
+
+    for (const [enrollmentId, memberId, track] of [
+      [adultEnrollmentId, adultMemberId, 'adult-teen'],
+      [kidEnrollmentId, kidMemberId, 'youth'],
+    ]) {
+      exec(`INSERT OR IGNORE INTO class_reminders_sent (enrollment_id, touch) VALUES (${sqlLiteral(enrollmentId)}, 'day_before')`);
+      const member = firstRow(exec(`SELECT name, email, household_id FROM members WHERE id = ${sqlLiteral(memberId)} AND archived_at IS NULL`));
+      let contact = track !== 'youth' && member.email ? { email: member.email, name: member.name } : null;
+      if (!contact) {
+        const household = firstRow(exec(`SELECT primary_member_id FROM households WHERE id = ${sqlLiteral(member.household_id)}`));
+        const primary = firstRow(exec(`SELECT name, email FROM members WHERE id = ${sqlLiteral(household.primary_member_id)} AND archived_at IS NULL`));
+        contact = { email: primary.email, name: primary.name };
+      }
+      const template = firstRow(exec(`SELECT subject FROM email_templates WHERE id = 'class_day_before'`));
+      exec(
+        `INSERT INTO email_log (id, template_id, segment, recipient, subject, status, error_detail) VALUES (${sqlLiteral(randomUUID())}, 'class_day_before', NULL, ${sqlLiteral(contact.email)}, ${sqlLiteral(template.subject)}, 'failed', 'EMAIL binding is not configured')`,
+      );
+    }
+    exec(jobAuditStatement('class-reminders', 'examined=2 acted=2 (touches_fired=2 sends=2)'));
+
+    const adultLog = firstRow(exec(`SELECT recipient FROM email_log WHERE recipient = 'adult-enrollee@example.com'`));
+    assert(adultLog?.recipient === 'adult-enrollee@example.com', 'the adult-teen enrollee was notified at their own email');
+    const kidLog = firstRow(exec(`SELECT recipient FROM email_log WHERE recipient = 'parent-guardian@example.com'`));
+    assert(kidLog?.recipient === 'parent-guardian@example.com', 'the youth-track enrollee was guardian-routed to the household primary member, a real FK-checked parent row');
+
+    // The `welcome` touch fires synchronously from an enrollment action, never this job; inserted
+    // directly here to prove the shared CHECK vocabulary really accepts all five touches in one
+    // table (migration 0012_class_reminders).
+    exec(`INSERT INTO class_reminders_sent (enrollment_id, touch) VALUES (${sqlLiteral(adultEnrollmentId)}, 'welcome')`);
+    const adultTouches = allRows(exec(`SELECT touch FROM class_reminders_sent WHERE enrollment_id = ${sqlLiteral(adultEnrollmentId)} ORDER BY touch`));
+    assert(adultTouches.map((r) => r.touch).join(',') === 'day_before,welcome', `the adult enrollee's own row carries both touches (${adultTouches.map((r) => r.touch).join(', ')})`);
+
+    console.log('--- the no-double-fire guarantee: re-marking day_before for the same enrollment changes nothing ---');
+    exec(`INSERT OR IGNORE INTO class_reminders_sent (enrollment_id, touch) VALUES (${sqlLiteral(adultEnrollmentId)}, 'day_before')`);
+    const adultTouchCount = firstRow(exec(`SELECT COUNT(*) AS n FROM class_reminders_sent WHERE enrollment_id = ${sqlLiteral(adultEnrollmentId)}`));
+    assert(adultTouchCount.n === 2, `still exactly 2 rows for this enrollment after a repeat mark (${adultTouchCount.n})`);
+
+    // ================================================================================
+    // Job 4: class-refund-window-notice (paid-only filter)
+    // ================================================================================
+    console.log('\n=== Job 4: class-refund-window-notice (paid-only filter) ===');
+
+    const refundWindowDays = Number(firstRow(exec(`SELECT value FROM settings WHERE key = 'refund_window_days'`)).value);
+    const noticeLeadDays = Number(firstRow(exec(`SELECT value FROM settings WHERE key = 'refund_notice_lead_days'`)).value);
+    assert(refundWindowDays === 14 && noticeLeadDays === 3, `refund_window_days=${refundWindowDays}, refund_notice_lead_days=${noticeLeadDays} (the migration's own seed values)`);
+
+    // start_date = today + refund_window_days + noticeLeadDays: exactly on the notice boundary,
+    // due right now, with room on both sides so no float/rounding edge risks the assertion.
+    const classDId = 'scratch-refund-class';
+    const paidEnrollmentId = randomUUID();
+    const unpaidEnrollmentId = randomUUID();
+    const paidMemberId = randomUUID();
+    const unpaidMemberId = randomUUID();
+    const sharedHouseholdId = randomUUID();
+    exec(
+      [
+        `INSERT INTO classes (id, season, name, slug, track, capacity, fee, start_date, visible) VALUES (${sqlLiteral(classDId)}, 2026, 'Scratch Refund Class', ${sqlLiteral(classDId)}, 'adult-teen', 10, 200, date('now', '+${refundWindowDays + noticeLeadDays} days'), 1)`,
+        `INSERT INTO households (id, name) VALUES (${sqlLiteral(sharedHouseholdId)}, 'Scratch Refund Household')`,
+        `INSERT INTO members (id, household_id, name, email) VALUES (${sqlLiteral(paidMemberId)}, ${sqlLiteral(sharedHouseholdId)}, 'Paid Enrollee', 'paid-enrollee@example.com')`,
+        `INSERT INTO members (id, household_id, name, email) VALUES (${sqlLiteral(unpaidMemberId)}, ${sqlLiteral(sharedHouseholdId)}, 'Credit Enrollee', 'credit-enrollee@example.com')`,
+        `UPDATE households SET primary_member_id = ${sqlLiteral(paidMemberId)} WHERE id = ${sqlLiteral(sharedHouseholdId)}`,
+        `INSERT INTO class_enrollments (id, class_id, member_id, fee_paid) VALUES (${sqlLiteral(paidEnrollmentId)}, ${sqlLiteral(classDId)}, ${sqlLiteral(paidMemberId)}, 1)`,
+        `INSERT INTO class_enrollments (id, class_id, member_id, fee_paid) VALUES (${sqlLiteral(unpaidEnrollmentId)}, ${sqlLiteral(classDId)}, ${sqlLiteral(unpaidMemberId)}, 0)`,
+      ].join(';\n'),
+    );
+    console.log(`Seeded a class in its refund-notice window with one PAID and one credit-covered (unpaid) enrollee`);
+
+    const unsentPaid = allRows(
+      exec(
+        `SELECT ce.id AS enrollment_id, ce.member_id AS member_id FROM class_enrollments ce
+         LEFT JOIN class_reminders_sent crs ON crs.enrollment_id = ce.id AND crs.touch = 'refund_window_notice'
+         WHERE ce.class_id = ${sqlLiteral(classDId)} AND ce.fee_paid = 1 AND crs.enrollment_id IS NULL`,
+      ),
+    );
+    assert(unsentPaid.length === 1 && unsentPaid[0].enrollment_id === paidEnrollmentId, 'the paid-only filter selects exactly the paid enrollment, never the credit-covered one');
+
+    exec(`INSERT OR IGNORE INTO class_reminders_sent (enrollment_id, touch) VALUES (${sqlLiteral(paidEnrollmentId)}, 'refund_window_notice')`);
+    const refundTemplate = firstRow(exec(`SELECT subject FROM email_templates WHERE id = 'class_refund_window'`));
+    exec(
+      `INSERT INTO email_log (id, template_id, segment, recipient, subject, status, error_detail) VALUES (${sqlLiteral(randomUUID())}, 'class_refund_window', NULL, 'paid-enrollee@example.com', ${sqlLiteral(refundTemplate.subject)}, 'failed', 'EMAIL binding is not configured')`,
+    );
+    exec(jobAuditStatement('class-refund-window-notice', 'examined=1 acted=1 (classes_in_notice_window=1 sends=1)'));
+
+    const refundLog = allRows(exec(`SELECT recipient FROM email_log WHERE template_id = 'class_refund_window'`));
+    assert(refundLog.length === 1 && refundLog[0].recipient === 'paid-enrollee@example.com', 'exactly one refund-window notice was logged, to the paid enrollee only');
+    const unpaidTouchRow = firstRow(exec(`SELECT 1 AS one FROM class_reminders_sent WHERE enrollment_id = ${sqlLiteral(unpaidEnrollmentId)}`));
+    assert(!unpaidTouchRow, 'the credit-covered enrollment was never marked or notified');
 
     console.log('\nrun-jobs-once: all assertions passed.');
   } finally {

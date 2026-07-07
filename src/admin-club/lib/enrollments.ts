@@ -22,6 +22,8 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { getClassWithCounts } from './classes-store';
 import { ensureMember } from './people';
+import { sendClassWelcomeEmail } from './class-welcome';
+import type { EmailBindingEnv } from './club-email';
 
 /** A signup's outcome: `'enrolled'` when the class had a free spot, `'waitlisted'` (with the new
  *  entry's queue position) when it was already full. */
@@ -52,6 +54,12 @@ export interface SignUpForClassInput {
    *  `club-settings.ts`'s `getWaiverTextVersion` at the moment of submission, never here. */
   waiverVersion: string;
 }
+
+/** `signUpForClass`'s optional welcome-email trigger (the class-reminder set's own `welcome`
+ *  touch, `class-welcome.ts`'s own header): `undefined` when the caller has no EMAIL binding
+ *  wired, in which case the enrolled branch skips the attempt entirely (never blocks or fails the
+ *  signup itself either way). */
+export type SignUpNotify = EmailBindingEnv;
 
 /** True when `err` is a SQLite `UNIQUE` constraint failure naming `table`: the shape both a
  *  concurrent double-enrollment (`class_enrollments`'s own uniqueness) and a concurrent double-
@@ -84,11 +92,15 @@ function waiverAcceptanceInsert(db: D1Database, input: SignUpForClassInput) {
  * only gating field). Otherwise enrolls immediately if the class has a free spot, or joins the
  * waitlist if it is already full; either branch also records the liability-release acceptance,
  * atomically with the signup, in the same `db.batch()`. A batch failure (a constraint violation,
- * a transient D1 error) surfaces as a refusal rather than a false "you're in" success.
+ * a transient D1 error) surfaces as a refusal rather than a false "you're in" success. An
+ * immediate enrollment also sends the class-reminder set's own `welcome` touch (best-effort,
+ * after the batch has committed, `notify` optional) -- a waitlist join has no enrollment yet to
+ * welcome, so the waitlist branch never touches `notify` at all.
  */
 export async function signUpForClass(
   db: D1Database,
   input: SignUpForClassInput,
+  notify?: SignUpNotify,
 ): Promise<SignUpResult | SignUpActionError> {
   const cls = await getClassWithCounts(db, input.classId);
   if (!cls || !cls.visible) return { error: 'This class is not open for signup.' };
@@ -114,6 +126,13 @@ export async function signUpForClass(
           .bind('public:signup', 'enroll', 'enrollment', enrollmentId, detail),
         waiverAcceptanceInsert(db, input),
       ]);
+
+      await sendClassWelcomeEmail(db, notify, {
+        enrollmentId,
+        className: cls.name,
+        track: cls.track,
+        memberId: member.memberId,
+      });
 
       return { outcome: 'enrolled' };
     }

@@ -20,6 +20,7 @@ import { getClass, getClassWithCounts } from './classes-store';
 import { getOfferWindowHours } from './club-settings';
 import { ensureMember } from './people';
 import { sendClubEmail, type EmailBindingEnv } from './club-email';
+import { sendClassWelcomeEmail } from './class-welcome';
 import { formatClubTimestamp } from './ui';
 
 /** How an offer was last resolved; `null` (the `class_offers.resolved` column's own default)
@@ -320,8 +321,14 @@ export async function previewOffer(db: D1Database, token: string): Promise<Offer
  * one SQLite file, the same reasoning `club-roles.ts`'s last-owner guard documents for an
  * identical shape); whichever loses sees `changes === 0` and refuses cleanly instead of double-
  * enrolling.
+ *
+ * A successful claim also sends the class-reminder set's own `welcome` touch (best-effort, after
+ * the batch has committed, `notify` optional -- `class-welcome.ts`'s own header), the same as
+ * `enrollments.ts`'s `signUpForClass` does for a direct signup: both are real enrollment moments,
+ * and a waitlisted-then-offered participant deserves the same welcome a directly-enrolled one
+ * gets.
  */
-export async function claimOffer(db: D1Database, token: string): Promise<OfferClaimResult | OfferActionError> {
+export async function claimOffer(db: D1Database, token: string, notify?: EmailBindingEnv): Promise<OfferClaimResult | OfferActionError> {
   const tokenHash = await hashOfferToken(token);
   const now = toSqliteDatetime(new Date());
 
@@ -403,6 +410,13 @@ export async function claimOffer(db: D1Database, token: string): Promise<OfferCl
   }
 
   await writeAudit(db, 'public:claim', 'claim', preview.waitlist_id, `class=${preview.class_id}`);
+
+  await sendClassWelcomeEmail(db, notify, {
+    enrollmentId,
+    className: cls.name,
+    track: cls.track,
+    memberId: enrollMemberId,
+  });
 
   return {
     enrollmentId,

@@ -115,3 +115,31 @@ export async function getRenewalGraceDays(db: D1Database): Promise<number> {
   const parsed = row ? Number(row.value) : NaN;
   return Number.isFinite(parsed) ? parsed : DEFAULT_RENEWAL_GRACE_DAYS;
 }
+
+/** The migration's own seed values (`migrations/asc-club/0012_class_reminders`): used only if a
+ *  row is ever missing, which should not happen post-migration. */
+const DEFAULT_REFUND_WINDOW_DAYS = 14;
+const DEFAULT_REFUND_NOTICE_LEAD_DAYS = 3;
+
+/**
+ * How many days before a class's own `start_date` a paid enrollment's refund/voucher deadline
+ * falls (the education page's own published policy): `src/jobs/class-refund-window-notice.ts`'s
+ * one reader, a Club setting rather than a constant for the same reason every other cadence
+ * number here is (`getOfferWindowHours`'s own precedent).
+ */
+export async function getRefundWindowDays(db: D1Database): Promise<number> {
+  const row = await db.prepare("SELECT value FROM settings WHERE key = 'refund_window_days'").first<{ value: string }>();
+  const parsed = row ? Number(row.value) : NaN;
+  return Number.isFinite(parsed) ? parsed : DEFAULT_REFUND_WINDOW_DAYS;
+}
+
+/**
+ * How many days BEFORE the refund cutoff (`getRefundWindowDays` days before `start_date`) the
+ * refund-window-notice job warns a paid enrollee, so the notice lands with time to act rather
+ * than on the cutoff itself.
+ */
+export async function getRefundNoticeLeadDays(db: D1Database): Promise<number> {
+  const row = await db.prepare("SELECT value FROM settings WHERE key = 'refund_notice_lead_days'").first<{ value: string }>();
+  const parsed = row ? Number(row.value) : NaN;
+  return Number.isFinite(parsed) ? parsed : DEFAULT_REFUND_NOTICE_LEAD_DAYS;
+}

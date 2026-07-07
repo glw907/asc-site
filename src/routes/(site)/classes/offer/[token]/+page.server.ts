@@ -24,7 +24,10 @@ export const actions: Actions = {
     const db = platform?.env.CLUB_DB;
     if (!db) return fail(503, { error: 'This link is not available right now.' });
 
-    const result = await claimOffer(db, params.token);
+    // The class-reminder set's own `welcome` touch (`class-welcome.ts`'s own header): a claimed
+    // offer is as real an enrollment moment as a direct signup, so it gets the same welcome.
+    const notify = platform?.env.EMAIL ? { EMAIL: platform.env.EMAIL } : undefined;
+    const result = await claimOffer(db, params.token, notify);
     if ('error' in result) return fail(400, { error: result.error });
     return { claimed: true as const, result };
   },

@@ -9,6 +9,7 @@ import * as v from 'valibot';
 import { invalid } from '@sveltejs/kit';
 import type { D1Database } from '@cloudflare/workers-types';
 import { signUpForClass, type SignUpForClassInput, type SignUpResult } from '$admin-club/lib/enrollments';
+import type { EmailBindingEnv } from '$admin-club/lib/club-email';
 import { getWaiverTextVersion } from '$admin-club/lib/club-settings';
 import { verifyTurnstile } from './turnstile';
 
@@ -30,10 +31,13 @@ export type ClassSignupSubmission = v.InferOutput<typeof classSignupSchema>;
 /** The slice of `App.Platform['env']` this handler actually reads, narrowed the same way
  *  `club-roles.ts`'s own `resolveClubDb` narrows `platform.env`: a plain `env: unknown` argument,
  *  cast internally, so a caller (or a test) never has to satisfy the engine's full
- *  `CairnPlatformBindings` shape just to exercise this one form. */
+ *  `CairnPlatformBindings` shape just to exercise this one form. `EMAIL` threads through to
+ *  `signUpForClass`'s own optional `notify` (the class-reminder set's `welcome` touch); missing
+ *  it (no binding wired) is a normal, silent no-op there, never a signup failure. */
 interface ClassSignupEnv {
   CLUB_DB?: D1Database;
   TURNSTILE_SECRET_KEY?: string;
+  EMAIL?: EmailBindingEnv['EMAIL'];
 }
 
 /** Sign up for a class from the public form's own submission: Turnstile-gated (degrading
@@ -65,7 +69,7 @@ export async function handleClassSignup(
     phone: input.phone || undefined,
     waiverVersion,
   };
-  const result = await signUpForClass(db, signupInput);
+  const result = await signUpForClass(db, signupInput, platformEnv?.EMAIL ? { EMAIL: platformEnv.EMAIL } : undefined);
   if ('error' in result) invalid(result.error);
 
   return result;

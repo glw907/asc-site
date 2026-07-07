@@ -6,6 +6,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type { EmailBindingEnv } from '$admin-club/lib/club-email';
 import { expireStaleOffersJob } from './expire-stale-offers';
 import { renewalRemindersJob } from './renewal-reminders';
+import { classRemindersJob } from './class-reminders';
+import { classRefundWindowNoticeJob } from './class-refund-window-notice';
 
 /** The bindings a job may read: `CLUB_DB` is resolved once by `runner.ts` and handed to every job
  *  through {@link JobRunContext} instead, so a job's own `env` argument only ever needs the
@@ -51,16 +53,17 @@ export interface Job {
  * independently try/caught, so a new job is exactly one array entry, never a new branch in the
  * runner itself.
  *
- * TWO MORE JOBS the requirements review named are deliberately NOT built this pass (the review's
- * own "leave hooks... do NOT build those today" instruction): adding either later is meant to be
+ * `class-reminders` drives three of the class-reminder set's four touches (`week_out`,
+ * `day_before`, `followup`); the fourth, `welcome`, fires synchronously from the enrollment
+ * action itself (`enrollments.ts`'s `signUpForClass`, `offers.ts`'s `claimOffer`), never from
+ * this array, since it has no cron cadence of its own to wait for.
+ *
+ * ONE MORE JOB the requirements review named is deliberately NOT built this pass (the review's
+ * own "leave hooks... do NOT build those today" instruction): adding it later is meant to be
  * exactly this, one more import and one more array entry, nothing else.
  *   - `asset-payment-window-release`: the approved-asset payment window (30 days, one global
  *     setting per the review's ruling C) expires unpaid approvals and reopens the freed
- *     asset_waitlist queue, mirroring this pass's own `expire-stale-offers` shape closely enough
- *     to copy its freed-queue pattern once the asset payment build lands.
- *   - `pre-class-reminder`: a T-minus-days-before-class-starts nudge ("what to bring"), replacing
- *     the site's own promised-but-unbuilt manual "we'll follow up by email" copy (the review's
- *     item 2). Needs a per-class send cadence, not a per-household one, so it is its own job
- *     rather than a third touch on `renewal-reminders`.
+ *     asset_waitlist queue, mirroring `expire-stale-offers`'s own freed-queue pattern closely
+ *     enough to copy once the asset payment build lands.
  */
-export const JOBS: Job[] = [expireStaleOffersJob, renewalRemindersJob];
+export const JOBS: Job[] = [expireStaleOffersJob, renewalRemindersJob, classRemindersJob, classRefundWindowNoticeJob];
