@@ -61,7 +61,7 @@
       "concept": "pages",
       "title": "Class Registration",
       "permalink": "/class-registration",
-      "summary": "Sign in to your MembershipWorks account below to register for a class. Not yet a member? Join first, since membership is required for all classes. For class details, schedules, and what to bring, see…",
+      "summary": "Class registration happens on the Events page: find your class in the calendar and register directly from its listing. Not yet a member? Join first, since membership is required for all classes. For…",
       "draft": false,
       "links": []
     },
@@ -124,7 +124,7 @@
       "concept": "pages",
       "title": "Member Directory",
       "permalink": "/directory",
-      "summary": "The member directory is moving from MembershipWorks to the new site as part of the club's phase-2 work, and isn't ready yet. :::callout{tone=\"note\"} [In the meantime] Looking for a committee chair or…",
+      "summary": "The member directory is moving from MembershipWorks to the new site as part of the club's phase-2 work, and isn't ready yet. :::callout[In the Meantime]{tone=\"note\"} Looking for a committee chair or…",
       "draft": false,
       "links": []
     },
@@ -160,7 +160,14 @@
       "permalink": "/education",
       "summary": "The Alaska Sailing Club is an education-focused 501(c)(3). Each summer, we teach a four-day beginner sailing course in two tracks, one for adults and teens and one for youth, making it easy for whole…",
       "draft": false,
-      "links": []
+      "links": [],
+      "mediaRefs": [
+        "659b55426153c22e",
+        "6af6b0768d544d48",
+        "9c08687cac54de80",
+        "a660579bd31517ff",
+        "b48f26c871d0aa34"
+      ]
     },
     {
       "id": "elections",
@@ -203,7 +210,7 @@
       "concept": "pages",
       "title": "Issues & Support",
       "permalink": "/issues-and-support",
-      "summary": "Report a problem, ask a billing question, submit a reimbursement request, or ask about storage availability below. Boat problems route to #fleet on Discord, harbor issues to #harbor, and site issues…",
+      "summary": "Report a problem, ask a billing question, submit a reimbursement request, or ask about storage availability. Boat problems route to #fleet on Discord, harbor issues to #harbor, and site issues to…",
       "draft": false,
       "links": []
     },
@@ -212,7 +219,7 @@
       "concept": "pages",
       "title": "IT & Infrastructure Requests",
       "permalink": "/it-request",
-      "summary": "Need help with your club email, website login, Discord access, or something not working right on the site? Submit a request below and we'll get back to you. For boat, dock, or clubhouse issues, use…",
+      "summary": "Need help with your club email, website login, Discord access, or something not working right on the site? Here's how to reach us. For boat, dock, or clubhouse issues, use Issues & Support instead.…",
       "draft": false,
       "links": []
     },
@@ -223,7 +230,10 @@
       "permalink": "/join",
       "summary": "The Alaska Sailing Club is a community of sailors, families, and friends who share a beautiful lakeside property on Big Lake (about an hour north of Anchorage). Whether you're here to learn to sail,…",
       "draft": false,
-      "links": []
+      "links": [],
+      "mediaRefs": [
+        "7fc9675a17c7a38e"
+      ]
     },
     {
       "id": "long-term-rv-parking-guidelines",
@@ -301,7 +311,10 @@
       "permalink": "/racing",
       "summary": "Racing at the ASC picks up where our sailing classes leave off, giving experienced sailors a fleet to plug into when they move to Anchorage. Graduates of our Introduction to Dinghy Sailing course…",
       "draft": false,
-      "links": []
+      "links": [],
+      "mediaRefs": [
+        "ff77ce74df7d2570"
+      ]
     },
     {
       "id": "rack-storage",
