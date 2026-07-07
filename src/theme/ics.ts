@@ -1,8 +1,9 @@
 // The events deep-look pass: the real iCal feed. Ported from the legacy main-site Worker's own
 // `src/lib/ics.js` (`buildICS`), which this rebuild's `/events/calendar.ics/+server.ts` reads with
-// the same `EVENTS_DB` rows the full listing uses (`$theme/events-data.ts`'s `EventDetailRow`), so
-// the calendar-subscribe bar's iCal/Apple and Google Calendar links resolve against a real,
-// currently-correct feed rather than a static or placeholder file.
+// the same rows the full listing uses (`$theme/events-data.ts`'s `EventDetailRow`, sourced from
+// `CLUB_DB` as of pass 2.1's Task 9), so the calendar-subscribe bar's iCal/Apple and Google
+// Calendar links resolve against a real, currently-correct feed rather than a static or
+// placeholder file.
 import type { EventDetailRow } from './events-data';
 
 /** Escape the handful of characters the iCalendar spec reserves in a text property value. */

@@ -7,13 +7,14 @@ import { loadSeasonMonths } from '$theme/season-data';
 import { activeNotification } from '$theme/active-notification';
 import { newsCards } from '$theme/post-cards';
 
-// The Season section reads the club's live D1 at request time (Task 4), so the home page can no
-// longer be baked into the static build the way an ordinary content route is; `prerender` is
-// therefore left at its project default (false, dynamic SSR), same as the /admin routes.
+// The Season section reads the club's live D1 at request time (Task 4, repointed to asc-club by
+// pass 2.1's Task 9), so the home page can no longer be baked into the static build the way an
+// ordinary content route is; `prerender` is therefore left at its project default (false, dynamic
+// SSR), same as the /admin routes.
 
 export const load: PageServerLoad = async ({ platform }) => {
   const images = homeImages(mediaManifest, publicMediaResolver);
-  const db = platform?.env.EVENTS_DB;
+  const db = platform?.env.CLUB_DB;
   const season = db ? await loadSeasonMonths(db) : [];
   return {
     news: newsCards(posts.all().slice(0, 3), posts, mediaManifest, publicMediaResolver),

@@ -3,12 +3,12 @@ import { buildSeasonMonths } from '$theme/season-data';
 
 const CURRENT_YEAR = 2026;
 
-// A representative slice of the live asc-ops rows this module reads, fixed here rather than
+// A representative slice of the live asc-club rows this module reads, fixed here rather than
 // fetched, so the taxonomy and grouping stay pinned even if the club's own live data changes.
 function row(overrides: Partial<Parameters<typeof buildSeasonMonths>[0][number]>) {
   return {
     title: 'An event',
-    event_type: 'regatta',
+    event_type: 'racing',
     start_date: null,
     end_date: null,
     date_history: null,
@@ -28,15 +28,15 @@ describe('buildSeasonMonths', () => {
     });
   });
 
-  it('keeps a regatta plain ink: no dot, no muted', () => {
+  it('keeps a racing event plain ink: no dot, no muted', () => {
     const [may] = buildSeasonMonths(
-      [row({ title: 'Icebreaker Regatta', event_type: 'regatta', start_date: '2026-05-24', end_date: '2026-05-24' })],
+      [row({ title: 'Icebreaker Regatta', event_type: 'racing', start_date: '2026-05-24', end_date: '2026-05-24' })],
       CURRENT_YEAR,
     );
     expect(may.events[0]).toEqual({ dateRange: 'May 24', name: 'Icebreaker Regatta', dot: undefined, muted: undefined });
   });
 
-  it.each(['work_party', 'meeting', 'social'])('mutes a routine, non-racing "%s" entry', (eventType) => {
+  it.each(['operations', 'governance', 'social'])('mutes a routine, non-racing "%s" entry', (eventType) => {
     const [may] = buildSeasonMonths(
       [row({ title: 'Spring Work Party', event_type: eventType, start_date: '2026-05-23', end_date: '2026-05-23' })],
       CURRENT_YEAR,
@@ -60,7 +60,7 @@ describe('buildSeasonMonths', () => {
     const months = buildSeasonMonths(
       [
         row({ title: 'BNAC', start_date: '2026-10-09', end_date: '2026-10-11' }),
-        row({ title: 'Annual Meeting', event_type: 'meeting', start_date: '2026-11-14' }),
+        row({ title: 'Annual Meeting', event_type: 'governance', start_date: '2026-11-14' }),
       ],
       CURRENT_YEAR,
     );

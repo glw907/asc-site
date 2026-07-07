@@ -36,10 +36,14 @@ database_name = "cairn-asc-auth"
 database_id = "e8ebb275-bd87-4e9f-b1f8-685c460e7629"
 
 # Task 4 (events integration): a read-only binding onto the club's own ops stack D1 (`asc-ops`,
-# the same database ops.aksailingclub.org's dashboard writes to). This site's own code only ever
-# SELECTs from it (see src/theme/season-data.ts's header comment); ops keeps every write, per the
-# phase-1 design spec's coexistence strategy. Not this site's database: do not add a migration for
-# it here.
+# the same database ops.aksailingclub.org's dashboard writes to). Not this site's database: do not
+# add a migration for it here.
+#
+# READER NOTE (pass 2.1, Task 9 — the dev cutover): this binding is now PRESENT BUT UNUSED. Every
+# read that went through it (the home Season section, the /events listing, the .ics feed) repoints
+# at CLUB_DB below (src/theme/season-data.ts, src/theme/events-data.ts). The binding stays bound
+# rather than deleted so a rollback is a repoint back to EVENTS_DB in those two modules' own
+# `platform?.env.*` reads, not a wrangler.toml edit. Do not remove this binding.
 [[d1_databases]]
 binding = "EVENTS_DB"
 database_name = "asc-ops"
@@ -48,7 +52,8 @@ database_id = "59a1f106-71f4-4a4c-acbf-c1dba9ed5a16"
 # Task 1 (pass 2.1 substrate): the club's own phase-2 domain store, the "asc-club" side of the
 # two-database strategy. asc-club is created fresh from the ratified DDL and grows its own
 # migrations per pass (this pass's events/classes subset lives in migrations/asc-club/); the
-# club's existing system, asc-ops (bound above as EVENTS_DB), is never altered.
+# club's existing system, asc-ops (bound above as EVENTS_DB), is never altered. As of Task 9, this
+# is also the site's own live read path for events/season (see the EVENTS_DB comment above).
 [[d1_databases]]
 binding = "CLUB_DB"
 database_name = "asc-club"

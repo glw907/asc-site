@@ -1,28 +1,27 @@
-// The Season/events D1 read (Task 4): the club's own ops stack (`asc-ops`, a Cloudflare D1 the
-// existing ops.aksailingclub.org dashboard owns and writes to) is the source of truth for events
-// and classes. This site only ever SELECTs from it (the `EVENTS_DB` binding in wrangler.toml is a
-// read intent this module's own code upholds, not a Cloudflare-enforced restriction); the ops
-// stack keeps every write, matching the coexistence strategy the phase-1 design spec locks in.
+// The Season/events D1 read (Task 4, repointed by pass 2.1's Task 9): the club's own domain store
+// (`asc-club`, bound as `CLUB_DB`) is the source of truth for events and classes. Reads and writes
+// both live here now; the admin screens under `/admin/club` write through this same database
+// (`$admin-club/lib/events-store.ts`, `classes-store.ts`), and this module only ever SELECTs. The
+// prior source, the ops stack's own `asc-ops` (bound as `EVENTS_DB`), is retired from every read
+// path; its binding stays in `wrangler.toml`, unused, for a documented rollback (see that file's
+// own comment).
 //
-// Schema verification (read-only, against the LIVE database, not the retired prior migration's
-// `db/` directory, which carried no schema file at all): `events` has a NOT NULL `event_type`
-// column (`regatta`, `work_party`, `meeting`, `social`, confirmed live via `wrangler d1 execute
-// asc-ops --remote`); `classes` is a wholly separate table with no category column of its own.
-// SCHEMA GAP for the ops absorption: a unified query across both tables has no single stored
-// category to group on, so the retiring main-site Worker's own `injection.js` synthesizes one by
-// table membership (`SELECT ... , 'class' AS event_type FROM classes`), and this module ports that
-// exact pattern rather than inventing a new one. A future ops pass that wants to query "every
-// class or clinic" without a UNION would need `classes` to carry its own category column; recorded
-// here rather than fixed, since ops owns that schema.
+// Schema note: `events.category` (the ratified DDL, `migrations/asc-club/0001_substrate/`) is a
+// NOT NULL, CHECK-constrained column (`racing`, `class`, `operations`, `social`, `governance`);
+// `classes` carries no category column of its own, by design, not a gap, since a class always
+// displays as the synthesized `'class'` tag. This module ports the same union-and-synthesize
+// pattern the ops-sourced read used (`SELECT ..., 'class' AS event_type FROM classes`), now against
+// asc-club's own tables; the field name `event_type` is kept on the row shape below for continuity
+// with `$theme/events-data.ts`'s own row shape, even though the source column is `category`.
 //
 // Taxonomy mapping (the C7-gold recipe, resolved against the ratified north star's actual pixels,
 // not just its stub's paraphrase): `class` (the synthesized tag above) gets the gold dot, since the
-// club's own mission-first emphasis is education; `regatta` stays plain ink, since racing is the
-// other headline activity; everything else (`work_party`, `meeting`, `social`) reads muted, the
+// club's own mission-first emphasis is education; `racing` stays plain ink, since racing is the
+// other headline activity; everything else (`operations`, `social`, `governance`) reads muted, the
 // quieter "routine, non-racing" ink. The north star's own off-season group confirms this: BNAC
-// (a regatta) stays full ink there while "End-of-Season Celebration" (a `social` entry) and
-// "Annual Meeting" (a `meeting`) both render muted, so the rule is "everything but racing and
-// education", not literally only "work parties and meetings" as an earlier stub's doc comment
+// (a racing event) stays full ink there while "End-of-Season Celebration" (a `social` entry) and
+// "Annual Meeting" (a `governance` entry) both render muted, so the rule is "everything but racing
+// and education", not literally only "operations and governance" as an earlier stub's doc comment
 // paraphrased it.
 import type { D1Database } from '@cloudflare/workers-types';
 
@@ -72,12 +71,15 @@ export const SEASON_MONTHS: readonly { month: number; label: string }[] = [
 ];
 const OFF_SEASON_LABEL = 'Off-season';
 
-/** The events table's own SELECT; `visible = 1` matches the legacy Worker's public read. */
-const EVENTS_QUERY = `SELECT title, event_type, start_date, end_date, date_history
+/** The events table's own SELECT; `visible = 1` matches the legacy ops-sourced read's public
+ *  filter. `date_history` has no asc-club equivalent (the ratified DDL carries no such column, see
+ *  the header comment); selected as a literal `NULL` so the row shape below, and its shared date
+ *  helpers, stay unchanged. */
+const EVENTS_QUERY = `SELECT title, category AS event_type, start_date, end_date, NULL AS date_history
                        FROM events WHERE visible = 1`;
-/** The classes table's SELECT, tagged with the synthesized `'class'` category (the recorded
- *  schema gap above). */
-const CLASSES_QUERY = `SELECT name AS title, 'class' AS event_type, start_date, end_date, date_history
+/** The classes table's SELECT, tagged with the synthesized `'class'` category (see the header
+ *  comment on why `classes` carries no category column of its own). */
+const CLASSES_QUERY = `SELECT name AS title, 'class' AS event_type, start_date, end_date, NULL AS date_history
                         FROM classes WHERE visible = 1`;
 
 /** The best available date for ordering an event with no current-year `start_date`: its most
@@ -134,12 +136,12 @@ export function formatDateRange(startIso: string, endIso: string | null): string
 }
 
 /** The C7-gold taxonomy: `dot` for a class or clinic, `muted` for everything routine and
- *  non-racing, plain ink for a regatta. See the header comment for how this resolves against the
- *  north star's actual rendered colors. Exported for the full `/events` listing, whose type badge
- *  reads the same three-way split rather than inventing a second taxonomy. */
+ *  non-racing, plain ink for a racing event. See the header comment for how this resolves against
+ *  the north star's actual rendered colors. Exported for the full `/events` listing, whose type
+ *  badge reads the same three-way split rather than inventing a second taxonomy. */
 export function categorize(eventType: string): Pick<SeasonEvent, 'dot' | 'muted'> {
   if (eventType === 'class') return { dot: true };
-  if (eventType === 'regatta') return {};
+  if (eventType === 'racing') return {};
   return { muted: true };
 }
 
@@ -203,7 +205,7 @@ export async function loadSeasonMonths(db: D1Database, currentYear = new Date().
     ]);
     return buildSeasonMonths([...(events.results ?? []), ...(classes.results ?? [])], currentYear);
   } catch (err) {
-    console.error('season-data: EVENTS_DB read failed', err);
+    console.error('season-data: CLUB_DB read failed', err);
     return [];
   }
 }

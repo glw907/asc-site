@@ -6,7 +6,7 @@ function row(overrides: Partial<EventDetailRow>): EventDetailRow {
   return {
     title: 'An event',
     slug: 'an-event',
-    event_type: 'regatta',
+    event_type: 'racing',
     start_date: null,
     end_date: null,
     date_history: null,
