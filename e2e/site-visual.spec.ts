@@ -14,6 +14,11 @@ import { test, expect } from '@playwright/test';
 // renders as the browser's broken-image glyph with its alt text, not the actual photograph. This
 // is deterministic across runs (a real layout regression still shows), so it does not weaken the
 // gate; it just cannot catch a photo-specific regression, which stays a manual review concern.
+// The baselines are CI-canonical: a developer's workstation that has already run `wrangler dev`
+// against the real MEDIA_BUCKET (populating its own local R2 replica under the gitignored
+// .wrangler/) will render the real photos instead, and diff against these broken-image baselines
+// for a reason that is not a regression. Trust a red run here only after also checking it on CI,
+// or after clearing the local .wrangler/state/v3/r2 replica first.
 const FAMILY_WIDTHS = [320, 390, 768, 1440, 2560];
 
 test('home — light', async ({ page }) => {
