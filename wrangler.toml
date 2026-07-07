@@ -45,6 +45,15 @@ binding = "EVENTS_DB"
 database_name = "asc-ops"
 database_id = "59a1f106-71f4-4a4c-acbf-c1dba9ed5a16"
 
+# Task 1 (pass 2.1 substrate): the club's own phase-2 domain store, the "asc-club" side of the
+# two-database strategy. asc-club is created fresh from the ratified DDL and grows its own
+# migrations per pass (this pass's events/classes subset lives in migrations/asc-club/); the
+# club's existing system, asc-ops (bound above as EVENTS_DB), is never altered.
+[[d1_databases]]
+binding = "CLUB_DB"
+database_name = "asc-club"
+database_id = "643edae4-bdc1-42ab-976e-fa014ef2eac1"
+
 # cairn-cms: R2 bucket backing the media library. The /media delivery route streams
 # content-addressed image bytes from here; the adapter's assets block names this binding.
 [[r2_buckets]]

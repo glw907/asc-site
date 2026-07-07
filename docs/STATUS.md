@@ -15,6 +15,16 @@ design suite + mockups due for Geoff's morning ratification. asc-club D1 CREATED
 643edae4-bdc1-42ab-976e-fa014ef2eac1. The engine Part C seams merged at cairn 69a2908; the
 club-admin scaffold merged here at 5549d19 (simplifier folded, 0623682).**
 
+**Task 1 landed (2026-07-07): the asc-club migration 0001_substrate.** Ten tables (events,
+classes, class_instructors, class_enrollments, class_waitlist, class_offers, club_roles,
+settings, audit_log, plus the waiver_acceptances rider folded in early from Task 8's gap
+analysis) are live on the real `asc-club` D1, proven first on a scratch database
+(forward, verify, rollback, verify-empty, delete) per the migration pattern. Seeds: settings
+current_season=2026 (read off asc-ops's own live 2026 events/classes rows), offer_window_hours=72,
+waiver_text_version=2026-01; club_roles one row, geoff-login@907.life as owner (the ratified
+DDL's club_roles enum was extended with 'owner' to match Task 4's typed contract). The
+CLUB_DB binding is in `wrangler.toml`. Task 2 (the ops import scripts) is next.
+
 **THE FULL-SITE WALKTHROUGH LANDED (2026-07-06, three verifier chunks, every page):
 docs/ORIGINAL-MANIFEST.md is the completion pass's checklist — 7 go-live blockers
 (events stub, dead forms, notifications unwired, the WRONG LOGO, home news images,
