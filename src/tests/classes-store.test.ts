@@ -12,6 +12,7 @@ import {
   listClassesWithCounts,
   listEnrollments,
   listInstructors,
+  listWaitlist,
   removeInstructor,
   updateClass,
   type ClassWrite,
@@ -208,6 +209,42 @@ describe('addInstructor / removeInstructor', () => {
         args: ['1st_adult_teen_intro', 'coach@example.com'],
       },
     ]);
+  });
+});
+
+describe('listWaitlist', () => {
+  it('maps each row, position order', async () => {
+    const { db, calls } = fakeD1({
+      allResults: {
+        'FROM class_waitlist WHERE class_id': [
+          {
+            id: 'wait-1',
+            class_id: '1st_adult_teen_intro',
+            member_id: null,
+            applicant_name: 'Jamie Rivera',
+            applicant_email: 'jamie@example.com',
+            applicant_phone: null,
+            position: 1,
+            requested_at: '2026-05-01 00:00:00',
+            notes: null,
+          },
+        ],
+      },
+    });
+    await expect(listWaitlist(db, '1st_adult_teen_intro')).resolves.toEqual([
+      {
+        id: 'wait-1',
+        classId: '1st_adult_teen_intro',
+        memberId: null,
+        applicantName: 'Jamie Rivera',
+        applicantEmail: 'jamie@example.com',
+        applicantPhone: null,
+        position: 1,
+        requestedAt: '2026-05-01 00:00:00',
+        notes: null,
+      },
+    ]);
+    expect(calls[0].sql).toContain('ORDER BY position ASC');
   });
 });
 

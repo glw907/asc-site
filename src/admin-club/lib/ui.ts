@@ -42,3 +42,15 @@ export function formatCivilDate(iso: string | null, fallback = 'Not yet'): strin
 export function formatDollars(amount: number | null): string {
   return amount == null ? '—' : `$${amount}`;
 }
+
+const utcTimestampFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+/** Format a SQLite `datetime('now')`-shaped UTC string ("YYYY-MM-DD HH:MM:SS", no offset) as a
+ *  local date and time: swapping the space for `T` and appending `Z` keeps `Date` reading it as
+ *  UTC rather than local time, the same reasoning `formatCivilDate`'s own comment gives for a
+ *  bare calendar day. The waitlist offer's countdown (`class_offers.expires_at`) is this
+ *  module's own consumer. */
+export function formatUtcTimestamp(sqliteDatetime: string): string {
+  const parsed = new Date(`${sqliteDatetime.replace(' ', 'T')}Z`);
+  return Number.isNaN(parsed.getTime()) ? sqliteDatetime : utcTimestampFmt.format(parsed);
+}

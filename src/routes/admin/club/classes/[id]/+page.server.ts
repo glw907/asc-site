@@ -1,7 +1,9 @@
 // The Classes edit screen (Task 6): the detail form's load (class, its assigned instructors, and
 // its read-only enrolled roster), plus the update, delete, and instructor-assignment actions. A
 // miss on `id` returns an honest `class: null` rather than SvelteKit's `error(404)`, the same
-// reasoning `events/[id]/+page.server.ts`'s own header documents.
+// reasoning `events/[id]/+page.server.ts`'s own header documents. Task 7 adds the waitlist section
+// and its offer machine: the load sweeps stale offers before reading anything else, so the
+// per-entry state it hands the page is never a moment behind an expiry.
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireSession } from '@glw907/cairn-cms/sveltekit';
@@ -14,12 +16,15 @@ import {
   getClassWithCounts,
   listEnrollments,
   listInstructors,
+  listWaitlist,
   removeInstructor,
   updateClass,
   type ClassInstructor,
   type ClassWithCounts,
   type EnrollmentRow,
+  type WaitlistRow,
 } from '$admin-club/lib/classes-store';
+import { cancelActiveOffer, expireStaleOffers, listOffersForClass, offerSpot, type OfferRow } from '$admin-club/lib/offers';
 import { parseClassForm } from '../class-form-input';
 
 /** See `events/[id]/+page.server.ts`'s identical `routeId` for why this narrow cast is safe. */
@@ -35,16 +40,21 @@ export const load: PageServerLoad = async (event) => {
       class: null as ClassWithCounts | null,
       instructors: [] as ClassInstructor[],
       enrollments: [] as EnrollmentRow[],
+      waitlist: [] as WaitlistRow[],
+      offers: [] as OfferRow[],
       error: 'CLUB_DB is not bound.',
     };
   }
   const id = event.params.id;
-  const [row, instructors, enrollments] = await Promise.all([
+  await expireStaleOffers(db);
+  const [row, instructors, enrollments, waitlist, offers] = await Promise.all([
     getClassWithCounts(db, id),
     listInstructors(db, id),
     listEnrollments(db, id),
+    listWaitlist(db, id),
+    listOffersForClass(db, id),
   ]);
-  return { class: row, instructors, enrollments, error: null as string | null };
+  return { class: row, instructors, enrollments, waitlist, offers, error: null as string | null };
 };
 
 const DENIED_MESSAGE = 'A club role is required to manage classes.';
@@ -115,5 +125,44 @@ export const actions: Actions = {
       return { ok: true };
     },
     { action: 'unassign', entity: 'assignment', deniedMessage: DENIED_MESSAGE },
+  ),
+
+  offer: clubAdminAction(
+    async ({ event, form, ctx }) => {
+      const id = routeId(event);
+      const waitlistId = form.get('waitlistId');
+      if (typeof waitlistId !== 'string' || !waitlistId.trim()) {
+        ctx.audit({ action: 'offer', entity: 'offer', entityId: id, detail: 'rejected: missing waitlistId' });
+        return fail(400, { error: 'A waitlist entry is required.' });
+      }
+      const result = await offerSpot(ctx.db, { classId: id, waitlistId, actorEmail: ctx.editor.email });
+      if ('error' in result) {
+        ctx.audit({ action: 'offer', entity: 'offer', entityId: waitlistId, detail: `rejected: ${result.error}` });
+        return fail(400, { error: result.error });
+      }
+      ctx.audit({ action: 'offer', entity: 'offer', entityId: waitlistId });
+      // The plaintext token is returned exactly once, here: only its hash reaches storage, so
+      // this render is the admin's only chance to copy the claim link (the page's own comment).
+      return { ok: true, offered: { waitlistId, token: result.token, expiresAt: result.expiresAt } };
+    },
+    { action: 'offer', entity: 'offer', deniedMessage: DENIED_MESSAGE },
+  ),
+
+  cancelOffer: clubAdminAction(
+    async ({ form, ctx }) => {
+      const waitlistId = form.get('waitlistId');
+      if (typeof waitlistId !== 'string' || !waitlistId.trim()) {
+        ctx.audit({ action: 'cancel-offer', entity: 'offer', detail: 'rejected: missing waitlistId' });
+        return fail(400, { error: 'A waitlist entry is required.' });
+      }
+      const result = await cancelActiveOffer(ctx.db, waitlistId);
+      if ('error' in result) {
+        ctx.audit({ action: 'cancel-offer', entity: 'offer', entityId: waitlistId, detail: `rejected: ${result.error}` });
+        return fail(400, { error: result.error });
+      }
+      ctx.audit({ action: 'cancel-offer', entity: 'offer', entityId: waitlistId });
+      return { ok: true };
+    },
+    { action: 'cancel-offer', entity: 'offer', deniedMessage: DENIED_MESSAGE },
   ),
 };

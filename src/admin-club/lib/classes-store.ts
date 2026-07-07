@@ -94,6 +94,21 @@ export interface EnrollmentRow {
   guardianContact: string | null;
 }
 
+/** One `class_waitlist` row, camelCased. Exactly one of `memberId`/`applicantEmail` is set (the
+ *  table's own `CHECK`): a public signup may not be a member yet. Read-only here; `offers.ts`
+ *  owns every write (a new entry's own insert path is Task 8's public form, a later task). */
+export interface WaitlistRow {
+  id: string;
+  classId: string;
+  memberId: string | null;
+  applicantName: string | null;
+  applicantEmail: string | null;
+  applicantPhone: string | null;
+  position: number;
+  requestedAt: string;
+  notes: string | null;
+}
+
 /** The raw shape a `SELECT` off `classes` returns, before `toClassRow` camelCases it. */
 interface ClassRawRow {
   id: string;
@@ -304,5 +319,39 @@ export async function listEnrollments(db: D1Database, classId: string): Promise<
     enrolledAt: row.enrolled_at,
     feePaid: row.fee_paid === 1,
     guardianContact: row.guardian_contact,
+  }));
+}
+
+/** The class's waitlist, position order: the offer machine's own read of who is next in line,
+ *  and the detail screen's per-entry state (Task 7). */
+export async function listWaitlist(db: D1Database, classId: string): Promise<WaitlistRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, class_id, member_id, applicant_name, applicant_email, applicant_phone, position,
+        requested_at, notes
+       FROM class_waitlist WHERE class_id = ?1 ORDER BY position ASC`,
+    )
+    .bind(classId)
+    .all<{
+      id: string;
+      class_id: string;
+      member_id: string | null;
+      applicant_name: string | null;
+      applicant_email: string | null;
+      applicant_phone: string | null;
+      position: number;
+      requested_at: string;
+      notes: string | null;
+    }>();
+  return results.map((row) => ({
+    id: row.id,
+    classId: row.class_id,
+    memberId: row.member_id,
+    applicantName: row.applicant_name,
+    applicantEmail: row.applicant_email,
+    applicantPhone: row.applicant_phone,
+    position: row.position,
+    requestedAt: row.requested_at,
+    notes: row.notes,
   }));
 }
