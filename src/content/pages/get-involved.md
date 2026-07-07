@@ -66,7 +66,7 @@ Not sure where to begin? That's fine.
 :::card[Post in #general on Discord]{icon="chats" href="/discord-server/"}
 Say you're looking to get involved and ask where help is needed. Someone will point you in the right direction.
 :::
-:::card[Reach the Membership Committee]{icon="envelope-simple" href="/issues-and-support/?category=general#report-an-issue"}
-Not sure which committee fits? Use the Issues & Support form. It routes directly to the Membership Committee, who can point you in the right direction.
+:::card[Reach the Membership Committee]{icon="envelope-simple" href="/contact/"}
+Not sure which committee fits? Use the contact form and choose a topic; we'll route your message to the Membership Committee.
 :::
 ::::
