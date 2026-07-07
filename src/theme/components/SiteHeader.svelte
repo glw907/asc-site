@@ -53,9 +53,15 @@ state. -->
    * root; a deeper link matches its own path or anything nested under it.
    */
   function isCurrent(href: string): boolean {
-    const path = page.url.pathname;
-    if (href === '/') return path === '/';
-    return path === href || path.startsWith(`${href}/`);
+    // Normalize a trailing slash off both sides before comparing: the nav hrefs carry one
+    // ("/education/") while the resolved pathname may not ("/education"), and the raw mismatch
+    // left every subpage's nav link unmarked (only "/" matched), so a visitor lost their place
+    // everywhere but home.
+    const trim = (s: string) => (s.length > 1 && s.endsWith('/') ? s.slice(0, -1) : s);
+    const path = trim(page.url.pathname);
+    const target = trim(href);
+    if (target === '/') return path === '/';
+    return path === target || path.startsWith(`${target}/`);
   }
 
   function closeMobile(): void {
