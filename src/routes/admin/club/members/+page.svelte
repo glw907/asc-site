@@ -12,8 +12,8 @@ the same title-links-to-desk-route recipe the engine's own `ConceptList` uses fo
 -->
 <script lang="ts">
   import type { PageData } from './$types';
-  import OfficeList from '$admin-club/lib/OfficeList.svelte';
-  import { SelectField } from '$admin-club/lib/fields.js';
+  import { OfficeList } from '@glw907/cairn-cms/components';
+  import { SelectField } from '@glw907/cairn-cms/admin-fields';
   import { HEADER_CELL, formatCivilDate } from '$admin-club/lib/ui';
   import { SEGMENT_CHIP, VISIBILITY_CHIP, PAYMENT_PENDING_LABEL, PAYMENT_PENDING_CLS } from '$admin-club/lib/member-format';
 
@@ -71,7 +71,7 @@ the same title-links-to-desk-route recipe the engine's own `ConceptList` uses fo
   Showing {filtered.length === 0 ? 0 : pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, filtered.length)} of {filtered.length} members
 </span>
 
-<OfficeList title="Members" {subtitle}>
+<OfficeList eyebrow="Club" title="Members" {subtitle}>
   {#snippet action()}
     <div class="flex flex-wrap items-center gap-4">
       <input

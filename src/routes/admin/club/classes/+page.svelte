@@ -7,7 +7,7 @@ without opening anything. Pass 2.1 makes the status editable through this same s
 -->
 <script lang="ts">
   import type { PageData } from './$types';
-  import OfficeList from '$admin-club/lib/OfficeList.svelte';
+  import { OfficeList } from '@glw907/cairn-cms/components';
   import { HEADER_CELL, OPS_VISIBILITY_CHIP, formatCivilDate, formatDollars } from '$admin-club/lib/ui';
   import type { ChipStyle } from '$admin-club/lib/ui';
 
@@ -31,7 +31,7 @@ without opening anything. Pass 2.1 makes the status editable through this same s
   );
 </script>
 
-<OfficeList title="Classes" {subtitle}>
+<OfficeList eyebrow="Club" title="Classes" {subtitle}>
   <table class="table">
     <caption class="sr-only">The club's classes with each one's registration status</caption>
     <thead>

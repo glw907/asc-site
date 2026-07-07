@@ -23,8 +23,7 @@ a local guess) and simpler than reconciling client and server state for a screen
 -->
 <script lang="ts">
   import type { PageData, ActionData } from './$types';
-  import { CsrfField } from '@glw907/cairn-cms/components';
-  import OfficeList from '$admin-club/lib/OfficeList.svelte';
+  import { CsrfField, OfficeList } from '@glw907/cairn-cms/components';
   import { HEADER_CELL, formatCivilDate, formatDollars } from '$admin-club/lib/ui';
   import { TIER_LABEL } from '$admin-club/lib/member-format';
 
@@ -54,7 +53,7 @@ a local guess) and simpler than reconciling client and server state for a screen
   </div>
 </div>
 
-<OfficeList title="Signup review" {subtitle}>
+<OfficeList eyebrow="Club" title="Signup review" {subtitle}>
   {#if form?.error}
     <p class="border-b border-[var(--cairn-card-border)] px-6 py-3 text-sm font-medium text-error" role="alert">
       {form.error}

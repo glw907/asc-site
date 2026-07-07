@@ -5,11 +5,11 @@ views ops proved, re-expressed as two lenses over one screen family, with the wa
 as a single polymorphic queue). No data yet; see docs/club-admin-scaffold.md.
 -->
 <script lang="ts">
-  import OfficeList from '$admin-club/lib/OfficeList.svelte';
+  import { OfficeList } from '@glw907/cairn-cms/components';
   import { HEADER_CELL } from '$admin-club/lib/ui';
 </script>
 
-<OfficeList title="Assets" subtitle="Structural placeholder; not wired to data yet.">
+<OfficeList eyebrow="Club" title="Assets" subtitle="Structural placeholder; not wired to data yet.">
   <table class="table">
     <thead>
       <tr>

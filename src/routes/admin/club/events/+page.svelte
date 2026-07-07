@@ -7,8 +7,8 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
 -->
 <script lang="ts">
   import type { PageData } from './$types';
-  import OfficeList from '$admin-club/lib/OfficeList.svelte';
-  import { SelectField } from '$admin-club/lib/fields.js';
+  import { OfficeList } from '@glw907/cairn-cms/components';
+  import { SelectField } from '@glw907/cairn-cms/admin-fields';
   import { HEADER_CELL, OPS_VISIBILITY_CHIP, formatCivilDate } from '$admin-club/lib/ui';
 
   let { data }: { data: PageData } = $props();
@@ -48,7 +48,7 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
      assistive tech without re-reading the whole table. -->
 <span class="sr-only" role="status">{filtered.length} of {data.events.length} events shown</span>
 
-<OfficeList title="Events" {subtitle}>
+<OfficeList eyebrow="Club" title="Events" {subtitle}>
   {#snippet action()}
     {#if typeOptions.length > 1}
       <SelectField label="Type" name="type" bind:value={typeFilter} options={typeOptions} />

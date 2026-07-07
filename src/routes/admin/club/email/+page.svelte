@@ -5,11 +5,11 @@ editor with a variables palette; the send log is a filterable list). No data yet
 admin-scaffold.md.
 -->
 <script lang="ts">
-  import OfficeList from '$admin-club/lib/OfficeList.svelte';
+  import { OfficeList } from '@glw907/cairn-cms/components';
   import { HEADER_CELL } from '$admin-club/lib/ui';
 </script>
 
-<OfficeList title="Email" subtitle="Structural placeholder; not wired to data yet.">
+<OfficeList eyebrow="Club" title="Email" subtitle="Structural placeholder; not wired to data yet.">
   <table class="table">
     <thead>
       <tr>
