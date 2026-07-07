@@ -44,7 +44,12 @@ html {
   min-width: 0;
 }
 
-/* The home template breaks the shared reading-column contract deliberately: the north star's
+/* The site-wide band rule (the design-polish pass's audit, 2026-07-07): only the landing-style
+   home page composes full-bleed alternating bands; every long-form content page (education,
+   racing, governance, join, events, contact, donate, posts, tags) stays plain article or list
+   flow inside the shared reading column, with no bands at all, uniformly.
+
+   The home template breaks the shared reading-column contract deliberately: the north star's
    bands are full-bleed to the viewport (alternating white/tinted/navy sections), never framed to
    the prose article measure every other route reads at. `:has()` detects the marker the home
    page's own root element carries (`.home-shell`) and cancels this box for that one route only;

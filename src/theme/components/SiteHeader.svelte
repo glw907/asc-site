@@ -122,8 +122,11 @@ state. -->
       </span>
     </a>
 
-    <!-- Desktop nav: hidden below 640px, replaced by the hamburger drawer. -->
-    <nav class="desktop-nav items-center gap-s text-step--1" aria-label="Primary">
+    <!-- Desktop nav: hidden below 640px, replaced by the hamburger drawer. Sized and spaced
+         directly (not `text-step--1`/`gap-s`, both too tight per the design-polish pass's
+         measured render: 13.44px text with 18px gaps read cramped), matching the north star's
+         own `.nav a` recipe (0.95rem, a touch of letter-spacing) with `gap-m` as the item rhythm. -->
+    <nav class="desktop-nav items-center gap-m" aria-label="Primary">
       {#each nav as item (item.url ?? item.label)}
         {@const current = item.url ? isCurrent(item.url) : false}
         {#if hasChildren(item)}
@@ -131,8 +134,9 @@ state. -->
                DaisyUI v5 popover dropdown (the EditorToolbar recipe: popovertarget/anchor-name on
                the trigger, popover="auto"/position-anchor on the panel), so Escape and light-dismiss
                come from the Popover API for free. A plain link list, not an ARIA menu: nothing here
-               behaves like a menu command. -->
-          <div class="nav-item-dropdown inline-flex items-center">
+               behaves like a menu command. The small `gap-3xs` keeps the caret optically tight to
+               its own label, while the pair still reads as one `gap-m` item next to its neighbors. -->
+          <div class="nav-item-dropdown inline-flex items-center gap-3xs">
             <a href={item.url} class="nav-link" class:active={current} aria-current={current ? 'page' : undefined}>
               {item.label}
             </a>
@@ -308,7 +312,10 @@ state. -->
     color: var(--color-base-content);
     text-decoration: none;
     font-weight: 500;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
     padding-block: 0.25rem;
+    line-height: 1;
     transition: color 0.15s ease;
   }
   .nav-link:hover {

@@ -16,7 +16,8 @@
     "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "probe:design": "node scripts/design-probe.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260405.1",

@@ -41,19 +41,25 @@ before the photography existed, never a broken image. -->
      `max-w-measure-wide`, the same width SiteHeader/SiteFooter use, so the page still reads as one
      aligned content column under the alternating bands. -->
 <div class="home-shell">
-  <!-- Ahoy! hero: the welcome unboxed (A1), the lede opening directly beneath the heading. -->
-  <section class="pb-s pt-l md:pt-xl">
+  <!-- Ahoy! hero: the welcome unboxed (A1), the lede opening directly beneath the heading. The
+       top keeps its own distinct treatment (a touch shallower than the band scale below, since
+       nothing sits above it); the bottom joins the one band-padding rhythm (`pb-xl`) every other
+       full-width section uses, per the design-polish pass's section-rhythm fix. -->
+  <section class="pb-xl pt-l md:pt-xl">
     <div class="hero-grid mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m">
-      <div>
+      <!-- The text column measures to ~36ch (the north star's own balance target), so the row
+           reads as a deliberate photo/text pairing rather than a wide text block dwarfing a
+           narrow photo. -->
+      <div class="max-w-[36ch]">
         <h1 class="m-0 font-display text-step-5 font-semibold italic leading-tight tracking-tight text-base-content">
           Ahoy!
         </h1>
-        <p class="mt-2xs max-w-[54ch] text-base-content">
+        <p class="mt-2xs text-base-content">
           &hellip;and welcome to the Alaska Sailing Club. Founded in 1967, we&rsquo;re an engaged,
           community-involved 501(c)(3) with an active yearly schedule of classes, regattas, and
           family-friendly events &mdash; fun, friends, and sailing under the midnight sun.
         </p>
-        <a href="/education/" class="cta-btn mt-s">Take a sailing class &rarr;</a>
+        <a href="/education/" class="cta-btn mt-m">Take a sailing class &rarr;</a>
       </div>
       <div class="hero-figure" class:has-photo={!!data.images.hero}>
         {#if data.images.hero}
@@ -66,7 +72,7 @@ before the photography existed, never a broken image. -->
   <!-- The notification: a slim accent strip, unboxed, never a card (A1). Only renders while a
        notification is current; an expired one is correct, honest silence. -->
   {#if data.notification}
-    <section class="pb-s">
+    <section class="pb-xl">
       <div class="mx-auto max-w-measure-wide px-m">
         <div class="notification-strip max-w-[40rem] rounded-r-field border-l-[3px] border-secondary bg-base-200 px-[1.15rem] py-xs">
           <strong class="text-base-content">{data.notification.title}</strong>
@@ -88,9 +94,17 @@ before the photography existed, never a broken image. -->
           {#each data.news as post (post.id)}
             <a href={post.permalink} class="news-card block overflow-hidden rounded-box border border-card-border bg-base-100">
               {#if post.image}
-                <img src={post.image.url} alt={post.image.alt} class="news-card-art h-28 w-full object-cover" />
+                <!-- data-crop="3/2": the design probe's deliberate-editorial-crop opt-out. Every
+                     source photo (3:2 or 2:1) is intentionally cropped to one uniform card
+                     ratio here, not a layout accident. -->
+                <img
+                  src={post.image.url}
+                  alt={post.image.alt}
+                  class="news-card-art aspect-[3/2] w-full object-cover"
+                  data-crop="3/2"
+                />
               {:else}
-                <div class="news-card-art"></div>
+                <div class="news-card-art aspect-[3/2]"></div>
               {/if}
               <div class="px-m py-s">
                 <strong class="text-step-0 text-base-content">{post.title}</strong>
@@ -120,7 +134,7 @@ before the photography existed, never a broken image. -->
        clearly-labeled placeholder (a dashed frame, the "photo coming" glyph, and the alt text the
        real shot will carry) rather than a silent gradient like the hero/fleet/facilities panels
        use for the same gap. Geoff drops the real photo into each slot through the media library. -->
-  <section class="py-l">
+  <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">What do we do?</h2>
       <p class="mt-xs max-w-[70ch] text-base-content">
@@ -165,7 +179,7 @@ before the photography existed, never a broken image. -->
   </section>
 
   <!-- Our fleet: a two-column composition with the real club photography (Task 3). -->
-  <section class="border-y border-card-border bg-base-200 py-l">
+  <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel">
       <div>
         <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">Our fleet</h2>
@@ -188,7 +202,7 @@ before the photography existed, never a broken image. -->
   </section>
 
   <!-- Our facilities: image first at desktop width (order swaps via the panel-figure-first class). -->
-  <section class="py-l">
+  <section class="py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel">
       <div class="panel-figure panel-figure-first" class:has-photo={!!data.images.facilities}>
         {#if data.images.facilities}
@@ -203,15 +217,15 @@ before the photography existed, never a broken image. -->
           envy of any sailing club in the world. Our facilities include:
         </p>
         <ul class="amenity-list mt-xs text-step-0 text-base-content">
-          <li>A clubhouse with a sauna and storage shed</li>
-          <li>A harbor with nine mooring spots for small keelboats</li>
-          <li>Year-round parking for trailered dinghies</li>
-          <li>An electric hoist with 2000 lb capacity</li>
-          <li>Trailer and RV parking available for members</li>
-          <li>A tenting area for overnight stays</li>
-          <li>A campfire spot and firewood storage</li>
-          <li>A small boat rack for kayaks and canoes</li>
-          <li>Park-style grounds with beautiful lake views</li>
+          <li class="amenity-item">A clubhouse with a sauna and storage shed</li>
+          <li class="amenity-item">A harbor with nine mooring spots for small keelboats</li>
+          <li class="amenity-item">Year-round parking for trailered dinghies</li>
+          <li class="amenity-item">An electric hoist with 2000 lb capacity</li>
+          <li class="amenity-item">Trailer and RV parking available for members</li>
+          <li class="amenity-item">A tenting area for overnight stays</li>
+          <li class="amenity-item">A campfire spot and firewood storage</li>
+          <li class="amenity-item">A small boat rack for kayaks and canoes</li>
+          <li class="amenity-item">Park-style grounds with beautiful lake views</li>
         </ul>
         <a href="/join/" class="mt-xs inline-block font-semibold text-primary underline underline-offset-[3px]">
           Learn about membership &rarr;
@@ -221,7 +235,7 @@ before the photography existed, never a broken image. -->
   </section>
 
   <!-- The closing band: the navy-deep "brand device" (SiteFooter's own comment), mission-first CTA. -->
-  <section class="closing-band bg-flag-navy-deep py-l">
+  <section class="closing-band bg-flag-navy-deep py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m closing-grid">
       <div>
         <h2 class="m-0 font-display text-step-3 font-semibold text-white">Interested in learning more?</h2>
@@ -279,16 +293,22 @@ before the photography existed, never a broken image. -->
 
   /* The hero and Fleet/Facilities photo panels: a gradient placeholder until real photography
      resolves (the `.has-photo` modifier drops the gradient once an <img> fills the box), matching
-     the north star's own pre-photography state as the safe degrade for a resolver miss. */
+     the north star's own pre-photography state as the safe degrade for a resolver miss. Each
+     panel carries its own real photo's natural ratio (the hero shot is 4:3; the fleet and
+     facilities shots are both 2:1) as an explicit `aspect-ratio`, so the box never depends on the
+     grid row's incidental height and the photo audit's box-vs-natural check holds regardless of
+     viewport. */
   .hero-figure,
   .panel-figure {
     border-radius: var(--radius-box);
-    min-height: 14rem;
     background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
   }
+  .hero-figure {
+    aspect-ratio: 4 / 3;
+  }
   .panel-figure {
+    aspect-ratio: 2 / 1;
     background: linear-gradient(120deg, var(--color-flag-navy), #7ba7d9 60%, #c9dcee);
-    min-height: 13rem;
   }
   .hero-figure.has-photo,
   .panel-figure.has-photo {
@@ -327,8 +347,10 @@ before the photography existed, never a broken image. -->
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+  /* aspect-[3/2] (on the element itself, in the markup above) sets the box; every card art slot
+     crops to that one ratio regardless of its source photo's own natural ratio, a deliberate
+     editorial crop (the `data-crop="3/2"` attribute is the design probe's opt-out for it). */
   .news-card-art {
-    min-height: 7rem;
     background: linear-gradient(140deg, #7ba7d9, #4a7fb5);
   }
 
@@ -344,30 +366,48 @@ before the photography existed, never a broken image. -->
   }
 
   /* The facilities amenity list (manifest item 12): the live site's own 9-item list, restored in
-     place of the summarizing paragraph the theme build had substituted. A compact two-column
-     layout once there is room for it, one column below that. */
+     place of the summarizing paragraph the theme build had substituted, and restyled off the
+     browser-default disc marker (the design-polish pass's finding) onto a real two-column grid
+     with the season's own gold-dot marker (`.season-dot`'s idiom, not a new icon set) before each
+     item. One column below 640px, matching the family's own 900px-vs-640px two-tier collapse for
+     a list this short. */
   .amenity-list {
     margin: 0;
-    padding-left: 1.1rem;
-    list-style: disc;
-    columns: 1;
-    column-gap: var(--spacing-m);
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 var(--spacing-l);
   }
-  .amenity-list li {
-    break-inside: avoid;
-    padding-block: 0.15rem;
+  .amenity-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    padding-block: 0.3rem;
+  }
+  .amenity-item::before {
+    content: '';
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    align-self: center;
+    border-radius: 999px;
+    background: var(--color-secondary);
   }
   @media (min-width: 40rem) {
     .amenity-list {
-      columns: 2;
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
   /* The family's 900px collapse threshold (the north star's own `.twocol`/`.cols2` breakpoint):
      below it every two-column section stacks to one. */
   @media (min-width: 56.25rem) {
+    /* Slightly favors the photo over the north star's own 1.25fr:1fr split (46% vs 44%), since
+       this site's narrower `--container-measure-wide` (58rem, vs the north star's 1120px shell)
+       otherwise renders the photo smaller in absolute pixels for the same ratio. */
     .hero-grid {
-      grid-template-columns: 1.25fr 1fr;
+      grid-template-columns: 1.15fr 1fr;
     }
     .twocol-panel {
       grid-template-columns: 1fr 1fr;
