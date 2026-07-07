@@ -64,13 +64,17 @@ The portal gains "Your assets" once both halves exist:
 - **Year-to-year retention (Geoff, 2026-07-07): assets carry over by REQUEST, not
   automatically.** Requests carry a kind: 'retention' or 'new'. A renewing member who
   held an asset last season gets the retention option surfaced IN the renewal flow
-  ("Request your mooring again for 2027?"), and per the suite's asset-fees-ride-the-
-  membership rule, an approved retention's fee joins the same payment context. The admin
+  ("Request your mooring again for 2027?") — as INTENT only; the renewal checkout covers
+  dues alone. **The sequence is request → admin approval → THEN payment (Geoff,
+  2026-07-07): the approval moment is leadership's merit gate, the deliberate check that
+  the person is an active, participating member who still merits a scarce spot, before
+  money changes hands.** On approval the member's portal task list gains "Pay for your
+  mooring — $300" (and the notification email says so); payment completes the assignment
+  (state machine: pending → approved-awaiting-payment → active | denied). The admin
   inbox shows every request WITH the household's prior-holding history ("held mooring,
   2023 through 2026, paid each season" — derivable from the assignment/payment rows), so
-  approving a returning holder is one informed click. Denial carries a reason; nothing
-  renews silently, which is exactly the admin-approval control Geoff wants over the
-  de-facto tradition of retention.
+  approving a returning holder is one informed click and denying one is a considered,
+  reasoned act. Nothing renews silently.
 
 Explicitly NOT in the portal: payment-method vaulting (annual manual renewal is the club's
 rhythm; no stored cards in v1), invoice archaeology beyond simple receipts, any admin
