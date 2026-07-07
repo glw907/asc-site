@@ -11,6 +11,7 @@ export default defineConfig({
     alias: {
       $chassis: resolve(__dirname, 'src/chassis'),
       $theme: resolve(__dirname, 'src/theme'),
+      '$admin-club': resolve(__dirname, 'src/admin-club'),
     },
   },
   test: {

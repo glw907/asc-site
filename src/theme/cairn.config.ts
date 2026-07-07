@@ -4,6 +4,7 @@
 // backend against the asc-site repo.
 import { defineAdapter, defineConcept, fieldset, fields, githubApp, createRenderer, parseSiteConfig } from '@glw907/cairn-cms';
 import { normalizeAssets, makeMediaResolver, readCommittedManifest } from '@glw907/cairn-cms/media';
+import type { AdminNavEntry } from '@glw907/cairn-cms/sveltekit';
 import { ascRegistry } from './markdown/components.js';
 import { ICON_PATHS } from './markdown/icons.js';
 import siteYaml from './site.config.yaml?raw';
@@ -17,6 +18,19 @@ import siteCss from './site.css?url';
 // registry, not the bare default, so those directives dispatch to real markup instead of
 // rendering inert (Task 2's migration authored the content against this vocabulary already).
 const { renderMarkdown } = createRenderer(ascRegistry);
+
+// The Club section (docs/superpowers/specs/2026-07-06-asc-phase-2-design-suite.md, Part B): the
+// ops-absorption screens present inside cairn's admin as custom /admin/club/* routes, one sidebar
+// entry each. adminNav is flat today (Part C item 4 records the future grouping seam), so the
+// five entries render as five ungrouped links rather than a nested "Club" section; docs/
+// club-admin-scaffold.md tracks that gap. Icon picks stay inside cairn's nine-name allowlist.
+const clubAdminNav: AdminNavEntry[] = [
+  { label: 'Club: Events', icon: 'calendar', href: '/admin/club/events' },
+  { label: 'Club: Classes', icon: 'clipboard-list', href: '/admin/club/classes' },
+  { label: 'Club: Members', icon: 'users', href: '/admin/club/members' },
+  { label: 'Club: Assets', icon: 'package', href: '/admin/club/assets' },
+  { label: 'Club: Email', icon: 'inbox', href: '/admin/club/email' },
+];
 
 // The committed media manifest the public render resolver reads. A bare {} until an editor
 // uploads. Read through import.meta.glob so a fresh site with no committed media.json degrades
@@ -108,6 +122,7 @@ export const cairn = defineAdapter({
     // The preview knob: the (site) layout renders entries inside <main class="site-main">
     // (site.css), so the frame links the same theme/site sheets and reproduces that container.
     preview: { stylesheets: [themeCss, siteCss], containerClass: 'site-main' },
+    adminNav: clubAdminNav,
   },
 });
 

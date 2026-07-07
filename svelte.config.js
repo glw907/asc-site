@@ -10,12 +10,16 @@ export default {
     // $chassis resolves the genre-free layer (src/chassis/): the plumbing and composition
     // primitives any cairn theme mounts onto. $theme resolves this site's own content (the
     // adapter config, the chrome, the token values). See src/chassis/README.md for the
-    // boundary rule.
+    // boundary rule. $admin-club resolves the Club admin section's own layer (src/admin-club/):
+    // the custom /admin/club/* screens plus their local stand-ins for Part C's future engine
+    // seams (see docs/club-admin-scaffold.md).
     alias: {
       $chassis: 'src/chassis',
       '$chassis/*': 'src/chassis/*',
       $theme: 'src/theme',
       '$theme/*': 'src/theme/*',
+      '$admin-club': 'src/admin-club',
+      '$admin-club/*': 'src/admin-club/*',
     },
     // handleHttpError: 'warn' downgrades a prerender error to a warning. The cairnManifest()
     // plugin verifies the manifest in buildStart, outside the prerender lifecycle, so a stale
