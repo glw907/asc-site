@@ -274,15 +274,6 @@
       "links": []
     },
     {
-      "id": "my-account",
-      "concept": "pages",
-      "title": "My Account",
-      "permalink": "/my-account",
-      "summary": "Membership account management is moving from MembershipWorks to the new site as part of the club's phase-2 work, and isn't ready yet. :::callout{tone=\"note\"} [In the meantime] Email…",
-      "draft": false,
-      "links": []
-    },
-    {
       "id": "new-member-guide",
       "concept": "pages",
       "title": "New Member Guide",

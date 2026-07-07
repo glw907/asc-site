@@ -4,6 +4,7 @@ import type { ExecutionContext, D1Database } from '@cloudflare/workers-types';
 // them rather than restating every engine binding by hand. CairnMediaBindings adds
 // MEDIA_BUCKET, present because this site turns media on.
 import type { CairnPlatformBindings, CairnMediaBindings, AdminActionAuditSink } from '@glw907/cairn-cms/sveltekit';
+import type { MemberRow } from '$member-auth/lib/auth';
 // App.Locals.editor (set by the engine's auth guard) ships with the engine.
 import '@glw907/cairn-cms/ambient';
 
@@ -14,6 +15,10 @@ declare global {
       // Task 6's rider 2): the Club section's own persisted audit_log sink, which adminAction
       // calls per ctx.audit emit. Absent everywhere else; adminAction tolerates a missing sink.
       auditSink?: AdminActionAuditSink;
+      // Set by /my-account/+layout.server.ts's own session resolve (a member session, distinct
+      // from the engine's own `locals.editor`; the two stores never blur). `null` when signed
+      // out or the session has expired; absent (`undefined`) outside the /my-account route tree.
+      member?: MemberRow | null;
     }
     interface Platform {
       // EVENTS_DB is this site's own binding (Task 4), not a cairn-cms one: the club's ops-stack
