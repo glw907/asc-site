@@ -62,6 +62,13 @@
 //    current one's. A future pass 2.4 (asset assignments) attaches an assignment to a
 //    `Membership`, never to an individual `Member`, the same household-not-person seam this
 //    ledger already uses.
+// 10. A `SignupReview` references an existing `Member` by id rather than duplicating their
+//     evidence (who, household, tier, payment, credit grant): the signups queue derives that
+//     evidence the same way every other screen does, so there is exactly one place a member's
+//     facts live, not a second copy that could drift. The review record itself is the one thing
+//     genuinely new: an outcome (`null` while pending), a board reason (required only for a
+//     denial), and who resolved it, when. Signup review is a POST-HOC check the board runs in
+//     the background, never a gate (design choice 5): nothing here can un-activate a membership.
 
 /** MembershipWorks's own three-state semantics for how a member appears in the public
  *  directory: fully visible, name-and-city only, or not listed at all. */
@@ -229,6 +236,12 @@ export const households: Household[] = [
   { id: 'hh-tanaka', name: 'The Tanakas', city: 'Valdez', primaryMemberId: 'mem-haruto-tanaka' },
   { id: 'hh-ivanov', name: 'The Ivanovs', city: 'Seward', primaryMemberId: 'mem-nikita-ivanov' },
   { id: 'hh-nguyen', name: 'The Nguyens', city: 'Wasilla', primaryMemberId: 'mem-linh-nguyen' },
+  // Three brand-new signups this season, each sitting in the signup-review queue below (design
+  // choice 10): the Marchettis (a new family), Tobi Oyelaran (a new Young Adult), and the
+  // Drummonds (the flagged case, an under-published payment).
+  { id: 'hh-marchetti', name: 'The Marchettis', city: 'Cordova', primaryMemberId: 'mem-elena-marchetti' },
+  { id: 'hh-oyelaran', name: 'The Oyelarans', city: 'Kodiak', primaryMemberId: 'mem-tobi-oyelaran' },
+  { id: 'hh-drummond', name: 'The Drummonds', city: 'Seward', primaryMemberId: 'mem-quinn-drummond' },
 ];
 
 export const members: Member[] = [
@@ -270,6 +283,15 @@ export const members: Member[] = [
   // The Nguyens: Family tier, current.
   { id: 'mem-linh-nguyen', householdId: 'hh-nguyen', name: 'Linh Nguyen', email: 'linh.nguyen@example.com', phone: '(907) 555-1155', directoryVisibility: 'visible', joined: '2021-04-27', archivedAt: null, birthdate: '1983-12-03' },
   { id: 'mem-duc-nguyen', householdId: 'hh-nguyen', name: 'Duc Nguyen', email: 'duc.nguyen@example.com', phone: '(907) 555-1156', directoryVisibility: 'partial', joined: '2021-04-27', archivedAt: null, birthdate: '1985-06-22' },
+  // The Marchettis: Family tier, brand new this season, under background review.
+  { id: 'mem-elena-marchetti', householdId: 'hh-marchetti', name: 'Elena Marchetti', email: 'elena.marchetti@example.com', phone: '(907) 555-1201', directoryVisibility: 'visible', joined: '2026-06-20', archivedAt: null, birthdate: '1988-03-04' },
+  { id: 'mem-marco-marchetti', householdId: 'hh-marchetti', name: 'Marco Marchetti', email: 'marco.marchetti@example.com', phone: '(907) 555-1202', directoryVisibility: 'visible', joined: '2026-06-20', archivedAt: null, birthdate: '1987-11-19' },
+  // A new Young Adult signup this season (23 years old, inside the eligibility window), also
+  // under background review.
+  { id: 'mem-tobi-oyelaran', householdId: 'hh-oyelaran', name: 'Tobi Oyelaran', email: 'tobi.oyelaran@example.com', phone: '(907) 555-1310', directoryVisibility: 'partial', joined: '2026-06-18', archivedAt: null, birthdate: '2003-05-14' },
+  // A new Individual signup this season, automatically flagged: the payment received is short of
+  // the published rate (see the payment record below).
+  { id: 'mem-quinn-drummond', householdId: 'hh-drummond', name: 'Quinn Drummond', email: 'quinn.drummond@example.com', phone: '(907) 555-1420', directoryVisibility: 'hidden', joined: '2026-06-22', archivedAt: null, birthdate: '1992-08-30' },
 ];
 
 export const memberships: Membership[] = [
@@ -302,6 +324,10 @@ export const memberships: Membership[] = [
   { id: 'ms-ivanov-2025', householdId: 'hh-ivanov', season: 2025, tier: 'family', pricePaid: TIER_PRICING.family },
   { id: 'ms-nguyen-2026', householdId: 'hh-nguyen', season: 2026, tier: 'family', pricePaid: TIER_PRICING.family },
   { id: 'ms-nguyen-2025', householdId: 'hh-nguyen', season: 2025, tier: 'family', pricePaid: TIER_PRICING.family },
+  // The three brand-new signups (see the households list above), each a single, first-season row.
+  { id: 'ms-marchetti-2026', householdId: 'hh-marchetti', season: 2026, tier: 'family', pricePaid: TIER_PRICING.family },
+  { id: 'ms-oyelaran-2026', householdId: 'hh-oyelaran', season: 2026, tier: 'young-adult', pricePaid: TIER_PRICING['young-adult'] },
+  { id: 'ms-drummond-2026', householdId: 'hh-drummond', season: 2026, tier: 'individual', pricePaid: TIER_PRICING.individual },
 ];
 
 export const payments: Payment[] = [
@@ -330,6 +356,13 @@ export const payments: Payment[] = [
   { id: 'pay-ivanov-2025', membershipId: 'ms-ivanov-2025', amount: 500, status: 'paid', paidDate: '2025-02-18', stripePaymentLinkId: 'plink_1d7075' },
   { id: 'pay-nguyen-2026', membershipId: 'ms-nguyen-2026', amount: 500, status: 'paid', paidDate: '2026-01-22', stripePaymentLinkId: 'plink_9e6166' },
   { id: 'pay-nguyen-2025', membershipId: 'ms-nguyen-2025', amount: 500, status: 'paid', paidDate: '2025-01-19', stripePaymentLinkId: 'plink_0c3039' },
+  { id: 'pay-marchetti-2026', membershipId: 'ms-marchetti-2026', amount: 500, status: 'paid', paidDate: '2026-06-20', stripePaymentLinkId: 'plink_3d8f61' },
+  { id: 'pay-oyelaran-2026', membershipId: 'ms-oyelaran-2026', amount: 100, status: 'paid', paidDate: '2026-06-18', stripePaymentLinkId: 'plink_7c2a94' },
+  // The flagged case: Stripe confirmed $200, short of the published $250 Individual rate (design
+  // choice 4's own note that amount and pricePaid usually match, and a partial payment is exactly
+  // the case where they don't). The membership still activated immediately (design choice 5); the
+  // shortfall is what the signup-review queue's automated flag calls out.
+  { id: 'pay-drummond-2026', membershipId: 'ms-drummond-2026', amount: 200, status: 'paid', paidDate: '2026-06-22', stripePaymentLinkId: 'plink_5e9b03' },
 ];
 
 export const creditGrants: CreditGrant[] = [
@@ -345,6 +378,11 @@ export const creditGrants: CreditGrant[] = [
   { id: 'grant-halvorsen-2026', householdId: 'hh-halvorsen', memberId: 'mem-bjorn-halvorsen', grantedAt: '2026-03-01', tier: 'individual', amount: CREDIT_GRANT_AMOUNT.individual },
   // A fresh, unredeemed Young Adult-tier grant (1 credit), showing that tier's own grant size.
   { id: 'grant-yamada-2024', householdId: 'hh-yamada', memberId: 'mem-priya-yamada', grantedAt: '2024-05-19', tier: 'young-adult', amount: CREDIT_GRANT_AMOUNT['young-adult'] },
+  // The three brand-new signups' own grants: activation is immediate (design choice 5), so each
+  // is already granted and unredeemed even though the board hasn't reviewed the signup yet.
+  { id: 'grant-marchetti-2026', householdId: 'hh-marchetti', memberId: 'mem-elena-marchetti', grantedAt: '2026-06-20', tier: 'family', amount: CREDIT_GRANT_AMOUNT.family },
+  { id: 'grant-oyelaran-2026', householdId: 'hh-oyelaran', memberId: 'mem-tobi-oyelaran', grantedAt: '2026-06-18', tier: 'young-adult', amount: CREDIT_GRANT_AMOUNT['young-adult'] },
+  { id: 'grant-drummond-2026', householdId: 'hh-drummond', memberId: 'mem-quinn-drummond', grantedAt: '2026-06-22', tier: 'individual', amount: CREDIT_GRANT_AMOUNT.individual },
 ];
 
 export const creditRedemptions: CreditRedemption[] = [
@@ -458,4 +496,119 @@ export function ageInSeason(birthdate: string, season: number): number {
     (midpoint.getMonth() === born.getMonth() && midpoint.getDate() < born.getDate());
   if (beforeBirthdayThisYear) age -= 1;
   return age;
+}
+
+/**
+ * The signup-review queue's own outcome vocabulary (design choice 10): membership activates
+ * immediately on payment (design choice 5), so this queue is never a gate. `approved` is the
+ * common case, an acknowledging no-op that simply clears the row; `denied` is the rare case the
+ * board flags an issue with, which always needs a required {@link SignupReview.reason} and a
+ * member-facing follow-up this schema doesn't model yet (a TODO for pass 2.2's real store).
+ */
+export type SignupReviewOutcome = 'approved' | 'denied';
+
+/**
+ * One new signup awaiting the board's post-hoc background review (2-3 days, silence unless
+ * there's an issue; see design choice 5 and design choice 10). A review references an existing
+ * {@link Member} by id rather than duplicating their evidence, so the queue and detail screens
+ * read the same household/membership/payment/credit facts every other screen already derives.
+ */
+export interface SignupReview {
+  id: string;
+  memberId: string;
+  /** The civil date the signup happened; matches the member's own `joined` date in every case
+   *  here, since a review is created the moment a new signup is paid. */
+  submittedAt: string;
+  /** An automated rule's own note (a payment short of the published tier rate, for instance),
+   *  present before any board member has looked at the row. Distinct from `reason`, the board's
+   *  own decision note: a flagged row still starts `pending` and is reviewed like any other, it
+   *  is never auto-denied. */
+  flagNote: string | null;
+  /** `null` while the row sits in the queue; set once the board acts. */
+  outcome: SignupReviewOutcome | null;
+  /** The board's stated reason for a `denied` outcome, required at that point; `null` for
+   *  `approved` (an acknowledging no-op has nothing to say) and while still `pending`. */
+  reason: string | null;
+  /** The civil date the board acted, or `null` while still pending. */
+  reviewedAt: string | null;
+  /** The editor who resolved this review, for the audit trail; `null` while still pending. */
+  reviewedBy: string | null;
+}
+
+export const signupReviews: SignupReview[] = [
+  {
+    id: 'review-marchetti-2026',
+    memberId: 'mem-elena-marchetti',
+    submittedAt: '2026-06-20',
+    flagNote: null,
+    outcome: null,
+    reason: null,
+    reviewedAt: null,
+    reviewedBy: null,
+  },
+  {
+    id: 'review-oyelaran-2026',
+    memberId: 'mem-tobi-oyelaran',
+    submittedAt: '2026-06-18',
+    flagNote: null,
+    outcome: null,
+    reason: null,
+    reviewedAt: null,
+    reviewedBy: null,
+  },
+  {
+    id: 'review-drummond-2026',
+    memberId: 'mem-quinn-drummond',
+    submittedAt: '2026-06-22',
+    flagNote: 'Payment received ($200) is short of the published Individual rate ($250).',
+    outcome: null,
+    reason: null,
+    reviewedAt: null,
+    reviewedBy: null,
+  },
+];
+
+export function getSignupReview(id: string): SignupReview | undefined {
+  return signupReviews.find((review) => review.id === id);
+}
+
+/** The rows the queue screen shows: every review the board hasn't acted on yet, oldest first (the
+ *  order a review-inbox reads in, matching the Linear/GitHub-class review-queue convention the
+ *  design suite names). */
+export function pendingSignupReviews(): SignupReview[] {
+  return signupReviews
+    .filter((review) => review.outcome === null)
+    .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
+}
+
+/** How many reviews the board has resolved this {@link CURRENT_SEASON}, for the queue's own
+ *  stats strip. */
+export function reviewedThisSeasonCount(): number {
+  return signupReviews.filter(
+    (review) => review.outcome !== null && review.reviewedAt?.startsWith(`${CURRENT_SEASON}-`),
+  ).length;
+}
+
+/**
+ * Resolves a pending review: `approved` clears it with no further data (design choice 10's
+ * acknowledging no-op); `denied` requires a non-empty `reason`, thrown as a plain `Error` when
+ * missing so the caller (the signups screen's own form action) can turn it into a user-facing
+ * validation failure. Mutates the matching row in place; pass 2.2's real store replaces this
+ * with a D1 update.
+ */
+export function resolveSignupReview(
+  id: string,
+  outcome: SignupReviewOutcome,
+  opts: { reason?: string; reviewedBy: string },
+): SignupReview {
+  const review = getSignupReview(id);
+  if (!review) throw new Error(`No such signup review: ${id}`);
+  if (outcome === 'denied' && !opts.reason?.trim()) {
+    throw new Error('Denying a signup needs a reason.');
+  }
+  review.outcome = outcome;
+  review.reason = outcome === 'denied' ? opts.reason!.trim() : null;
+  review.reviewedAt = new Date().toISOString().slice(0, 10);
+  review.reviewedBy = opts.reviewedBy;
+  return review;
 }

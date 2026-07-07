@@ -26,7 +26,10 @@ src/routes/admin/club/
   events/+page.server.ts   Real read-only load against EVENTS_DB (the events table)
   events/+page.svelte      Office-list-shaped table: date, title, type chip, visibility
   classes/+page.{server.ts,svelte}   Structural placeholder (see "Deliberate scope" below)
-  members/+page.{server.ts,svelte}   Structural placeholder
+  members/+page.{server.ts,svelte}   The Members list (search + pagination over demo-members.ts)
+  members/[id]/+page.{server.ts,svelte}   The Member detail (identity + household + timeline)
+  signups/+page.server.ts   The signup-review queue's load and write actions (see below)
+  signups/+page.svelte      Review-inbox screen: DaisyUI v5 list/list-row + a deny confirm dialog
   assets/+page.{server.ts,svelte}    Structural placeholder
   email/+page.{server.ts,svelte}     Structural placeholder
 ```
@@ -37,9 +40,10 @@ a view every editor should reach; none of these screens are destructive yet, so 
 should gate that action with `requireOwner` or `adminAction(event, { ownerOnly: true })`.
 
 Each entry carries a sidebar link (`adapter.editor.adminNav` in `src/theme/cairn.config.ts`), one
-per screen, in the icon allowlist (`calendar`, `clipboard-list`, `users`, `package`, `inbox`). The
-labels are prefixed `Club: ` (`Club: Events`, `Club: Classes`, ...) because `adminNav` is flat
-today (see the nav-sections gap below); a real "Club" sidebar group waits for Part C item 4.
+per screen, in the icon allowlist (`calendar`, `clipboard-list`, `users`, `list`, `package`,
+`inbox`). The labels are prefixed `Club: ` (`Club: Events`, `Club: Classes`, ...) because
+`adminNav` is flat today (see the nav-sections gap below); a real "Club" sidebar group waits for
+Part C item 4.
 
 ## The events screen: what "wired for real" means here
 
@@ -62,6 +66,35 @@ placeholders. The real Pass 2.1 build wires Classes for real, alongside whatever
 it lands (the design suite's Part A calls out a `CHECK` constraint on `event_type` in that same
 pass). Building Classes for real here would have blurred that boundary without the plan's own
 verification of the migration behind it.
+
+## The signup-review queue: the first real write path
+
+`admin/club/signups` is the section's first screen with an actual mutation, and so the first live
+consumer of `adminAction.ts` (see the corrected Item 3 below): the mutation exemplar every later
+phase-2 write flow (renewals, the season rollover, asset assignments) is meant to copy.
+
+**The semantics are load-bearing.** Membership activates immediately on payment
+(`demo-members.ts`'s design choice 5); this queue is the board's post-hoc background check
+(2-3 days, silence unless there's an issue), never a gate. The copy says "under background
+review", never "awaiting approval", since there is nothing here for a member to be waiting on.
+Approve is an acknowledging no-op (design choice 10) that just clears the row; Deny is the rare
+path, requiring a reason, and records it for the audit trail. Neither action can un-activate a
+membership. Telling a denied signup's member what happened is a manual step today; a real
+member-communication send is a TODO for pass 2.2's real store.
+
+**Two DaisyUI v5 shapes** from `docs/internal/daisyui-v5-hard-components.md`, chosen over the
+Events/Members screens' own `<table>`: a `list`/`list-row` (a decision belongs beside its
+evidence, the text block marked `list-col-grow`), and the destructive-confirm `<dialog>` recipe
+for Deny (`method="dialog"` form, the Cancel button autofocused and `formnovalidate`, the Deny
+button overriding `formmethod`/`formaction` to actually submit, the dialog's own `cancel` event
+prevented so ESC or a backdrop click can't quietly dismiss it). Approve carries no dialog: asking
+a reviewer to confirm a no-op would just be friction.
+
+Both actions go through `adminAction` for the signed-in editor and a typed `club.audit` emit
+(`club.signups.approved` / `club.signups.denied`); the CSRF token still rides the ordinary
+`<CsrfField />` path the guard already checks (see Item 3's correction). Optimistic UI is
+deliberately absent: both actions plain-POST, and the load's own post-redirect-get re-render is
+what drops the resolved row.
 
 ## The `src/admin-club/lib/` layer: local stand-ins for Part C
 
@@ -101,9 +134,11 @@ real primitive is expected to). Each Club screen still writes its own `<table>`.
 
 ### Item 3: `adminAction.ts` (admin-scoped server helpers) and a correction to the spec
 
-The stand-in wraps `requireSession`/`requireOwner` plus a typed `audit` emitter. It has no
-consumer yet in this scaffold (none of the five screens has a write action), so it is verified by
-a direct unit test (`src/tests/admin-action.test.ts`), not by a live route.
+The stand-in wraps `requireSession`/`requireOwner` plus a typed `audit` emitter. It is verified
+directly by unit test (`src/tests/admin-action.test.ts`) and now also has a real consumer: the
+signup-review queue's `approve`/`deny` actions (`src/routes/admin/club/signups/+page.server.ts`),
+the section's first live write path (see "The signup-review queue" above), covered by its own
+action-level test (`src/tests/signups-actions.test.ts`).
 
 One thing this stand-in surfaces worth correcting in Part C's own text before the engine pass
 starts: the spec describes the wrapper as "verifies CSRF + editor", implying CSRF is a gap. It is
@@ -118,9 +153,9 @@ before the engine pass scopes item 3's real implementation.
 
 ### Item 4: nav sections (no stand-in)
 
-`adminNav` (`AdminNavEntry[]`) is flat; there is no grouping key to declare. The five Club entries
-render as five ungrouped sidebar links, distinguished only by the `Club: ` label prefix. A real
-"Club" section (one collapsible group, five children) waits for Part C's engine change.
+`adminNav` (`AdminNavEntry[]`) is flat; there is no grouping key to declare. The six Club entries
+render as six ungrouped sidebar links, distinguished only by the `Club: ` label prefix. A real
+"Club" section (one collapsible group, six children) waits for Part C's engine change.
 
 ## What a future pass should not have to rediscover
 
@@ -133,3 +168,7 @@ render as five ungrouped sidebar links, distinguished only by the `Club: ` label
   or later) gives it one.
 - The `$admin-club` SvelteKit alias (`svelte.config.js`, `vitest.config.ts`) resolves
   `src/admin-club/`, mirroring the site's existing `$chassis`/`$theme` convention.
+- `resolveSignupReview` mutates `demo-members.ts`'s module-scoped `signupReviews` array in place,
+  the first genuine "write" any Club fixture does. It is not persistent (a fresh Worker isolate
+  starts from the fixture's own pending state again); that is expected and fine for this pass,
+  since pass 2.2's real D1 store replaces the whole module regardless.

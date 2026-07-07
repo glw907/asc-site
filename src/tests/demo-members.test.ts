@@ -13,12 +13,17 @@ import {
   getMember,
   getMembershipsForHousehold,
   getPaymentForMembership,
+  getSignupReview,
   households,
   isHouseholdPrimary,
   memberships,
   members,
   payments,
+  pendingSignupReviews,
+  resolveSignupReview,
+  reviewedThisSeasonCount,
   segmentForMember,
+  signupReviews,
   currentSeasonPaymentStatus,
 } from '$admin-club/lib/demo-members';
 
@@ -173,5 +178,58 @@ describe('ageInSeason', () => {
   it('computes a family dependent as under the Young Adult window', () => {
     const nikolai = getMember('mem-nikolai-petrov')!;
     expect(ageInSeason(nikolai.birthdate, CURRENT_SEASON)).toBeLessThan(YOUNG_ADULT_MIN_AGE);
+  });
+});
+
+describe('signup-review queue', () => {
+  it('references a real member for every review', () => {
+    for (const review of signupReviews) {
+      expect(getMember(review.memberId), `${review.id} has no member`).toBeDefined();
+    }
+  });
+
+  it('starts every fixture review pending, with one pre-flagged', () => {
+    const flagged = signupReviews.filter((review) => review.flagNote !== null);
+    expect(flagged).toHaveLength(1);
+    expect(pendingSignupReviews()).toHaveLength(signupReviews.length);
+  });
+
+  it('sorts pending reviews oldest submitted first', () => {
+    const pending = pendingSignupReviews();
+    const submittedDates = pending.map((review) => review.submittedAt);
+    expect(submittedDates).toEqual([...submittedDates].sort());
+  });
+
+  it('approves as an acknowledging no-op: cleared, no reason recorded', () => {
+    const review = signupReviews.find((r) => r.id === 'review-oyelaran-2026')!;
+    expect(review.outcome).toBeNull();
+    const resolved = resolveSignupReview('review-oyelaran-2026', 'approved', { reviewedBy: 'owner@example.com' });
+    expect(resolved.outcome).toBe('approved');
+    expect(resolved.reason).toBeNull();
+    expect(resolved.reviewedBy).toBe('owner@example.com');
+    expect(pendingSignupReviews().find((r) => r.id === 'review-oyelaran-2026')).toBeUndefined();
+    expect(reviewedThisSeasonCount()).toBeGreaterThan(0);
+  });
+
+  it('denies only with a non-empty reason, recording it', () => {
+    expect(() => resolveSignupReview('review-marchetti-2026', 'denied', { reviewedBy: 'owner@example.com' })).toThrow();
+    expect(() =>
+      resolveSignupReview('review-marchetti-2026', 'denied', { reason: '   ', reviewedBy: 'owner@example.com' }),
+    ).toThrow();
+    const resolved = resolveSignupReview('review-marchetti-2026', 'denied', {
+      reason: 'Household address could not be verified.',
+      reviewedBy: 'owner@example.com',
+    });
+    expect(resolved.outcome).toBe('denied');
+    expect(resolved.reason).toBe('Household address could not be verified.');
+  });
+
+  it('throws for a review id that does not exist', () => {
+    expect(() => resolveSignupReview('review-does-not-exist', 'approved', { reviewedBy: 'owner@example.com' })).toThrow();
+  });
+
+  it('finds a review by id, or undefined for a bad one', () => {
+    expect(getSignupReview('review-drummond-2026')).toBeDefined();
+    expect(getSignupReview('review-does-not-exist')).toBeUndefined();
   });
 });

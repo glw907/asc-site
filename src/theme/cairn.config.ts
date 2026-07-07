@@ -22,12 +22,13 @@ const { renderMarkdown } = createRenderer(ascRegistry);
 // The Club section (docs/superpowers/specs/2026-07-06-asc-phase-2-design-suite.md, Part B): the
 // ops-absorption screens present inside cairn's admin as custom /admin/club/* routes, one sidebar
 // entry each. adminNav is flat today (Part C item 4 records the future grouping seam), so the
-// five entries render as five ungrouped links rather than a nested "Club" section; docs/
+// six entries render as six ungrouped links rather than a nested "Club" section; docs/
 // club-admin-scaffold.md tracks that gap. Icon picks stay inside cairn's nine-name allowlist.
 const clubAdminNav: AdminNavEntry[] = [
   { label: 'Club: Events', icon: 'calendar', href: '/admin/club/events' },
   { label: 'Club: Classes', icon: 'clipboard-list', href: '/admin/club/classes' },
   { label: 'Club: Members', icon: 'users', href: '/admin/club/members' },
+  { label: 'Club: Signups', icon: 'list', href: '/admin/club/signups' },
   { label: 'Club: Assets', icon: 'package', href: '/admin/club/assets' },
   { label: 'Club: Email', icon: 'inbox', href: '/admin/club/email' },
 ];
