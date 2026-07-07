@@ -8,8 +8,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "build:search": "vite build && npx pagefind --site .svelte-kit/cloudflare",
+    "build": "vite build && node scripts/wire-scheduled-handler.mjs",
+    "build:search": "vite build && node scripts/wire-scheduled-handler.mjs && npx pagefind --site .svelte-kit/cloudflare",
     "cairn:manifest": "cairn-manifest",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

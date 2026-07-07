@@ -1,0 +1,57 @@
+// The scheduled entrypoint the Cloudflare Cron Trigger invokes (wired via
+// `scripts/wire-scheduled-handler.mjs`, see that script's own header for the mechanism and
+// why it exists; `wrangler.toml`'s `[triggers]` names the schedule). Runs every job in `JOBS`
+// (registry.ts) independently: one throwing job is caught and audited as a failure, never
+// blocking the jobs after it, and every job (success or failure) writes exactly one `audit_log`
+// row for the tick, actor `'system:cron'`.
+import type { D1Database } from '@cloudflare/workers-types';
+import { resolveClubDb } from '$admin-club/lib/club-roles';
+import { JOBS, type JobRunnerEnv } from './registry';
+
+const CRON_ACTOR = 'system:cron';
+
+/** Insert one `audit_log` row for a job's own tick (mirrors `offers.ts`'s own `writeAudit`: a
+ *  direct insert, not `ctx.audit`, since a scheduled tick has no signed-in editor or `adminAction`
+ *  wrapper behind it). Never throws: a failed audit write must not take down the tick itself, the
+ *  same tradeoff `offers.ts`'s `writeAudit` documents, just logged loudly instead. */
+async function writeJobAudit(db: D1Database, jobName: string, detail: string): Promise<void> {
+  try {
+    await db
+      .prepare("INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, 'job.run', 'job', ?2, ?3)")
+      .bind(CRON_ACTOR, jobName, detail)
+      .run();
+  } catch (err) {
+    console.error(`jobs/runner: audit_log insert failed for job "${jobName}"`, err);
+  }
+}
+
+/**
+ * Run every registered job once, in order. `env` is the raw Worker bindings object the `scheduled`
+ * handler receives (typed `unknown` at this boundary, narrowed internally, the same convention
+ * `resolveClubDb`/`ClassSignupEnv` already use elsewhere in this site rather than requiring every
+ * caller to satisfy the engine's full platform-binding shape). If `CLUB_DB` itself is not bound,
+ * the whole tick is skipped (logged, never thrown): there is nowhere to write even a failure
+ * audit row without it.
+ */
+export async function runScheduledJobs(env: unknown): Promise<void> {
+  const platformEnv = env as JobRunnerEnv;
+  const db = resolveClubDb(env);
+  if (!db) {
+    console.error('jobs/runner: CLUB_DB is not bound; skipping this scheduled tick entirely.');
+    return;
+  }
+
+  const now = new Date();
+  for (const job of JOBS) {
+    try {
+      const summary = await job.run(platformEnv, { db, now });
+      const detail = `examined=${summary.examined} acted=${summary.acted}${summary.detail ? ` (${summary.detail})` : ''}`;
+      await writeJobAudit(db, job.name, detail);
+      console.log(`jobs/runner: "${job.name}" ok -- ${detail}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      await writeJobAudit(db, job.name, `FAILED: ${message}`);
+      console.error(`jobs/runner: "${job.name}" threw`, err);
+    }
+  }
+}

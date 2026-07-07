@@ -65,6 +65,15 @@ database_id = "643edae4-bdc1-42ab-976e-fa014ef2eac1"
 binding = "MEDIA_BUCKET"
 bucket_name = "asc-site-media"
 
+# The job runner's own daily tick (docs/2026-07-07-requirements-adversarial-review.md's
+# "structural gap: nothing can act on time"): 08:00 UTC (00:00 Alaska time during daylight saving,
+# 23:00 the rest of the year), a quiet hour for both the offer-expiry sweep and the renewal-
+# reminder sends. `src/jobs/runner.ts` is the `scheduled()` handler this trigger invokes, wired in
+# by `scripts/wire-scheduled-handler.mjs` (see that script's own header for why a post-build
+# step, not a `main` override, is the correct mechanism here).
+[triggers]
+crons = ["0 8 * * *"]
+
 [vars]
 # Canonical origin for magic-link confirmation links, never read from a request header. The dev
 # cutover (plan Task 5) repoints the dev.aksailingclub.org Workers custom domain to this Worker;

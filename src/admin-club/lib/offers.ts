@@ -465,6 +465,22 @@ export async function cancelActiveOffer(db: D1Database, waitlistId: string): Pro
 }
 
 /**
+ * Whether any waitlist entry for a class currently carries an unresolved offer, so the freed-spot
+ * auto-offer job (`src/jobs/expire-stale-offers.ts`) never mints a second live offer for a class
+ * already mid-offer with someone. Read-only, and deliberately never lazily expires a stale row the
+ * way {@link activeOfferForWaitlist} does: the job's own sweep already runs {@link
+ * expireStaleOffers} first in the same tick, so a genuinely stale row never survives to this
+ * check.
+ */
+export async function hasActiveOfferForClass(db: D1Database, classId: string): Promise<boolean> {
+  const row = await db
+    .prepare('SELECT 1 AS one FROM class_offers WHERE class_id = ?1 AND resolved IS NULL LIMIT 1')
+    .bind(classId)
+    .first<{ one: number }>();
+  return row !== null;
+}
+
+/**
  * The lazy sweep: expire every unresolved offer whose window has already passed, auditing each as
  * `'system'`. Callable from a page `load` (the Club classes detail screen runs this before reading
  * the waitlist, so a stale offer never lingers as "active" in the admin's own view), with no

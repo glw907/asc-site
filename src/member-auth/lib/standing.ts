@@ -111,6 +111,18 @@ function plusDays(date: Date, days: number): Date {
 }
 
 /**
+ * A household's renewal boundary, one calendar year past its most recently paid `memberships`
+ * row's `paid_at`: the same math {@link getMemberStanding} derives `expiresOn` from, exported so
+ * the renewal-reminder job (`src/jobs/renewal-reminders.ts`) can compute it directly off a batch
+ * of household rows without re-deriving the date parsing or paying a per-household
+ * `getMemberStanding` lookup (which needs a `memberId`, not a bare `paid_at`) it has no other use
+ * for.
+ */
+export function renewalExpiryFrom(paidAt: string): Date {
+  return plusOneYear(parseStoredDate(paidAt));
+}
+
+/**
  * A household's renewal standing, read through one of its members (`memberId`). Resolves the
  * member's household, then that household's most recently paid `memberships` row (by `paid_at`,
  * not `season`: this module's own header on why), and derives `status`/`expiresOn`/`graceEndsOn`
