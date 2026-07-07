@@ -142,7 +142,10 @@ and class signup proceed as short single-question steps rather than one long for
 
 - Open sessions listed with seats-remaining honesty; a member with an unspent credit sees
   the credit APPLIED by default at confirmation ("Using 1 class credit — $0 due today");
-  no credit = the $100 fee line and Checkout.
+  no credit = the class's own fee line and Checkout. **Fee semantics (Geoff, 2026-07-07):
+  each class carries its own admin-editable fee (currently $100 on paid classes, $0 on
+  the free clinics); a credit waives ONE class's fee whichever it is (the published
+  promise); a default_class_fee Club setting pre-fills the new-class form.**
 - **Who's taking this class? (Geoff, 2026-07-07): a parent enrolls their kids.** The
   member signup flow selects the enrollee from the household's members, filtered by the
   track's age gate (youth 8-12, teen/adult 13+, computed from birthdate; a member with
