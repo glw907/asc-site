@@ -25,11 +25,10 @@ a local guess) and simpler than reconciling client and server state for a screen
   import type { PageData, ActionData } from './$types';
   import { CsrfField } from '@glw907/cairn-cms/components';
   import OfficeList from '$admin-club/lib/OfficeList.svelte';
-  import { TIER_LABEL, formatCivilDate, formatDues } from '$admin-club/lib/member-format';
+  import { HEADER_CELL, formatCivilDate, formatDollars } from '$admin-club/lib/ui';
+  import { TIER_LABEL } from '$admin-club/lib/member-format';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
-
-  const headerCell = 'text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted';
 
   // One <dialog> ref per row, keyed by review id, so each row's Deny button opens its own
   // confirm without a shared "which row is this for" piece of state.
@@ -44,12 +43,12 @@ a local guess) and simpler than reconciling client and server state for a screen
 
 <div class="stats stats-vertical lg:stats-horizontal mb-6 w-full rounded-box border border-[var(--cairn-card-border)] bg-base-100 shadow-[var(--cairn-shadow)]">
   <div class="stat">
-    <div class={headerCell}>Pending</div>
+    <div class={HEADER_CELL}>Pending</div>
     <div class="stat-value text-xl text-warning">{data.reviews.length}</div>
     <div class="stat-desc">Under background review</div>
   </div>
   <div class="stat">
-    <div class={headerCell}>Reviewed this season</div>
+    <div class={HEADER_CELL}>Reviewed this season</div>
     <div class="stat-value text-xl text-success">{data.reviewedThisSeason}</div>
     <div class="stat-desc">Cleared or denied</div>
   </div>
@@ -71,7 +70,7 @@ a local guess) and simpler than reconciling client and server state for a screen
             <span class="badge badge-ghost badge-sm font-medium">{TIER_LABEL[row.tier]}</span>
           </div>
           <p class="mt-1 text-sm text-muted">
-            {formatDues(row.paidAmount)} paid {formatCivilDate(row.paidDate)}
+            {formatDollars(row.paidAmount)} paid {formatCivilDate(row.paidDate)}
             &middot; {row.creditGrant} class {row.creditGrant === 1 ? 'credit' : 'credits'} granted
           </p>
           <p class="text-xs text-muted">Signed up {formatCivilDate(row.submittedAt)}</p>

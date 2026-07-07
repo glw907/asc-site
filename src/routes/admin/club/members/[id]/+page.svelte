@@ -19,11 +19,11 @@ good", the same green/amber a Stripe-adjacent record page already trains a volun
 -->
 <script lang="ts">
   import type { PageData } from './$types';
-  import { SEGMENT_CHIP, VISIBILITY_CHIP, TIER_LABEL, formatCivilDate, formatDues } from '$admin-club/lib/member-format';
+  import { HEADER_CELL, formatCivilDate, formatDollars } from '$admin-club/lib/ui';
+  import { SEGMENT_CHIP, VISIBILITY_CHIP, TIER_LABEL } from '$admin-club/lib/member-format';
 
   let { data }: { data: PageData } = $props();
 
-  const headerCell = 'text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted';
   const cardCls = 'rounded-box border border-[var(--cairn-card-border)] bg-base-100 p-6 shadow-[var(--cairn-shadow)]';
 
   /** The timeline and stats color language: success for paid/current, warning for pending, and
@@ -52,7 +52,7 @@ good", the same green/amber a Stripe-adjacent record page already trains a volun
   {@const displayStanding = data.currentSeasonPaymentStatus === 'pending' && data.segment === 'current' ? 'pending' : data.segment}
   <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <div class="flex flex-col gap-0.5">
-      <span class={headerCell}>Club</span>
+      <span class={HEADER_CELL}>Club</span>
       <h1 class="text-2xl font-bold tracking-tight font-[family-name:var(--font-display)]">{data.member.name}</h1>
       <p class="text-sm text-muted">
         {data.household ? `${data.household.name}, ${data.household.city}` : 'No household on file'}
@@ -93,7 +93,7 @@ good", the same green/amber a Stripe-adjacent record page already trains a volun
 
       {#if data.creditsGranted > 0}
         <div class="mt-4 border-t border-[var(--cairn-card-border)] pt-4">
-          <h2 class={headerCell}>Class credits</h2>
+          <h2 class={HEADER_CELL}>Class credits</h2>
           <p class="mt-1 text-sm">
             <span class="font-semibold">{data.creditsRemaining} of {data.creditsGranted}</span>
             <span class="text-muted">remaining, household-wide</span>
@@ -102,7 +102,7 @@ good", the same green/amber a Stripe-adjacent record page already trains a volun
       {/if}
 
       <div class="mt-4 border-t border-[var(--cairn-card-border)] pt-4">
-        <h2 class={headerCell}>Household</h2>
+        <h2 class={HEADER_CELL}>Household</h2>
         {#if data.otherHouseholdMembers.length}
           <ul class="mt-2 flex flex-col gap-1">
             {#each data.otherHouseholdMembers as other (other.id)}
@@ -121,7 +121,7 @@ good", the same green/amber a Stripe-adjacent record page already trains a volun
 
     <!-- Activity: the two-column card, the household's membership/payment and credit history. -->
     <div class="{cardCls} lg:col-span-2">
-      <h2 class={headerCell}>Household membership &amp; payments</h2>
+      <h2 class={HEADER_CELL}>Household membership &amp; payments</h2>
       {#if data.timeline.length}
         <ul class="timeline timeline-vertical mt-2">
           {#each data.timeline as entry, i (entry.date + i)}
@@ -141,7 +141,7 @@ good", the same green/amber a Stripe-adjacent record page already trains a volun
                 {#if entry.kind === 'membership'}
                   <p class="font-semibold">{entry.season} season &middot; <span class="font-normal text-muted">{TIER_LABEL[entry.tier]}</span></p>
                   <p class="text-sm text-muted">
-                    {formatDues(entry.amount)} &middot;
+                    {formatDollars(entry.amount)} &middot;
                     <span class="font-medium {paid ? 'text-success' : 'text-warning'}">
                       {paid ? `Paid ${formatCivilDate(entry.paidDate)}` : 'Payment due'}
                     </span>

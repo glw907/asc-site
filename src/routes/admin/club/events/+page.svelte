@@ -9,6 +9,7 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
   import type { PageData } from './$types';
   import OfficeList from '$admin-club/lib/OfficeList.svelte';
   import { SelectField } from '$admin-club/lib/fields.js';
+  import { HEADER_CELL, OPS_VISIBILITY_CHIP, formatCivilDate } from '$admin-club/lib/ui';
 
   let { data }: { data: PageData } = $props();
 
@@ -22,18 +23,6 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
   function typeLabel(type: string): string {
     return TYPE_LABELS[type] ?? type;
   }
-
-  const dateFmt = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  /** An ops date is a civil date ("the regatta is on the 24th"), not an instant, so it parses
-   *  as local midnight on purpose: appending T00:00:00 keeps Date from reading a bare
-   *  YYYY-MM-DD as UTC and shifting it a day west of Greenwich. */
-  function formatDate(iso: string | null): string {
-    if (!iso) return 'TBD';
-    const parsed = new Date(`${iso}T00:00:00`);
-    return Number.isNaN(parsed.getTime()) ? iso : dateFmt.format(parsed);
-  }
-
-  const headerCell = 'text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted';
 
   const typeOptions = $derived([
     { value: 'all', label: 'All types' },
@@ -69,25 +58,20 @@ the row shape is date, title, type, and visibility, not the full triage table Pa
     <caption class="sr-only">Club events from the ops calendar, filterable by type</caption>
     <thead>
       <tr>
-        <th class="{headerCell} w-28">Date</th>
-        <th class={headerCell}>Title</th>
-        <th class="{headerCell} w-32">Type</th>
-        <th class="{headerCell} w-28">Visibility</th>
+        <th class="{HEADER_CELL} w-28">Date</th>
+        <th class={HEADER_CELL}>Title</th>
+        <th class="{HEADER_CELL} w-32">Type</th>
+        <th class="{HEADER_CELL} w-28">Visibility</th>
       </tr>
     </thead>
     <tbody>
       {#each filtered as row (row.id)}
+        {@const visibility = OPS_VISIBILITY_CHIP[row.visible ? 'visible' : 'hidden']}
         <tr class="transition-colors hover:bg-base-200/60">
-          <td class="whitespace-nowrap text-sm tabular-nums text-muted">{formatDate(row.start_date)}</td>
+          <td class="whitespace-nowrap text-sm tabular-nums text-muted">{formatCivilDate(row.start_date, 'TBD')}</td>
           <td class="font-semibold">{row.title}</td>
           <td><span class="badge badge-ghost badge-sm font-medium">{typeLabel(row.event_type)}</span></td>
-          <td>
-            {#if row.visible}
-              <span class="badge badge-sm border-transparent bg-primary/10 font-medium text-primary">Visible</span>
-            {:else}
-              <span class="badge badge-ghost badge-sm font-medium">Hidden</span>
-            {/if}
-          </td>
+          <td><span class="badge {visibility.cls}">{visibility.label}</span></td>
         </tr>
       {:else}
         <tr>

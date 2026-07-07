@@ -14,11 +14,11 @@ the same title-links-to-desk-route recipe the engine's own `ConceptList` uses fo
   import type { PageData } from './$types';
   import OfficeList from '$admin-club/lib/OfficeList.svelte';
   import { SelectField } from '$admin-club/lib/fields.js';
-  import { SEGMENT_CHIP, VISIBILITY_CHIP, PAYMENT_PENDING_LABEL, PAYMENT_PENDING_CLS, formatCivilDate } from '$admin-club/lib/member-format';
+  import { HEADER_CELL, formatCivilDate } from '$admin-club/lib/ui';
+  import { SEGMENT_CHIP, VISIBILITY_CHIP, PAYMENT_PENDING_LABEL, PAYMENT_PENDING_CLS } from '$admin-club/lib/member-format';
 
   let { data }: { data: PageData } = $props();
 
-  const headerCell = 'text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted';
   const PAGE_SIZE = 10;
 
   // SelectField's value is a plain string (it renders an ordinary <select>), so the filter state
@@ -92,11 +92,11 @@ the same title-links-to-desk-route recipe the engine's own `ConceptList` uses fo
     <caption class="sr-only">Club members, searchable and filterable by standing, archived members hidden by default</caption>
     <thead>
       <tr>
-        <th class={headerCell}>Member</th>
-        <th class="{headerCell} w-40">Household</th>
-        <th class="{headerCell} w-40">Standing</th>
-        <th class="{headerCell} w-32">Directory</th>
-        <th class="{headerCell} w-28">Joined</th>
+        <th class={HEADER_CELL}>Member</th>
+        <th class="{HEADER_CELL} w-40">Household</th>
+        <th class="{HEADER_CELL} w-40">Standing</th>
+        <th class="{HEADER_CELL} w-32">Directory</th>
+        <th class="{HEADER_CELL} w-28">Joined</th>
       </tr>
     </thead>
     <tbody>

@@ -1,0 +1,44 @@
+// Screen-agnostic presentation primitives every /admin/club/* screen shares, so the office-list
+// table recipe, the civil-date parse, and the whole-dollar formatting each have one home rather
+// than a copy per screen (the same extraction member-format.ts did for the member-specific chip
+// vocabularies once a second consumer needed them). Member-domain chips and labels stay in
+// member-format.ts, which reads `ChipStyle` from here.
+
+/** One chip's display: the label it reads, and the badge classes carrying its color. */
+export interface ChipStyle {
+  label: string;
+  cls: string;
+}
+
+/** The uppercase micro-label the screens share for an eyebrow and every table column header:
+ *  one design token so a header can't drift a screen at a time. */
+export const HEADER_CELL = 'text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted';
+
+/** The two-state ops visibility badge the Events and Classes rows both render off a SQLite
+ *  `visible` boolean: the shown state gets the filled primary tint, hidden stays a ghost chip.
+ *  Distinct from member-format.ts's three-state directory `VISIBILITY_CHIP`, which answers a
+ *  different question (how a member appears in the public directory). */
+export const OPS_VISIBILITY_CHIP: Record<'visible' | 'hidden', ChipStyle> = {
+  visible: { label: 'Visible', cls: 'badge-sm border-transparent bg-primary/10 font-medium text-primary' },
+  hidden: { label: 'Hidden', cls: 'badge-ghost badge-sm font-medium' },
+};
+
+const civilDateFmt = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+/** A civil date ("the regatta is on the 24th", "joined on the 2nd") is a calendar day, not an
+ *  instant, so it parses at local midnight on purpose: appending T00:00:00 keeps `Date` from
+ *  reading a bare YYYY-MM-DD as UTC and shifting it a day west of Greenwich. `fallback` is the
+ *  empty-date word the screen wants ("TBD" for an unscheduled ops date, the default "Not yet"
+ *  for a date that simply hasn't happened). */
+export function formatCivilDate(iso: string | null, fallback = 'Not yet'): string {
+  if (!iso) return fallback;
+  const parsed = new Date(`${iso}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? iso : civilDateFmt.format(parsed);
+}
+
+/** Whole US dollars (every dues, fee, and payment amount in this data is a plain integer, no
+ *  cents anywhere), so this is string formatting, not currency math. A null amount reads as an
+ *  em dash. */
+export function formatDollars(amount: number | null): string {
+  return amount == null ? '—' : `$${amount}`;
+}

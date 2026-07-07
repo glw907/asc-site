@@ -104,9 +104,10 @@ export const actions: Actions = {
     if (typeof reason !== 'string' || !reason.trim()) {
       return fail(400, { error: 'A reason is required to deny a signup.', id });
     }
+    const trimmedReason = reason.trim();
     if (!getSignupReview(id)) return fail(404, { error: 'No such signup review.' });
-    resolveSignupReview(id, 'denied', { reason, reviewedBy: editor.email });
-    audit('club.signups.denied', { reviewId: id, reason: reason.trim() });
+    resolveSignupReview(id, 'denied', { reason: trimmedReason, reviewedBy: editor.email });
+    audit('club.signups.denied', { reviewId: id, reason: trimmedReason });
     throw redirect(303, '/admin/club/signups');
   },
 };

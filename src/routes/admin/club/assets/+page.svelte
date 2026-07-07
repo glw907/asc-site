@@ -6,17 +6,16 @@ as a single polymorphic queue). No data yet; see docs/club-admin-scaffold.md.
 -->
 <script lang="ts">
   import OfficeList from '$admin-club/lib/OfficeList.svelte';
-
-  const headerCell = 'text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted';
+  import { HEADER_CELL } from '$admin-club/lib/ui';
 </script>
 
 <OfficeList title="Assets" subtitle="Structural placeholder; not wired to data yet.">
   <table class="table">
     <thead>
       <tr>
-        <th class={headerCell}>Asset</th>
-        <th class="{headerCell} w-40">Assigned to</th>
-        <th class="{headerCell} w-32">Status</th>
+        <th class={HEADER_CELL}>Asset</th>
+        <th class="{HEADER_CELL} w-40">Assigned to</th>
+        <th class="{HEADER_CELL} w-32">Status</th>
       </tr>
     </thead>
     <tbody>

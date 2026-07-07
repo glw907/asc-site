@@ -11,6 +11,7 @@ once it ships.
 -->
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { HEADER_CELL } from './ui';
 
   interface Props {
     /** The small uppercase label above the title. Every Club screen reads "Club". */
@@ -30,7 +31,7 @@ once it ships.
 
 <header class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
   <div class="flex flex-col gap-0.5">
-    <span class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-muted">{eyebrow}</span>
+    <span class={HEADER_CELL}>{eyebrow}</span>
     <h1 class="text-2xl font-bold tracking-tight font-[family-name:var(--font-display)]">{title}</h1>
     {#if subtitle}<p class="text-sm text-muted">{subtitle}</p>{/if}
   </div>
