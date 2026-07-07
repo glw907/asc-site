@@ -153,7 +153,7 @@ Many members discover us through classes and stay for the boats, the racing, and
 
 1. **Join the club:** [Apply and pay at aksailingclub.org/join/](/join/), membership is active immediately.
 2. **Check your welcome email** for your class credit. Use it when registering for your first class.
-3. **Register for your class:** Head to the [class schedule](#class-schedule) above and select your session.
+3. **Register for your class:** Check the class schedule on our [events page](/events/) for open sessions and registration links.
 
 **Tip:** Classes fill quickly, join early. There's no waiting period between joining and registering.
 

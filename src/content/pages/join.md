@@ -62,6 +62,9 @@ If you're joining for the boats, the racing, or the community rather than a begi
 
 ### New Members
 
+Online signup is almost here; until it lands, email `board@aksailingclub.org` and we'll get you
+started. Once it's live, applying will work like this:
+
 1. **Submit your application and pay**, membership is active immediately.
 2. **Check your email** for your welcome message with your class credit, Discord invite, and account link.
 3. **The board reviews** new applications in the background (typically 2-3 business days). You won't hear anything unless there's an issue.

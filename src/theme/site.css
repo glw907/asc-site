@@ -146,3 +146,23 @@ body {
 .site-main .prose a:not(.asc-card-link):hover {
   text-decoration-color: currentColor;
 }
+
+/* The site-wide reduced-motion gate (the completion pass's a11y fix, manifest item 5): every
+   component's own scoped `prefers-reduced-motion` rule (SiteHeader, SiteFooter, SearchModal,
+   asc-components.css, the home template) already turns off ITS OWN hand-written transitions, but
+   that leaves two classes of motion outside any one component's reach: a future transition nobody
+   remembers to gate individually, and DaisyUI's own built-in motion (the modal's translate/scale
+   entrance, the popover/dropdown's scale-in), which ships inside the plugin's cascade layers, not
+   this site's components. This one blanket rule closes both gaps at once, unlayered so it always
+   outranks a layered declaration regardless of specificity; it does not replace the narrower
+   per-component rules, which stay as the cheaper, more targeted first line. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

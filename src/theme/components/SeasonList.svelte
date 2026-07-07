@@ -18,7 +18,8 @@ factored out for the second caller. -->
         <div class="season-row">
           <span class="season-date">{event.dateRange}</span>
           <span class={event.muted ? 'text-muted' : 'text-base-content'}>
-            {#if event.dot}<span class="season-dot mr-[0.5rem] inline-block align-middle"></span>{/if}{event.name}
+            {#if event.dot}<span class="season-dot mr-[0.5rem] inline-block align-middle" aria-hidden="true"
+              ></span><span class="sr-only">Class or clinic: </span>{/if}{event.name}
           </span>
         </div>
       {/each}
@@ -27,12 +28,16 @@ factored out for the second caller. -->
 </div>
 
 <style>
-  /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only. */
+  /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only.
+     `--color-star-gold-dot` (not `--color-secondary` itself) is the darkened, >=3:1-on-white gold
+     the completion pass's contrast fix introduced (theme.css carries the derivation); the sibling
+     `sr-only` span in the markup above carries the same "class or clinic" meaning for a screen
+     reader, since the dot itself is `aria-hidden`. */
   .season-dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: var(--color-secondary);
+    background: var(--color-star-gold-dot);
     vertical-align: 1px;
   }
   .season-columns {

@@ -464,19 +464,21 @@ state. -->
     font-weight: 650;
   }
 
-  /* Raised from 640px (the design-polish pass's own regression): a width sweep with the logo's
-     box protected from shrinking (`.site-logo` below) showed the full desktop row's honest total
-     (logo + gap-s + all eleven nav/icon items) first fits with zero horizontal overflow at
-     ~920px; 960px keeps a clear margin above that measured floor rather than shipping the exact
-     crossover point. Below it, the hamburger drawer carries every nav entry instead. */
-  @media (min-width: 60rem) {
+  /* Lowered to 768px (the completion pass's fix, manifest item 12): the north star's own 7-item
+     text nav fits there, so the prior 960px hamburger-only floor rendered too eagerly across the
+     upper half of the tablet band. A width sweep at 640/700/768/800/900/959 found the honest
+     crossover: even with the Members caret/dropdown dropped (the next block's own tightening),
+     640 and 700px still overflowed (by 112px and 53px), so the floor stops at 768px, the first
+     width that measured clean, rather than the full 640px range the mockup's own divergence note
+     asked to check. Below 768px, the hamburger drawer still carries every nav entry. */
+  @media (min-width: 48rem) {
     .desktop-nav {
       display: flex;
     }
     .mobile-controls {
       display: none;
     }
-    /* Scoped to the desktop row alone: nav-inner is a two-item flex row (logo, nav) under
+    /* Scoped to the row-shown breakpoint alone: nav-inner is a two-item flex row (logo, nav) under
        `justify-content: space-between`, and without this the browser's flex-shrink math
        (site-logo is itself a nested inline-flex container) can compress the logo's own box below
        its content's real width once nav-inner's cap is tighter than the row's natural total.
@@ -489,6 +491,24 @@ state. -->
        behavior untouched. */
     .site-logo {
       flex-shrink: 0;
+    }
+  }
+
+  /* The tablet step-down (768-959px, manifest item 12): the same nav row above, tightened, with
+     the Members caret/dropdown affordance dropped (Members reads as a plain link to /members/
+     instead) to reclaim the width its own hit target and popover panel would otherwise cost.
+     Verified by the same width sweep: the full row (logo, seven links, donate, search, theme
+     toggle) fits with zero horizontal overflow from 768 through 959px at this size. */
+  @media (min-width: 48rem) and (max-width: 59.9375rem) {
+    .desktop-nav {
+      gap: var(--spacing-3xs);
+    }
+    .desktop-nav .nav-link {
+      font-size: 0.875rem;
+    }
+    .nav-caret,
+    .members-dropdown {
+      display: none;
     }
   }
 

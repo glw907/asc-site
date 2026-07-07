@@ -38,9 +38,13 @@ weights. -->
 </footer>
 
 <style>
+  /* padding-block (the completion pass's touch-target fix, manifest item 4): measured 20px tall,
+     short of the 24px minimum. A plain inline link's padding does not affect line-height, so this
+     grows the clickable area without shifting the row's own layout. */
   .footer-link {
     color: var(--color-footer-ink);
     text-decoration: none;
+    padding-block: 0.3rem;
     transition: color 0.15s ease;
   }
   .footer-link:hover {

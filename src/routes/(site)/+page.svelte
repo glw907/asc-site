@@ -47,10 +47,11 @@ before the photography existed, never a broken image. -->
        full-width section uses, per the design-polish pass's section-rhythm fix. -->
   <section class="pb-xl pt-l md:pt-xl">
     <div class="hero-grid mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m">
-      <!-- The text column measures to ~36ch (the north star's own balance target), so the row
-           reads as a deliberate photo/text pairing rather than a wide text block dwarfing a
-           narrow photo. -->
-      <div class="max-w-[36ch]">
+      <!-- The text column measures to ~54ch (the north star's own balance target, restored from
+           the completion pass's fix: an earlier ~36ch cap wrapped the lede to six narrow lines),
+           so the row reads as a deliberate photo/text pairing rather than a narrow text column
+           dwarfed by the photo. -->
+      <div class="max-w-[54ch]">
         <h1 class="m-0 font-display text-step-5 font-semibold italic leading-tight tracking-tight text-base-content">
           Ahoy!
         </h1>
@@ -96,10 +97,13 @@ before the photography existed, never a broken image. -->
               {#if post.image}
                 <!-- data-crop="3/2": the design probe's deliberate-editorial-crop opt-out. Every
                      source photo (3:2 or 2:1) is intentionally cropped to one uniform card
-                     ratio here, not a layout accident. -->
+                     ratio here, not a layout accident. alt="": decorative in this context, since
+                     the card's own headline below is the whole card's accessible name (the
+                     `news-card` anchor wraps both); the post's own page keeps the descriptive alt
+                     on this same photo. -->
                 <img
                   src={post.image.url}
-                  alt={post.image.alt}
+                  alt=""
                   class="news-card-art aspect-[3/2] w-full object-cover"
                   data-crop="3/2"
                 />
@@ -107,7 +111,11 @@ before the photography existed, never a broken image. -->
                 <div class="news-card-art aspect-[3/2]"></div>
               {/if}
               <div class="px-m py-s">
-                <strong class="text-step-0 text-base-content">{post.title}</strong>
+                <!-- min-height reserves two title lines at the 3-up (1440px) width: a one-line
+                     title in a sibling card would otherwise leave that card's meta line sitting
+                     higher than a two-line neighbor's, breaking the row's baseline alignment
+                     (the completion pass's measured finding, manifest item 6). -->
+                <strong class="news-card-title block text-step-0 text-base-content">{post.title}</strong>
                 <div class="mt-[0.2rem] text-step--1 text-muted">
                   {#if post.date}
                     <time datetime={post.date}>{formatDate(post.date)}</time>
@@ -123,7 +131,7 @@ before the photography existed, never a broken image. -->
         <p class="mt-m text-muted">No news yet.</p>
       {/if}
       <p class="mt-m">
-        <a href="/posts/" class="font-semibold text-primary underline underline-offset-[3px]">View all news &rarr;</a>
+        <a href="/posts/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">View all news &rarr;</a>
       </p>
     </div>
   </section>
@@ -137,7 +145,7 @@ before the photography existed, never a broken image. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">What do we do?</h2>
-      <p class="mt-xs max-w-[70ch] text-base-content">
+      <p class="mt-xs max-w-[65ch] text-base-content">
         The Alaska Sailing Club is a welcoming environment with beautiful lakeside grounds and
         plenty to do for new sailors and old salts alike. Whether you&rsquo;re here to develop
         your skills, compete on the water, or enjoy our facilities and community, the ASC offers
@@ -155,7 +163,7 @@ before the photography existed, never a broken image. -->
             </div>
             <h3 class="mt-xs mb-0 font-display text-step-1 font-semibold text-base-content">{tile.label}</h3>
             <p class="mt-[0.2rem]">
-              <a href={tile.href} class="font-semibold text-primary underline underline-offset-[3px]">{tile.cta} &rarr;</a>
+              <a href={tile.href} class="arrow-link font-semibold text-primary underline underline-offset-[3px]">{tile.cta} &rarr;</a>
             </p>
           </div>
         {/each}
@@ -169,10 +177,9 @@ before the photography existed, never a broken image. -->
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-3 font-semibold text-base-content">The Season</h2>
       <p class="mt-[-0.4rem] mb-m text-step--1 text-muted">
-        Racing runs May through September. Social events bookend the year, and the
-        <span class="whitespace-nowrap"><span class="season-dot mr-[0.3rem] inline-block"></span>gold dot</span>
-        marks classes and clinics.
-        <a href="/events/" class="font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
+        Racing runs May through September. Social events bookend the year, and a
+        <span class="season-dot mr-[0.3rem] inline-block" aria-hidden="true"></span>marks classes and clinics.
+        <a href="/events/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
       </p>
       <SeasonList months={data.season} />
     </div>
@@ -201,9 +208,15 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- Our facilities: image first at desktop width (order swaps via the panel-figure-first class). -->
+  <!-- Our facilities: image first at desktop width (order swaps via the panel-figure-first class).
+       `facilities-row` is the scoped variant of `twocol-panel` (the completion pass's composition
+       fix, manifest item 9): the amenity list runs noticeably taller than the fleet section's own
+       three-line paragraph, so the shared `items-center` alignment left the photo floating in a
+       band of empty space above and below it; this row top-aligns instead and gives the photo a
+       touch more width, so it reads as a deliberate, fuller presence next to the list rather than
+       a smaller panel adrift beside it. -->
   <section class="py-xl">
-    <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel">
+    <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel facilities-row">
       <div class="panel-figure panel-figure-first" class:has-photo={!!data.images.facilities}>
         {#if data.images.facilities}
           <img src={data.images.facilities.url} alt={data.images.facilities.alt} class="h-full w-full rounded-box object-cover" />
@@ -268,9 +281,16 @@ before the photography existed, never a broken image. -->
     filter: brightness(1.08);
     transform: translateY(-1px);
   }
+  /* Navy on white by default (the hero's own ground): the completion pass's contrast fix, manifest
+     item 1. The prior white outline was invisible against the hero's white background, since this
+     class is shared with the closing band's own CTA on a navy ground; the scoped override just
+     below restores white there, where navy would be the one that disappears. */
   .cta-btn:focus-visible {
-    outline: 2px solid white;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+  .closing-band .cta-btn:focus-visible {
+    outline-color: white;
   }
   .ghost-btn {
     display: inline-flex;
@@ -353,24 +373,37 @@ before the photography existed, never a broken image. -->
   .news-card-art {
     background: linear-gradient(140deg, #7ba7d9, #4a7fb5);
   }
+  /* Reserves two title lines at the 3-up (1440px) grid (the completion pass's fix, manifest item
+     6): without it, a one-line title left its card's meta line sitting higher than a two-line
+     sibling's, breaking the row's baseline alignment. `line-height` here is the same 1.4 the
+     `text-step-0` line naturally sets; 2 lines' worth reserves the space a wrapped title needs
+     without changing a one-line card's own rendered text position. */
+  .news-card-title {
+    min-height: calc(1.4em * 2);
+    line-height: 1.4;
+  }
 
   /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only.
-     Shared with SeasonList.svelte's own copy of this rule (the intro legend above uses the dot
-     outside that component, so this page still needs its own). */
+     `--color-star-gold-dot`, not `--color-secondary` itself: the completion pass's contrast fix
+     (theme.css carries the derivation), so the marker reads >=3:1 against white. Shared with
+     SeasonList.svelte's own copy of this rule (the intro legend above uses the dot outside that
+     component, so this page still needs its own). */
   .season-dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: var(--color-secondary);
+    background: var(--color-star-gold-dot);
     vertical-align: 1px;
   }
 
   /* The facilities amenity list (manifest item 12): the live site's own 9-item list, restored in
      place of the summarizing paragraph the theme build had substituted, and restyled off the
-     browser-default disc marker (the design-polish pass's finding) onto a real two-column grid
-     with the season's own gold-dot marker (`.season-dot`'s idiom, not a new icon set) before each
-     item. One column below 640px, matching the family's own 900px-vs-640px two-tier collapse for
-     a list this short. */
+     browser-default disc marker (the design-polish pass's finding) onto a real two-column grid.
+     Its own marker is flag navy (`--color-primary`), not the Season's gold dot (the completion
+     pass's fix, manifest item 9c): the gold dot's whole point is to mean "class or clinic"
+     specifically, and a second, unrelated list reusing the same mark would spend that meaning on
+     housekeeping instead. One column below 640px, matching the family's own 900px-vs-640px
+     two-tier collapse for a list this short. */
   .amenity-list {
     margin: 0;
     padding: 0;
@@ -385,14 +418,21 @@ before the photography existed, never a broken image. -->
     gap: 0.65rem;
     padding-block: 0.3rem;
   }
+  /* align-self: flex-start plus a top offset centers the marker on the item's FIRST line rather
+     than the item's full (possibly two-line, once wrapped) box, matching a bullet's usual
+     placement (the completion pass's fix, manifest item 9b): `align-self: center` on a taller,
+     wrapped item centered the dot across both lines instead. `1lh` is the CSS line-height unit
+     (the item's own computed line-height, whatever it resolves to), so the offset stays exact
+     without hard-coding a multiplier that could drift from the actual cascade. */
   .amenity-item::before {
     content: '';
     flex-shrink: 0;
     width: 8px;
     height: 8px;
-    align-self: center;
+    align-self: flex-start;
+    margin-top: calc((1lh - 8px) / 2);
     border-radius: 999px;
-    background: var(--color-secondary);
+    background: var(--color-primary);
   }
   @media (min-width: 40rem) {
     .amenity-list {
@@ -412,6 +452,13 @@ before the photography existed, never a broken image. -->
     .twocol-panel {
       grid-template-columns: 1fr 1fr;
     }
+    /* Facilities gives its photo a touch more width than the fleet section's own even split, and
+       top-aligns it against the list instead of vertically centering it in the list's own taller
+       box (the completion pass's composition fix, manifest item 9a). */
+    .facilities-row {
+      grid-template-columns: 1.08fr 1fr;
+      align-items: start;
+    }
     .closing-grid {
       grid-template-columns: 1.2fr 1fr;
     }
@@ -422,6 +469,16 @@ before the photography existed, never a broken image. -->
     .panel-figure-first {
       order: -1;
     }
+  }
+
+  /* A shared inline touch-target expansion (the completion pass's fix, manifest item 4): "View all
+     news", the three What-do-we-do CTAs, and "See all events" all measured 19-22px tall, short of
+     the 24px minimum, since a plain inline link's hit area is just its line box. Vertical padding
+     on an inline (not inline-block) element does not affect line-height at all per the CSS spec,
+     so this grows the clickable/paintable box without shifting any surrounding text, a pixel or
+     two of visual overlap into the line above/below aside. */
+  .arrow-link {
+    padding-block: 0.3rem;
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -166,6 +166,13 @@
   --color-flag-navy: oklch(38.7% 0.086 251);
   --color-flag-navy-deep: oklch(28.2% 0.068 257.6);
   --color-star-gold: oklch(75.1% 0.155 78.3);
+  /* The Season's marker-only dot (the completion pass's contrast fix, manifest item 2): the
+     brand's own star gold reads 2.26:1 against white, short of the 3:1 WCAG non-text minimum for
+     a mark that carries meaning (class or clinic). Same hue and chroma as `--color-star-gold`,
+     darkened to 62% lightness (computed via the sRGB round trip: 3.70:1 against white), so the
+     dot stays recognizably gold rather than reaching for an unrelated hue. Body text never uses
+     this token; it exists only for the dot, per the story's "marks and waypoints only" rule. */
+  --color-star-gold-dot: oklch(62% 0.155 78.3);
   --color-fireweed: oklch(53.9% 0.166 352.8);
   --color-sage: oklch(96.7% 0.006 137.8);
   --color-sage-mid: oklch(93.3% 0.012 137.8);
