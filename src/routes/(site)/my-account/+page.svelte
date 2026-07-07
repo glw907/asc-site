@@ -1,13 +1,19 @@
 <!-- @component
-/my-account: the sign-in form when signed out (mockup frame 01) or the auth-focused landing when
-signed in (a minimal placeholder over mockup frame 02: name + standing card + sign out; the full
-task-list/receipts/household composition is a later pass's own work). -->
+/my-account: the sign-in form when signed out (mockup frame 01), or the signed-in landing (frames
+02/03): the standing card, the task list (rendered only when a task exists — no tasks, no empty
+state), the household card, the assets summary, and a short receipts list. Renewal and asset
+payment are honest stubs (a real Stripe key is pending): both actions record intent and say so
+on-screen, per this task's own instruction. -->
 <script lang="ts">
   import type { ActionData, PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
   import { MEMBERSHIP_TIER_LABEL } from '$member-auth/lib/standing';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
+
+  function formatDollars(cents: number): string {
+    return `$${cents.toLocaleString('en-US')}`;
+  }
 </script>
 
 <svelte:head>
@@ -32,7 +38,7 @@ task-list/receipts/household composition is a later pass's own work). -->
       </p>
     </div>
   {:else}
-    {#if form?.error}
+    {#if form && 'error' in form && form.error}
       <p class="mt-s max-w-measure-wide rounded-field border border-error bg-error/10 px-s py-xs text-step--1 text-error">
         {form.error}
       </p>
@@ -58,6 +64,7 @@ task-list/receipts/household composition is a later pass's own work). -->
 
   {#if data.standing}
     <div
+      id="renew"
       class="mt-l max-w-measure-wide rounded-box border border-l-4 border-card-border bg-base-100 p-m"
       class:border-l-success={data.standing.status === 'current'}
       class:border-l-warning={data.standing.status === 'grace'}
@@ -67,10 +74,131 @@ task-list/receipts/household composition is a later pass's own work). -->
       {#if data.standing.tier && data.standing.season}
         <p class="mt-2xs mb-0 text-step--1 text-muted">
           {MEMBERSHIP_TIER_LABEL[data.standing.tier]} membership · {data.standing.season} season
+          {#if data.creditBalance > 0}
+            · {data.creditBalance} class {data.creditBalance === 1 ? 'credit' : 'credits'} available
+          {/if}
         </p>
+      {/if}
+      {#if data.standing.status !== 'current'}
+        <form method="POST" action="?/renew" class="mt-s">
+          <input type="hidden" name="csrf" value={data.csrf} />
+          <button type="submit" class="btn btn-primary btn-sm">Renew</button>
+          {#if form && 'renewRequested' in form && form.renewRequested}
+            <p class="mt-xs mb-0 text-step--1 text-base-content">
+              Thanks — online renewal is coming soon. The club will follow up to complete your
+              renewal in the meantime.
+            </p>
+          {/if}
+        </form>
       {/if}
     </div>
   {/if}
+
+  {#if data.tasks && data.tasks.length > 0}
+    <div class="mt-l max-w-measure-wide">
+      <h2 class="m-0 text-step-0 font-semibold text-base-content">To do</h2>
+      <ul class="mt-xs flex flex-col gap-2xs">
+        {#each data.tasks as task (task.id)}
+          <li>
+            <a href={task.href} class="text-primary underline-offset-2 hover:underline">{task.label}</a>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+
+  {#if data.householdMembers && data.householdMembers.length > 0}
+    <div class="mt-l max-w-measure-wide rounded-box border border-card-border bg-base-100 p-m">
+      <div class="flex flex-wrap items-center justify-between gap-xs">
+        <h2 class="m-0 text-step-0 font-semibold text-base-content">Household</h2>
+        {#if data.isPrimary}
+          <a href="/my-account/household" class="text-step--1 text-primary underline-offset-2 hover:underline">Manage</a>
+        {/if}
+      </div>
+      <ul class="mt-xs flex flex-col gap-2xs text-step--1 text-base-content">
+        {#each data.householdMembers as member (member.id)}
+          <li>
+            {member.name}
+            {#if member.isPrimary}<span class="text-muted">· primary</span>{/if}
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+
+  {#if (data.assignments && data.assignments.length > 0) || (data.waitlistEntries && data.waitlistEntries.length > 0) || (data.requests && data.requests.length > 0)}
+    <div id="assets" class="mt-l max-w-measure-wide rounded-box border border-card-border bg-base-100 p-m">
+      <h2 class="m-0 text-step-0 font-semibold text-base-content">Your assets</h2>
+
+      {#if form && 'error' in form && form.error}
+        <p class="mt-xs mb-0 rounded-field border border-error bg-error/10 px-s py-xs text-step--1 text-error">{form.error}</p>
+      {/if}
+
+      {#each data.assignments as assignment (assignment.id)}
+        <div class="mt-xs flex flex-wrap items-center justify-between gap-xs border-t border-card-border pt-xs text-step--1">
+          <span class="text-base-content">
+            {assignment.assetTypeName}{#if assignment.description} — {assignment.description}{/if}
+            {#if assignment.paymentStanding === 'outstanding'}<span class="text-warning"> · payment outstanding</span>{/if}
+          </span>
+          <form method="POST" action="?/releaseAsset">
+            <input type="hidden" name="csrf" value={data.csrf} />
+            <input type="hidden" name="assignmentId" value={assignment.id} />
+            <button type="submit" class="btn btn-ghost btn-xs">Release</button>
+          </form>
+        </div>
+      {/each}
+
+      {#each data.waitlistEntries as entry (entry.id)}
+        <p class="mt-xs border-t border-card-border pt-xs text-step--1 text-base-content">
+          {entry.assetTypeName}: waitlist position {entry.position} of {entry.queueLength}
+        </p>
+      {/each}
+
+      {#each data.requests.filter((r) => r.status === 'pending' || r.status === 'approved_awaiting_payment') as request (request.id)}
+        <div class="mt-xs flex flex-wrap items-center justify-between gap-xs border-t border-card-border pt-xs text-step--1">
+          {#if request.status === 'approved_awaiting_payment'}
+            <span class="text-base-content">Approved: {request.assetTypeName} — {formatDollars(request.fee)}</span>
+            <form method="POST" action="?/payRequest">
+              <input type="hidden" name="csrf" value={data.csrf} />
+              <input type="hidden" name="requestId" value={request.id} />
+              <button type="submit" class="btn btn-primary btn-xs">Pay</button>
+            </form>
+          {:else}
+            <span class="text-muted">{request.assetTypeName} request pending review</span>
+            <form method="POST" action="?/cancelRequest">
+              <input type="hidden" name="csrf" value={data.csrf} />
+              <input type="hidden" name="requestId" value={request.id} />
+              <button type="submit" class="btn btn-ghost btn-xs">Cancel request</button>
+            </form>
+          {/if}
+        </div>
+      {/each}
+    </div>
+  {/if}
+
+  {#if data.receipts && data.receipts.length > 0}
+    <div class="mt-l max-w-measure-wide">
+      <h2 class="m-0 text-step-0 font-semibold text-base-content">Receipts</h2>
+      <ul class="mt-xs flex flex-col gap-2xs text-step--1 text-base-content">
+        {#each data.receipts as receipt (receipt.id)}
+          <li class="flex flex-wrap justify-between gap-xs">
+            <span>{receipt.date.slice(0, 10)} · {receipt.what}</span>
+            <span>{formatDollars(receipt.amount)}</span>
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+
+  <p class="mt-l max-w-measure-wide text-step--1">
+    <a href="/my-account/classes" class="text-primary underline-offset-2 hover:underline">Classes</a>
+    <span class="text-muted"> · </span>
+    <a href="/my-account/profile" class="text-primary underline-offset-2 hover:underline">Profile</a>
+    {#if data.isPrimary}
+      <span class="text-muted"> · </span>
+      <a href="/my-account/household" class="text-primary underline-offset-2 hover:underline">Household</a>
+    {/if}
+  </p>
 
   <form method="POST" action="?/signOut" class="mt-l">
     <button type="submit" class="btn btn-ghost btn-sm">Sign out</button>
