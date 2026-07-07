@@ -1,5 +1,20 @@
 # asc-site status
 
+**PASS 2.1 EXECUTING OVERNIGHT (2026-07-07, the extended Fable session; Geoff sleeping ~9h):
+the plan is `docs/plans/2026-07-07-pass-2-1-events-classes.md` (committed). Ruled tonight:
+0.82.0 cut authorized (consumer-needs-it); ops 410 PREPARED but HELD for Geoff; 2.2 substrate
+authorized (fixtures + the partial export at ~/.local/asc-data/mw-export-2026-07-07.csv; full
+accounting export needs Geoff's MW contact); beta WAITS for phase 2; offer window 72h; club
+roles seed = Geoff only; Stripe = reuse the ops account, KEY IS GEOFF'S MORNING PASTE (lives
+only in the ops worker + 1Password); lean member data (ONE email + ONE phone, E.164);
+birthdates for tier/class age gates; the household PRIMARY controls household members'
+directory listings (per-member visibility writable by self, primary, or admin); renewal
+reminders = few, well-chosen touches (3-4 band), shipped as Club settings. The member PORTAL
+is a first-class deliverable: episodic-use design (signup + renewal, zero learned navigation),
+design suite + mockups due for Geoff's morning ratification. asc-club D1 CREATED:
+643edae4-bdc1-42ab-976e-fa014ef2eac1. The engine Part C seams merged at cairn 69a2908; the
+club-admin scaffold merged here at 5549d19 (simplifier folded, 0623682).**
+
 **THE FULL-SITE WALKTHROUGH LANDED (2026-07-06, three verifier chunks, every page):
 docs/ORIGINAL-MANIFEST.md is the completion pass's checklist — 7 go-live blockers
 (events stub, dead forms, notifications unwired, the WRONG LOGO, home news images,
