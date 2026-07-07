@@ -53,9 +53,16 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
   <div class="mt-l max-w-measure-wide rounded-box border border-success bg-success/10 p-m">
     <p class="m-0 font-semibold text-base-content">You're signed up for {data.cls.name}.</p>
     <p class="mt-xs mb-0 text-step--1 text-base-content">
-      The $100 class fee is due before your first day, paid the same way as membership dues today;
-      online payment is coming with the member portal. We'll follow up by email with anything else
-      you need before class.
+      {#if data.cls.fee > 0}
+        The ${data.cls.fee} class fee is due before your first day, paid the same way as membership
+        dues today; online payment is coming with the member portal. We'll follow up by email with
+        anything else you need before class.
+      {:else}
+        <!-- The free-clinic journey (Geoff, 2026-07-07): the signup IS the roster, so the
+             confirmation says so instead of inventing a fee. -->
+        It's free; signing up just lets us know you're coming. We'll follow up by email with
+        anything you need before the weekend.
+      {/if}
     </p>
   </div>
 {:else if joinClass.result?.outcome === 'waitlisted'}
