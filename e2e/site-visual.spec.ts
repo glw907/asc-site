@@ -56,21 +56,35 @@ test('education — light', async ({ page }) => {
   await expect(page).toHaveScreenshot('education-light.png', { fullPage: true });
 });
 
-// The D1-backed /events template: the events deep-look pass's full detailed listing (month
-// sections, Off-Season, Meetings & Governance, the calendar-subscribe bar) reading from the
-// seeded fixture rows in every card shape the live page's own re-enumeration found
-// (docs/events-manifest.md).
+// The D1-backed /events template: the events-redesign pass's season spine (month waypoints,
+// Off-Season and Meetings & Governance as the spine's own closing waypoints, the calendar-
+// subscribe bar) reading from the seeded fixture rows in every row shape the manifest
+// (docs/events-manifest.md) and the redesign brief describe. Content assertions over a screenshot
+// here: the redesign intentionally breaks the prior card-grid baseline, which regenerates on CI
+// post-merge rather than being hand-verified pixel-by-pixel in this suite.
 test('events — light', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/events/');
   await expect(page.getByRole('heading', { level: 1, name: 'Events' })).toBeVisible();
-  // A card from each section, proving the full read/group/render pipeline, not just the shell.
-  await expect(page.getByRole('heading', { level: 3, name: 'Test Regatta' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 3, name: 'Test Off-Season Social' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 3, name: 'Test Annual Meeting' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Off-Season' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2, name: 'Meetings & Governance' })).toBeVisible();
+  // A spine row from each section, proving the full read/group/render pipeline, not just the
+  // shell: each row's name links to its own /events/[id] page.
+  await expect(page.getByRole('link', { name: 'Test Regatta' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Test Off-Season Social' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Test Annual Meeting' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'iCal / Apple' })).toBeVisible();
   await expect(page).toHaveScreenshot('events-light.png', { fullPage: true });
 });
+
+for (const width of FAMILY_WIDTHS) {
+  test(`events — light — ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/events/');
+    await expect(page).toHaveScreenshot(`events-light-${width}.png`, { fullPage: true });
+  });
+}
 
 // The real .ics feed the calendar-subscribe bar's links point at.
 test('events calendar.ics — real feed', async ({ page }) => {
@@ -81,4 +95,37 @@ test('events calendar.ics — real feed', async ({ page }) => {
   expect(body).toContain('BEGIN:VCALENDAR');
   expect(body).toContain('SUMMARY:Test Regatta');
   expect(body).toContain('UID:test-regatta@aksailingclub.org');
+});
+
+// The per-event page (a real event, with a photo-less placeholder in this fixture): the facts
+// slab, the description, and the register/signup action zone all render off the same seeded row.
+test('event detail — light', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/events/test-regatta');
+  await expect(page.getByRole('heading', { level: 1, name: 'Test Regatta' })).toBeVisible();
+  await expect(page.getByText('10:00 AM')).toBeVisible();
+  await expect(page.getByRole('definition').getByText('Alaska Sailing Club', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Add to calendar' })).toBeVisible();
+  await expect(page).toHaveScreenshot('event-detail-light.png', { fullPage: true });
+});
+
+// The per-class page: the same route, keyed by the class's own id (never its season-scoped slug),
+// carrying the fee fact and its internal signup-route action instead of an outbound register link.
+test('class detail — light', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/events/test-intro-class');
+  await expect(page.getByRole('heading', { level: 1, name: 'Test Intro Class' })).toBeVisible();
+  await expect(page.getByText('$150')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/classes/test-intro-class/signup');
+  await expect(page).toHaveScreenshot('class-detail-light.png', { fullPage: true });
+});
+
+// /events/[id].ics: the per-event add-to-calendar endpoint, exactly one VEVENT.
+test('event detail .ics — real feed', async ({ page }) => {
+  const res = await page.request.get('/events/test-regatta.ics');
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toContain('text/calendar');
+  const body = await res.text();
+  expect(body).toContain('UID:test-regatta@aksailingclub.org');
+  expect(body.indexOf('BEGIN:VEVENT', body.indexOf('BEGIN:VEVENT') + 1)).toBe(-1);
 });

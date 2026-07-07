@@ -3,7 +3,9 @@ The Season listing (the C7-gold recipe): month-grouped events with the gold dot 
 or clinic and the quieter ink marking a routine, non-racing entry. Shared by the home page's
 Season section and the dedicated /events page (`$theme/season-data.ts` supplies both with the
 same live D1 read); markup and styling are unchanged from Task 3's static home template, just
-factored out for the second caller. -->
+factored out for the second caller. Each event's name links to its own `/events/[id]` page (the
+events-redesign pass), the same `routeId` the full listing's spine rows and the per-event page
+itself resolve on. -->
 <script lang="ts">
   import type { SeasonMonth } from '$theme/season-data';
 
@@ -14,13 +16,13 @@ factored out for the second caller. -->
   {#each months as month (month.label)}
     <div class="season-month">
       <div class="season-month-label">{month.label}</div>
-      {#each month.events as event (event.dateRange + event.name)}
+      {#each month.events as event (event.routeId)}
         <div class="season-row">
           <span class="season-date">{event.dateRange}</span>
-          <span class="text-step-0 {event.muted ? 'text-muted' : 'text-base-content'}">
+          <a href="/events/{event.routeId}" class="season-link text-step-0 {event.muted ? 'text-muted' : 'text-base-content'}">
             {#if event.dot}<span class="season-dot mr-[0.5rem] inline-block align-middle" aria-hidden="true"
               ></span><span class="sr-only">Class or clinic: </span>{/if}{event.name}
-          </span>
+          </a>
         </div>
       {/each}
     </div>
@@ -66,6 +68,13 @@ factored out for the second caller. -->
     color: var(--color-muted);
     font-variant-numeric: tabular-nums;
     font-size: var(--text-step--2);
+  }
+  .season-link {
+    text-decoration: none;
+  }
+  .season-link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
   }
 
   /* The family's 900px collapse threshold (the north star's own breakpoint): two columns above it. */

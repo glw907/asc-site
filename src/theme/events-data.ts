@@ -12,17 +12,21 @@
 // of its date, mirroring the legacy main-site Worker's own `buildEventsPage`).
 import type { D1Database } from '@cloudflare/workers-types';
 import type { MediaResolve } from '@glw907/cairn-cms/media';
-import { categorize, DATE_TBD, formatDateRange, monthAndDay, SEASON_MONTHS } from './season-data';
+import { categorize, DATE_TBD, formatDateRange, monthAndDay, routeIdOf, SEASON_MONTHS } from './season-data';
 import { resolveEventImageUrl } from './event-images';
 
-/** A raw event or class row from D1, the full column set the detailed listing reads (a superset of
- *  season-data.ts's own `EventRow`, structurally compatible with its exported date helpers). */
+/** A raw event or class row from D1, the full column set the detailed listing (and the per-event
+ *  page) reads (a superset of season-data.ts's own `EventRow`, structurally compatible with its
+ *  exported date helpers and `routeIdOf`). */
 export interface EventDetailRow {
+  id: string;
   title: string;
   slug: string;
   event_type: string;
   start_date: string | null;
+  start_time: string | null;
   end_date: string | null;
+  end_time: string | null;
   date_history: string | null;
   location: string | null;
   short_description: string | null;
@@ -32,16 +36,19 @@ export interface EventDetailRow {
   registration_url: string | null;
   /** Only ever set on a synthesized `'class'` row; a real `events` row selects a literal `NULL`. */
   registration_status: string | null;
+  /** A class's whole-dollar fee (`classes.fee`); a real `events` row selects a literal `NULL`,
+   *  since events carry no fee column. */
+  fee: number | null;
 }
 
 /** The events table's full-detail SELECT. asc-club's `events` (`migrations/asc-club/
  *  0001_substrate/`) carries no `registration_url` or `date_history` column (both ops-only, per
  *  `scripts/import/ops-events.README.md`'s field mapping), so both select as a literal `NULL`,
  *  keeping `EventDetailRow`'s shape unchanged for `buildEventsPage`'s date helpers. */
-const EVENTS_QUERY = `SELECT title, slug, category AS event_type, start_date, end_date,
-                              NULL AS date_history, location, short_description, long_description,
-                              hero_image, hero_image_alt, NULL AS registration_url,
-                              NULL AS registration_status
+const EVENTS_QUERY = `SELECT id, title, slug, category AS event_type, start_date, start_time,
+                              end_date, end_time, NULL AS date_history, location,
+                              short_description, long_description, hero_image, hero_image_alt,
+                              NULL AS registration_url, NULL AS registration_status, NULL AS fee
                        FROM events WHERE visible = 1`;
 /** The classes table's full-detail SELECT, tagged with the synthesized `'class'` category. Two
  *  differences from the events query above, both forced by the ratified `classes` schema
@@ -58,13 +65,16 @@ const EVENTS_QUERY = `SELECT title, slug, category AS event_type, start_date, en
  *  stored flag. `hero_image`/`hero_image_alt` select as real columns (migration
  *  `0003_class_images`, a rider closing the regression this pass first shipped with a literal
  *  `NULL` here): the five imported classes' own photography, already in the media library via
- *  `$theme/event-images.ts`'s `EVENT_IMAGE_TOKENS`, renders again. */
-const CLASSES_QUERY = `SELECT name AS title, slug, 'class' AS event_type, start_date, end_date,
+ *  `$theme/event-images.ts`'s `EVENT_IMAGE_TOKENS`, renders again. `classes` carries no
+ *  `start_time`/`end_time` column of its own, so both select as a literal `NULL`. */
+const CLASSES_QUERY = `SELECT id, name AS title, slug, 'class' AS event_type, start_date,
+                               NULL AS start_time, end_date, NULL AS end_time,
                                NULL AS date_history, location, NULL AS short_description,
                                description AS long_description, hero_image, hero_image_alt,
                                '/classes/' || id || '/signup' AS registration_url,
                                CASE WHEN (SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = classes.id) >= capacity
-                                    THEN 'full' ELSE 'open' END AS registration_status
+                                    THEN 'full' ELSE 'open' END AS registration_status,
+                               fee
                         FROM classes WHERE visible = 1`;
 
 /** Read every visible event and class row, full detail. Degrades to an empty list on any D1
@@ -125,8 +135,12 @@ const REG_STATUS_KIND: Record<string, RegStatusKind> = {
   closed: 'error',
 };
 
-/** One event or class, display-ready: every field its card variant (full or compact) needs. */
+/** One event or class, display-ready: every field the season spine's compact row or the per-event
+ *  detail page needs. */
 export interface EventCard {
+  /** The `/events/[id]` route segment (`routeIdOf`): an event's `slug`, or a class's own `id`
+   *  (whose `slug` is only unique within its season). The spine row's stable anchor id too. */
+  routeId: string;
   slug: string;
   title: string;
   typeLabel: string;
@@ -140,14 +154,29 @@ export interface EventCard {
   muted?: boolean;
   dateDisplay: string;
   isTbd: boolean;
+  /** A friendly 12-hour rendering of `start_time`/`end_time` (events only; `classes` carries no
+   *  time column), shown only when the row has a start time. */
+  timeDisplay?: string;
   location?: string;
+  /** A class's whole-dollar fee; never set on a plain event (which has no fee column). */
+  fee?: number;
   shortDescription?: string;
+  /** A plain-text, word-boundary-truncated teaser (~90 characters) for the spine row's one-line
+   *  description: `short_description` when present, else a stripped-markdown pass over
+   *  `long_description` (a class's only description field). */
+  summary?: string;
   /** Pre-rendered markdown (the async render step runs once, in the page's own server load). */
   longDescriptionHtml?: string;
   registrationUrl?: string;
   registrationStatusLabel?: string;
   registrationStatusKind?: RegStatusKind;
   image?: { url: string; alt: string };
+}
+
+/** One entry in the season's chronological order: the per-event page's quiet prev/next links. */
+export interface EventNavLink {
+  routeId: string;
+  title: string;
 }
 
 /** One month's (or Off-Season's) section, in the full listing's own shape (distinct from
@@ -187,9 +216,51 @@ const MONTH_IDS: Record<number, string> = {
 export const OFF_SEASON_ID = 'off-season';
 export const MEETINGS_ID = 'meetings';
 
+/** Format a 24-hour `"HH:MM"` time value (the admin form's own `type="time"` input) as a friendly
+ *  12-hour string, e.g. `"10:00"` -> `"10:00 AM"`. Returns undefined for a malformed value, so a
+ *  caller degrades to omitting the time line entirely rather than showing a broken string. */
+function formatTime(time: string): string | undefined {
+  const match = /^(\d{2}):(\d{2})$/.exec(time);
+  if (!match) return undefined;
+  const hour24 = Number(match[1]);
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  return `${hour12}:${match[2]} ${hour24 < 12 ? 'AM' : 'PM'}`;
+}
+
+/** A single time, or a start-end range when both are present and valid. */
+function formatTimeRange(startTime: string, endTime: string | null): string | undefined {
+  const start = formatTime(startTime);
+  if (!start) return undefined;
+  const end = endTime ? formatTime(endTime) : undefined;
+  return end ? `${start}–${end}` : start;
+}
+
+/** A rough markdown-to-plain-text pass for the spine row's one-line teaser: strips the handful of
+ *  syntax markers this content actually uses (headings, emphasis, links) without pulling in a full
+ *  markdown parser just to shorten one sentence. */
+function stripMarkdown(md: string): string {
+  return md
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_`]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Truncate `text` at the last word boundary within `maxLen` characters, so the spine row's
+ *  teaser never cuts a word in half; the ellipsis marks a real truncation only. */
+function truncateSummary(text: string, maxLen = 90): string {
+  if (text.length <= maxLen) return text;
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
 /** Render a row's markdown fields and resolve its photo, the two async steps a bare D1 row needs
- *  before it is display-ready. */
-async function toEventCard(
+ *  before it is display-ready. Exported for the per-event page's own single-row load, which needs
+ *  the same enrichment `buildEventsPage` runs per row, just for one row rather than the whole
+ *  calendar. */
+export async function toEventCard(
   row: EventDetailRow,
   currentYear: number,
   resolveMedia: MediaResolve,
@@ -200,7 +271,9 @@ async function toEventCard(
   const dateDisplay = isTbd ? DATE_TBD : formatDateRange(row.start_date as string, row.end_date);
 
   const imageUrl = resolveEventImageUrl(row.hero_image, resolveMedia);
+  const descriptionSource = row.short_description ?? row.long_description ?? undefined;
   const card: EventCard = {
+    routeId: routeIdOf(row),
     slug: row.slug,
     title: row.title,
     typeLabel: TYPE_LABELS[row.event_type] ?? row.event_type,
@@ -208,8 +281,11 @@ async function toEventCard(
     ...categorize(row.event_type),
     dateDisplay,
     isTbd,
+    timeDisplay: row.start_time ? formatTimeRange(row.start_time, row.end_time) : undefined,
     location: row.location ?? undefined,
+    fee: row.event_type === 'class' && row.fee !== null ? row.fee : undefined,
     shortDescription: row.short_description ?? undefined,
+    summary: descriptionSource ? truncateSummary(stripMarkdown(descriptionSource)) : undefined,
     // A class row's registration_url is computed straight off asc-club by the query above (its own
     // `id`, this database's internal signup route); a plain events row selects a literal `NULL`.
     registrationUrl: row.registration_url ?? undefined,
@@ -230,6 +306,18 @@ async function toEventCard(
 
 const byMonthThenDay = (a: { month: number; sortDay: number }, b: { month: number; sortDay: number }) =>
   a.month !== b.month ? a.month - b.month : a.sortDay - b.sortDay;
+
+/** The season's full chronological order, every visible row (governance included, same as
+ *  everywhere else in this module): just enough for a per-event page's quiet prev/next links, so
+ *  it skips the async card enrichment `buildEventsPage` needs for a full render. A genuinely
+ *  undated row sorts last (`monthAndDay`'s own `{99, 99}` fallback), same as every other ordering
+ *  this module does. */
+export function buildEventOrder(rows: EventDetailRow[], currentYear = new Date().getFullYear()): EventNavLink[] {
+  return rows
+    .map((row) => ({ row, ...monthAndDay(row, currentYear) }))
+    .sort(byMonthThenDay)
+    .map(({ row }) => ({ routeId: routeIdOf(row), title: row.title }));
+}
 
 /** Build the full `/events` page's data from every visible row: the enriched cards, grouped into
  *  month sections, Off-Season, and Meetings & Governance, plus the TOC that only lists a populated

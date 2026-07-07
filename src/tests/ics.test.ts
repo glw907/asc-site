@@ -1,14 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { buildIcs } from '$theme/ics';
+import { buildIcs, buildSingleEventIcs } from '$theme/ics';
 import type { EventDetailRow } from '$theme/events-data';
 
 function row(overrides: Partial<EventDetailRow>): EventDetailRow {
   return {
+    id: 'an-event-id',
     title: 'An event',
     slug: 'an-event',
     event_type: 'racing',
     start_date: null,
+    start_time: null,
     end_date: null,
+    end_time: null,
     date_history: null,
     location: null,
     short_description: null,
@@ -17,6 +20,7 @@ function row(overrides: Partial<EventDetailRow>): EventDetailRow {
     hero_image_alt: null,
     registration_url: null,
     registration_status: null,
+    fee: null,
     ...overrides,
   };
 }
@@ -66,5 +70,24 @@ describe('buildIcs', () => {
 
     const withoutDesc = buildIcs([row({ title: 'B', slug: 'b', start_date: '2026-06-02' })], BASE_URL);
     expect(withoutDesc).not.toContain('DESCRIPTION:');
+  });
+});
+
+describe('buildSingleEventIcs', () => {
+  it('wraps one VEVENT in the standard VCALENDAR header', () => {
+    const ics = buildSingleEventIcs(
+      row({ title: 'Icebreaker Regatta', slug: 'icebreaker-regatta', start_date: '2026-05-24' }),
+      BASE_URL,
+    );
+    expect(ics).toContain('BEGIN:VCALENDAR');
+    expect(ics).toContain('UID:icebreaker-regatta@aksailingclub.org');
+    expect(ics).toContain('DTSTART;VALUE=DATE:20260524');
+    expect(ics).toContain('END:VCALENDAR');
+    // Exactly one VEVENT: the second BEGIN:VEVENT search finds nothing after the first.
+    expect(ics?.indexOf('BEGIN:VEVENT', ics.indexOf('BEGIN:VEVENT') + 1)).toBe(-1);
+  });
+
+  it('returns null for a genuinely TBD row (no start_date)', () => {
+    expect(buildSingleEventIcs(row({ title: 'TBD Event', slug: 'tbd-event' }), BASE_URL)).toBeNull();
   });
 });

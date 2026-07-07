@@ -34,19 +34,21 @@ CREATE TABLE events (
   category TEXT NOT NULL CHECK (category IN ('racing','class','operations','social','governance')),
   short_description TEXT,
   long_description TEXT,
-  start_date TEXT, end_date TEXT,
+  start_date TEXT, start_time TEXT, end_date TEXT, end_time TEXT,
   location TEXT,
   hero_image TEXT, hero_image_alt TEXT,
   visible INTEGER NOT NULL DEFAULT 1 CHECK (visible IN (0,1))
 );
 
--- Trimmed to the columns the public read touches; the real table also carries season/track/fee
+-- Trimmed to the columns the public read touches; the real table also carries season/track
 -- (settings.current_season, class_instructors, etc.), none of which this fixture's queries select.
+-- `fee` is kept (the events-redesign pass's per-event facts slab reads it for a class row).
 CREATE TABLE classes (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   slug TEXT NOT NULL,
   capacity INTEGER NOT NULL,
+  fee INTEGER NOT NULL DEFAULT 0,
   start_date TEXT, end_date TEXT,
   location TEXT,
   description TEXT,
@@ -62,38 +64,38 @@ CREATE TABLE class_enrollments (
 );
 
 INSERT INTO events (
-  id, title, slug, category, start_date, end_date, location, short_description, long_description, visible
+  id, title, slug, category, start_date, start_time, end_date, end_time, location, short_description, long_description, visible
 ) VALUES
   (
-    'test-regatta', 'Test Regatta', 'test-regatta', 'racing', '2026-07-10', '2026-07-11', 'Alaska Sailing Club',
+    'test-regatta', 'Test Regatta', 'test-regatta', 'racing', '2026-07-10', '10:00', '2026-07-11', NULL, 'Alaska Sailing Club',
     'A one-day fixture regatta for the visual suite.',
     'Racing starts at 10am both days, weather permitting.',
     1
   ),
   (
-    'test-spring-work-party', 'Test Spring Work Party', 'test-spring-work-party', 'operations', '2026-05-18', '2026-05-18', 'Alaska Sailing Club',
+    'test-spring-work-party', 'Test Spring Work Party', 'test-spring-work-party', 'operations', '2026-05-18', NULL, '2026-05-18', NULL, 'Alaska Sailing Club',
     'Dock building and general grounds work.',
     NULL,
     1
   ),
   (
-    'test-off-season-social', 'Test Off-Season Social', 'test-off-season-social', 'social', '2026-11-05', '2026-11-05', 'Anchorage, AK',
+    'test-off-season-social', 'Test Off-Season Social', 'test-off-season-social', 'social', '2026-11-05', NULL, '2026-11-05', NULL, 'Anchorage, AK',
     'A fixture off-season gathering.',
     NULL,
     1
   ),
   (
-    'test-annual-meeting', 'Test Annual Meeting', 'test-annual-meeting', 'governance', '2026-11-14', NULL, 'Google Meet',
+    'test-annual-meeting', 'Test Annual Meeting', 'test-annual-meeting', 'governance', '2026-11-14', NULL, NULL, NULL, 'Google Meet',
     'Election of officers, fixture data only.',
     NULL,
     1
   );
 
 INSERT INTO classes (
-  id, name, slug, capacity, start_date, end_date, location, description, hero_image, hero_image_alt, visible
+  id, name, slug, capacity, fee, start_date, end_date, location, description, hero_image, hero_image_alt, visible
 ) VALUES
   (
-    'test-intro-class', 'Test Intro Class', 'test-intro-class', 8, '2026-06-20', '2026-06-22', 'Alaska Sailing Club',
+    'test-intro-class', 'Test Intro Class', 'test-intro-class', 8, 150, '2026-06-20', '2026-06-22', 'Alaska Sailing Club',
     'Four-day fixture class for the visual suite.
 
 Covers the fundamentals of dinghy sailing over a long weekend.',

@@ -1,15 +1,14 @@
 <!-- @component
-The events deep-look pass: the full `/events` calendar (docs/events-manifest.md), built from
-`$theme/events-data.ts`'s grouped data. A TOC of jump links (only a populated section gets one),
-then one alternating-band section per populated month with the full-detail card variant, then
-Off-Season and Meetings & Governance in the compact variant (no image; Meetings also drops the
-type badge, since the section heading already names it). A genuinely empty calendar (every table
-read came back with nothing visible) shows one honest line instead of a silent blank page, the one
-deliberate addition over the live page's own untested empty state. -->
+The events-redesign pass: the full `/events` listing as one season spine — a single vertical
+timeline line down the page, month waypoints marking it, and each event or class a uniform quiet
+row hanging off it (`SpineRow.svelte`). Off-Season and Meetings & Governance close the spine as two
+more labeled waypoints, not orphan bordered sections, so the whole calendar reads as one continuous
+season rather than a stack of separate cards. A genuinely empty calendar (every table read came
+back with nothing visible) shows one honest line instead of a silent blank page. -->
 <script lang="ts">
   import type { EventsPageData } from '$theme/events-data';
   import { OFF_SEASON_ID, MEETINGS_ID } from '$theme/events-data';
-  import EventCard from './EventCard.svelte';
+  import SpineRow from './SpineRow.svelte';
 
   let { events }: { events: EventsPageData } = $props();
 </script>
@@ -25,38 +24,37 @@ deliberate addition over the live page's own untested empty state. -->
     </nav>
   {/if}
 
-  {#each events.monthSections as section, i (section.id)}
-    <section id="section-{section.id}" class="events-band" class:events-band--alt={i % 2 === 1}>
-      <h2 class="events-band-title">{section.label}</h2>
-      <div class="events-grid">
-        {#each section.events as event (event.slug)}
-          <EventCard {event} variant="full" />
-        {/each}
+  <div class="spine">
+    {#each events.monthSections as section (section.id)}
+      <div class="spine-waypoint" id="section-{section.id}">
+        <span class="spine-waypoint-marker" aria-hidden="true"></span>
+        <h2 class="spine-waypoint-label">{section.label}</h2>
       </div>
-    </section>
-  {/each}
+      {#each section.events as event (event.routeId)}
+        <SpineRow {event} />
+      {/each}
+    {/each}
 
-  {#if events.offSeason.length > 0}
-    <section id="section-{OFF_SEASON_ID}" class="events-band" class:events-band--alt={events.monthSections.length % 2 === 1}>
-      <h2 class="events-band-title">Off-Season</h2>
-      <div class="events-compact-list">
-        {#each events.offSeason as event (event.slug)}
-          <EventCard {event} variant="compact" />
-        {/each}
+    {#if events.offSeason.length > 0}
+      <div class="spine-waypoint" id="section-{OFF_SEASON_ID}">
+        <span class="spine-waypoint-marker" aria-hidden="true"></span>
+        <h2 class="spine-waypoint-label">Off-Season</h2>
       </div>
-    </section>
-  {/if}
+      {#each events.offSeason as event (event.routeId)}
+        <SpineRow {event} />
+      {/each}
+    {/if}
 
-  {#if events.meetings.length > 0}
-    <section id="section-{MEETINGS_ID}" class="events-band events-band--meetings">
-      <h3 class="events-band-title events-band-title--subordinate">Meetings &amp; Governance</h3>
-      <div class="events-compact-list">
-        {#each events.meetings as event (event.slug)}
-          <EventCard {event} variant="compact" showTypeBadge={false} />
-        {/each}
+    {#if events.meetings.length > 0}
+      <div class="spine-waypoint" id="section-{MEETINGS_ID}">
+        <span class="spine-waypoint-marker" aria-hidden="true"></span>
+        <h2 class="spine-waypoint-label">Meetings &amp; Governance</h2>
       </div>
-    </section>
-  {/if}
+      {#each events.meetings as event (event.routeId)}
+        <SpineRow {event} showTypeBadge={false} />
+      {/each}
+    {/if}
+  </div>
 {/if}
 
 <style>
@@ -81,48 +79,60 @@ deliberate addition over the live page's own untested empty state. -->
     color: var(--color-base-content);
   }
 
-  .events-band {
-    padding: var(--spacing-l) 0;
-    border-top: var(--border) solid var(--color-card-border);
+  /* The season spine: one vertical line down the whole listing (`::before`, drawn once on this
+     wrapper rather than per-row), with every waypoint and row's own marker positioned off the
+     shared `--spine-content-gap` custom property (an inherited CSS variable), so the line's
+     horizontal position (`--spine-line-x`) can shrink at a narrow viewport with no change to any
+     marker's own math: a marker's offset from its row's left edge is `-(line-to-content gap)`,
+     independent of where the line itself sits. */
+  .spine {
+    --spine-line-x: 0.5rem;
+    --spine-content-gap: 1.75rem;
+    position: relative;
+    padding-left: calc(var(--spine-line-x) + var(--spine-content-gap));
   }
-  .events-band--alt {
-    background: var(--color-base-200);
-    margin-inline: calc(var(--spacing-m) * -1);
-    padding-inline: var(--spacing-m);
-    border-radius: var(--radius-box);
+  .spine::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--spine-line-x);
+    width: 1px;
+    background: var(--color-card-border);
   }
-  .events-band--meetings {
-    border-top: var(--border) solid var(--color-card-border);
+
+  .spine-waypoint {
+    position: relative;
+    padding: var(--spacing-m) 0 var(--spacing-2xs);
   }
-  .events-band-title {
-    margin: 0 0 var(--spacing-m);
+  .spine-waypoint:first-child {
+    padding-top: 0;
+  }
+  .spine-waypoint-marker {
+    position: absolute;
+    top: 0.5em;
+    left: calc(-1 * var(--spine-content-gap) - 0.1875rem);
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 999px;
+    background: var(--color-base-100);
+    border: 2px solid var(--color-muted);
+  }
+  .spine-waypoint-label {
+    margin: 0;
     font-family: var(--font-display);
     font-weight: 300;
-    font-size: var(--text-step-4);
+    font-size: var(--text-step-3);
     color: var(--color-muted);
   }
-  .events-band-title--subordinate {
-    font-size: var(--text-step--1);
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
 
-  .events-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing-m);
-  }
-  .events-compact-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-s);
-  }
-
-  /* The family's 900px collapse threshold: two columns of full event cards above it. */
-  @media (min-width: 56.25rem) {
-    .events-grid {
-      grid-template-columns: repeat(2, 1fr);
+  /* Hugs the left edge at a narrow viewport (390px composure): the line and the marker gap both
+     shrink, and every marker's own math (defined off `--spine-content-gap` alone) re-centers with
+     no separate override needed. */
+  @media (max-width: 30rem) {
+    .spine {
+      --spine-line-x: 0.2rem;
+      --spine-content-gap: 1.15rem;
     }
   }
 </style>

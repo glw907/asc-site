@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSeasonMonths } from '$theme/season-data';
+import { buildSeasonMonths, routeIdOf } from '$theme/season-data';
 
 const CURRENT_YEAR = 2026;
 
@@ -7,7 +7,9 @@ const CURRENT_YEAR = 2026;
 // fetched, so the taxonomy and grouping stay pinned even if the club's own live data changes.
 function row(overrides: Partial<Parameters<typeof buildSeasonMonths>[0][number]>) {
   return {
+    id: 'an-event-id',
     title: 'An event',
+    slug: 'an-event',
     event_type: 'racing',
     start_date: null,
     end_date: null,
@@ -24,7 +26,7 @@ describe('buildSeasonMonths', () => {
     );
     expect(june).toEqual({
       label: 'June',
-      events: [{ dateRange: 'Jun 12–14', name: 'Fleet Tune-Up Weekend', dot: true, muted: undefined }],
+      events: [{ dateRange: 'Jun 12–14', name: 'Fleet Tune-Up Weekend', routeId: 'an-event-id', dot: true, muted: undefined }],
     });
   });
 
@@ -33,7 +35,13 @@ describe('buildSeasonMonths', () => {
       [row({ title: 'Icebreaker Regatta', event_type: 'racing', start_date: '2026-05-24', end_date: '2026-05-24' })],
       CURRENT_YEAR,
     );
-    expect(may.events[0]).toEqual({ dateRange: 'May 24', name: 'Icebreaker Regatta', dot: undefined, muted: undefined });
+    expect(may.events[0]).toEqual({
+      dateRange: 'May 24',
+      name: 'Icebreaker Regatta',
+      routeId: 'an-event',
+      dot: undefined,
+      muted: undefined,
+    });
   });
 
   it.each(['operations', 'governance', 'social'])('mutes a routine, non-racing "%s" entry', (eventType) => {
@@ -110,7 +118,10 @@ describe('buildSeasonMonths', () => {
   it('gives an undated (TBD) event no crash and an off-season placement', () => {
     const months = buildSeasonMonths([row({ title: 'To be scheduled' })], CURRENT_YEAR);
     expect(months).toHaveLength(1);
-    expect(months[0]).toEqual({ label: 'Off-season', events: [{ dateRange: 'Date TBD', name: 'To be scheduled', dot: undefined, muted: undefined }] });
+    expect(months[0]).toEqual({
+      label: 'Off-season',
+      events: [{ dateRange: 'Date TBD', name: 'To be scheduled', routeId: 'an-event', dot: undefined, muted: undefined }],
+    });
   });
 
   it('falls back to date_history when there is no start_date at all', () => {
@@ -131,5 +142,15 @@ describe('buildSeasonMonths', () => {
 
   it('returns no groups for an empty input', () => {
     expect(buildSeasonMonths([], CURRENT_YEAR)).toEqual([]);
+  });
+});
+
+describe('routeIdOf', () => {
+  it("routes a plain event on its (globally unique) slug", () => {
+    expect(routeIdOf({ event_type: 'racing', slug: 'bnac', id: 'some-uuid' })).toBe('bnac');
+  });
+
+  it("routes a class on its id, since a class's slug is only unique within its season", () => {
+    expect(routeIdOf({ event_type: 'class', slug: 'adult-intro', id: 'class-row-id' })).toBe('class-row-id');
   });
 });

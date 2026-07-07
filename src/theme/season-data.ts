@@ -31,6 +31,9 @@ import type { D1Database } from '@cloudflare/workers-types';
 export interface SeasonEvent {
   dateRange: string;
   name: string;
+  /** The `/events/[id]` route segment (`routeIdOf`), so the home page's Season band can link
+   *  each event name to its own page. */
+  routeId: string;
   dot?: boolean;
   muted?: boolean;
 }
@@ -44,13 +47,25 @@ export interface SeasonMonth {
 
 /** A raw event or class row, already read from D1. `event_type` is the stored column for a real
  *  `events` row, or the synthesized `'class'` tag this module's own queries attach to a `classes`
- *  row (see the header comment's recorded schema gap). */
+ *  row (see the header comment's recorded schema gap). `id` and `slug` back `routeIdOf` below;
+ *  `$theme/events-data.ts`'s own richer row shape is structurally compatible with this one. */
 interface EventRow {
+  id: string;
   title: string;
+  slug: string;
   event_type: string;
   start_date: string | null;
   end_date: string | null;
   date_history: string | null;
+}
+
+/** The per-event page's own URL segment (also the events-redesign pass's spine-row and Season-
+ *  link anchor): an `events` row's `slug` is globally unique, but a `classes` row's `slug` is only
+ *  unique within its season (`UNIQUE (season, slug)`), so a class row routes on its real primary
+ *  key instead. Shared by `$theme/events-data.ts`, which reads the identical `event_type`/`slug`/
+ *  `id` triple off its own richer row shape. */
+export function routeIdOf(row: Pick<EventRow, 'event_type' | 'slug' | 'id'>): string {
+  return row.event_type === 'class' ? row.id : row.slug;
 }
 
 /** The display text for an event with no resolvable current-year date. Shared with the full
@@ -75,11 +90,11 @@ const OFF_SEASON_LABEL = 'Off-season';
  *  filter. `date_history` has no asc-club equivalent (the ratified DDL carries no such column, see
  *  the header comment); selected as a literal `NULL` so the row shape below, and its shared date
  *  helpers, stay unchanged. */
-const EVENTS_QUERY = `SELECT title, category AS event_type, start_date, end_date, NULL AS date_history
+const EVENTS_QUERY = `SELECT id, title, slug, category AS event_type, start_date, end_date, NULL AS date_history
                        FROM events WHERE visible = 1`;
 /** The classes table's SELECT, tagged with the synthesized `'class'` category (see the header
  *  comment on why `classes` carries no category column of its own). */
-const CLASSES_QUERY = `SELECT name AS title, 'class' AS event_type, start_date, end_date, NULL AS date_history
+const CLASSES_QUERY = `SELECT id, name AS title, slug, 'class' AS event_type, start_date, end_date, NULL AS date_history
                         FROM classes WHERE visible = 1`;
 
 /** The best available date for ordering an event with no current-year `start_date`: its most
@@ -157,6 +172,7 @@ function toWorkingEvent(row: EventRow, currentYear: number): WorkingEvent {
   return {
     dateRange: row.start_date ? formatDateRange(row.start_date, row.end_date) : DATE_TBD,
     name: row.title,
+    routeId: routeIdOf(row),
     ...categorize(row.event_type),
     inSeason: month >= 5 && month <= 9,
     month,
@@ -164,8 +180,8 @@ function toWorkingEvent(row: EventRow, currentYear: number): WorkingEvent {
   };
 }
 
-function toSeasonEvent({ dateRange, name, dot, muted }: WorkingEvent): SeasonEvent {
-  return { dateRange, name, dot, muted };
+function toSeasonEvent({ dateRange, name, routeId, dot, muted }: WorkingEvent): SeasonEvent {
+  return { dateRange, name, routeId, dot, muted };
 }
 
 const byMonthThenDay = (a: WorkingEvent, b: WorkingEvent) =>
