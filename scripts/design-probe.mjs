@@ -43,7 +43,9 @@ async function waitForServer(url, timeoutMs = 30_000) {
   while (Date.now() < deadline) {
     try {
       const res = await fetch(url);
-      if (res.ok || res.status < 500) return true;
+      // Any answer short of a server error means the server is up (a 404 still means it is
+      // listening); only a 5xx or a thrown connection error keeps polling.
+      if (res.status < 500) return true;
     } catch {
       // Not up yet; keep polling.
     }

@@ -321,10 +321,10 @@ before the photography existed, never a broken image. -->
   .hero-figure,
   .panel-figure {
     border-radius: var(--radius-box);
-    background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
   }
   .hero-figure {
     aspect-ratio: 4 / 3;
+    background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
   }
   .panel-figure {
     aspect-ratio: 2 / 1;
