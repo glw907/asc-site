@@ -6,8 +6,7 @@ description: "Bylaws of the Alaska Sailing Club Condominiums Owners Association,
 **Adopted:** 2011  
 **Authority:** Per Article XV of the Declaration
 
-:::callout{tone="note"}
-[Plain-English summary]
+:::callout[Plain-English Summary]{tone="note"}
 The Alaska Sailing Club Condominiums Owners Association (ASCCA) is a separate legal entity — a condominium association that governs the property on which the club operates. The ASC is a unit owner within this structure, holding Unit H. These bylaws define how the ASCCA is governed and what authority it has over the property.
 
 **What this means for members:**
