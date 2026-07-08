@@ -185,6 +185,19 @@ body {
   }
 }
 
+/* The text-selection highlight (the finishing audit's surface lens, 2026-07-08): with no
+   ::selection rule anywhere in the site, a drag-select fell back to the browser's stock
+   cornflower blue, a foreign note against the navy/sage/gold palette every other surface
+   already carries. Navy (--color-primary), not gold (--color-secondary), keeps this legible in
+   both themes: a navy tint over light ink stays readable in light mode, and asc-dark's
+   light-blue primary stays readable over the dark ground, whereas a gold wash risks
+   light-ink-on-light-gold there. Background only; `color` is left alone so the selected text
+   keeps its own base-content ink. Unlayered, so it outranks prose.css's `@layer components`
+   the same way the link-color rule above does. */
+::selection {
+  background-color: color-mix(in oklab, var(--color-primary) 28%, transparent);
+}
+
 /* Page-to-page cross-fade (the owner-round-2 fix, 2026-07-07): the root layout's own `onNavigate`
    wraps every client-side navigation in `document.startViewTransition`; this sets the actual
    duration, deliberately quick and quiet (~180ms, toward the fast end of the ~150-200ms range, so

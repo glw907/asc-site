@@ -419,6 +419,16 @@ state. -->
   .nav-caret {
     transition: color 0.15s ease;
   }
+  /* Tailwind v4's preflight leaves `<button>` at the OS default arrow cursor (a deliberate v3+
+     removal); `.donate-link` needs no rule of its own since it is an `<a href>`, which already
+     gets the browser's own pointer cursor. Without this, hovering across the icon trio
+     (donate, search, theme toggle) flips hand/arrow/hand, a small inconsistency in an otherwise
+     visually matched row. */
+  .theme-toggle,
+  .nav-caret,
+  .hamburger {
+    cursor: pointer;
+  }
   .theme-toggle:focus-visible,
   .donate-link:focus-visible,
   .nav-caret:focus-visible {

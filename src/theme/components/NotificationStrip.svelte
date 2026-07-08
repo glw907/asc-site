@@ -31,7 +31,7 @@ superseding round-5's own hero-left-column width, which read as an inadvertent g
   </svg>
   <p class="notification-text m-0 text-step-0 text-base-content">
     {#each segments as segment, i (i)}{#if segment.bold}<strong>{segment.text}</strong>{:else}{segment.text}{/if}{/each}
-    <a href="/join/" class="font-semibold text-primary underline underline-offset-[3px] whitespace-nowrap">Read more&nbsp;&rarr;</a>
+    <a href="/join/" class="notification-link font-semibold text-primary underline underline-offset-[3px] whitespace-nowrap">Read more&nbsp;&rarr;</a>
   </p>
 </div>
 
@@ -58,5 +58,9 @@ superseding round-5's own hero-left-column width, which read as an inadvertent g
     height: 1.3em;
     flex-shrink: 0;
     margin-top: 0.2em;
+  }
+  .notification-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 </style>

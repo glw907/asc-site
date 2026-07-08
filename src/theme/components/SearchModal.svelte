@@ -164,6 +164,7 @@ ecxc.ski's own SearchModal, the family's standing Pagefind pattern.
 <style>
   .search-trigger {
     position: relative;
+    cursor: pointer;
     transition: color 0.15s ease;
   }
   .search-trigger:focus-visible {

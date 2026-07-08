@@ -182,4 +182,8 @@ the same `routeId` the full listing's spine rows and the per-event page itself r
     color: var(--color-primary);
     text-decoration: underline;
   }
+  .season-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 </style>

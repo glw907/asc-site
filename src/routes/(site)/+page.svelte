@@ -197,7 +197,7 @@ before the photography existed, never a broken image. -->
   <!-- News & updates: cards mark objects (A1); the one place body content gets real card chrome. -->
   <section id="news" class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">News &amp; updates</h2>
+      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-balance text-base-content">News &amp; updates</h2>
       {#if data.news.length > 0}
         <div class="news-grid mt-xs grid grid-cols-1 gap-m">
           {#each data.news as post (post.id)}
@@ -270,7 +270,7 @@ before the photography existed, never a broken image. -->
        a guessed pixel clamp. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">What do we do?</h2>
+      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-balance text-base-content">What do we do?</h2>
       <p class="wdwd-intro mt-xs text-step-0 text-base-content">
         The Alaska Sailing Club is a welcoming environment with beautiful lakeside grounds and
         plenty to do for new sailors and old salts alike. Whether you&rsquo;re here to develop
@@ -335,7 +335,7 @@ before the photography existed, never a broken image. -->
        channel, never the only one carrying the dot's meaning. -->
   <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">The Season</h2>
+      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-balance text-base-content">The Season</h2>
       <p class="mt-xs mb-2xs text-step-0 text-base-content">
         Racing runs May through September; social events bookend the year.
         <a href="/events/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
@@ -370,7 +370,7 @@ before the photography existed, never a broken image. -->
        photo-first reorder here to compensate for). -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
-      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">Our fleet</h2>
+      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-balance text-base-content">Our fleet</h2>
       <div class="mt-s grid grid-cols-1 items-center gap-l twocol-panel fleet-row">
         <div>
           <p class="text-step-0 text-base-content">
@@ -437,7 +437,7 @@ before the photography existed, never a broken image. -->
         {/if}
       </div>
       <div>
-        <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">Our facilities</h2>
+        <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-balance text-base-content">Our facilities</h2>
         <p class="mt-xs text-step-0 text-base-content">
           To the best of our knowledge, the ASC is the northernmost sailing club in the United
           States. But despite this (or maybe because of it?) we have facilities that would be the
@@ -462,7 +462,7 @@ before the photography existed, never a broken image. -->
   <section class="closing-band bg-flag-navy-deep py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m closing-grid">
       <div>
-        <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-white">Interested in learning more?</h2>
+        <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-balance text-white">Interested in learning more?</h2>
         <p class="mt-xs max-w-[50ch] text-step-0 text-footer-ink">
           Whether you&rsquo;re brand-new to sailing or looking for a community of fellow sailors,
           we&rsquo;d love to meet you.
@@ -533,9 +533,11 @@ before the photography existed, never a broken image. -->
      read as calmer, better-spaced prose instead of a tightly packed block. */
   .hero-title {
     font-size: calc(var(--text-step-5) * 1.15);
+    text-wrap: balance;
   }
   .hero-lede {
     line-height: var(--leading-body);
+    text-wrap: pretty;
   }
 
   /* The hero and Fleet/Facilities photo panels: a gradient placeholder until real photography
@@ -1166,6 +1168,10 @@ before the photography existed, never a broken image. -->
   .arrow-link {
     padding-block: 0.3rem;
     font-size: var(--text-step--1);
+  }
+  .arrow-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   @media (prefers-reduced-motion: reduce) {
