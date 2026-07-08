@@ -7,20 +7,15 @@ image:
 
 The Alaska Sailing Club is an education-focused 501(c)(3). Each summer, we teach a four-day beginner sailing course in two tracks, one for adults and teens and one for youth, making it easy for whole families to learn together. We also host a free Fleet Tune-Up Weekend for experienced sailors looking to sharpen their skills before the racing season. Our volunteer instructors are passionate sailors with decades of combined experience teaching sailing; several are nationally competitive racers.
 
-## Class Schedule
+## Dates & Registration
 
 Registration requires an active ASC membership. See [How to Register](#how-to-register) below for details on joining and class credits.
 
-:::callout{tone="note"}
-[See the current schedule]
-Class dates, openings, and sign-up links live on the [events page](/events/), pulled straight
-from the club's own calendar and kept current. Open a class there for its dates and a link to
-sign up.
-:::
+Class dates, openings, and sign-up links live on the [events page](/events/), pulled straight from the club's own calendar and kept current. Open a class there for its dates and a link to sign up.
 
 **Classes fill fast**, sessions typically sell out within a week of registration opening in mid-March, and some fill in days. If you're planning to take a class this summer, register as soon as registration opens.
 
-*If a class shows as open but registration fails, it may have already filled, [join the waitlist](#class-waitlist) and we'll contact you when a spot opens.*
+*If a class shows as open but registration fails, it may have already filled. [Join the waitlist](#class-waitlist) and we'll contact you when a spot opens.*
 
 ## Introduction to Dinghy Sailing
 
@@ -38,7 +33,7 @@ Our four-day beginner course for adults and teens covers all the fundamentals of
 
 A kid-friendly version of our intro course, with more hands-on time, on-water games, and shorter practice sessions designed for younger learners. Parents are welcome to take the adult class simultaneously or enjoy time on our grounds.
 
-Note that we require parents to be on-premises during our youth classes.
+Note that we require parents to be on-premises during our youth classes. Because of that, a child registers under a Family membership, the only tier that covers all ages (see [Pricing](#pricing) below); there's no separate youth membership.
 
 :::figure
 ![Sailing instructor celebrating with arms raised alongside a group of youth students on a Buccaneer at the dock](media:youth-intro-class-1.9c08687cac54de80)
@@ -59,7 +54,7 @@ Participants in our intro classes will learn all the following:
 
 ### A Typical Course Weekend
 
-A rough schedule for the four-day Introduction to Dinghy Sailing course. We adjust for weather and wind, so treat the times as a plan, not a promise. Class runs to 6:00 p.m. Thursday through Saturday; most students camp at the club for the duration, and instructors often take a sunset sail on the club's Ensign 22 after dinner.
+A rough schedule for the four-day Introduction to Dinghy Sailing course. We adjust for weather and wind, so treat the times as a plan, not a promise. Class runs to 6:00 p.m. Thursday through Saturday and wraps up an hour earlier on Sunday; most students camp at the club for the duration, and instructors often take a sunset sail on the club's Ensign 22 after dinner.
 
 | Day | Time | Focus |
 |---|---|---|
@@ -217,7 +212,7 @@ There is a Three Bears grocery store about ten minutes away from the club if you
 
 ## Cancelation and Refund Policy
 
-You can cancel a class up to two weeks before its first day for a refund of your ASC membership and course fees, minus any PayPal service fees. To notify us of your need to cancel, please email `board@aksailingclub.org` with the subject "Class cancellation" and let us know which class you're canceling.
+You can cancel a class up to two weeks before its first day for a refund of your ASC membership and course fees, minus any PayPal service fees. To notify us of your need to cancel, please email [board@aksailingclub.org](mailto:board@aksailingclub.org) with the subject "Class cancellation" and let us know which class you're canceling.
 
 If you cancel a class within the two-week window, you can opt to apply your class payment or voucher to a course the following year.
 
@@ -227,11 +222,7 @@ If you need to cancel, please give us as much notice as possible. Courses at the
 
 Our Learn to Sail classes fill up quickly! If a class session is full, join the waitlist below. The Program Committee will contact you when a spot opens up. Cancellations are common in the weeks before class. Waitlisted students frequently get in.
 
-:::callout{tone="note"}
-[Join the waitlist]
-Find your class on the [events page](/events/) and open its listing. A full class shows a "Join
-the waitlist" option in place of Sign Up, right on the same page, no separate form.
-:::
+Find your class on the [events page](/events/) and open its listing. A full class shows a "Join the waitlist" option in place of Sign Up, right on the same page, no separate form.
 
 ## Questions?
 

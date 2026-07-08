@@ -460,10 +460,11 @@
       width: 14rem;
       max-height: calc(100vh - var(--header-clearance) - var(--spacing-l));
       overflow-y: auto;
-      background: var(--color-base-100);
-      border: var(--border) solid var(--color-card-border);
-      border-radius: var(--radius-box);
-      padding: var(--spacing-s) var(--spacing-m);
+      /* No fill, no border, no radius (a panel-review finding, 2026-07-07): a boxed card in the
+         gutter read as a docs-app reference panel, not part of the plain article the rest of the
+         page already reads as. The label and link list stand on their own, the same "quiet"
+         reading the in-flow `.jump-links` gets below this breakpoint. */
+      padding: 0 var(--spacing-m) 0 0;
     }
   }
   :global(.site-main) .prose .page-toc-rail a {
@@ -495,12 +496,37 @@
      row that needs it). `min(...)` clamps the breakout to the viewport itself below the width
      where there is no room to spare, so it never overflows a narrower viewport; the grid's own
      `repeat(auto-fill, minmax(14rem, 1fr))` (asc-components.css) still governs how many columns
-     actually fit at whatever width this resolves to. */
+     actually fit at whatever width this resolves to.
+
+     Below the rail's own breakpoint (the media query just past this rule) the breakout is
+     unconstrained: the gutter rail is not on screen there (`.jump-links` renders in its place),
+     so there is nothing for the row to run into. */
   .long-form-page :global(.asc-cards) {
     width: min(var(--container-measure-wide), 100vw - 3rem);
     position: relative;
     left: 50%;
     transform: translateX(-50%);
+  }
+  /* Past 80rem the fixed gutter rail (`.page-toc-rail` above) is on screen, and the unconstrained
+     breakout's centered 58rem width draws past the rail's own left edge at every width checked
+     (a panel-review finding, 2026-07-07): both the row and the rail center-align independently,
+     the row on the viewport and the rail on `--container-measure`'s own right edge plus its
+     gutter, so a fixed 58rem breakout eventually always outruns a 14rem-plus-gutter rail as the
+     viewport narrows toward this very breakpoint.
+
+     The row and the rail share one derivation here instead: the row's own right edge is pinned
+     to exactly `--container-measure` plus one `--spacing-m` of extra breakout (half of what the
+     rail's own `left` formula above reserves as its gutter), which by construction lands exactly
+     half a `--spacing-m` inside the rail's left edge at every viewport width past this
+     breakpoint, not just the ones spot-checked. The row stays centered on the viewport (as it is
+     below this breakpoint) via the same `left: 50%; translateX(-50%)` pair, just narrower; the
+     grid's own `repeat(auto-fill, minmax(14rem, 1fr))` still decides column count at whatever
+     width this resolves to, three columns where it fits, two where the narrowed measure only
+     leaves room for two. */
+  @media (min-width: 80rem) {
+    .long-form-page :global(.asc-cards) {
+      width: min(calc(var(--container-measure) + var(--spacing-m)), 100vw - 3rem);
+    }
   }
 
   /* Strand 3 (the presentation round): the pages concept's title-adjacent hero, adapted from the
