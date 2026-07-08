@@ -788,7 +788,8 @@ before the photography existed, never a broken image. -->
     max-width: 30ch;
     font-size: var(--text-step--1);
     line-height: var(--leading-snug);
-    color: rgba(255, 255, 255, 0.92);
+    font-weight: 450;
+    color: rgba(255, 255, 255, 1);
   }
   /* White, not the fireweed pop: the hero and closing-band CTAs already spend the story's "at
      most twice a page" fireweed budget, and white already reads as a clear, high-contrast link
