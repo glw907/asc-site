@@ -56,6 +56,31 @@ test('education — light', async ({ page }) => {
   await expect(page).toHaveScreenshot('education-light.png', { fullPage: true });
 });
 
+// Regression for the pipeline-ordering bug (edu-round-3): the long-form page's group split used to
+// run against html the program-section and registration-band wraps had already applied, so a group
+// boundary that fell inside the band's own wrapper divs cut the slice through them, leaving one
+// {@html} segment with an unclosed div and the next with its stray closer. The browser's
+// error-correcting parser repaired each segment independently, which duplicated the whole
+// Registration-through-Questions block on hydration. 'load', not 'networkidle' (the design-probe
+// script's own note: some pages keep a request open past 'load'), plus a short settle for
+// hydration to finish.
+test('education — long-form pipeline renders no duplicate section', async ({ page }) => {
+  await page.goto('/education/', { waitUntil: 'load' });
+  await page.waitForTimeout(300);
+
+  await expect(page.locator('#how-to-register--pricing')).toHaveCount(1);
+
+  const band = page.locator('.registration-band');
+  await expect(band.locator('#how-to-register--pricing')).toHaveCount(1);
+  await expect(band.locator('#swim-test-capsize-drill-and-life-jackets')).toHaveCount(0);
+
+  const dividerLabels = page.locator('.group-divider-label');
+  await expect(dividerLabels).toHaveCount(3);
+  await expect(dividerLabels.nth(0)).toHaveText('Registration & logistics');
+  await expect(dividerLabels.nth(1)).toHaveText('Preparing for class');
+  await expect(dividerLabels.nth(2)).toHaveText('Policies & questions');
+});
+
 // The D1-backed /events template: the events-redesign pass's season spine (month waypoints,
 // Off-Season and Meetings & Governance as the spine's own closing waypoints, the calendar-
 // subscribe bar) reading from the seeded fixture rows in every row shape the manifest

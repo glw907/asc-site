@@ -97,6 +97,7 @@
   const GROUP_HEADINGS: Record<string, { headingId: string; label: string }[]> = {
     education: [
       { headingId: 'how-to-register--pricing', label: 'Registration & logistics' },
+      { headingId: 'swim-test-capsize-drill-and-life-jackets', label: 'Preparing for class' },
       { headingId: 'cancellation-and-refund-policy', label: 'Policies & questions' },
     ],
   };
@@ -298,9 +299,9 @@
    *  `.registration-band` bleeds to the viewport and carries the sage tint, `.registration-band-
    *  inner` re-centers the section's own content back to `--container-measure`, so only the ground
    *  stretches full width, never the text or the cards (the amendment's own rule). Runs AFTER
-   *  wrapHeadingSection so the band's own h2 tag (still a plain top-level match at this point) is
-   *  found correctly regardless of the earlier program-section wraps, which all close before this
-   *  heading starts. */
+   *  wrapHeadingSection within the same group segment (wrapLongFormSegment, below) so the band's
+   *  own h2 tag (still a plain top-level match at this point) is found correctly regardless of any
+   *  earlier program-section wraps in that segment, which all close before this heading starts. */
   function wrapSectionAsBand(html: string, headingId: string): string {
     return wrapRange(
       html,
@@ -310,21 +311,38 @@
     );
   }
 
-  // The full long-form body pipeline, in order: each program section wraps first (their own
-  // boundaries all close before the registration band's own heading starts, so the two never
-  // overlap), then the registration band, then the divider-group split below reads the result.
-  const longFormBodyWrapped = $derived.by(() => {
-    if (!longFormSlug) return longFormBody;
-    let html = longFormBody;
-    for (const { headingId, level } of PROGRAM_SECTION_HEADINGS[longFormSlug] ?? []) {
-      html = wrapHeadingSection(html, headingId, level);
+  /** Applies one long-form page's own wraps, program sections then the registration band, to a
+   *  single already-split group segment's own html (used by groupSegments below). wrapRange's
+   *  missing-id tolerance (its own doc comment above) makes running every wrap against every
+   *  segment safe: a heading id absent from a given segment simply no-ops there, so only the
+   *  segment that actually contains a wrap's own heading is ever changed. */
+  function wrapLongFormSegment(html: string, slug: string): string {
+    let wrapped = html;
+    for (const { headingId, level } of PROGRAM_SECTION_HEADINGS[slug] ?? []) {
+      wrapped = wrapHeadingSection(wrapped, headingId, level);
     }
-    const bandHeadingId = REGISTRATION_BAND_HEADING_ID[longFormSlug];
-    if (bandHeadingId) html = wrapSectionAsBand(html, bandHeadingId);
-    return html;
-  });
+    const bandHeadingId = REGISTRATION_BAND_HEADING_ID[slug];
+    if (bandHeadingId) wrapped = wrapSectionAsBand(wrapped, bandHeadingId);
+    return wrapped;
+  }
+
+  // The full long-form body pipeline, in order: split the PLAIN, unwrapped body into its named
+  // groups first (splitAtHeadingIds), then wrap each group's own segment independently
+  // (wrapLongFormSegment: program sections, then the registration band). Splitting before
+  // wrapping, rather than after, is what keeps every segment's own html balanced for its own
+  // {@html} below: a wrap applied to the whole body before the split could straddle a group
+  // boundary (the registration band's own heading is also a group boundary here) and leave one
+  // segment with an unclosed wrapper div and the next with its stray closer, which is exactly the
+  // shape that let the browser's own error-correcting HTML parser silently duplicate the section
+  // on hydration. Splitting first guarantees every cut lands on a plain top-level heading tag,
+  // never on wrapper markup, since the wraps have not been applied yet at split time.
   const groupSegments = $derived(
-    longFormSlug ? splitAtHeadingIds(longFormBodyWrapped, GROUP_HEADINGS[longFormSlug] ?? []) : [],
+    longFormSlug
+      ? splitAtHeadingIds(longFormBody, GROUP_HEADINGS[longFormSlug] ?? []).map((segment) => ({
+          ...segment,
+          html: wrapLongFormSegment(segment.html, longFormSlug),
+        }))
+      : [],
   );
 
   // The sticky gutter TOC's active-section highlight (Strand 2, and shared by the long-form gutter
