@@ -182,6 +182,11 @@ export const cairn = defineAdapter({
     // (site.css), so the frame links the same theme/site sheets and reproduces that container.
     preview: { stylesheets: [themeCss, siteCss], containerClass: 'site-main' },
     adminNav: [clubAdminNav],
+    // The publish-actions seam: a published post lands beside the Announce screen's own
+    // detail route (`/admin/club/announce/[id]`, a path param, not the doc example's query-string
+    // shape) so the member who just published can jump straight into notifying the club.
+    // Restricted to posts: pages have no Announce screen.
+    publishActions: [{ label: 'Announce this post', href: '/admin/club/announce/{id}', concepts: ['posts'] }],
   },
 });
 
