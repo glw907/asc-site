@@ -205,3 +205,10 @@ viewport width. The rule is width-conditional: at tablet and narrow viewports (w
 viewport and the content measure converge) edge-to-edge content is fine and often right; at
 wide viewports it never is. In practice: content blocks cap at the wide breakout, which
 below ~lg is the viewport anyway.
+
+## Amendment (Geoff, 2026-07-08): one deliberate band per long-form page
+
+The bands-are-home-only ruling amends: home keeps the page-wide alternating rhythm
+exclusively, and a long-form page may use ONE tinted band around its primary action group
+(education's registration + CTA moment is the first), echoing home's rhythm at a single
+deliberate moment. Full alternation stays home's alone.
