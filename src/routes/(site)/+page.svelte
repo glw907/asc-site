@@ -56,18 +56,37 @@ before the photography existed, never a broken image. -->
        column now outweighs the text column (`.hero-grid`'s own ratio, below) instead of the
        other way around, which grows its rendered height for free at the photo's true 4:3 ratio
        (no crop). Below 900px the photo leads the stack (`order: -1`) rather than following the
-       text, so a mobile reader meets the photography first. -->
+       text, so a mobile reader meets the photography first.
+
+       The text column's own vertical edges (round-3 fix, 2026-07-07): at 900px+, the tall photo
+       column (its own 4:3 ratio at the row's 0.75fr track) runs noticeably taller than the text
+       column's intrinsic content height, and the row's prior `align-items: end` (bottom-anchoring
+       the CTA to the photo's own bottom edge, still correct) left roughly 80px of dead air above
+       the title, which read as the text block floating apart from the photo rather than resolving
+       against BOTH its edges (Geoff's live-review finding). `.hero-text` (the scoped rule below)
+       now stretches to the row's full height and distributes its own three children with
+       `justify-content: space-between`, so the title's own cap line resolves against the photo's
+       top edge and the CTA keeps its existing bottom-edge resolution, with the lede's natural
+       flow filling the space between. The title gains a display-scale step and the lede gains a
+       touch more leading (this rule block, below) so that distributed space reads as generous
+       paragraph breathing room, not a stretched void: the text now reads full beside the photo at
+       every tested width, never centered as a fallback (this pass's own render check). -->
   <section class="pb-xl pt-l md:pt-xl">
     <div class="hero-grid mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m">
       <!-- The text column measures to ~54ch (the north star's own balance target, restored from
            the completion pass's fix: an earlier ~36ch cap wrapped the lede to six narrow lines),
            so the row reads as a deliberate photo/text pairing rather than a narrow text column
-           dwarfed by the photo. -->
-      <div class="max-w-[54ch]">
-        <h1 class="m-0 font-display text-step-5 font-semibold italic leading-tight tracking-tight text-base-content">
+           dwarfed by the photo. The cap only ever binds at very wide viewports: at the row's own
+           0.75fr:1fr split it is well short of the nominal 54ch in practice, still narrower than a
+           long-form reading measure ought to be, which is exactly why the title and lede both gain
+           a touch more presence below rather than the column simply growing wider (that would
+           require reopening the photo-dominant ratio the design-polish pass deliberately chose for
+           the source photo's own composition, out of this round's scope). -->
+      <div class="hero-text max-w-[54ch]">
+        <h1 class="hero-title m-0 font-display font-semibold italic leading-tight tracking-tight text-base-content">
           Ahoy!
         </h1>
-        <p class="mt-xs text-step-0 text-base-content">
+        <p class="hero-lede mt-xs text-step-0 text-base-content">
           &hellip;and welcome to the Alaska Sailing Club. Founded in 1967, we&rsquo;re an engaged,
           community-involved 501(c)(3) with an active yearly schedule of classes, regattas, and
           family-friendly events &mdash; fun, friends, and sailing under the midnight sun.
@@ -399,6 +418,22 @@ before the photography existed, never a broken image. -->
     outline-offset: 2px;
   }
 
+  /* The hero title and lede's own added presence (round-3 fix, 2026-07-07): both gain a touch
+     more weight so the text column reads full beside the photo rather than needing the vertical
+     distribution (`.hero-text`, below) to stretch across an otherwise-thin block. "Ahoy!" steps up
+     a display size past the shared `--text-step-5` heading token (a bespoke `calc`, not a new
+     token: no page uses a heading bigger than this one, and the greeting is this page's own single
+     largest mark) while staying well under the What-do-we-do band's own tile treatment, still the
+     page's louder highlight. The lede's leading opens from the ambient `1.5` to the theme's own
+     `--leading-body` token, the same generous body rhythm prose.css already uses, so its six lines
+     read as calmer, better-spaced prose instead of a tightly packed block. */
+  .hero-title {
+    font-size: calc(var(--text-step-5) * 1.15);
+  }
+  .hero-lede {
+    line-height: var(--leading-body);
+  }
+
   /* The hero and Fleet/Facilities photo panels: a gradient placeholder until real photography
      resolves (the `.has-photo` modifier drops the gradient once an <img> fills the box), matching
      the north star's own pre-photography state as the safe degrade for a resolver miss. Each
@@ -691,13 +726,32 @@ before the photography existed, never a broken image. -->
        Facilities panel already does further down the page. */
     .hero-grid {
       grid-template-columns: 0.75fr 1fr;
-      /* Anchors the CTA to the photo's own lower edge (the craft pass's hero-balance fix,
+      /* Stretches both columns to the row's own height (the round-3 edge-resolution fix,
          2026-07-07), overriding the row's shared `items-center` utility (an unlayered scoped rule
          already outranks any Tailwind utility class regardless of specificity, the same mechanism
-         `.facilities-row`'s own `align-items` override relies on below): plain centering left an
-         identical sliver of white above the heading and below the button, which read as the text
-         block floating apart from the photo rather than settling against it. */
-      align-items: end;
+         `.facilities-row`'s own `align-items` override relies on below): `.hero-text`'s own
+         `justify-content: space-between` (below) needs a full-height box to distribute against.
+         Plain `end` (the craft pass's prior fix) anchored only the CTA to the photo's bottom edge
+         and left the title floating in dead air above; stretch resolves both edges at once. */
+      align-items: stretch;
+    }
+    /* The text column's own edge resolution (round-3 fix): stretched to the row's full height by
+       the grid's `align-items: stretch` above, then distributes its three children so the title
+       resolves against the photo's top edge, the CTA keeps its existing bottom-edge resolution,
+       and the lede's own flow fills the space between. Judged against the render at 1440 and 768:
+       the title/lede's own added presence (below) keeps this reading as generous paragraph
+       breathing room rather than a stretched void, so this is the shipped state, not the
+       centered fallback the task allowed for. */
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    /* The optical cap-height nudge: a line box's own leading sits above a letter's true cap
+       height, so top-anchoring the column's box (above) still leaves a small visible gap before
+       "Ahoy!"'s own ink starts. Pulled up by eye against the photo's top edge at 1440 and 768. */
+    .hero-title {
+      margin-top: -0.08em;
     }
     .twocol-panel {
       grid-template-columns: 1fr 1fr;
