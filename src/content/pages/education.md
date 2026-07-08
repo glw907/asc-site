@@ -210,7 +210,7 @@ We have a grill, a microwave, a coffee maker, a hot water heater, a shared fridg
 
 There is a Three Bears grocery store about ten minutes away from the club if you need supplies. Lakeside Laundromat is across the street from Three Bears and has hot showers and a sink where you can fill water coolers.
 
-## Cancelation and Refund Policy
+## Cancellation and Refund Policy
 
 You can cancel a class up to two weeks before its first day for a refund of your ASC membership and course fees, minus any PayPal service fees. To notify us of your need to cancel, please email [board@aksailingclub.org](mailto:board@aksailingclub.org) with the subject "Class cancellation" and let us know which class you're canceling.
 
@@ -226,4 +226,8 @@ Find your class on the [events page](/events/) and open its listing. A full clas
 
 ## Questions?
 
-If you have any questions or concerns regarding our classes, [email us](/contact/) to reach our instructors and program committee.
+::::cards
+:::card[Email us]{icon="envelope-simple" href="/contact/"}
+Reach our instructors and program committee with any questions or concerns about our classes.
+:::
+::::
