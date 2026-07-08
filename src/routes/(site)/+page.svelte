@@ -48,32 +48,37 @@ before the photography existed, never a broken image. -->
 
   // The What-do-we-do band's three tiles. Design candidate A (the triptych, landed on main by
   // the wdwd-final pass, 2026-07-07; contained to the page's own measure in round-5): Geoff
-  // picked candidate A over the wdwd-candidates
-  // branch's editorial-feature and manifesto-rows alternatives "by a mile". `desc` is the
-  // candidate's own addition, one honest line per tile in the club voice, room the redesigned
-  // band gives this section for the first time; `key` picks each tile's own slot out of
-  // `data.images`.
+  // picked candidate A over the wdwd-candidates branch's editorial-feature and manifesto-rows
+  // alternatives "by a mile". `key` picks each tile's own slot out of `data.images`.
+  //
+  // `desc` restores the club's own original copy (round-7, 2026-07-07, supplied by Geoff
+  // directly, superseding the shorter one-line `desc` the wdwd-candidates round had invented):
+  // the standing defect sanction applies two typo fixes recorded here, never silently preserved
+  // ("Or intro courses" -> "Our intro courses" in Learn; "a fanatic spot" -> "a fantastic spot" in
+  // Relax). Learn and Race also restore their own original link labels ("Learn to sail",
+  // "Regatta schedule"); Relax's original link label was not supplied, so its `cta` keeps the
+  // wdwd-candidates round's "Facilities & membership" pending Geoff's confirmation.
   const WHAT_WE_DO = [
     {
       label: 'Learn',
-      cta: 'Courses & clinics',
+      cta: 'Learn to sail',
       href: '/education/',
       key: 'learn' as const,
-      desc: 'Classes and clinics that take you from first tack to confident skipper.',
+      desc: 'The ASC offers both introductory and intermediate courses every summer for adults, teens, and kids. Our intro courses require no prior sailing experience and are extremely popular. So, sign up quickly if you want a spot!',
     },
     {
       label: 'Race',
-      cta: 'Regattas & events',
+      cta: 'Regatta schedule',
       href: '/racing/',
       key: 'race' as const,
-      desc: 'Club racing and regattas all summer, from casual Wednesday nights to regional events.',
+      desc: 'The ASC puts on six summer regattas, as well as “Wet Wednesday” races and clinics throughout summer. We host the largest Buccaneer 18 fleet in the US, as well as an active Portsmouth rated open fleet where anybody can race.',
     },
     {
       label: 'Relax',
       cta: 'Facilities & membership',
       href: '/join/',
       key: 'relax' as const,
-      desc: 'Lakeside grounds and a clubhouse built for slow evenings with the club.',
+      desc: 'We have a beautiful location with a clubhouse and sauna, trailered boat and RV parking, a tenting area, and moorings for small keelboats. It’s a fantastic spot for casual sailing, swimming, kayaking, and relaxing in the sun.',
     },
   ];
 
@@ -273,36 +278,38 @@ before the photography existed, never a broken image. -->
         something for everyone under the midnight sun.
       </p>
     </div>
-    <div class="wdwd-triptych mx-auto mt-m max-w-measure-wide px-m">
-      {#each WHAT_WE_DO as tile (tile.label)}
-        {@const photo = data.images[tile.key]}
-        <div class="wdwd-panel" class:has-photo={!!photo}>
-          {#if photo}
-            <!-- data-crop opts out of the design probe's natural-ratio check: each landscape
-                 source is deliberately cropped to this tall panel shape, the same "editorial
-                 crop" recipe the News grid and the prior tile grid both use. `object-position`
-                 keys off `tile.key` since each source frames its subject at a different point
-                 (the "Learn" group huddles right of center; "Race" 's boats and spinnakers sit
-                 low in the frame, closed on by the panel's own `racing-hero-crop` derived asset;
-                 "Relax" 's grounds and docked boats sit mid-frame). -->
-            <img
-              src={photo.url}
-              alt={photo.alt}
-              class="wdwd-panel-img"
-              class:wdwd-panel-img-learn={tile.key === 'learn'}
-              class:wdwd-panel-img-race={tile.key === 'race'}
-              class:wdwd-panel-img-relax={tile.key === 'relax'}
-              data-crop="triptych"
-            />
-            <div class="wdwd-panel-scrim" aria-hidden="true"></div>
-          {/if}
-          <div class="wdwd-panel-caption">
-            <h3 class="wdwd-panel-word">{tile.label}</h3>
-            <p class="wdwd-panel-desc">{tile.desc}</p>
-            <a href={tile.href} class="wdwd-panel-link">{tile.cta} &rarr;</a>
+    <div class="mx-auto mt-m max-w-measure-wide px-m">
+      <div class="wdwd-triptych">
+        {#each WHAT_WE_DO as tile (tile.label)}
+          {@const photo = data.images[tile.key]}
+          <div class="wdwd-panel" class:has-photo={!!photo}>
+            {#if photo}
+              <!-- data-crop opts out of the design probe's natural-ratio check: each landscape
+                   source is deliberately cropped to this tall panel shape, the same "editorial
+                   crop" recipe the News grid and the prior tile grid both use. `object-position`
+                   keys off `tile.key` since each source frames its subject at a different point
+                   (the "Learn" group huddles right of center; "Race" 's boats and spinnakers sit
+                   low in the frame, closed on by the panel's own `racing-hero-crop` derived asset;
+                   "Relax" 's grounds and docked boats sit mid-frame). -->
+              <img
+                src={photo.url}
+                alt={photo.alt}
+                class="wdwd-panel-img"
+                class:wdwd-panel-img-learn={tile.key === 'learn'}
+                class:wdwd-panel-img-race={tile.key === 'race'}
+                class:wdwd-panel-img-relax={tile.key === 'relax'}
+                data-crop="triptych"
+              />
+              <div class="wdwd-panel-scrim" aria-hidden="true"></div>
+            {/if}
+            <div class="wdwd-panel-caption">
+              <h3 class="wdwd-panel-word">{tile.label}</h3>
+              <p class="wdwd-panel-desc">{tile.desc}</p>
+              <a href={tile.href} class="wdwd-panel-link">{tile.cta} &rarr;</a>
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     </div>
   </section>
 
@@ -596,15 +603,30 @@ before the photography existed, never a broken image. -->
   /* The triptych band (round-5 containment fix, 2026-07-07, superseding the original full-bleed
      break-out): full-viewport width paired with round-4's cut-down height read as "a narrow
      ribbon stretched across the page" at 1440px+ (Geoff's live read), since nothing scaled the
-     panel width down to match the shrunken height. The band now sits in the markup's own
-     `mx-auto max-w-measure-wide px-m` wrapper (the same classes every other section's content div
-     uses), so its outer edges align with News, Season, and every other section instead of
-     bleeding to the viewport edge. Three panels side by side at the family's 900px two-column
-     breakpoint; one column (each panel already full-width) below it, so it stacks to three
-     full-width panels with no extra rule needed. */
+     panel width down to match the shrunken height. The band sits inside an outer `mx-auto
+     max-w-measure-wide px-m` wrapper (the same classes every other section's content div uses),
+     so its outer edges align with News, Season, and every other section instead of bleeding to
+     the viewport edge. Three panels side by side at the family's 900px two-column breakpoint; one
+     column (each panel already full-width) below it, so it stacks to three full-width panels with
+     no extra rule needed.
+
+     `border-radius`/`overflow: hidden` live here on the GROUP, not on each panel (round-7 fix,
+     2026-07-07: Geoff's own live read found the round-6 per-panel radius "divot"-ing at the
+     seams, adjacent rounded corners meeting with no gap between them reads as a scalloped notch,
+     not a clean edge). One bounded triptych object, its four outer corners rounded to match every
+     other framed image on the page, its inner seams square where the panels abut.
+
+     This rule now owns NO alignment classes of its own (`mx-auto`/`max-w-measure-wide`/`px-m`
+     moved to a new outer wrapper div, round-7): the wrapper's own `px-m` padding, if it lived on
+     this same element, would inset the panels 27px from the rounded edge on both sides, leaving a
+     blank white margin inside the curve instead of the photo clipping there. The outer wrapper
+     still lands the band's outer edges at the page's shared measure; this element is purely the
+     grid plus its own clip. */
   .wdwd-triptych {
     display: grid;
     grid-template-columns: 1fr;
+    overflow: hidden;
+    border-radius: var(--radius-box);
   }
   @media (min-width: 56.25rem) {
     .wdwd-triptych {
@@ -621,23 +643,25 @@ before the photography existed, never a broken image. -->
      the container's own clamp range at 1440px, close to Candidate A's page-scale character, while
      still tying height to the panel's own column width (never the viewport's) so the ratio holds
      by construction at every desktop width, the property round-5's fix established and this one
-     keeps. The stacked (mobile) tier below 900px keeps its own `clamp(12rem, 32vh, 18rem)` height
-     unchanged: a full-width single panel at this ratio would run needlessly tall stacked three
-     deep, and this round's brief only targets the three-up desktop character. The same silent-
-     gradient degrade the hero/fleet/facilities panels use covers a resolver miss (no photo, no
-     scrim, just the gradient panel; the word/description/link still render, so the panel never
-     goes empty).
+     keeps. The same silent-gradient degrade the hero/fleet/facilities panels use covers a
+     resolver miss (no photo, no scrim, just the gradient panel; the word/description/link still
+     render, so the panel never goes empty).
 
-     `border-radius: var(--radius-box)` (the round-6 fix, 2026-07-07): every other photo on the
-     page (the hero, News cards, Fleet, Facilities) carries this same token via the `rounded-box`
-     utility; the triptych's own sharp corners were the one holdout. Set here rather than as a
-     utility class in the markup, since this rule already owns `overflow: hidden`, the property
-     that makes the radius actually clip the absolutely-positioned image and scrim beneath it. */
+     The stacked (mobile) tier's height grew from round-6's `clamp(12rem, 32vh, 18rem)` to
+     `clamp(20rem, 45vh, 26rem)` (round-7, 2026-07-07): the restored original copy's caption (see
+     `WHAT_WE_DO`'s own comment) needs roughly 280px of its own to hold word, description, and
+     link at any width, and round-6's own 18rem (288px) ceiling left the caption covering nearly
+     the entire panel, no photo visible at all, the same crowding the desktop tier's type and
+     leading work addressed. The new range holds comfortably clear of that floor at ordinary
+     phone heights, giving the photo a real top band again.
+
+     No `border-radius` here (moved to `.wdwd-triptych`, the group, in round-7: see that rule's own
+     comment). `overflow: hidden` stays, since the panel still clips its own absolutely-positioned
+     image and scrim to its box even with square corners. */
   .wdwd-panel {
     position: relative;
     overflow: hidden;
-    height: clamp(12rem, 32vh, 18rem);
-    border-radius: var(--radius-box);
+    height: clamp(20rem, 45vh, 26rem);
     background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
   }
   .wdwd-panel.has-photo {
@@ -717,18 +741,31 @@ before the photography existed, never a broken image. -->
     line-height: var(--leading-tight);
     letter-spacing: calc(var(--tracking-tight) * 1.5);
   }
-  /* The type-care pass (round-6, 2026-07-07): the description's own leading opens to the theme's
-     comfortable-reading token (`--leading-body`, 1.6, the same one the hero lede and body prose
-     use), a touch more than the ambient default it inherited before, so the two-line sentence
-     reads with real air over the photo rather than crowding it. Its own gap from the word above
+  /* The type-care pass (round-6, 2026-07-07): the description's own gap from the word above
      (below, `margin-top`) moves off a bespoke `0.4rem` onto the same `--spacing-2xs` token the
      link below already uses, so the caption's two internal gaps share one rhythm rather than two
-     different numbers. */
+     different numbers.
+
+     Round-7 (2026-07-07) restored the club's own original copy (see `WHAT_WE_DO`'s own comment),
+     several sentences per panel where round-6's own invented `desc` was one short line, so both
+     the leading and the size step down to keep the caption subordinate to the photo: `--leading-
+     snug` (1.4, the theme's next-tighter token below the loose `--leading-body` round-6 used) plus
+     `--text-step--1`, one step below the caption's round-6 size. Together they hold the caption to
+     roughly the panel's own bottom half at the desktop width, leaving the photo the clear top
+     majority the scrim below is tuned for.
+
+     `min-height` reserves the row's own line budget (7 lines, the tallest of the three panels'
+     restored copy at this width) so the word and link stay planted at the same y position across
+     all three panels regardless of each panel's own description length, the row-grid Geoff's own
+     brief called for: a shorter future description leaves blank space in its own row rather than
+     floating the word above it upward, and a longer one grows past the reservation visibly (never
+     silently clipped) rather than breaking alignment without a trace. */
   .wdwd-panel-desc {
     margin: var(--spacing-2xs) 0 0;
     max-width: 30ch;
-    font-size: var(--text-step-0);
-    line-height: var(--leading-body);
+    min-height: calc(7 * var(--leading-snug) * 1em);
+    font-size: var(--text-step--1);
+    line-height: var(--leading-snug);
     color: rgba(255, 255, 255, 0.92);
   }
   /* White, not the fireweed pop: the hero and closing-band CTAs already spend the story's "at

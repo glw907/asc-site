@@ -45,7 +45,9 @@ superseding round-5's own hero-left-column width, which read as an inadvertent g
     gap: var(--spacing-xs);
     background: var(--color-base-200);
     border-radius: var(--radius-box);
-    padding: var(--spacing-xs) var(--spacing-s);
+    /* One notch more breathing room than round-6's `xs`/`s` (round-7, 2026-07-07, Geoff's own live
+       read): the card still reads a little tight against its own fill. */
+    padding: var(--spacing-s) var(--spacing-m);
   }
   /* ~1.3em, a touch larger than the round-3 strip's inline 1.1em glyph, since it now carries the
      reference's whole gold-accent role alone rather than sitting beside a separate border-left
