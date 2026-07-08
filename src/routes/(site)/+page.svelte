@@ -190,8 +190,13 @@ before the photography existed, never a broken image. -->
   </section>
 
   <!-- The Season: C7's gold-dot taxonomy, mission-first (education most prominent, since the club
-       is an educational 501(c)(3)). Live D1 events (Task 4), same markup Task 3 built. -->
-  <section class="py-xl">
+       is an educational 501(c)(3)). Live D1 events (Task 4), same markup Task 3 built. Carries its
+       own sage band (the owner-round fix, 2026-07-07): it previously sat on the same transparent
+       ground as "What do we do?" directly above it, reading as one long white stretch (the design
+       probe's own band-sequence line showed two consecutive "—" entries here). Facilities picks up
+       the sage band the Fleet section below gives up (Fleet's own fix, same pass), so the full
+       sequence alternates cleanly top to bottom with no two adjacent sections sharing a ground. -->
+  <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">The Season</h2>
       <p class="mt-xs mb-m text-step--2 text-muted season-subtitle">
@@ -203,12 +208,24 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- Our fleet: a two-column composition with the real club photography (Task 3). -->
-  <section class="border-y border-card-border bg-base-200 py-xl">
-    <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel">
-      <div>
-        <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">Our fleet</h2>
-        <p class="mt-xs text-step-0 text-base-content">
+  <!-- Our fleet: full-width photography with the text below it (the owner-round fix, 2026-07-07),
+       replacing the two-column composition that squeezed a wide, short source photo (the same
+       fleet-racing-spinnakers shot, 1200x600, an action shot of four boats racing under spinnaker)
+       into a narrow strip beside the paragraph. The photo now leads the section at its own natural
+       2:1 ratio, unclipped (`.panel-figure`, the same figure recipe Facilities' figure column uses,
+       reused here rather than duplicated); the copy and its link follow underneath, capped to a
+       comfortable reading measure. Gives up the sage band it shared with News (Season's fix, same
+       pass, needs it to keep the whole page's band sequence from repeating adjacent sections). -->
+  <section class="py-xl">
+    <div class="mx-auto max-w-measure-wide px-m">
+      <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">Our fleet</h2>
+      <div class="panel-figure mt-s" class:has-photo={!!data.images.fleet}>
+        {#if data.images.fleet}
+          <img src={data.images.fleet.url} alt={data.images.fleet.alt} class="h-full w-full rounded-box object-cover" />
+        {/if}
+      </div>
+      <div class="mt-m max-w-[65ch]">
+        <p class="text-step-0 text-base-content">
           The ASC has a well-maintained collection of club boats for sailors of all ages and
           abilities: six Lido 14s, three Lasers, a Laser II, five Optimists &mdash; plus a
           Buccaneer 18, a Catalina 16.5, a Skipjack 15, and an Ensign 22. All available to
@@ -217,11 +234,6 @@ before the photography existed, never a broken image. -->
         <a href="/club-boat-use-and-qualification/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
           Learn about club boat use &rarr;
         </a>
-      </div>
-      <div class="panel-figure" class:has-photo={!!data.images.fleet}>
-        {#if data.images.fleet}
-          <img src={data.images.fleet.url} alt={data.images.fleet.alt} class="h-full w-full rounded-box object-cover" />
-        {/if}
       </div>
     </div>
   </section>
@@ -236,8 +248,10 @@ before the photography existed, never a broken image. -->
        it out of the design probe's natural-ratio check, since filling the column deliberately
        diverges from the source photo's own 2:1 shot. Below the 900px breakpoint the row stacks to
        one column and this override never applies, so the photo keeps its natural-ish 2:1 shape
-       there instead of towering. -->
-  <section class="py-xl">
+       there instead of towering. Picks up the sage band Fleet gives up above (the owner-round fix,
+       2026-07-07), so the page's band sequence still alternates with no two adjacent sections
+       sharing a ground. -->
+  <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel facilities-row">
       <div class="panel-figure panel-figure-first" class:has-photo={!!data.images.facilities}>
         {#if data.images.facilities}
@@ -267,9 +281,13 @@ before the photography existed, never a broken image. -->
           <li class="amenity-item">A small boat rack for kayaks and canoes</li>
           <li class="amenity-item">Park-style grounds with beautiful lake views</li>
         </ul>
-        <a href="/join/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
-          Learn about membership &rarr;
-        </a>
+        <!-- The section's own exit CTA (the owner-round fix, 2026-07-07): previously a trailing
+             `.arrow-link`, indistinguishable from the amenity list right above it, so it read as
+             one more list-adjacent line rather than a deliberate call to action. `.cta-btn-outline`
+             gives it real button chrome (the primary/outline variant, since fireweed already spends
+             its "at most twice per page" budget on the hero and closing-band CTAs) without
+             duplicating the closing band's own navy CTA further down the page. -->
+        <a href="/join/" class="cta-btn-outline mt-l">Learn about membership &rarr;</a>
       </div>
     </div>
   </section>
@@ -318,6 +336,30 @@ before the photography existed, never a broken image. -->
   }
   .closing-band .cta-btn:focus-visible {
     outline-color: white;
+  }
+  /* The Facilities section's own exit CTA: a navy outline button, not a third fireweed CTA
+     (the club-grounds story's "at most twice per page" rule, already spent by the hero and the
+     closing band). Filling solid on hover reads as the same "press" affordance `.cta-btn` gives
+     without borrowing fireweed's exclusive pop. */
+  .cta-btn-outline {
+    display: inline-block;
+    color: var(--color-primary);
+    background: transparent;
+    border: 1.5px solid var(--color-primary);
+    font-weight: 650;
+    font-size: var(--text-step--1);
+    padding: calc(0.6rem - 1.5px) calc(1.25rem - 1.5px);
+    border-radius: var(--radius-field);
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .cta-btn-outline:hover {
+    background: var(--color-primary);
+    color: white;
+  }
+  .cta-btn-outline:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
   .ghost-btn {
     display: inline-flex;
@@ -469,14 +511,16 @@ before the photography existed, never a broken image. -->
     color: color-mix(in oklab, var(--color-muted) 55%, var(--color-base-content) 45%);
   }
 
-  /* The facilities amenity list (manifest item 12): the live site's own 9-item list, restored in
-     place of the summarizing paragraph the theme build had substituted, and restyled off the
-     browser-default disc marker (the design-polish pass's finding) onto a real two-column grid.
-     Its own marker is flag navy (`--color-primary`), not the Season's gold dot (the completion
-     pass's fix, manifest item 9c): the gold dot's whole point is to mean "class or clinic"
-     specifically, and a second, unrelated list reusing the same mark would spend that meaning on
-     housekeeping instead. One column below 640px, matching the family's own 900px-vs-640px
-     two-tier collapse for a list this short. */
+  /* The facilities amenity list (manifest item 12; restyled again in the owner-round pass,
+     2026-07-07): the live site's own 9-item list, restored in place of the summarizing paragraph
+     the theme build had substituted, off the browser-default disc marker (the design-polish pass's
+     finding) onto a real two-column grid. Its own marker reads as a small checkmark, not a plain
+     dot (Geoff's finding: the list needed "better list markers... spacing that reads designed"), in
+     flag navy (`--color-primary`), never the Season's gold dot (the completion pass's fix, manifest
+     item 9c: the gold dot's whole point is to mean "class or clinic" specifically, and a second,
+     unrelated list reusing the same mark would spend that meaning on housekeeping instead). One
+     column below 640px, matching the family's own 900px-vs-640px two-tier collapse for a list this
+     short. */
   /* margin-top set here, not the markup's own `mt-xs` (there was one, and it did nothing): this
      unlayered scoped rule already outranks any Tailwind utility class regardless of specificity
      (the same mechanism `.facilities-row`'s `align-items` override relies on above), so a `margin:
@@ -494,8 +538,8 @@ before the photography existed, never a broken image. -->
   .amenity-item {
     display: flex;
     align-items: baseline;
-    gap: 0.65rem;
-    padding-block: 0.3rem;
+    gap: 0.75rem;
+    padding-block: 0.4rem;
     /* Only matters once the two-column rule below switches the list to CSS multi-column: keeps a
        single amenity from splitting its own two lines across the column break. */
     break-inside: avoid;
@@ -503,30 +547,36 @@ before the photography existed, never a broken image. -->
   /* align-self: flex-start plus a top offset centers the marker on the item's FIRST line rather
      than the item's full (possibly two-line, once wrapped) box, matching a bullet's usual
      placement (the completion pass's fix, manifest item 9b): `align-self: center` on a taller,
-     wrapped item centered the dot across both lines instead. `1lh` is the CSS line-height unit
+     wrapped item centered the mark across both lines instead. `1lh` is the CSS line-height unit
      (the item's own computed line-height, whatever it resolves to), so the offset stays exact
-     without hard-coding a multiplier that could drift from the actual cascade. */
+     without hard-coding a multiplier that could drift from the actual cascade. The checkmark itself
+     (the owner-round restyle) is the classic two-segment border technique, rotated 40deg: a plain
+     CSS shape, no icon dependency, that reads as "included" rather than an unlabeled bullet. */
   .amenity-item::before {
     content: '';
     flex-shrink: 0;
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 11px;
     align-self: flex-start;
-    margin-top: calc((1lh - 8px) / 2);
-    border-radius: 999px;
-    background: var(--color-primary);
+    margin-top: calc((1lh - 11px) / 2);
+    border-right: 2px solid var(--color-primary);
+    border-bottom: 2px solid var(--color-primary);
+    transform: rotate(40deg);
   }
   /* CSS multi-column, not a second grid track: a 9-item list split into a 5/4 grid ran the two
      columns row-major (item 1 and 2 side by side, 3 and 4 below them, and so on), which read as a
      zigzag rather than the familiar top-to-bottom-per-column list, and left the shorter column's
      last row dangling well above the taller one's (the design-polish pass's finding, 2026-07-07).
      `columns` reads top-to-bottom per column and balances the two columns' total height on its
-     own (`column-fill: balance`, the default for an unconstrained-height container). */
+     own (`column-fill: balance`, the default for an unconstrained-height container). The hairline
+     `column-rule` (the owner-round restyle) gives the two columns a consistent visible seam instead
+     of relying on the reader's eye to find the break in the gap alone. */
   @media (min-width: 40rem) {
     .amenity-list {
       display: block;
       columns: 2;
       column-gap: var(--spacing-l);
+      column-rule: var(--border) solid var(--color-card-border);
     }
   }
 
