@@ -18,6 +18,10 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    # Only the manual regen dispatch needs to push a commit back to the branch it ran against;
+    # the routine push/pull_request runs never reach that step.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -33,14 +37,23 @@ jobs:
         if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true') }}
         run: npm run test:e2e
       # Manual regen mode: a dispatcher ticks `update_snapshots` after a deliberate rendering
-      # change, and the resulting PNGs upload as a build artifact for a maintainer to review and
-      # copy back into the repo; nothing here commits the baselines itself.
+      # change. Runs the visual spec by its file path (never a title grep, which silently skips
+      # any test whose name doesn't match), on the CI runner itself, since baselines are
+      # CI-canonical and a workstation render is never an acceptable substitute. Commits the
+      # changed PNGs straight back to the branch the dispatch ran against, the same
+      # checkout-commit-push shape as aksailingclub-legacy's sync-editors.yml.
       - name: Regenerate the visual baseline snapshots
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true' }}
-        run: npm run test:e2e -- --update-snapshots
-      - name: Upload the regenerated site-visual baselines
+        run: npm run test:e2e -- e2e/site-visual.spec.ts --update-snapshots
+      - name: Commit the regenerated visual baselines
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: site-visual-baselines
-          path: e2e/site-visual.spec.ts-snapshots/
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add e2e/site-visual.spec.ts-snapshots/
+          if git diff --staged --quiet; then
+            echo "No baseline changes to commit."
+          else
+            git commit -m "chore(e2e): regenerate the site-visual baselines"
+            git push
+          fi
