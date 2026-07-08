@@ -1,6 +1,6 @@
 ---
 title: Test notification
 body: >-
-  Test notification — reviewing the banner UI. Racing starts May 18.
+  Test notification: racing starts **May 18** — come for the season opener.
 expires: 2026-12-31
 ---

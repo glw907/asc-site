@@ -14,28 +14,38 @@
 // asc-club's own tables; the field name `event_type` is kept on the row shape below for continuity
 // with `$theme/events-data.ts`'s own row shape, even though the source column is `category`.
 //
-// Taxonomy mapping (the C7-gold recipe, resolved against the ratified north star's actual pixels,
-// not just its stub's paraphrase): `class` (the synthesized tag above) gets the gold dot, since the
-// club's own mission-first emphasis is education; `racing` stays plain ink, since racing is the
-// other headline activity; everything else (`operations`, `social`, `governance`) reads muted, the
-// quieter "routine, non-racing" ink. The north star's own off-season group confirms this: BNAC
-// (a racing event) stays full ink there while "End-of-Season Celebration" (a `social` entry) and
-// "Annual Meeting" (a `governance` entry) both render muted, so the rule is "everything but racing
-// and education", not literally only "operations and governance" as an earlier stub's doc comment
-// paraphrased it.
+// Taxonomy mapping (the C7-gold recipe): `class` (the synthesized tag above) gets the gold dot,
+// since the club's own mission-first emphasis is education; `racing` stays plain ink with no dot
+// at all, since racing is the season's other headline activity and its own plain-ink default.
+// `categorize()` below keeps that original two-way split (dot/muted booleans), still read by the
+// full `/events` listing's own badge (`events-data.ts`).
+//
+// The home Season band's calendar rebuild (round-3 design review, 2026-07-07) replaces its own
+// font-weight "muted ink" category coding with a richer per-category DOT, since a font-treatment
+// split reads as an unintentionally weaker row rather than a deliberate marker (Geoff's live
+// finding). `seasonDotKind()` below is a second, home-band-only mapping over the same real D1
+// `category` values, kept separate from `categorize()` so the full listing's own boolean taxonomy
+// is untouched: `social` gets its own sage dot and `operations`/`governance` (the club's
+// administrative categories) share a slate dot, both real category values already in the ratified
+// DDL's CHECK constraint, not an invented taxonomy.
 import type { D1Database } from '@cloudflare/workers-types';
 
-/** One event row in the Season listing: its date range, its name, and the two independent
- *  emphasis flags the C7 recipe uses. `dot` marks a class or clinic (the gold accent dot); `muted`
- *  marks a routine, non-racing entry that reads in the quieter ink. */
+/** The home Season band's per-category dot kind (see the header comment): `class` for the gold
+ *  mission-first accent, `social` for a sage dot, `business` for a slate dot marking the club's
+ *  administrative categories (`operations`, `governance`). `racing`, the season's plain-ink
+ *  default, carries no dot at all. */
+export type SeasonDotKind = 'class' | 'social' | 'business';
+
+/** One event row in the Season listing: its date range, its name, and its dot kind (undefined for
+ *  a racing event, the season's plain-ink default). Every event name renders at the same body-scale
+ *  reading ink; only the dot slot carries category emphasis (the round-3 calendar rebuild). */
 export interface SeasonEvent {
   dateRange: string;
   name: string;
   /** The `/events/[id]` route segment (`routeIdOf`), so the home page's Season band can link
    *  each event name to its own page. */
   routeId: string;
-  dot?: boolean;
-  muted?: boolean;
+  dot?: SeasonDotKind;
 }
 
 /** One month's (or the off-season's) group of events; a month with no events is omitted, and
@@ -150,14 +160,24 @@ export function formatDateRange(startIso: string, endIso: string | null): string
     : `${startMonth} ${start.getDate()}–${endMonth} ${end.getDate()}`;
 }
 
-/** The C7-gold taxonomy: `dot` for a class or clinic, `muted` for everything routine and
- *  non-racing, plain ink for a racing event. See the header comment for how this resolves against
- *  the north star's actual rendered colors. Exported for the full `/events` listing, whose type
- *  badge reads the same three-way split rather than inventing a second taxonomy. */
-export function categorize(eventType: string): Pick<SeasonEvent, 'dot' | 'muted'> {
+/** The full `/events` listing's own two-way emphasis: `dot` for a class or clinic, `muted` for
+ *  everything routine and non-racing, plain ink for a racing event. Kept as its own boolean shape
+ *  (not `SeasonEvent`'s richer `SeasonDotKind`) since `events-data.ts`'s badge reads exactly this
+ *  pair; see the header comment for why the home Season band now reads a separate mapping. */
+export function categorize(eventType: string): { dot?: boolean; muted?: boolean } {
   if (eventType === 'class') return { dot: true };
   if (eventType === 'racing') return {};
   return { muted: true };
+}
+
+/** The home Season band's per-category dot (see the header comment): `class` keeps the sanctioned
+ *  gold accent, `social` gets a sage dot, and `operations`/`governance` (the club's administrative
+ *  categories) share a slate dot. `racing` returns undefined, the season's plain-ink default. */
+export function seasonDotKind(eventType: string): SeasonDotKind | undefined {
+  if (eventType === 'class') return 'class';
+  if (eventType === 'social') return 'social';
+  if (eventType === 'operations' || eventType === 'governance') return 'business';
+  return undefined;
 }
 
 /** One row, enriched with its display fields and its sort key, before grouping. */
@@ -173,15 +193,15 @@ function toWorkingEvent(row: EventRow, currentYear: number): WorkingEvent {
     dateRange: row.start_date ? formatDateRange(row.start_date, row.end_date) : DATE_TBD,
     name: row.title,
     routeId: routeIdOf(row),
-    ...categorize(row.event_type),
+    dot: seasonDotKind(row.event_type),
     inSeason: month >= 5 && month <= 9,
     month,
     sortDay,
   };
 }
 
-function toSeasonEvent({ dateRange, name, routeId, dot, muted }: WorkingEvent): SeasonEvent {
-  return { dateRange, name, routeId, dot, muted };
+function toSeasonEvent({ dateRange, name, routeId, dot }: WorkingEvent): SeasonEvent {
+  return { dateRange, name, routeId, dot };
 }
 
 const byMonthThenDay = (a: WorkingEvent, b: WorkingEvent) =>

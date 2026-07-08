@@ -41,3 +41,25 @@ export function activeNotification(
   }
   return undefined;
 }
+
+/** One run of a notification body's text, either plain or the one bold "timely fact" a `**...**`
+ *  pair marks. */
+export interface BodySegment {
+  text: string;
+  bold: boolean;
+}
+
+/**
+ * Splits a notification body on `**bold**` markers into plain and bold runs, for the home
+ * pennant's "the timely fact bold" treatment (the round-3 redesign). `body` is a plain-text field
+ * (`fields.textarea`, not markdown), so this is the one narrow, safe convention the pennant reads,
+ * never a route into `{@html}`: every segment still renders through Svelte's own text
+ * interpolation, which escapes it the same as plain text. An unpaired or absent `**` leaves the
+ * whole body as one plain segment.
+ */
+export function parseBoldSegments(body: string): BodySegment[] {
+  return body
+    .split(/\*\*(.+?)\*\*/g)
+    .map((text, i) => ({ text, bold: i % 2 === 1 }))
+    .filter((segment) => segment.text !== '');
+}

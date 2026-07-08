@@ -248,12 +248,25 @@ state. -->
           </a>
         {/if}
       {/each}
+      <!-- The icon trio's own divider (round-3 fix, 2026-07-07): the prior gap-ratio-only attempt
+           (a tighter inner `gap-2xs` plus the nav's own `gap-s` as the trio's outer distance)
+           still didn't read as its own group (Geoff's live-review finding), so a conventional
+           hairline now marks the boundary explicitly rather than leaving it to a gap ratio alone.
+           `margin-inline` adds on top of the nav row's own `gap-s` (already applied on both of the
+           divider's sides by the flex `gap`, the same rhythm separating every nav link), so the
+           combined Contact-to-divider and divider-to-trio distances land around 2.6x the trio's own
+           internal `gap-2xs`, comfortably past the >=2.5x floor. Contact itself keeps the plain
+           `gap-s` to Members, its standard inter-link distance, untouched: the extra room lives
+           entirely in this margin, between Contact and the divider, not inside the link cluster
+           (Geoff's second finding, "Contact feels a little too far away from Members" resolves as
+           a relative effect once the trio's own distance grows past it, not from shrinking
+           Members-Contact itself). -->
+      <div class="nav-divider" aria-hidden="true"></div>
+
       <!-- The icon trio (owner-round-2 fix, 2026-07-07): donate, search, and the theme toggle
            previously sat at the nav's own `gap-s`, the same rhythm separating one nav link from
            the next, so they read as three more nav items rather than a single utility cluster.
-           A tighter inner `gap-2xs` binds the trio into one group; the surrounding `gap-s` (this
-           group's own distance from Members, the last nav link) still marks it as a distinct
-           cluster at the row's end. -->
+           A tighter inner `gap-2xs` binds the trio into one group. -->
       <div class="nav-icon-group inline-flex items-center gap-2xs">
         {@render donateLink()}
         <SearchModal />
@@ -428,6 +441,18 @@ state. -->
     content: '';
     position: absolute;
     inset: -4px;
+  }
+
+  /* The trio's own hairline (round-3 fix): 1px wide, the same muted hairline token the header's
+     own bottom border reads, sized to roughly 60% of the nav row's own content height (the icon
+     trio's `h-9`/2.25rem boxes, the row's tallest children under `items-center`) rather than the
+     full row, so it reads as a mark between two groups, not a full-height rule. */
+  .nav-divider {
+    width: 1px;
+    height: 1.35rem;
+    flex-shrink: 0;
+    background: var(--color-card-border);
+    margin-inline: var(--spacing-3xs);
   }
 
   .nav-item-dropdown {

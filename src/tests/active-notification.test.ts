@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ContentIndex, ContentSummary, ContentEntry } from '@glw907/cairn-cms/delivery';
-import { activeNotification, type NotificationFields } from '$theme/active-notification';
+import { activeNotification, parseBoldSegments, type NotificationFields } from '$theme/active-notification';
 
 /** A minimal fake ContentIndex, just the two methods activeNotification actually reads. */
 function fakeIndex(
@@ -81,5 +81,23 @@ describe('activeNotification', () => {
       title: 'Older, still current',
       body: 'A',
     });
+  });
+});
+
+describe('parseBoldSegments', () => {
+  it('splits one bold run out of surrounding plain text', () => {
+    expect(parseBoldSegments('racing starts **May 18** — come for the opener.')).toEqual([
+      { text: 'racing starts ', bold: false },
+      { text: 'May 18', bold: true },
+      { text: ' — come for the opener.', bold: false },
+    ]);
+  });
+
+  it('returns one plain segment when there is no bold marker at all', () => {
+    expect(parseBoldSegments('No bold fact here.')).toEqual([{ text: 'No bold fact here.', bold: false }]);
+  });
+
+  it('drops an empty leading or trailing segment', () => {
+    expect(parseBoldSegments('**Only bold**')).toEqual([{ text: 'Only bold', bold: true }]);
   });
 });

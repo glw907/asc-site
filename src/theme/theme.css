@@ -202,6 +202,14 @@
   --color-fireweed: oklch(53.9% 0.166 352.8);
   --color-sage: oklch(96.7% 0.006 137.8);
   --color-sage-mid: oklch(93.3% 0.012 137.8);
+  /* The Season band's social-event dot (the round-3 calendar rebuild, 2026-07-07): the same
+     sage hue as `--color-sage`/`--color-sage-mid` above, darkened and given real chroma for a mark
+     rather than a band tint, the same derivation `--color-star-gold-dot` uses off `--color-star-
+     gold`. Those two tokens are pale surface tints (0.006-0.012 chroma) that would read as
+     invisible grey at 8px; this one computes to 5.88:1 against white, comfortably past the 3:1
+     WCAG non-text minimum, and close to `--color-muted`'s own 5.52:1 so the two dots read as the
+     same quiet weight. */
+  --color-sage-dot: oklch(50% 0.05 137.8);
   --color-harbor-ink: oklch(24.7% 0.029 249);
   --color-footer-ink: oklch(75.1% 0.035 252.5);
   --color-footer-ink-strong: oklch(86.2% 0.022 250.2);

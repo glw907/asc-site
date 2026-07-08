@@ -26,11 +26,11 @@ describe('buildSeasonMonths', () => {
     );
     expect(june).toEqual({
       label: 'June',
-      events: [{ dateRange: 'Jun 12–14', name: 'Fleet Tune-Up Weekend', routeId: 'an-event-id', dot: true, muted: undefined }],
+      events: [{ dateRange: 'Jun 12–14', name: 'Fleet Tune-Up Weekend', routeId: 'an-event-id', dot: 'class' }],
     });
   });
 
-  it('keeps a racing event plain ink: no dot, no muted', () => {
+  it('keeps a racing event plain ink: no dot at all', () => {
     const [may] = buildSeasonMonths(
       [row({ title: 'Icebreaker Regatta', event_type: 'racing', start_date: '2026-05-24', end_date: '2026-05-24' })],
       CURRENT_YEAR,
@@ -40,17 +40,23 @@ describe('buildSeasonMonths', () => {
       name: 'Icebreaker Regatta',
       routeId: 'an-event',
       dot: undefined,
-      muted: undefined,
     });
   });
 
-  it.each(['operations', 'governance', 'social'])('mutes a routine, non-racing "%s" entry', (eventType) => {
+  it('marks a social entry with the sage dot', () => {
+    const [may] = buildSeasonMonths(
+      [row({ title: 'Icebreaker Potluck', event_type: 'social', start_date: '2026-05-23', end_date: '2026-05-23' })],
+      CURRENT_YEAR,
+    );
+    expect(may.events[0].dot).toBe('social');
+  });
+
+  it.each(['operations', 'governance'])('marks a club-business "%s" entry with the slate dot', (eventType) => {
     const [may] = buildSeasonMonths(
       [row({ title: 'Spring Work Party', event_type: eventType, start_date: '2026-05-23', end_date: '2026-05-23' })],
       CURRENT_YEAR,
     );
-    expect(may.events[0].muted).toBe(true);
-    expect(may.events[0].dot).toBeUndefined();
+    expect(may.events[0].dot).toBe('business');
   });
 
   it('groups May through September by name and drops an empty month', () => {
@@ -120,7 +126,7 @@ describe('buildSeasonMonths', () => {
     expect(months).toHaveLength(1);
     expect(months[0]).toEqual({
       label: 'Off-season',
-      events: [{ dateRange: 'Date TBD', name: 'To be scheduled', routeId: 'an-event', dot: undefined, muted: undefined }],
+      events: [{ dateRange: 'Date TBD', name: 'To be scheduled', routeId: 'an-event', dot: undefined }],
     });
   });
 

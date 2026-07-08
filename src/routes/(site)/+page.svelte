@@ -14,6 +14,7 @@ before the photography existed, never a broken image. -->
   import type { PageData } from './$types';
   import { CairnHead } from '@glw907/cairn-cms/delivery/head';
   import SeasonList from '$theme/components/SeasonList.svelte';
+  import NotificationStrip from '$theme/components/NotificationStrip.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -81,18 +82,15 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- The notification: a slim accent strip, unboxed, never a card (A1). Only renders while a
-       notification is current; an expired one is correct, honest silence. -->
+  <!-- The notification: a hoisted pennant (the round-3 redesign, 2026-07-07), replacing the
+       gray admonition box (fill, border, bold title prefix) Geoff's live review flagged. Unboxed,
+       on the page's own white ground, in the hero's own measure. Only renders while a
+       notification is current; an expired one is correct, honest silence. See
+       NotificationStrip.svelte's own header comment. -->
   {#if data.notification}
     <section class="pb-xl">
       <div class="mx-auto max-w-measure-wide px-m">
-        <div class="notification-strip max-w-[40rem] rounded-r-field border-l-[3px] border-secondary bg-base-200 px-[1.15rem] py-xs">
-          <strong class="text-base-content">{data.notification.title}</strong>
-          <div class="mt-[0.15rem] text-step--1 text-muted">
-            {data.notification.body}
-            <a href="/join/" class="font-semibold text-primary">Join now</a>
-          </div>
-        </div>
+        <NotificationStrip notification={data.notification} />
       </div>
     </section>
   {/if}
@@ -197,26 +195,30 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- The Season: C7's gold-dot taxonomy, mission-first (education most prominent, since the club
-       is an educational 501(c)(3)). Live D1 events (Task 4), same markup Task 3 built. Carries its
-       own sage band (the owner-round fix, 2026-07-07): it previously sat on the same transparent
-       ground as "What do we do?" directly above it, reading as one long white stretch (the design
-       probe's own band-sequence line showed two consecutive "—" entries here). Facilities picks up
-       the sage band the Fleet section below gives up (Fleet's own fix, same pass), so the full
-       sequence alternates cleanly top to bottom with no two adjacent sections sharing a ground.
+  <!-- The Season: one printed race-calendar (the round-3 rebuild, 2026-07-07), replacing the
+       original per-tier CSS-multicol build Geoff's live review found "messy and disorganized at a
+       casual glance". `SeasonList` carries the calendar itself (one column, month groups as
+       bounded units, all category emphasis in the dot slot); see its own header comment for the
+       full diagnosis and rebuild. Carries its own sage band (the owner-round fix, 2026-07-07): it
+       previously sat on the same transparent ground as "What do we do?" directly above it, reading
+       as one long white stretch (the design probe's own band-sequence line showed two consecutive
+       "—" entries here). Facilities picks up the sage band the Fleet section below gives up
+       (Fleet's own fix, same pass), so the full sequence alternates cleanly top to bottom with no
+       two adjacent sections sharing a ground.
 
-       The subtitle reads at `text-step--1` now, one step below body rather than caption scale
-       (the owner-round-2 fix, 2026-07-07): it is the band's own orienting sentence, explaining the
-       gold-dot legend and pointing at the full listing, and had been rendering smaller than
-       everything else on the page, including the amenity list's own now-deliberately-small ink
-       just below it. `SeasonList` carries the rest of this pass's rhythm fix (tighter row and
-       month spacing, a real date-to-event grouping hierarchy); see its own header comment. -->
+       The intro sentence reads at full body scale and ink now (`text-step-0 text-base-content`,
+       the round-3 fix), not the caption-scale muted line it was: this is the band's own orienting
+       sentence and its dot legend, naming every color the calendar below uses, so it earns the same
+       reading weight as the event names it explains rather than reading as a footnote beneath
+       them. -->
   <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">The Season</h2>
-      <p class="mt-xs mb-s text-step--1 text-muted season-subtitle">
-        Racing runs May through September. Social events bookend the year, and a
-        <span class="season-dot mr-[0.3rem] inline-block" aria-hidden="true"></span>marks classes and clinics.
+      <p class="mt-xs mb-s text-step-0 text-base-content">
+        Racing runs May through September. A
+        <span class="season-dot season-dot-class mx-[0.3rem] inline-block" aria-hidden="true"></span>gold dot marks classes and clinics, a
+        <span class="season-dot season-dot-social mx-[0.3rem] inline-block" aria-hidden="true"></span>sage dot marks social events, and a
+        <span class="season-dot season-dot-business mx-[0.3rem] inline-block" aria-hidden="true"></span>slate dot marks club business.
         <a href="/events/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
       </p>
       <SeasonList months={data.season} />
@@ -318,7 +320,7 @@ before the photography existed, never a broken image. -->
           States. But despite this (or maybe because of it?) we have facilities that would be the
           envy of any sailing club in the world. Our facilities include:
         </p>
-        <ul class="amenity-list text-step--1 text-muted">
+        <ul class="amenity-list text-step--1">
           <li class="amenity-item">A clubhouse with a sauna and storage shed</li>
           <li class="amenity-item">A harbor with nine mooring spots for small keelboats</li>
           <li class="amenity-item">Year-round parking for trailered dinghies</li>
@@ -572,26 +574,24 @@ before the photography existed, never a broken image. -->
     overflow: hidden;
   }
 
-  /* The Season's gold accent dot (C7): spends no hue on event names, marks a class or clinic only.
-     `--color-star-gold-dot`, not `--color-secondary` itself: the completion pass's contrast fix
-     (theme.css carries the derivation), so the marker reads >=3:1 against white. Shared with
-     SeasonList.svelte's own copy of this rule (the intro legend above uses the dot outside that
-     component, so this page still needs its own). */
+  /* The Season legend's three dots (the round-3 calendar rebuild): the same three colors
+     SeasonList.svelte's own row dots use (that component's copy of this rule; the intro legend
+     above uses the dot outside that component, so this page still needs its own), each spending
+     no hue on the event names themselves, marks only. */
   .season-dot {
     width: 8px;
     height: 8px;
     border-radius: 999px;
-    background: var(--color-star-gold-dot);
     vertical-align: 1px;
   }
-
-  /* The Season's subtitle: plain `text-muted` (the same token every other quiet caption on the
-     page reads) sat too faint directly under this section's own bold heading (the design-polish
-     pass's finding, 2026-07-07). A darker mix keeps the line reading as a quiet caption, not body
-     text, while giving it enough weight to read as an intentional sub-line rather than a washed-
-     out afterthought. */
-  .season-subtitle {
-    color: color-mix(in oklab, var(--color-muted) 55%, var(--color-base-content) 45%);
+  .season-dot-class {
+    background: var(--color-star-gold-dot);
+  }
+  .season-dot-social {
+    background: var(--color-sage-dot);
+  }
+  .season-dot-business {
+    background: var(--color-muted);
   }
 
   /* The facilities amenity list (manifest item 12; restyled again in the owner-round pass,
@@ -604,11 +604,19 @@ before the photography existed, never a broken image. -->
      mark would spend that meaning on housekeeping instead). One column below 640px, matching the
      family's own 900px-vs-640px two-tier collapse for a list this short.
 
-     The list reads as subordinate to the intro paragraph above it now (the owner-round-2 fix,
-     2026-07-07: `text-step--1 text-muted` in the markup, one size and one voice quieter than the
-     paragraph's own `text-step-0 text-base-content`), so the checkmark follows the same quieting
-     (`--color-muted`, not `--color-primary`) and the rows themselves tighten to read as a compact
-     inventory rather than a second co-equal block of prose. */
+     The list reads as subordinate to the intro paragraph above it (the owner-round-2 fix,
+     2026-07-07: `text-step--1` in the markup, one size quieter than the paragraph's own
+     `text-step-0 text-base-content`), so the rows themselves stay tightened to read as a compact
+     inventory rather than a second co-equal block of prose; the checkmark keeps its own quieted
+     `--color-muted` border below, untouched by the round-3 ink fix (next comment).
+
+     The list's own text ink steps up one notch toward reading ink (the round-3 fix, 2026-07-07:
+     Geoff's live-review finding, "a tad too light"): plain `--color-muted` (the same token every
+     quiet caption on the page reads) read as too faint for a list of real included amenities, not
+     housekeeping. A third-toward-ink color-mix (not a full step to `--color-base-content`, which
+     would erase the intended subordination to the intro paragraph above) keeps the list reading
+     quieter than body text while no longer reading washed out. Size, spacing, and the checkmark
+     itself are unchanged; only this rule's `color` differs from the owner-round-2 version. */
   /* margin-top set here, not the markup's own `mt-xs` (there was one, and it did nothing): this
      unlayered scoped rule already outranks any Tailwind utility class regardless of specificity
      (the same mechanism `.facilities-row`'s `align-items` override relies on above), so a `margin:
@@ -622,6 +630,7 @@ before the photography existed, never a broken image. -->
     display: grid;
     grid-template-columns: 1fr;
     gap: 0 var(--spacing-l);
+    color: color-mix(in oklab, var(--color-muted) 67%, var(--color-base-content) 33%);
   }
   .amenity-item {
     display: flex;
