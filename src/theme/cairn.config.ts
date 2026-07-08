@@ -44,6 +44,12 @@ export const clubAdminNav: AdminNavSection = {
     // portal-capstone: the asset-request review inbox (the signup queue's own pattern).
     { label: 'Requests', icon: 'table', href: '/admin/club/asset-requests' },
     { label: 'Email', icon: 'inbox', href: '/admin/club/email' },
+    // The Announce screen (a published post's own "notify the club" step): recently published
+    // posts, each with an email-and/or-Discord send form. No spare icon in the nine-name
+    // allowlist is unclaimed by this point (admin-nav-icons.js), so this reuses 'inbox', the
+    // same messaging-shaped glyph Email already carries; two adjacent inbox icons is a small,
+    // deliberate tradeoff against widening the allowlist for one more screen.
+    { label: 'Announce', icon: 'inbox', href: '/admin/club/announce' },
     // Task 4: role management + the offer-window setting; the layout guard admits any club role
     // here, but the screen's own write actions are owner-only (see the settings route's header
     // comment). `ownerOnly` stays unset: an admin should still SEE the link and the current

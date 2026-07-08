@@ -14,30 +14,114 @@
 // this pass adds none): a notification is fire-and-forget, and its only durable record is
 // whatever `audit_log` row the real call site already writes for the event itself.
 //
-// The two webhooks are one Discord server, split by committee: `DISCORD_WEBHOOK_ASSETS` posts to
-// the assets/storage channel (payment requests, asset requests), `DISCORD_WEBHOOK_CLASSES` posts
-// to the classes/program channel (waitlist signups, offers, a class filling). Both are Worker
-// secrets on the destination site, not this repo's own config; see the wiring doc's "secrets
-// cutover" section for how their values move from the ops worker to this one.
+// The two committee webhooks are one Discord server, split by committee: `DISCORD_WEBHOOK_ASSETS`
+// posts to the assets/storage channel (payment requests, asset requests), `DISCORD_WEBHOOK_CLASSES`
+// posts to the classes/program channel (waitlist signups, offers, a class filling). Both are
+// Worker secrets on the destination site, not this repo's own config; see the wiring doc's
+// "secrets cutover" section for how their values move from the ops worker to this one.
+//
+// The Announce feature (a published post's own "notify the club" step) adds a second, unrelated
+// vocabulary of nine channels (leadership, general, site, fleet, education, racing,
+// buccaneer-18, harbor, technology): every public/leadership Discord channel a story can ping,
+// not the two narrow committee inboxes above. Both vocabularies share one `DiscordChannel` union
+// and one webhook lookup, since a notification only ever needs "which secret does this channel's
+// URL live under," not two separate code paths.
 
 /** The Discord webhook binding shape this module needs: a structural subset of whatever the
  *  consuming site's own `Platform.env` carries (mirrors `EmailBindingEnv`'s own reasoning in
- *  `club-email.ts`), read as two independently optional strings so a site that has provisioned
- *  only one committee's webhook still gets pings on that channel. Neither secret is set in this
- *  environment yet; see the wiring doc's cutover note. */
+ *  `club-email.ts`), read as independently optional strings so a site that has provisioned only
+ *  some channels' webhooks still gets pings on those. `ASSETS`/`CLASSES` are the two committee
+ *  channels above; the rest are the Announce vocabulary. Only `GENERAL`, `SITE`, `FLEET`,
+ *  `EDUCATION`, `RACING`, `HARBOR`, and `TECHNOLOGY` are set as real Worker secrets as of this
+ *  writing; `LEADERSHIP` and `BUCCANEER_18` are declared but unconfigured (see
+ *  `docs/discord-notifications-wiring.md`'s own cutover note for the committee pair's history). */
 export interface DiscordBindingEnv {
   DISCORD_WEBHOOK_ASSETS?: string;
   DISCORD_WEBHOOK_CLASSES?: string;
+  DISCORD_WEBHOOK_LEADERSHIP?: string;
+  DISCORD_WEBHOOK_GENERAL?: string;
+  DISCORD_WEBHOOK_SITE?: string;
+  DISCORD_WEBHOOK_FLEET?: string;
+  DISCORD_WEBHOOK_EDUCATION?: string;
+  DISCORD_WEBHOOK_RACING?: string;
+  DISCORD_WEBHOOK_BUCCANEER_18?: string;
+  DISCORD_WEBHOOK_HARBOR?: string;
+  DISCORD_WEBHOOK_TECHNOLOGY?: string;
 }
 
-/** Which committee's channel a notification posts to, and so which of the two webhook secrets
- *  `notifyDiscord` reads. */
-export type DiscordChannel = 'assets' | 'classes';
+/** Every channel a notification can target, and so which of `DiscordBindingEnv`'s webhook
+ *  secrets `notifyDiscord` reads for it: the two committee inboxes (`assets`, `classes`) plus
+ *  the nine-channel Announce vocabulary (see this module's header). */
+export type DiscordChannel =
+  | 'assets'
+  | 'classes'
+  | 'leadership'
+  | 'general'
+  | 'site'
+  | 'fleet'
+  | 'education'
+  | 'racing'
+  | 'buccaneer-18'
+  | 'harbor'
+  | 'technology';
+
+/** Every `DiscordChannel` mapped to the `DiscordBindingEnv` field that carries its webhook URL,
+ *  the one place the channel vocabulary and the secret names are tied together. */
+const CHANNEL_ENV_KEY: Record<DiscordChannel, keyof DiscordBindingEnv> = {
+  assets: 'DISCORD_WEBHOOK_ASSETS',
+  classes: 'DISCORD_WEBHOOK_CLASSES',
+  leadership: 'DISCORD_WEBHOOK_LEADERSHIP',
+  general: 'DISCORD_WEBHOOK_GENERAL',
+  site: 'DISCORD_WEBHOOK_SITE',
+  fleet: 'DISCORD_WEBHOOK_FLEET',
+  education: 'DISCORD_WEBHOOK_EDUCATION',
+  racing: 'DISCORD_WEBHOOK_RACING',
+  'buccaneer-18': 'DISCORD_WEBHOOK_BUCCANEER_18',
+  harbor: 'DISCORD_WEBHOOK_HARBOR',
+  technology: 'DISCORD_WEBHOOK_TECHNOLOGY',
+};
+
+/** The Announce screen's own channel vocabulary, in the order its `<select>` lists them.
+ *  `leadership` is first: the screen's default target, even though (as of this writing) it has
+ *  no webhook configured, so the gap is visible rather than silently skipped. */
+export const ANNOUNCE_CHANNELS: readonly DiscordChannel[] = [
+  'leadership',
+  'general',
+  'site',
+  'fleet',
+  'education',
+  'racing',
+  'buccaneer-18',
+  'harbor',
+  'technology',
+];
+
+/** Display labels for the Announce vocabulary, keyed the same as `ANNOUNCE_CHANNELS`. */
+export const ANNOUNCE_CHANNEL_LABEL: Record<string, string> = {
+  leadership: 'Leadership',
+  general: 'General',
+  site: 'Site',
+  fleet: 'Fleet',
+  education: 'Education',
+  racing: 'Racing',
+  'buccaneer-18': 'Buccaneer 18',
+  harbor: 'Harbor',
+  technology: 'Technology',
+};
+
+/** The Announce screen's own default channel selection. */
+export const DEFAULT_ANNOUNCE_CHANNEL: DiscordChannel = 'leadership';
 
 /** One named, real event this module has a builder for. Drives the embed's color (the
  *  `EMBED_COLORS` map below), kept as its own tag rather than inferred from a notification's
  *  free-text title so the color assignment survives a copy-edited title. */
-export type DiscordEventType = 'payment_request' | 'asset_request' | 'waitlist_signup' | 'offer_sent' | 'class_filled';
+export type DiscordEventType =
+  | 'payment_request'
+  | 'asset_request'
+  | 'waitlist_signup'
+  | 'offer_sent'
+  | 'class_filled'
+  | 'story_published';
 
 /** One row of a Discord embed's `fields` array: a label and its value, rendered side by side in
  *  the Discord client. */
@@ -47,11 +131,16 @@ export interface DiscordEmbedField {
 }
 
 /** The shape every builder below returns and `notifyDiscord` accepts: which channel, the
- *  embed's title, its tidy fields, and the event type the color lookup keys on. */
+ *  embed's title, its tidy fields, and the event type the color lookup keys on. `description`
+ *  and `url` are optional (only `buildStoryNotice` sets them today): a short embed body and a
+ *  clickable title, the shape a channel ping wants that the five committee-event builders above
+ *  never needed. */
 export interface DiscordNotification {
   channel: DiscordChannel;
   eventType: DiscordEventType;
   title: string;
+  description?: string;
+  url?: string;
   fields: DiscordEmbedField[];
 }
 
@@ -65,10 +154,18 @@ const EMBED_COLORS: Record<DiscordEventType, number> = {
   waitlist_signup: 0x1abc9c, // teal: a heads-up, no action required
   offer_sent: 0x9b59b6, // purple: a spot changed hands
   class_filled: 0x2ecc71, // green: a milestone, not an ask
+  story_published: 0x1c4670, // flag navy: the site's own link color, a plain heads-up
 };
 
 function webhookUrl(env: DiscordBindingEnv, channel: DiscordChannel): string | undefined {
-  return channel === 'assets' ? env.DISCORD_WEBHOOK_ASSETS : env.DISCORD_WEBHOOK_CLASSES;
+  return env[CHANNEL_ENV_KEY[channel]];
+}
+
+/** Whether `channel`'s own webhook secret is set on `env`: the Announce screen's own "not
+ *  configured" note reads this per option, and its default-channel fallback reads it to find the
+ *  first real, sendable channel when `leadership` itself has none. */
+export function isDiscordChannelConfigured(env: DiscordBindingEnv, channel: DiscordChannel): boolean {
+  return Boolean(webhookUrl(env, channel));
 }
 
 /**
@@ -95,6 +192,8 @@ export async function notifyDiscord(env: DiscordBindingEnv, notification: Discor
         embeds: [
           {
             title: notification.title,
+            description: notification.description,
+            url: notification.url,
             color: EMBED_COLORS[notification.eventType],
             fields: notification.fields,
             timestamp: new Date().toISOString(),
@@ -206,5 +305,43 @@ export function buildClassFilledNotice(args: { className: string; capacity: numb
     eventType: 'class_filled',
     title: `Class filled: ${args.className}`,
     fields: [{ name: 'Capacity', value: String(args.capacity) }],
+  };
+}
+
+/** A channel ping is short by design, not a newsletter: Discord's own embed `description` hard
+ *  caps at 4096 characters, but this module's own target is far tighter, a glance-length teaser
+ *  someone reads in a chat scrollback. `maxChars` defaults to that deliberately short target. */
+export const STORY_DESCRIPTION_MAX_CHARS = 280;
+
+/** Trim `text` to at most `maxChars`, cutting at the last whitespace boundary and appending an
+ *  ellipsis when it would otherwise run over. The same word-boundary idiom
+ *  `content/excerpt.ts`'s own `deriveExcerpt` uses, reimplemented here rather than imported: that
+ *  helper strips markdown out of a raw post body, while this module's input is already the
+ *  author's own edited, plain-text summary. */
+export function truncateForEmbed(text: string, maxChars = STORY_DESCRIPTION_MAX_CHARS): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxChars) return trimmed;
+  const cut = trimmed.slice(0, maxChars);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/**
+ * A published post's own Discord channel ping (the Announce screen, pass "announce"): the
+ * embed's title links to the live post (`url`), and `message` (the author's edited summary,
+ * shared with the email send's own body -- see `announcements.ts`'s
+ * `buildAnnouncementEmailContent`, this function's sibling render) is truncated to a tight embed
+ * description, never the full text a newsletter would carry. `channel` is caller-supplied rather
+ * than fixed (unlike every builder above): the Announce screen lets an admin pick from the
+ * nine-channel vocabulary, so there is no one right channel this function could hardcode.
+ */
+export function buildStoryNotice(args: { channel: DiscordChannel; title: string; message: string; url: string }): DiscordNotification {
+  return {
+    channel: args.channel,
+    eventType: 'story_published',
+    title: args.title,
+    description: truncateForEmbed(args.message),
+    url: args.url,
+    fields: [],
   };
 }

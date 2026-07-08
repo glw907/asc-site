@@ -36,7 +36,12 @@ declare global {
       // admin-club/lib/discord.ts's notifyDiscord (docs/discord-notifications-wiring.md); this
       // declaration is not required for a notifyDiscord call site to type-check (its own
       // DiscordBindingEnv is a structural subset any superset already satisfies), but keeps this
-      // environment's own type declarations in sync with what `wrangler secret list` names.
+      // environment's own type declarations in sync with what `wrangler secret list` names. The
+      // remaining nine DISCORD_WEBHOOK_* fields are the Announce screen's own channel vocabulary
+      // (discord.ts's ANNOUNCE_CHANNELS); as of this writing only GENERAL, SITE, FLEET,
+      // EDUCATION, RACING, HARBOR, and TECHNOLOGY are real secrets, LEADERSHIP and BUCCANEER_18
+      // are declared but unset, and the Announce screen's own "not configured" note is how that
+      // gap surfaces to an admin rather than a silent no-op.
       env: CairnPlatformBindings &
         CairnMediaBindings & {
           EVENTS_DB: D1Database;
@@ -46,6 +51,15 @@ declare global {
           STRIPE_WEBHOOK_SECRET?: string;
           DISCORD_WEBHOOK_ASSETS?: string;
           DISCORD_WEBHOOK_CLASSES?: string;
+          DISCORD_WEBHOOK_LEADERSHIP?: string;
+          DISCORD_WEBHOOK_GENERAL?: string;
+          DISCORD_WEBHOOK_SITE?: string;
+          DISCORD_WEBHOOK_FLEET?: string;
+          DISCORD_WEBHOOK_EDUCATION?: string;
+          DISCORD_WEBHOOK_RACING?: string;
+          DISCORD_WEBHOOK_BUCCANEER_18?: string;
+          DISCORD_WEBHOOK_HARBOR?: string;
+          DISCORD_WEBHOOK_TECHNOLOGY?: string;
         };
       context: ExecutionContext;
       caches: CacheStorage & { default: Cache };
