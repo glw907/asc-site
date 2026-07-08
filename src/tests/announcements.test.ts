@@ -357,13 +357,13 @@ describe('the channel map: configured, unconfigured, and the default fallback', 
     expect(defaultAnnounceChannel({ DISCORD_WEBHOOK_LEADERSHIP: 'https://x' })).toBe('leadership');
   });
 
-  it('falls back to the first configured channel when leadership is not configured', () => {
-    // ANNOUNCE_CHANNELS order: leadership, general, site, fleet, ... -- general is first after
-    // leadership, so with only fleet and general set, general wins the fallback.
-    expect(defaultAnnounceChannel({ DISCORD_WEBHOOK_FLEET: 'https://x', DISCORD_WEBHOOK_GENERAL: 'https://y' })).toBe('general');
+  it('falls back to the first configured channel when general is not configured', () => {
+    // With general unset, the fallback walks ANNOUNCE_CHANNELS order and lands on the first
+    // channel that can actually send.
+    expect(defaultAnnounceChannel({ DISCORD_WEBHOOK_FLEET: 'https://x', DISCORD_WEBHOOK_SITE: 'https://y' })).toBe('site');
   });
 
-  it('falls back to leadership (unconfigured) when nothing at all is configured, so the gap stays visible', () => {
-    expect(defaultAnnounceChannel({})).toBe('leadership');
+  it('falls back to general (unconfigured) when nothing at all is configured, so the gap stays visible', () => {
+    expect(defaultAnnounceChannel({})).toBe('general');
   });
 });
