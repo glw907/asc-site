@@ -1,5 +1,27 @@
 # asc-site status
 
+**THE RECOVERY + POLISH DAY (2026-07-07 evening, session f6adeb65): home and education
+REBUILT and on dev awaiting Geoff's read (one-shot gate passed: panels + conductor's
+dev-surface tiled read). Landed on main: the tool-wave consolidation (error-states merge,
+fixture fix, discord wiring 502cd8f), the migration renumber (0011/0015, 0012/0016), the
+member directory (/my-account/directory, review-gated), the craft sweep (~28 pages,
+DE-BANDED at merge per the reaffirmed home-only band ruling), home rounds 1+2 (Geoff's
+twelve notes), the education plain-article rebuild (hero fix site-wide, gutter-rail TOC
+standard, no bands), CI GREEN at d7e7cf3 (ics-feed fixture fix + self-committing baseline
+regen). ADMIN AUTH FIXED end-to-end: editor rows seeded (both Geoff addresses), Email
+Sending enabled for the zone, the legacy CMS-Admin Access app deleted, worker rebound —
+Geoff signed in. EMAIL MIGRATION (Resend->CF): ops worker LIVE on the new transport;
+main-site deploy BLOCKED on GitHub Actions billing (Geoff's action); reply-to arrays
+collapse to submitter (Geoff veto window); RESEND keys held for the soak. Engine: the
+pass-2.1 harvest landed at cairn c7b472f; admin sidebar fixes (scroll bleed +
+auto-collapse) in flight -> cairn patch release when green. QUEUED: the admin review
+round (Geoff's filed feedback: payment-due badge, count mismatch, header stack,
+Memberships screen), the rate limit on public forms (dev is NOT behind Access — Turnstile
+armed), asc-ops-staging's unknown deploy path, the live payments smoke (deliberate plan),
+member import. Topo + handbook rewrite PARKED (token economy). Test notification live on
+dev home for Geoff's banner review.**
+
+
 **PASS 2.1 COMPLETE ON pass-2-1 (2026-07-07, the extended-Fable overnight): all ten plan
 tasks plus five riders. asc-club carries 15 tables (migrations 0001-0006, every one
 scratch-proven then verified live), ops's 12 events + 5 classes imported and photo-parity
