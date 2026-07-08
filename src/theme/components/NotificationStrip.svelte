@@ -30,7 +30,7 @@ this card at the hero's own left-column width). -->
   </svg>
   <p class="notification-text m-0 text-step-0 text-base-content">
     {#each segments as segment, i (i)}{#if segment.bold}<strong>{segment.text}</strong>{:else}{segment.text}{/if}{/each}
-    <a href="/join/" class="font-semibold text-primary underline underline-offset-[3px]">Read more &rarr;</a>
+    <a href="/join/" class="font-semibold text-primary underline underline-offset-[3px] whitespace-nowrap">Read more&nbsp;&rarr;</a>
   </p>
 </div>
 
