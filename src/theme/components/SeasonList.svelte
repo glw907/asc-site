@@ -45,9 +45,22 @@ itself resolve on. -->
   .season-columns {
     columns: 1;
   }
+  /* The band's three-level grouping hierarchy, tightest to loosest (the owner-round-2 fix,
+     2026-07-07): a date and its own event name (`.season-row`'s own `column-gap`, below) < one
+     event and the next, and the month label and its first event, within one month (this rule's
+     `gap`, on the flex column that now carries the label and every row) < one month and the next
+     (this rule's own `margin-bottom`). Tightened overall from a flat 1.8rem month gap with no
+     finer structure, so the whole calendar reads as one compact schedule (Geoff's live-review
+     finding) whose months hold together as visibly distinct chunks (the same Gestalt-proximity fix
+     the member directory's own rows use): each tier reads clearly smaller than the one above it,
+     `--spacing-3xs` (about 0.3rem) to `--spacing-2xs` (about 0.5rem) to `--spacing-m` (about
+     1.6rem). */
   .season-month {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2xs);
     break-inside: avoid;
-    margin-bottom: 1.8rem;
+    margin-bottom: var(--spacing-m);
   }
   .season-month-label {
     font-family: var(--font-display);
@@ -56,13 +69,23 @@ itself resolve on. -->
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--color-base-content);
-    margin: 0 0 0.5rem;
+    /* Spacing below the label comes from the parent flex column's own `gap` now, at the same
+       tier as the row-to-row gap: the label is part of its month's own chunk, not a header sitting
+       at arm's length from the events it names. */
+    margin: 0;
   }
+  /* The date-to-event gap, this hierarchy's tightest tier (`column-gap`, below): the date column
+     dropped its old fixed 5.8rem width (sized for the longest realistic range, "May 30–Jun 2", but
+     leaving every shorter date sitting in dead space before the name started) for `max-content`,
+     so each row's own date text and event name sit snug together as one unit, reading as a single
+     entry rather than "two loosely floating fragments" (Geoff's live-review finding). The trade is
+     that dates no longer align into a straight scanning column down the month, a fair exchange for
+     the tighter pairing. */
   .season-row {
     display: grid;
-    grid-template-columns: 5.8rem 1fr;
+    grid-template-columns: max-content 1fr;
+    column-gap: var(--spacing-3xs);
     align-items: baseline;
-    padding: 0.18rem 0;
   }
   .season-date {
     color: var(--color-muted);

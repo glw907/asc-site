@@ -42,6 +42,34 @@ state. -->
 
   let mobileOpen = $state(false);
   let membersMenuOpen = $state(false);
+  let membersMenuEl = $state<HTMLUListElement>();
+  let membersOpenTimer: ReturnType<typeof setTimeout> | undefined;
+  let membersCloseTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * The Members dropdown's hover-intent open (owner-round-2 fix, 2026-07-07): a short delay
+   * (120ms) before showing, so a pointer skimming past the header on its way elsewhere never
+   * flickers the panel open. Click and keyboard (the existing `popovertarget`/`ontoggle` wiring)
+   * are untouched; this only adds a second way to open the same popover.
+   */
+  function scheduleMembersOpen(): void {
+    clearTimeout(membersCloseTimer);
+    membersOpenTimer = setTimeout(() => {
+      if (!membersMenuEl?.matches(':popover-open')) membersMenuEl?.showPopover();
+    }, 120);
+  }
+
+  /**
+   * The dropdown's hover-intent close: a longer delay (250ms) than the open, so a pointer
+   * travelling diagonally from the caret down into the panel itself has time to arrive before the
+   * panel disappears out from under it.
+   */
+  function scheduleMembersClose(): void {
+    clearTimeout(membersOpenTimer);
+    membersCloseTimer = setTimeout(() => {
+      if (membersMenuEl?.matches(':popover-open')) membersMenuEl?.hidePopover();
+    }, 250);
+  }
 
   /** True for the one nav item (Members) that carries a live sub-link list. */
   function hasChildren(item: NavNode): item is NavNode & { children: NavNode[] } {
@@ -155,7 +183,19 @@ state. -->
                come from the Popover API for free. A plain link list, not an ARIA menu: nothing here
                behaves like a menu command. The small `gap-3xs` keeps the caret optically tight to
                its own label, while the pair still reads as one `gap-s` item next to its neighbors. -->
-          <div class="nav-item-dropdown inline-flex items-center gap-3xs">
+          <!-- onmouseenter/onmouseleave on the wrapper, not just the caret (owner-round-2 fix,
+               2026-07-07): the panel itself (`.members-dropdown`, below) is a DOM child of this
+               same div even though `popover` promotes its paint to the top layer, so hovering
+               into the open panel stays inside this element's subtree and never fires the leave
+               handler early. A mouse-only convenience layered onto the existing click/keyboard
+               path (the link and the caret's own `popovertarget`/Escape handling, both untouched),
+               not a new interactive control of its own, so it carries no new role or tab stop. -->
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <div
+            class="nav-item-dropdown inline-flex items-center gap-3xs"
+            onmouseenter={scheduleMembersOpen}
+            onmouseleave={scheduleMembersClose}
+          >
             <a href={item.url} class="nav-link" class:active={current} aria-current={current ? 'page' : undefined}>
               {item.label}
             </a>
@@ -172,6 +212,7 @@ state. -->
               </svg>
             </button>
             <ul
+              bind:this={membersMenuEl}
               popover="auto"
               id="members-menu"
               style="position-anchor:--members-menu"
@@ -194,16 +235,24 @@ state. -->
           </a>
         {/if}
       {/each}
-      {@render donateLink()}
-      <SearchModal />
-      <button
-        type="button"
-        onclick={toggleTheme}
-        aria-label={theme === 'asc-dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-        class="theme-toggle inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-field text-muted hover:text-base-content"
-      >
-        {@render themeIcon()}
-      </button>
+      <!-- The icon trio (owner-round-2 fix, 2026-07-07): donate, search, and the theme toggle
+           previously sat at the nav's own `gap-s`, the same rhythm separating one nav link from
+           the next, so they read as three more nav items rather than a single utility cluster.
+           A tighter inner `gap-2xs` binds the trio into one group; the surrounding `gap-s` (this
+           group's own distance from Members, the last nav link) still marks it as a distinct
+           cluster at the row's end. -->
+      <div class="nav-icon-group inline-flex items-center gap-2xs">
+        {@render donateLink()}
+        <SearchModal />
+        <button
+          type="button"
+          onclick={toggleTheme}
+          aria-label={theme === 'asc-dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          class="theme-toggle inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-field text-muted hover:text-base-content"
+        >
+          {@render themeIcon()}
+        </button>
+      </div>
     </nav>
 
     <div class="mobile-controls items-center gap-1">
@@ -350,6 +399,23 @@ state. -->
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+  /* The trio's own 44px pointer target (owner-round-2 fix, 2026-07-07): the visible box stays a
+     compact 36px (`h-9 w-9`, the desktop nav's own icon size, unchanged so the tightened group
+     above still fits the row's own measured width budget), and an invisible `::before` extends
+     the actual hit area 4px past every edge instead, the standard expanded-target technique.
+     Absolute positioning keeps the extension out of flex layout, so neither the icon's own box
+     nor its siblings' spacing shift. Reused by `.search-trigger` in SearchModal.svelte for the
+     same fix on the same-sized trigger. */
+  .theme-toggle,
+  .donate-link {
+    position: relative;
+  }
+  .theme-toggle::before,
+  .donate-link::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+  }
 
   .nav-item-dropdown {
     position: relative;
@@ -368,6 +434,16 @@ state. -->
   .members-dropdown a {
     text-decoration: none;
     color: var(--color-base-content);
+  }
+  /* A defensive floor for a real, if narrow, race: the popover's top-layer paint is independent of
+     this component's own layout, so a live resize past the `.desktop-nav` breakpoint (below,
+     46rem) while the panel happens to be open does not itself close it, and it would otherwise
+     strand a floating panel with no visible trigger anywhere near it. Forces it closed below the
+     same floor the desktop nav itself collapses at, regardless of the popover's own open state. */
+  @media (max-width: 45.9375rem) {
+    .members-dropdown {
+      display: none;
+    }
   }
 
   .mobile-controls {

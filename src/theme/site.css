@@ -184,3 +184,28 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Page-to-page cross-fade (the owner-round-2 fix, 2026-07-07): the root layout's own `onNavigate`
+   wraps every client-side navigation in `document.startViewTransition`; this sets the actual
+   duration, deliberately quick and quiet (~180ms, toward the fast end of the ~150-200ms range, so
+   it reads as a feel rather than a show). `::view-transition-*` are pseudo-elements on the
+   browser's own snapshot tree, generated only for the duration of a transition, not on any real
+   element in the document, so no Svelte component's scoped `<style>` can reach them; this file is
+   plain, unscoped CSS, the one place in the site that can. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 180ms;
+}
+
+/* A CSS-level backstop for the reduced-motion guard `+layout.svelte`'s own `onNavigate` already
+   applies before ever calling `startViewTransition`: the blanket `*` rule above does not reach
+   `::view-transition-*`, since the universal selector does not match the snapshot pseudo-element
+   tree, so this is the one rule in the site that actually silences it, for any path that reaches
+   `startViewTransition` outside that one guarded call site. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

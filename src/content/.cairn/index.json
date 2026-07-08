@@ -30,6 +30,14 @@
       "links": []
     },
     {
+      "id": "2026-07-test-banner-review",
+      "concept": "notifications",
+      "title": "Test notification",
+      "permalink": "/notifications/2026-07-test-banner-review",
+      "draft": false,
+      "links": []
+    },
+    {
       "id": "articles-of-incorporation",
       "concept": "pages",
       "title": "Articles of Incorporation",
@@ -160,7 +168,14 @@
       "permalink": "/education",
       "summary": "The Alaska Sailing Club is an education-focused 501(c)(3). Each summer, we teach a four-day beginner sailing course in two tracks, one for adults and teens and one for youth, making it easy for whole…",
       "draft": false,
-      "links": []
+      "links": [],
+      "mediaRefs": [
+        "659b55426153c22e",
+        "6af6b0768d544d48",
+        "9c08687cac54de80",
+        "a660579bd31517ff",
+        "b48f26c871d0aa34"
+      ]
     },
     {
       "id": "elections",
@@ -223,7 +238,10 @@
       "permalink": "/join",
       "summary": "The Alaska Sailing Club is a community of sailors, families, and friends who share a beautiful lakeside property on Big Lake (about an hour north of Anchorage). Whether you're here to learn to sail,…",
       "draft": false,
-      "links": []
+      "links": [],
+      "mediaRefs": [
+        "7fc9675a17c7a38e"
+      ]
     },
     {
       "id": "long-term-rv-parking-guidelines",
@@ -301,7 +319,10 @@
       "permalink": "/racing",
       "summary": "Racing at the ASC picks up where our sailing classes leave off, giving experienced sailors a fleet to plug into when they move to Anchorage. Graduates of our Introduction to Dinghy Sailing course…",
       "draft": false,
-      "links": []
+      "links": [],
+      "mediaRefs": [
+        "ff77ce74df7d2570"
+      ]
     },
     {
       "id": "rack-storage",

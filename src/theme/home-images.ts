@@ -29,7 +29,16 @@ export interface HomeImages {
 // hero), not the sunset photo the Task 3 build had picked instead.
 const HERO_TOKEN = 'media:site-header-big-lake.eb71d593c9eaf136';
 const FLEET_TOKEN = 'media:fleet-racing-spinnakers.aced8df0a45f9553';
-const FACILITIES_TOKEN = 'media:clubhouse-and-grounds.ead9645a4e60dd76';
+// The owner-round-2 pass (2026-07-07) swaps in a deliberate derived crop
+// (`clubhouse-grounds-crop`, media.json entry `ea98fab43629398c`), trimmed from the same source
+// photo's own top 420 of 600 rows: the original 2:1 frame's bottom edge sliced through four club
+// dinghies' sails mid-mast (Geoff's live-review finding), and the facilities panel's own tall,
+// full-row-height box (`.facilities-row .panel-figure`, below) always shows the full height of
+// whatever source it's given (its own aspect ratio sits far short of the source's 2:1, so
+// `object-fit: cover` crops only horizontally, per CSS `cover` semantics), so no `object-position`
+// value could have hidden the slice. The crop removes the sail strip outright rather than
+// bisecting it, closing the frame on open water below the shoreline.
+const FACILITIES_TOKEN = 'media:clubhouse-grounds-crop.ea98fab43629398c';
 // The design-polish pass's placements (2026-07-07), replacing the What-do-we-do band's "photo
 // coming" placeholders: a class-instruction shot, a spinnaker/regatta shot, and a grounds shot.
 // LEARN_TOKEN reuses education.md's own Youth Track photo (its alt text, checked against the

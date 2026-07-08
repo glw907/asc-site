@@ -573,6 +573,20 @@
     "height": null,
     "createdAt": "2026-07-06T22:30:41.212Z"
   },
+  "ea98fab43629398c": {
+    "hash": "ea98fab43629398c",
+    "sha256": "ea98fab43629398cb0de2d13dd50e3756b589bf11d035df68198915fe0ddd7c9",
+    "slug": "clubhouse-grounds-crop",
+    "displayName": "clubhouse-grounds-crop",
+    "originalFilename": "clubhouse-and-grounds-crop.jpg",
+    "alt": "A view across Big Lake to the ASC clubhouse and grounds, framed by spruce and birch trees.",
+    "ext": "jpg",
+    "contentType": "image/jpeg",
+    "bytes": 173622,
+    "width": null,
+    "height": null,
+    "createdAt": "2026-07-07T00:00:00.000Z"
+  },
   "ead9645a4e60dd76": {
     "hash": "ead9645a4e60dd76",
     "sha256": "ead9645a4e60dd7627e7c96c85b8da904084fe4ba30b099d29469922f55d68c7",

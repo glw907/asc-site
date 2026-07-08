@@ -163,11 +163,20 @@ ecxc.ski's own SearchModal, the family's standing Pagefind pattern.
 
 <style>
   .search-trigger {
+    position: relative;
     transition: color 0.15s ease;
   }
   .search-trigger:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+  /* The trio's own 44px pointer target (owner-round-2 fix, 2026-07-07), matching the same
+     invisible-`::before` extension `.donate-link`/`.theme-toggle` use in SiteHeader.svelte: the
+     visible 36px box (`h-9 w-9`) stays put, and the actual hit area grows 4px past every edge. */
+  .search-trigger::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
   }
 
   .search-result-link {

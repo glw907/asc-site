@@ -160,7 +160,15 @@ before the photography existed, never a broken image. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">What do we do?</h2>
-      <p class="mt-xs max-w-[65ch] text-step-0 text-base-content">
+      <!-- Full row width, not a `ch`-capped column (the owner-round-2 fix, 2026-07-07): the prior
+           `max-w-[65ch]` cap wrapped this two-sentence intro to a measure that, purely by char-
+           count coincidence, stopped its right edge right at the three-tile grid's second tile
+           below, an arbitrary-looking seam (Geoff's live-page finding). Matching the grid's own
+           full width instead gives the paragraph's edge the same compositional line the row
+           already has, rather than a text-wrap accident; a two-sentence lede reads fine as two or
+           three wide lines, unlike a long-form paragraph the ~75ch reading-measure guideline
+           actually protects against. -->
+      <p class="mt-xs text-step-0 text-base-content">
         The Alaska Sailing Club is a welcoming environment with beautiful lakeside grounds and
         plenty to do for new sailors and old salts alike. Whether you&rsquo;re here to develop
         your skills, compete on the water, or enjoy our facilities and community, the ASC offers
@@ -195,11 +203,18 @@ before the photography existed, never a broken image. -->
        ground as "What do we do?" directly above it, reading as one long white stretch (the design
        probe's own band-sequence line showed two consecutive "—" entries here). Facilities picks up
        the sage band the Fleet section below gives up (Fleet's own fix, same pass), so the full
-       sequence alternates cleanly top to bottom with no two adjacent sections sharing a ground. -->
+       sequence alternates cleanly top to bottom with no two adjacent sections sharing a ground.
+
+       The subtitle reads at `text-step--1` now, one step below body rather than caption scale
+       (the owner-round-2 fix, 2026-07-07): it is the band's own orienting sentence, explaining the
+       gold-dot legend and pointing at the full listing, and had been rendering smaller than
+       everything else on the page, including the amenity list's own now-deliberately-small ink
+       just below it. `SeasonList` carries the rest of this pass's rhythm fix (tighter row and
+       month spacing, a real date-to-event grouping hierarchy); see its own header comment. -->
   <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">The Season</h2>
-      <p class="mt-xs mb-m text-step--2 text-muted season-subtitle">
+      <p class="mt-xs mb-s text-step--1 text-muted season-subtitle">
         Racing runs May through September. Social events bookend the year, and a
         <span class="season-dot mr-[0.3rem] inline-block" aria-hidden="true"></span>marks classes and clinics.
         <a href="/events/" class="arrow-link font-semibold text-primary underline underline-offset-[3px]">See all events &rarr;</a>
@@ -208,32 +223,55 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- Our fleet: full-width photography with the text below it (the owner-round fix, 2026-07-07),
-       replacing the two-column composition that squeezed a wide, short source photo (the same
-       fleet-racing-spinnakers shot, 1200x600, an action shot of four boats racing under spinnaker)
-       into a narrow strip beside the paragraph. The photo now leads the section at its own natural
-       2:1 ratio, unclipped (`.panel-figure`, the same figure recipe Facilities' figure column uses,
-       reused here rather than duplicated); the copy and its link follow underneath, capped to a
-       comfortable reading measure. Gives up the sage band it shared with News (Season's fix, same
-       pass, needs it to keep the whole page's band sequence from repeating adjacent sections). -->
+  <!-- Our fleet: a list beside a portrait photo (the owner-round-2 fix, 2026-07-07), replacing
+       the full-width-photo-then-paragraph composition: the paragraph sat well short of the row's
+       full width beneath a wide photo, reading as a blank column beside it (Geoff's live-page
+       finding). The boat inventory is now a real list rather than an inline run of clauses, and
+       sits beside a deliberate PORTRAIT crop of the same fleet-racing-spinnakers source (1200x600,
+       four boats racing under spinnaker); no portrait fleet asset exists in the library, and none
+       was needed, since a landscape source cropped into a taller-than-2:1 box always shows its own
+       FULL height under `object-fit: cover` (the box's own aspect ratio sits far short of the
+       source's 2:1, so `cover` can only crop horizontally, per CSS `cover` semantics) — exactly
+       the "no beheaded masts" constraint, satisfied for free. `object-position` (below) picks the
+       horizontal slice, centered on the two most legible sails (the red/white and blue/green
+       spinnakers). `.fleet-row` reuses `.facilities-row`'s own stretch-to-match trick (`panel-
+       figure`'s `aspect-ratio: auto; height: 100%` at the shared 900px breakpoint) to balance the
+       two columns' heights, an even 1fr/1fr split (not Facilities' own 1.08fr, since there is no
+       photo-first reorder here to compensate for). -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">Our fleet</h2>
-      <div class="panel-figure mt-s" class:has-photo={!!data.images.fleet}>
-        {#if data.images.fleet}
-          <img src={data.images.fleet.url} alt={data.images.fleet.alt} class="h-full w-full rounded-box object-cover" />
-        {/if}
-      </div>
-      <div class="mt-m max-w-[65ch]">
-        <p class="text-step-0 text-base-content">
-          The ASC has a well-maintained collection of club boats for sailors of all ages and
-          abilities: six Lido 14s, three Lasers, a Laser II, five Optimists &mdash; plus a
-          Buccaneer 18, a Catalina 16.5, a Skipjack 15, and an Ensign 22. All available to
-          qualified club members.
-        </p>
-        <a href="/club-boat-use-and-qualification/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
-          Learn about club boat use &rarr;
-        </a>
+      <div class="mt-s grid grid-cols-1 items-center gap-l twocol-panel fleet-row">
+        <div>
+          <p class="text-step-0 text-base-content">
+            The ASC has a well-maintained collection of club boats for sailors of all ages and
+            abilities:
+          </p>
+          <ul class="fleet-list text-step-0 text-base-content">
+            <li>Six Lido 14s</li>
+            <li>Three Lasers</li>
+            <li>A Laser II</li>
+            <li>Five Optimists</li>
+            <li>A Buccaneer 18</li>
+            <li>A Catalina 16.5</li>
+            <li>A Skipjack 15</li>
+            <li>An Ensign 22</li>
+          </ul>
+          <p class="mt-xs text-step-0 text-base-content">All available to qualified club members.</p>
+          <a href="/club-boat-use-and-qualification/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
+            Learn about club boat use &rarr;
+          </a>
+        </div>
+        <div class="panel-figure" class:has-photo={!!data.images.fleet}>
+          {#if data.images.fleet}
+            <img
+              src={data.images.fleet.url}
+              alt={data.images.fleet.alt}
+              class="h-full w-full rounded-box object-cover fleet-photo"
+              data-crop="portrait"
+            />
+          {/if}
+        </div>
       </div>
     </div>
   </section>
@@ -250,7 +288,17 @@ before the photography existed, never a broken image. -->
        one column and this override never applies, so the photo keeps its natural-ish 2:1 shape
        there instead of towering. Picks up the sage band Fleet gives up above (the owner-round fix,
        2026-07-07), so the page's band sequence still alternates with no two adjacent sections
-       sharing a ground. -->
+       sharing a ground.
+
+       The amenity list reads as subordinate to the intro paragraph above it (the owner-round-2
+       fix, 2026-07-07): the intro stays at body scale and full ink (`text-step-0 text-base-
+       content`, untouched), while the list steps down one size (`text-step--1`) and one voice
+       (`text-muted`, the site's own quiet-but-passing tone; the checkmark's own border color
+       follows suit below) with a tighter row `padding-block`, so the section reads heading, then
+       intro prose, then a compact supporting inventory, rather than two co-equal blocks of text.
+       The section's prior exit CTA ("Learn about membership") is gone outright (a second Geoff
+       finding, same review): the closing band's own CTA, two sections down, already owns that
+       job, and a mid-page duplicate diluted it; the section now simply ends with the list. -->
   <section class="border-y border-card-border bg-base-200 py-xl">
     <div class="mx-auto grid max-w-measure-wide grid-cols-1 items-center gap-l px-m twocol-panel facilities-row">
       <div class="panel-figure panel-figure-first" class:has-photo={!!data.images.facilities}>
@@ -270,7 +318,7 @@ before the photography existed, never a broken image. -->
           States. But despite this (or maybe because of it?) we have facilities that would be the
           envy of any sailing club in the world. Our facilities include:
         </p>
-        <ul class="amenity-list text-step-0 text-base-content">
+        <ul class="amenity-list text-step--1 text-muted">
           <li class="amenity-item">A clubhouse with a sauna and storage shed</li>
           <li class="amenity-item">A harbor with nine mooring spots for small keelboats</li>
           <li class="amenity-item">Year-round parking for trailered dinghies</li>
@@ -281,13 +329,6 @@ before the photography existed, never a broken image. -->
           <li class="amenity-item">A small boat rack for kayaks and canoes</li>
           <li class="amenity-item">Park-style grounds with beautiful lake views</li>
         </ul>
-        <!-- The section's own exit CTA (the owner-round fix, 2026-07-07): previously a trailing
-             `.arrow-link`, indistinguishable from the amenity list right above it, so it read as
-             one more list-adjacent line rather than a deliberate call to action. `.cta-btn-outline`
-             gives it real button chrome (the primary/outline variant, since fireweed already spends
-             its "at most twice per page" budget on the hero and closing-band CTAs) without
-             duplicating the closing band's own navy CTA further down the page. -->
-        <a href="/join/" class="cta-btn-outline mt-l">Learn about membership &rarr;</a>
       </div>
     </div>
   </section>
@@ -336,30 +377,6 @@ before the photography existed, never a broken image. -->
   }
   .closing-band .cta-btn:focus-visible {
     outline-color: white;
-  }
-  /* The Facilities section's own exit CTA: a navy outline button, not a third fireweed CTA
-     (the club-grounds story's "at most twice per page" rule, already spent by the hero and the
-     closing band). Filling solid on hover reads as the same "press" affordance `.cta-btn` gives
-     without borrowing fireweed's exclusive pop. */
-  .cta-btn-outline {
-    display: inline-block;
-    color: var(--color-primary);
-    background: transparent;
-    border: 1.5px solid var(--color-primary);
-    font-weight: 650;
-    font-size: var(--text-step--1);
-    padding: calc(0.6rem - 1.5px) calc(1.25rem - 1.5px);
-    border-radius: var(--radius-field);
-    text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  .cta-btn-outline:hover {
-    background: var(--color-primary);
-    color: white;
-  }
-  .cta-btn-outline:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
   }
   .ghost-btn {
     display: inline-flex;
@@ -413,18 +430,26 @@ before the photography existed, never a broken image. -->
   .panel-figure.has-photo {
     background: none;
   }
-  /* Facilities' own crop focus (retuned, craft pass 2026-07-07): the desktop rule below stretches
-     this box so much taller than the source photo's natural 2:1 that the vertical axis never
-     actually crops (the box's height alone drives `object-fit: cover`'s scale, so the full image
-     height always shows, top to bottom, whatever the Y offset reads). The real crop is entirely
-     horizontal: at that scale only about a third of the frame's WIDTH survives. Centering that
-     narrow slice (the default 50%) landed it on open water with just a sliver of the shot's one
-     real subject, the small treed island with its dock and boathouse; 25% shifts the slice left to
-     keep the island centered instead, the least-destructive framing this fixed aspect ratio and
-     this landscape source photo can give a column this tall. The real fix is a portrait asset for
-     this slot (a tall crop of the shoreline or the clubhouse itself); filed as a photo request. */
+  /* Facilities' own crop focus (re-derived, owner-round-2 fix, 2026-07-07): the desktop rule
+     below stretches this box so much taller than any landscape source's own shape that the
+     vertical axis never actually crops (the box's height alone drives `object-fit: cover`'s
+     scale, so the full image height always shows, top to bottom, no matter what `object-position`
+     reads: CSS `cover` can only crop the ONE axis whose fit ratio is smaller, and a box this much
+     taller than wide always loses that comparison on height). That made the box's own bottom edge
+     a direct window onto the source photo's own bottom edge, which sliced through four club
+     dinghies' sails mid-mast (Geoff's live-review finding); no `object-position` value could have
+     hidden that, only a real crop of the source could. `home-images.ts` now points this slot at a
+     deliberate derived crop (`clubhouse-grounds-crop`, the same source's own top 420 of 600 rows),
+     trimmed to end on open water below the shoreline, so the box's guaranteed full-height display
+     no longer has any boat left in it to slice. `object-position`'s job is therefore purely
+     horizontal now: this box's own tall, narrow shape only has room for about a third of the
+     frame's width, so it cannot hold both the shot's two landmarks (the near island with its own
+     dock and boathouse, and the clubhouse further down the shoreline) at once; 38% centers on the
+     island, the closer and more legible of the two, rather than drifting onto open water on
+     either side. A wider box (Facilities' own mobile breakpoint, and every viewport below 900px)
+     has room for both. */
   .facilities-photo {
-    object-position: 25% center;
+    object-position: 38% center;
   }
 
   /* The What-do-we-do band's tiles (design-polish pass, 2026-07-07): the same silent-gradient
@@ -443,6 +468,42 @@ before the photography existed, never a broken image. -->
      action, rather than two headings stacked. */
   .what-we-do-label {
     font-weight: 650;
+  }
+
+  /* Our fleet's own list (the owner-round-2 fix, 2026-07-07): a plain inventory, not the
+     Facilities amenity list's "included with membership" checkmark (a different meaning; reusing
+     that mark here would blur it). A single short dash reads as a neutral list item rather than an
+     unlabeled bullet, at the same full body ink as the surrounding intro/outro prose, since this
+     list is not being asked to read as subordinate the way Facilities' now is. One column: eight
+     short entries never runs tall enough to need the amenity list's multi-column balance. */
+  .fleet-list {
+    margin: 0;
+    margin-top: var(--spacing-xs);
+    padding: 0;
+    list-style: none;
+  }
+  .fleet-list li {
+    padding-block: 0.2rem;
+    padding-left: 1.1rem;
+    position: relative;
+  }
+  .fleet-list li::before {
+    content: '\2013';
+    position: absolute;
+    left: 0;
+    color: var(--color-muted);
+  }
+
+  /* Our fleet's photo (the owner-round-2 fix, 2026-07-07): unlike Facilities, this crop needs no
+     source-file trim, because the full vertical extent CSS `cover` is guaranteed to show (see
+     `.fleet-row .panel-figure`'s own comment above) already IS the wanted content: the source
+     shot's boats and sails run the full height of the frame already, so showing all of it is
+     correct, not a defect to route around. `object-position` only ever needed to choose a
+     horizontal slice; centered on the red/white and blue/green spinnakers (the source's own most
+     legible boats, roughly the frame's second and third quarters), not the plain default 50%,
+     which centers on the gap between the third and fourth boats instead. */
+  .fleet-photo {
+    object-position: 53% center;
   }
 
   /* News cards: the one place body content gets real chrome (A1); the gentle hover lift is the
@@ -515,12 +576,17 @@ before the photography existed, never a broken image. -->
      2026-07-07): the live site's own 9-item list, restored in place of the summarizing paragraph
      the theme build had substituted, off the browser-default disc marker (the design-polish pass's
      finding) onto a real two-column grid. Its own marker reads as a small checkmark, not a plain
-     dot (Geoff's finding: the list needed "better list markers... spacing that reads designed"), in
-     flag navy (`--color-primary`), never the Season's gold dot (the completion pass's fix, manifest
-     item 9c: the gold dot's whole point is to mean "class or clinic" specifically, and a second,
-     unrelated list reusing the same mark would spend that meaning on housekeeping instead). One
-     column below 640px, matching the family's own 900px-vs-640px two-tier collapse for a list this
-     short. */
+     dot (Geoff's finding: the list needed "better list markers... spacing that reads designed"),
+     never the Season's gold dot (the completion pass's fix, manifest item 9c: the gold dot's whole
+     point is to mean "class or clinic" specifically, and a second, unrelated list reusing the same
+     mark would spend that meaning on housekeeping instead). One column below 640px, matching the
+     family's own 900px-vs-640px two-tier collapse for a list this short.
+
+     The list reads as subordinate to the intro paragraph above it now (the owner-round-2 fix,
+     2026-07-07: `text-step--1 text-muted` in the markup, one size and one voice quieter than the
+     paragraph's own `text-step-0 text-base-content`), so the checkmark follows the same quieting
+     (`--color-muted`, not `--color-primary`) and the rows themselves tighten to read as a compact
+     inventory rather than a second co-equal block of prose. */
   /* margin-top set here, not the markup's own `mt-xs` (there was one, and it did nothing): this
      unlayered scoped rule already outranks any Tailwind utility class regardless of specificity
      (the same mechanism `.facilities-row`'s `align-items` override relies on above), so a `margin:
@@ -539,7 +605,9 @@ before the photography existed, never a broken image. -->
     display: flex;
     align-items: baseline;
     gap: 0.75rem;
-    padding-block: 0.4rem;
+    /* Tightened from 0.4rem (the owner-round-2 fix): a compact inventory reads as one small block,
+       not a list spaced to the same rhythm as the body-scale text above it. */
+    padding-block: 0.2rem;
     /* Only matters once the two-column rule below switches the list to CSS multi-column: keeps a
        single amenity from splitting its own two lines across the column break. */
     break-inside: avoid;
@@ -551,7 +619,9 @@ before the photography existed, never a broken image. -->
      (the item's own computed line-height, whatever it resolves to), so the offset stays exact
      without hard-coding a multiplier that could drift from the actual cascade. The checkmark itself
      (the owner-round restyle) is the classic two-segment border technique, rotated 40deg: a plain
-     CSS shape, no icon dependency, that reads as "included" rather than an unlabeled bullet. */
+     CSS shape, no icon dependency, that reads as "included" rather than an unlabeled bullet. Its
+     border color follows the list's own quieter ink (the owner-round-2 fix), `--color-muted`
+     rather than the navy `--color-primary` the rest of the page reserves for real emphasis. */
   .amenity-item::before {
     content: '';
     flex-shrink: 0;
@@ -559,8 +629,8 @@ before the photography existed, never a broken image. -->
     height: 11px;
     align-self: flex-start;
     margin-top: calc((1lh - 11px) / 2);
-    border-right: 2px solid var(--color-primary);
-    border-bottom: 2px solid var(--color-primary);
+    border-right: 2px solid var(--color-muted);
+    border-bottom: 2px solid var(--color-muted);
     transform: rotate(40deg);
   }
   /* CSS multi-column, not a second grid track: a 9-item list split into a 5/4 grid ran the two
@@ -618,6 +688,19 @@ before the photography existed, never a broken image. -->
        row's height), the browser has nothing left for `aspect-ratio` to resolve, and the img's own
        `object-fit: cover` crops the source photo to fill that box exactly. */
     .facilities-row .panel-figure {
+      aspect-ratio: auto;
+      height: 100%;
+    }
+    /* Our fleet's own row (the owner-round-2 fix, 2026-07-07): an even split, unlike Facilities'
+       1.08fr (which compensates for that section's own photo-first reorder; Fleet keeps DOM order,
+       list then photo, so no compensation is needed). The same stretch-to-match-height trick
+       balances the list and photo columns' heights; see `.fleet-photo`'s own comment for why full
+       image height is exactly what "no beheaded masts" needs here, unlike Facilities' need to
+       actually crop vertically. */
+    .fleet-row {
+      align-items: stretch;
+    }
+    .fleet-row .panel-figure {
       aspect-ratio: auto;
       height: 100%;
     }
