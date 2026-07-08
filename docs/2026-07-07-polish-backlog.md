@@ -100,3 +100,17 @@ not done today Geoff tackles on Opus tomorrow; hand this file to that session.
 - The ops events/classes 410 flip (parity audit says GO; Geoff's word).
 - The apex DNS cutover (aksailingclub.org → asc-site) after the before/after review.
 - MembershipWorks subscription cancel (after 2.4, the last ops domain).
+
+## Admin interface feedback (Geoff, live review 2026-07-07 — queued for the admin review round)
+
+- **Payment-due presentation in Members**: the Standing column renders "Current Payment due"
+  as one run-on string — the standing value and the payment-due flag need visual separation
+  (a distinct badge/pill for "Payment due," not inline concatenation with the standing).
+- **Count mismatch on the same screen**: "Showing 1-10 of 23 members" vs "25 members across
+  15 households" — if the delta is archived members, one of the counts must say so; as
+  rendered it reads as a bug.
+- **Header stack reads doubled**: "Overview / members / Club / Members / …" — the eyebrow,
+  page title, and list header repeat the same words; consolidate the screen's heading
+  hierarchy.
+- Already handled separately: the double-Settings relabel (shipped), the sidebar scroll-bleed
+  and auto-collapse-on-navigate (engine fixes in flight).
