@@ -6,7 +6,14 @@ standard arrow link. The leading mark is a small inline SVG (a thin navy mast pl
 triangular burgee), `aria-hidden` since the sentence beside it already carries the full meaning.
 `parseBoldSegments` (`$theme/active-notification`) is the one narrow, safe `**bold**` convention
 the plain-text `body` field supports; every segment still renders through Svelte's own escaped
-text interpolation, never `{@html}`. -->
+text interpolation, never `{@html}`.
+
+Round-5 fix (2026-07-07): the strip's own `max-w-[54ch]` capped it to the hero text column's
+width, which read as an extension of the hero rather than its own line item (Geoff's live read,
+after round-4's gap-only fix still failed to separate it). The cap is gone; the strip now spans
+whatever measure its wrapper section gives it (`+page.svelte`'s own `max-w-measure-wide`, the
+same column News and Season occupy), so pennant, message, and the arrow link read as one
+confident line at desktop widths instead of hugging a narrow column. -->
 <script lang="ts">
   import { parseBoldSegments, type ActiveNotification } from '$theme/active-notification';
 
@@ -14,7 +21,7 @@ text interpolation, never `{@html}`. -->
   const segments = $derived(parseBoldSegments(notification.body));
 </script>
 
-<div class="notification-strip flex max-w-[54ch] items-baseline gap-xs">
+<div class="notification-strip flex flex-wrap items-baseline gap-xs">
   <svg class="notification-pennant" viewBox="0 0 24 24" aria-hidden="true">
     <line x1="5" y1="2" x2="5" y2="22" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round" />
     <polygon points="5,3 18,7.5 5,12" fill="var(--color-secondary)" />

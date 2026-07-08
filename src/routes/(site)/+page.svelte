@@ -44,8 +44,9 @@ before the photography existed, never a broken image. -->
     return dateFmt.format(new Date(iso));
   }
 
-  // The What-do-we-do band's three tiles. Design candidate A (the full-bleed triptych, landed on
-  // main by the wdwd-final pass, 2026-07-07): Geoff picked candidate A over the wdwd-candidates
+  // The What-do-we-do band's three tiles. Design candidate A (the triptych, landed on main by
+  // the wdwd-final pass, 2026-07-07; contained to the page's own measure in round-5): Geoff
+  // picked candidate A over the wdwd-candidates
   // branch's editorial-feature and manifesto-rows alternatives "by a mile". `desc` is the
   // candidate's own addition, one honest line per tile in the club voice, room the redesigned
   // band gives this section for the first time; `key` picks each tile's own slot out of
@@ -72,6 +73,20 @@ before the photography existed, never a broken image. -->
       key: 'relax' as const,
       desc: 'Lakeside grounds and a clubhouse built for slow evenings with the club.',
     },
+  ];
+
+  // Our fleet's own inventory (the leader-dot spec-sheet redesign, 2026-07-07): each class name
+  // singular, since the row itself (a dotted leader to a right-aligned count) carries the
+  // quantity now, the job round-4's plural names ("Lidos 14s") used to do on their own.
+  const FLEET: { name: string; count: number }[] = [
+    { name: 'Lido 14', count: 6 },
+    { name: 'Laser', count: 3 },
+    { name: 'Laser II', count: 1 },
+    { name: 'Optimist', count: 5 },
+    { name: 'Buccaneer 18', count: 1 },
+    { name: 'Catalina 16.5', count: 1 },
+    { name: 'Skipjack 15', count: 1 },
+    { name: 'Ensign 22', count: 1 },
   ];
 </script>
 
@@ -144,20 +159,22 @@ before the photography existed, never a broken image. -->
 
   <!-- The notification: a hoisted pennant (the round-3 redesign, 2026-07-07), replacing the
        gray admonition box (fill, border, bold title prefix) Geoff's live review flagged. Unboxed,
-       on the page's own white ground, in the hero's own measure. Only renders while a
-       notification is current; an expired one is correct, honest silence. See
-       NotificationStrip.svelte's own header comment.
+       on the page's own white ground. Only renders while a notification is current; an expired
+       one is correct, honest silence. See NotificationStrip.svelte's own header comment.
 
-       Its own top padding (round-4 fix, 2026-07-07): the strip previously relied entirely on the
-       hero section's own `pb-xl` for separation, which read as the hero's own bottom margin
-       rather than a distinct slot for the notification, so the strip merged visually into the
-       hero above it (Geoff's live read). `pt-l` here is the strip's own explicit gap, added on
-       top of the hero's `pb-xl` rather than borrowed from it, clearly larger than any of the
-       hero's own internal spacing (`mt-xs`/`mt-s`, both an order of magnitude tighter) so the
-       notification now reads as its own line item between the hero and News. -->
+       Round-5 fix (2026-07-07): round-4's own top gap (`pt-l`, still present below) was not
+       enough on its own; Geoff's live read still placed the strip inside the hero. The hairline
+       rule above the strip is the Season band's own containment idiom (`SeasonList.svelte`'s
+       `.season-month-label` border, a quiet 1px `--color-card-border` line that caps a group)
+       borrowed here to cap the hero instead: it spans the same `max-w-measure-wide` column every
+       other section uses (not the hero's narrower text measure), so the strip visibly starts a
+       new slot rather than trailing the hero's own copy. `pt-xl` on the section (a step up from
+       round-4's `pt-l`) and `pt-m` between the rule and the strip give the whole band more air
+       than a caption would carry, so the rule-plus-strip reads as one deliberate beat, not a
+       one-line footnote. -->
   {#if data.notification}
-    <section class="pb-xl pt-l">
-      <div class="mx-auto max-w-measure-wide px-m">
+    <section class="pb-xl pt-xl">
+      <div class="mx-auto max-w-measure-wide border-t border-card-border px-m pt-m">
         <NotificationStrip notification={data.notification} />
       </div>
     </section>
@@ -217,24 +234,30 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- What do we do? (design candidate A, the full-bleed triptych, landed on main by the
-       wdwd-final pass, 2026-07-07): the design-polish pass's three "photo coming" icon tiles
-       read correct but "squished" for the club's own three-fold promise once real photography
-       filled them (Geoff's brief) — the section carrying the page's best photography deserved a
-       highlight, not a quiet grid row. Built on the wdwd-candidates branch alongside two other
-       full candidates (an editorial feature, a manifesto-rows layout); Geoff picked this one "by
-       a mile". The triptych composes the three photos as one full-bleed band: each panel breaks
-       out to the viewport edge (the same `left: 50%; transform: translateX(-50%)` full-bleed
-       trick site.css's `.cairn-place-full` already uses), carries its own word directly on the
-       image with a scrim for contrast, and the description/link sit inside the same panel rather
-       than below it, so the composition reads as one eye-catching band, not three cards. The
-       intro sentence keeps its own reading measure above the band (re-capped from the
-       owner-round-2 fix's full-width paragraph, safe to restore here since nothing below shares
-       its right edge the way the old three-tile grid did) rather than the surrounding sections'
-       shared `max-w-measure-wide` column, and the band itself acts as its own full-bleed visual
-       band in the page's alternating rhythm, sitting between the sage News band above and the
-       sage Season band below (no explicit `bg-*` needed; a full-bleed photo band already reads
-       as a band on its own). -->
+  <!-- What do we do? (design candidate A, landed on main by the wdwd-final pass, 2026-07-07):
+       the design-polish pass's three "photo coming" icon tiles read correct but "squished" for
+       the club's own three-fold promise once real photography filled them (Geoff's brief) — the
+       section carrying the page's best photography deserved a highlight, not a quiet grid row.
+       Built on the wdwd-candidates branch alongside two other full candidates (an editorial
+       feature, a manifesto-rows layout); Geoff picked this one "by a mile". Each panel carries
+       its own word directly on the image with a scrim for contrast, and the description/link sit
+       inside the same panel rather than below it, so the composition reads as one eye-catching
+       band, not three cards.
+
+       Round-5 fix (2026-07-07): the triptych originally broke out full-bleed to the viewport
+       edge (the same trick `.cairn-place-full` uses), which at 1440px+ read as "a narrow ribbon
+       stretched across the page" once round-4 cut its height (Geoff's live read) — full viewport
+       width paired with a short, vh-driven height produced exactly that letterboxed proportion.
+       The triptych now sits in the page's own `max-w-measure-wide` column, the same width News
+       and Season occupy (and the same column the intro paragraph's wrapper above already used;
+       only the intro's own narrower 60ch reading cap kept it visually distinct from the old
+       full-bleed band), so its outer edges align with every other section instead of bleeding
+       past them. Panel height is no longer a viewport-height clamp (the mechanism that produced
+       the ribbon: it tracks the WINDOW, not the panel's own now-narrower width) but
+       `aspect-ratio: 4 / 5` at the three-up desktop tier, so each panel is a fixed portrait
+       proportion that scales with its own column width at any viewport, landing inside the
+       "3:4 to 4:5" portrait-frame target Geoff's brief called for by construction rather than by
+       a guessed pixel clamp. -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">What do we do?</h2>
@@ -245,7 +268,7 @@ before the photography existed, never a broken image. -->
         something for everyone under the midnight sun.
       </p>
     </div>
-    <div class="wdwd-triptych mt-m">
+    <div class="wdwd-triptych mx-auto mt-m max-w-measure-wide px-m">
       {#each WHAT_WE_DO as tile (tile.label)}
         {@const photo = data.images[tile.key]}
         <div class="wdwd-panel" class:has-photo={!!photo}>
@@ -343,16 +366,17 @@ before the photography existed, never a broken image. -->
             abilities:
           </p>
           <ul class="fleet-list text-step-0 text-base-content">
-            <li><span class="fleet-count">6</span><span class="fleet-name">Lido 14s</span></li>
-            <li><span class="fleet-count">3</span><span class="fleet-name">Lasers</span></li>
-            <li><span class="fleet-count">1</span><span class="fleet-name">Laser II</span></li>
-            <li><span class="fleet-count">5</span><span class="fleet-name">Optimists</span></li>
-            <li><span class="fleet-count">1</span><span class="fleet-name">Buccaneer 18</span></li>
-            <li><span class="fleet-count">1</span><span class="fleet-name">Catalina 16.5</span></li>
-            <li><span class="fleet-count">1</span><span class="fleet-name">Skipjack 15</span></li>
-            <li><span class="fleet-count">1</span><span class="fleet-name">Ensign 22</span></li>
+            {#each FLEET as boat (boat.name)}
+              <li>
+                <span class="fleet-name">{boat.name}</span>
+                <span class="fleet-leader" aria-hidden="true"></span>
+                <span class="fleet-count">{boat.count}</span>
+              </li>
+            {/each}
           </ul>
-          <p class="mt-xs text-step-0 text-base-content">All available to qualified club members.</p>
+          <p class="mt-xs text-step-0 text-base-content">
+            Nineteen boats, all available to qualified club members.
+          </p>
           <a href="/club-boat-use-and-qualification/" class="arrow-link mt-s inline-block font-semibold text-primary underline underline-offset-[3px]">
             Learn about club boat use &rarr;
           </a>
@@ -563,24 +587,23 @@ before the photography existed, never a broken image. -->
     object-position: 38% center;
   }
 
-  /* What do we do? (design candidate A, the full-bleed triptych, landed on main by the
-     wdwd-final pass, 2026-07-07): the reading-measure cap the owner-round-2 fix removed (that
-     fix's own reasoning no longer applies here: the paragraph's right edge has nothing to line
-     up against below it now, only a full-bleed band). */
+  /* What do we do?'s intro: a tighter reading measure than the band beneath it, so a three-line
+     paragraph does not stretch across the full `max-w-measure-wide` column just because the
+     triptych below now shares that same width (round-5 fix, 2026-07-07). */
   .wdwd-intro {
     max-width: 60ch;
   }
 
-  /* The triptych band: the same full-bleed break-out `.cairn-place-full` already uses
-     (site.css), escaping the section's own `max-w-measure-wide` column to the viewport edge.
-     Three panels side by side at the family's 900px two-column breakpoint; one column (each
-     panel already full-width) below it, so it stacks to three full-width panels with no extra
-     rule needed. */
+  /* The triptych band (round-5 containment fix, 2026-07-07, superseding the original full-bleed
+     break-out): full-viewport width paired with round-4's cut-down height read as "a narrow
+     ribbon stretched across the page" at 1440px+ (Geoff's live read), since nothing scaled the
+     panel width down to match the shrunken height. The band now sits in the markup's own
+     `mx-auto max-w-measure-wide px-m` wrapper (the same classes every other section's content div
+     uses), so its outer edges align with News, Season, and every other section instead of
+     bleeding to the viewport edge. Three panels side by side at the family's 900px two-column
+     breakpoint; one column (each panel already full-width) below it, so it stacks to three
+     full-width panels with no extra rule needed. */
   .wdwd-triptych {
-    position: relative;
-    left: 50%;
-    width: 100vw;
-    transform: translateX(-50%);
     display: grid;
     grid-template-columns: 1fr;
   }
@@ -590,17 +613,19 @@ before the photography existed, never a broken image. -->
     }
   }
 
-  /* Each panel's height (round-4 proportion fix, 2026-07-07): Geoff's live read of the shipped
-     triptych was "OMGLOOKATME" against the rest of the page, a strong beat drowning out
-     everything around it rather than a proportionate highlight. Cut to roughly 58% of the prior
-     ceiling at the three-up tier (672px/42rem down to ~400px/25rem, comfortably inside the
-     directive's 380-420px target), scaled proportionally at the stacked (mobile) tier too
-     (30rem/480px down to 18rem/288px). Both tiers keep their own vh-driven middle clamp term
-     (scaled the same ~0.58 factor) and a sane floor, so an unusually short viewport still gets a
-     readable panel and an ultra-tall one never balloons back toward the old dominance. The same
-     silent-gradient degrade the hero/fleet/facilities panels use covers a resolver miss (no
-     photo, no scrim, just the gradient panel; the word/description/link still render, so the
-     panel never goes empty). */
+  /* Each panel's height: a fixed portrait `aspect-ratio` at the three-up desktop tier (round-5
+     fix, 2026-07-07), replacing round-4's `clamp(16rem, 38vh, 25rem)`. That clamp's middle term
+     tracked the WINDOW's height, not the panel's own width, which is exactly what produced the
+     "ribbon" once the triptych stopped being full-bleed: a fixed clamp height against a suddenly
+     much narrower (contained) column reads as short and wide instead of a composed portrait
+     frame. `aspect-ratio: 4 / 5` ties the panel's height directly to its own column width instead,
+     landing inside the "3:4 to 4:5" portrait-frame target at every desktop width by construction,
+     never a mismatched guess. The stacked (mobile) tier below 900px keeps its own
+     `clamp(12rem, 32vh, 18rem)` height unchanged: a full-width single panel at a 4:5 aspect would
+     run needlessly tall stacked three deep, and Geoff's brief only asked to fix the three-up
+     ribbon, not redesign the mobile stack. The same silent-gradient degrade the hero/fleet/
+     facilities panels use covers a resolver miss (no photo, no scrim, just the gradient panel;
+     the word/description/link still render, so the panel never goes empty). */
   .wdwd-panel {
     position: relative;
     overflow: hidden;
@@ -612,7 +637,8 @@ before the photography existed, never a broken image. -->
   }
   @media (min-width: 56.25rem) {
     .wdwd-panel {
-      height: clamp(16rem, 38vh, 25rem);
+      height: auto;
+      aspect-ratio: 4 / 5;
     }
   }
   .wdwd-panel-img {
@@ -706,18 +732,20 @@ before the photography existed, never a broken image. -->
     outline-offset: 2px;
   }
 
-  /* Our fleet's own list, redesigned as a plain inventory table (round-4 fix, 2026-07-07): the
-     diamond marker plus spelled-out count words ("Six", "A", "An") read, in Geoff's own words, as
-     designed by "a sweet 70-year-old grandma" — a quaint, decorative treatment for what is really
-     a scannable count. The fix drops decoration entirely: a numeral column
-     (`font-variant-numeric: tabular-nums`, so every digit takes the same fixed width and a run of
-     single- and double-digit counts still lines up edge to edge) sits flush-left, right-aligned in
-     its own narrow track, ahead of the boat name, the classic table-without-borders inventory
-     pattern. This list is still the section's PRIMARY content, not subordinate the way Facilities'
-     amenity list reads, so it keeps full body scale and ink (`text-step-0 text-base-content`,
-     unchanged). Row spacing is generous but tight, `--spacing-2xs` (a touch more breathing room
-     than the diamond version's `--spacing-3xs`, still far short of a loose list), since a bare
-     numeral column reads cleanest with a little more air between rows than a bulleted one needs. */
+  /* Our fleet's own list, redesigned as a leader-dot spec sheet (round-5 fix, 2026-07-07,
+     Geoff's own art direction): round-4's numeral column read correct but plain; a class name
+     left, a dotted leader, and a right-aligned count is the classic chandlery spec-card device,
+     the list reading as one designed sheet rather than a bare table. `.fleet-name` and
+     `.fleet-count` never shrink (`flex-shrink: 0`) so a long class name or the count never
+     crowds the leader out; `.fleet-leader` is the only flexible child (`flex: 1 1 auto`), so it
+     is the leader itself that compresses at narrow widths, never the readable text on either
+     side. `align-items: baseline` puts every row's shared baseline through the leader's own
+     empty box, which (carrying no text of its own) sits its bottom margin edge, and so its
+     dotted `border-bottom`, right at that baseline for free, no manual offset needed. The count
+     keeps `tabular-nums` (every digit the same fixed width) and steps up to `font-weight: 650` in
+     `--color-base-content` (the theme's own navy ink), reading as the sheet's one emphasized
+     column against the plain-weight names. Row spacing is unchanged from round-4
+     (`--spacing-2xs`, tight but not cramped). */
   .fleet-list {
     margin: 0;
     margin-top: var(--spacing-xs);
@@ -725,16 +753,24 @@ before the photography existed, never a broken image. -->
     list-style: none;
   }
   .fleet-list li {
-    display: grid;
-    grid-template-columns: 1.6rem 1fr;
-    column-gap: var(--spacing-2xs);
+    display: flex;
     align-items: baseline;
+    gap: var(--spacing-2xs);
     padding-block: var(--spacing-2xs);
   }
+  .fleet-name {
+    flex-shrink: 0;
+  }
+  .fleet-leader {
+    flex: 1 1 auto;
+    min-width: var(--spacing-m);
+    border-bottom: 1px dotted var(--color-card-border);
+  }
   .fleet-count {
+    flex-shrink: 0;
     font-variant-numeric: tabular-nums;
     font-weight: 650;
-    text-align: right;
+    color: var(--color-base-content);
   }
 
   /* Our fleet's photo (the owner-round-2 fix, 2026-07-07): unlike Facilities, this crop needs no
