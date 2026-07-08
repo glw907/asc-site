@@ -46,7 +46,13 @@ const FACILITIES_TOKEN = 'media:clubhouse-grounds-crop.ea98fab43629398c';
 // adult-intro-class-2, carries a stale "at the tiller" alt on what is actually a dockside
 // knot-tying moment) rather than ship a mismatched alt onto the home page.
 const LEARN_TOKEN = 'media:youth-intro-class-1.9c08687cac54de80';
-const RACE_TOKEN = 'media:racing-hero.ff77ce74df7d2570';
+// The wdwd-final pass (2026-07-07) swaps in a derived crop (`racing-hero-crop`, pushed to both
+// local and production R2, media.json entry `c9aed45347c7d39b`): the source shot's boats sit in
+// only the bottom quarter of a wide-sky frame, and the triptych's own tall, narrow panel always
+// shows a source's FULL height under `object-fit: cover` (see `.wdwd-panel-img`'s own comment),
+// so the original photo showed mostly empty sky no matter what `object-position` read. The crop
+// trims from just above the tallest sail tip to the waterline, closing on boats and water.
+const RACE_TOKEN = 'media:racing-hero-crop.c9aed45347c7d39b';
 const RELAX_TOKEN = 'media:green-lakeside-grounds.6345a50f183c0900';
 
 /** Resolve one fixed token against the manifest and resolver, or undefined on any miss (an

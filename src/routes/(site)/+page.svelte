@@ -24,13 +24,34 @@ before the photography existed, never a broken image. -->
     return dateFmt.format(new Date(iso));
   }
 
-  // The What-do-we-do band's three tiles (design-polish pass, 2026-07-07): the placeholder
-  // "photo coming" boxes are gone, replaced by the real class-instruction, spinnaker, and grounds
-  // photography home-images.ts resolves; `key` picks each tile's own slot out of `data.images`.
+  // The What-do-we-do band's three tiles. Design candidate A (the full-bleed triptych, landed on
+  // main by the wdwd-final pass, 2026-07-07): Geoff picked candidate A over the wdwd-candidates
+  // branch's editorial-feature and manifesto-rows alternatives "by a mile". `desc` is the
+  // candidate's own addition, one honest line per tile in the club voice, room the redesigned
+  // band gives this section for the first time; `key` picks each tile's own slot out of
+  // `data.images`.
   const WHAT_WE_DO = [
-    { label: 'Learn', cta: 'Courses & clinics', href: '/education/', key: 'learn' as const },
-    { label: 'Race', cta: 'Regattas & events', href: '/racing/', key: 'race' as const },
-    { label: 'Relax', cta: 'Facilities & membership', href: '/join/', key: 'relax' as const },
+    {
+      label: 'Learn',
+      cta: 'Courses & clinics',
+      href: '/education/',
+      key: 'learn' as const,
+      desc: 'Classes and clinics that take you from first tack to confident skipper.',
+    },
+    {
+      label: 'Race',
+      cta: 'Regattas & events',
+      href: '/racing/',
+      key: 'race' as const,
+      desc: 'Club racing and regattas all summer, from casual Wednesday nights to regional events.',
+    },
+    {
+      label: 'Relax',
+      cta: 'Facilities & membership',
+      href: '/join/',
+      key: 'relax' as const,
+      desc: 'Lakeside grounds and a clubhouse built for slow evenings with the club.',
+    },
   ];
 </script>
 
@@ -168,49 +189,64 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- What do we do?: restored from live (manifest item 13), sanctioned with one change. Live's
-       three icon tiles read weak in the walkthrough; the design-polish pass (2026-07-07) replaces
-       them with the real class-instruction, spinnaker, and grounds photography home-images.ts
-       resolves, closing the "photo coming" gap that was the page's loudest unfinished signal. A
-       resolver miss (never expected in production) degrades to the same silent gradient the
-       hero/fleet/facilities panels use, not a placeholder box. -->
+  <!-- What do we do? (design candidate A, the full-bleed triptych, landed on main by the
+       wdwd-final pass, 2026-07-07): the design-polish pass's three "photo coming" icon tiles
+       read correct but "squished" for the club's own three-fold promise once real photography
+       filled them (Geoff's brief) — the section carrying the page's best photography deserved a
+       highlight, not a quiet grid row. Built on the wdwd-candidates branch alongside two other
+       full candidates (an editorial feature, a manifesto-rows layout); Geoff picked this one "by
+       a mile". The triptych composes the three photos as one full-bleed band: each panel breaks
+       out to the viewport edge (the same `left: 50%; transform: translateX(-50%)` full-bleed
+       trick site.css's `.cairn-place-full` already uses), carries its own word directly on the
+       image with a scrim for contrast, and the description/link sit inside the same panel rather
+       than below it, so the composition reads as one eye-catching band, not three cards. The
+       intro sentence keeps its own reading measure above the band (re-capped from the
+       owner-round-2 fix's full-width paragraph, safe to restore here since nothing below shares
+       its right edge the way the old three-tile grid did) rather than the surrounding sections'
+       shared `max-w-measure-wide` column, and the band itself acts as its own full-bleed visual
+       band in the page's alternating rhythm, sitting between the sage News band above and the
+       sage Season band below (no explicit `bg-*` needed; a full-bleed photo band already reads
+       as a band on its own). -->
   <section class="py-xl">
     <div class="mx-auto max-w-measure-wide px-m">
       <h2 class="m-0 font-display text-step-4 font-semibold leading-tight text-base-content">What do we do?</h2>
-      <!-- Full row width, not a `ch`-capped column (the owner-round-2 fix, 2026-07-07): the prior
-           `max-w-[65ch]` cap wrapped this two-sentence intro to a measure that, purely by char-
-           count coincidence, stopped its right edge right at the three-tile grid's second tile
-           below, an arbitrary-looking seam (Geoff's live-page finding). Matching the grid's own
-           full width instead gives the paragraph's edge the same compositional line the row
-           already has, rather than a text-wrap accident; a two-sentence lede reads fine as two or
-           three wide lines, unlike a long-form paragraph the ~75ch reading-measure guideline
-           actually protects against. -->
-      <p class="mt-xs text-step-0 text-base-content">
+      <p class="wdwd-intro mt-xs text-step-0 text-base-content">
         The Alaska Sailing Club is a welcoming environment with beautiful lakeside grounds and
         plenty to do for new sailors and old salts alike. Whether you&rsquo;re here to develop
         your skills, compete on the water, or enjoy our facilities and community, the ASC offers
         something for everyone under the midnight sun.
       </p>
-      <div class="what-we-do-grid mt-m grid grid-cols-1 gap-l sm:grid-cols-3">
-        {#each WHAT_WE_DO as tile (tile.label)}
-          {@const photo = data.images[tile.key]}
-          <div class="what-we-do-tile">
-            <div class="what-we-do-figure aspect-[4/3] rounded-box" class:has-photo={!!photo}>
-              {#if photo}
-                <!-- data-crop="4/3": the design probe's deliberate-editorial-crop opt-out, the
-                     same recipe the News grid's own cards use just above. The three source photos
-                     carry three different natural ratios; this band crops all of them to one
-                     uniform tile shape on purpose. -->
-                <img src={photo.url} alt={photo.alt} class="h-full w-full rounded-box object-cover" data-crop="4/3" />
-              {/if}
-            </div>
-            <h3 class="what-we-do-label mt-xs mb-0 font-display text-step-1 leading-tight text-base-content">{tile.label}</h3>
-            <p class="mt-3xs">
-              <a href={tile.href} class="arrow-link font-semibold text-primary underline underline-offset-[3px]">{tile.cta} &rarr;</a>
-            </p>
+    </div>
+    <div class="wdwd-triptych mt-m">
+      {#each WHAT_WE_DO as tile (tile.label)}
+        {@const photo = data.images[tile.key]}
+        <div class="wdwd-panel" class:has-photo={!!photo}>
+          {#if photo}
+            <!-- data-crop opts out of the design probe's natural-ratio check: each landscape
+                 source is deliberately cropped to this tall panel shape, the same "editorial
+                 crop" recipe the News grid and the prior tile grid both use. `object-position`
+                 keys off `tile.key` since each source frames its subject at a different point
+                 (the "Learn" group huddles right of center; "Race" 's boats and spinnakers sit
+                 low in the frame, closed on by the panel's own `racing-hero-crop` derived asset;
+                 "Relax" 's grounds and docked boats sit mid-frame). -->
+            <img
+              src={photo.url}
+              alt={photo.alt}
+              class="wdwd-panel-img"
+              class:wdwd-panel-img-learn={tile.key === 'learn'}
+              class:wdwd-panel-img-race={tile.key === 'race'}
+              class:wdwd-panel-img-relax={tile.key === 'relax'}
+              data-crop="triptych"
+            />
+            <div class="wdwd-panel-scrim" aria-hidden="true"></div>
+          {/if}
+          <div class="wdwd-panel-caption">
+            <h3 class="wdwd-panel-word">{tile.label}</h3>
+            <p class="wdwd-panel-desc">{tile.desc}</p>
+            <a href={tile.href} class="wdwd-panel-link">{tile.cta} &rarr;</a>
           </div>
-        {/each}
-      </div>
+        </div>
+      {/each}
     </div>
   </section>
 
@@ -489,22 +525,134 @@ before the photography existed, never a broken image. -->
     object-position: 38% center;
   }
 
-  /* The What-do-we-do band's tiles (design-polish pass, 2026-07-07): the same silent-gradient
-     degrade the hero/fleet/facilities panels use for a resolver miss, so three real photos never
-     have a "waiting on art" moment in production. */
-  .what-we-do-figure {
-    background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
-  }
-  .what-we-do-figure.has-photo {
-    background: none;
+  /* What do we do? (design candidate A, the full-bleed triptych, landed on main by the
+     wdwd-final pass, 2026-07-07): the reading-measure cap the owner-round-2 fix removed (that
+     fix's own reasoning no longer applies here: the paragraph's right edge has nothing to line
+     up against below it now, only a full-bleed band). */
+  .wdwd-intro {
+    max-width: 60ch;
   }
 
-  /* The label reads as the tile's own caption, not a plain semibold heading (the craft pass's fix,
-     2026-07-07): a touch heavier than `font-semibold` (600) binds it visually to the tile above,
-     while `.arrow-link` right beneath keeps its own lighter weight so the pair reads as label, then
-     action, rather than two headings stacked. */
-  .what-we-do-label {
+  /* The triptych band: the same full-bleed break-out `.cairn-place-full` already uses
+     (site.css), escaping the section's own `max-w-measure-wide` column to the viewport edge.
+     Three panels side by side at the family's 900px two-column breakpoint; one column (each
+     panel already full-width) below it, so it stacks to three full-width panels with no extra
+     rule needed. */
+  .wdwd-triptych {
+    position: relative;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 56.25rem) {
+    .wdwd-triptych {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  /* Each panel: ~55vh on the stacked (mobile) tier, ~64vh on the three-up tier, both clamped
+     against a sane floor and ceiling so an unusually short or an ultra-wide-monitor viewport
+     never produces an absurd height. The same silent-gradient degrade the hero/fleet/facilities
+     panels use covers a resolver miss (no photo, no scrim, just the gradient panel; the
+     word/description/link still render, so the panel never goes empty). */
+  .wdwd-panel {
+    position: relative;
+    overflow: hidden;
+    height: clamp(20rem, 55vh, 30rem);
+    background: linear-gradient(140deg, #7ba7d9 0%, #4a7fb5 55%, #e8956b 100%);
+  }
+  .wdwd-panel.has-photo {
+    background: none;
+  }
+  @media (min-width: 56.25rem) {
+    .wdwd-panel {
+      height: clamp(26rem, 64vh, 42rem);
+    }
+  }
+  .wdwd-panel-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  /* Each source photo frames its own subject at a different point (see the markup's own
+     comment); a tall, narrow panel like this one only ever has room to crop horizontally once
+     the box's height alone drives `object-fit: cover`'s scale (the same "cover only crops the
+     smaller-ratio axis" mechanics `.facilities-photo`'s own comment works through above), so only
+     the X term below actually matters at the three-up tier; the Y term keeps the framing sane at
+     the mobile tier's shorter, wider panel. Race's own crop (`racing-hero-crop`, see
+     home-images.ts) is already trimmed to boats-and-water top to bottom, so the Y term is a
+     placeholder like the other two panels'; the X term was picked by comparing horizontal slices
+     of the crop (a bare 50% lands in the gap between the two boat clusters), landing on the
+     tight, colorful red-sail/yellow-spinnaker cluster left of center. */
+  .wdwd-panel-img-learn {
+    object-position: 58% 38%;
+  }
+  .wdwd-panel-img-race {
+    object-position: 38% 50%;
+  }
+  .wdwd-panel-img-relax {
+    object-position: 52% 55%;
+  }
+
+  /* The scrim: a bottom-anchored gradient in the club-grounds navy (`--color-flag-navy-deep`,
+     the same "brand device" the closing band uses), not a flat tint, so the photo reads clearly
+     through the panel's upper two-thirds and the caption sits on a solid-enough ground for white
+     text to clear WCAG contrast at its own lower third. */
+  .wdwd-panel-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      color-mix(in oklab, var(--color-flag-navy-deep) 94%, transparent) 0%,
+      color-mix(in oklab, var(--color-flag-navy-deep) 55%, transparent) 45%,
+      color-mix(in oklab, var(--color-flag-navy-deep) 0%, transparent) 80%
+    );
+  }
+  .wdwd-panel-caption {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    padding: var(--spacing-m) var(--spacing-m) var(--spacing-l);
+    color: white;
+  }
+  .wdwd-panel-word {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-step-4);
     font-weight: 650;
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  .wdwd-panel-desc {
+    margin: 0.4rem 0 0;
+    max-width: 30ch;
+    font-size: var(--text-step-0);
+    color: rgba(255, 255, 255, 0.92);
+  }
+  /* White, not the fireweed pop: the hero and closing-band CTAs already spend the story's "at
+     most twice a page" fireweed budget, and white already reads as a clear, high-contrast link
+     against the scrim. Padding-block for the same 24px touch-target reason `.arrow-link` carries
+     below, on its own rather than sharing that class since the color and ground differ entirely. */
+  .wdwd-panel-link {
+    display: inline-block;
+    margin-top: var(--spacing-2xs);
+    padding-block: 0.3rem;
+    font-size: var(--text-step--1);
+    font-weight: 650;
+    color: white;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .wdwd-panel-link:hover {
+    opacity: 0.85;
+  }
+  .wdwd-panel-link:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
   }
 
   /* Our fleet's own list (the fleet-treatment pass, 2026-07-07): the owner flagged the plain en
