@@ -78,68 +78,82 @@
     return items;
   }
 
-  // The pitch/reference genre split: a page named here renders everything ABOVE the given
-  // heading id as a plain photography-paced flow (the persuasive pitch a prospective member
-  // reads start to finish) and everything from that heading on as the reference material. Keyed
-  // by the pages concept's own flat slug, the same key GOVERNANCE_SUBPAGE_SLUGS uses. A page not
-  // listed here (every other long document, bylaws included) never splits and keeps the
-  // heading-count-gated panel/TOC template below unchanged. Currently education only: it also
-  // doubles as this page's marker for the long-form navigation rebuild below (the hero-round
-  // pass, 2026-07-07, after Geoff's direct review of dev found the old boxed-panel, narrowed-
-  // measure frame read as a docs app rather than an article).
-  const PITCH_SPLIT_HEADING_ID: Record<string, string> = {
-    education: 'swim-test-capsize-drill-and-life-jackets',
+  // The long-form page device: a page named here renders as a whole-document article, no boxed
+  // panels, no measure change, its own jump list plus a true gutter rail (past 1280px), and (the
+  // 2026-07-08 benchmark-alignment pass) its own document merged into the title-adjacent hero and
+  // grouped by GROUP_HEADINGS below. Keyed by the pages concept's own flat slug, the same key
+  // GOVERNANCE_SUBPAGE_SLUGS uses. A page not listed here (every other long document, bylaws
+  // included) keeps the heading-count-gated panel/TOC template below unchanged. Currently
+  // education only.
+  const LONG_FORM_PAGE_SLUGS = new Set(['education']);
+
+  // A long-form page's own group structure (the 2026-07-08 benchmark-alignment pass, axis B): a
+  // hairline-and-label divider announces the start of each named part after the first, so the
+  // page's multi-part shape reads at a glance across a long scroll rather than as one
+  // undifferentiated stack of h2 sections. Keyed by slug; a long-form page with no entry here
+  // renders with no dividers at all. A heading id not found in the document contributes no split
+  // (see splitAtHeadingIds below), so a content edit that renames or removes a group heading
+  // degrades to fewer, larger groups rather than throwing or dropping content.
+  const GROUP_HEADINGS: Record<string, { headingId: string; label: string }[]> = {
+    education: [
+      { headingId: 'how-to-register', label: 'Registration & logistics' },
+      { headingId: 'cancellation-and-refund-policy', label: 'Policies & questions' },
+    ],
   };
 
-  /** Splits rendered HTML immediately before the heading carrying `headingId`: everything before
-   *  that heading's own opening tag is `above`, that heading through the end of the document is
-   *  `below`. Falls back to putting the WHOLE document in `below` (never in `above`) when the id
-   *  is not found, so a content edit that renames or removes the split heading degrades to the
-   *  old single-flow, fully-panelized template rather than silently dropping the tail of the
-   *  page. */
-  function splitAtHeadingId(html: string, headingId: string): { above: string; below: string } {
-    const match = new RegExp(`<h[23] id="${headingId}"`).exec(html);
-    if (!match) return { above: '', below: html };
-    return { above: html.slice(0, match.index), below: html.slice(match.index) };
+  const longFormSlug = $derived(
+    data.entry.concept === 'pages' && LONG_FORM_PAGE_SLUGS.has(data.entry.slug) ? data.entry.slug : undefined,
+  );
+
+  /** Splits off the document's very first paragraph, when the document opens with one (no
+   *  heading or other block precedes it). Falls back to no split (an empty lede, the whole
+   *  document as `rest`) when the document does not open with a plain paragraph, so a future
+   *  content edit that opens with something else degrades to the plain hero (title and photo
+   *  only) rather than mis-slicing unrelated markup. Powers the title-adjacent hero's own lede
+   *  (axis A of the 2026-07-08 benchmark-alignment pass): title, lede, and photo compose as one
+   *  visual unit, matching the home page's own hero grammar, rather than floating the lede below
+   *  the whole hero row. Scoped to long-form pages only (`mergeLedeIntoHero` below), not every
+   *  `isPageHero` page, so the composition change stays inside this pass's own target rather than
+   *  reaching into donate/join/members/racing/new-member-guide, none of which this pass reviewed. */
+  function splitLede(html: string): { lede: string; rest: string } {
+    const match = /^\s*<p>[\s\S]*?<\/p>/.exec(html);
+    if (!match) return { lede: '', rest: html };
+    return { lede: match[0], rest: html.slice(match[0].length) };
   }
 
-  const pitchSplitId = $derived(
-    data.entry.concept === 'pages' ? PITCH_SPLIT_HEADING_ID[data.entry.slug] : undefined,
-  );
-  const pitchSplit = $derived(pitchSplitId ? splitAtHeadingId(data.html, pitchSplitId) : null);
-  // On a split page, only the material below the split heading is subject to the density gate
-  // and the panel/TOC treatment; on every other page `referenceHtml` is the whole document,
-  // matching the template's pre-split behavior exactly.
-  const referenceHtml = $derived(pitchSplit ? pitchSplit.below : data.html);
-  const pitchHtml = $derived(pitchSplit ? pitchSplit.above : '');
+  const mergeLedeIntoHero = $derived(isPageHero && Boolean(longFormSlug));
+  const ledeSplit = $derived(mergeLedeIntoHero ? splitLede(data.html) : null);
+  const heroLede = $derived(ledeSplit ? ledeSplit.lede : '');
+  // Every other derived value below reads `contentHtml`, never `data.html` directly, so the hero
+  // lede (once split off) does not also appear a second time further down the document.
+  const contentHtml = $derived(ledeSplit ? ledeSplit.rest : data.html);
 
   // Gated on a heading count, not a hardcoded slug list, so this generalizes to any page that
   // grows into a long reference document rather than special-casing bylaws and the new-member
   // guide by name (spec B1: "in-page TOCs on the longest pages"). Eight or more h2/h3 headings is
   // the density where a document reads as a reference to navigate rather than prose to read
-  // straight through. Computed over `referenceHtml`, not the raw document, so a split page's TOC
-  // both scopes to and covers the material it actually governs, complete rather than truncated.
+  // straight through.
   //
-  // A split page (`pitchSplitId` set) never uses this boxed-panel frame: it gets the long-form
-  // navigation below instead (a jump list plus, past 1280px, a true gutter rail), covering the
-  // WHOLE document from the top rather than gating on the reference tail alone. Every other long
-  // page that earns this frame by heading count (racing, join, bylaws, and the rest) keeps it
-  // unchanged.
-  const toc = $derived(extractToc(referenceHtml));
-  const showToc = $derived(toc.length >= 8 && !pitchSplitId);
+  // A long-form page (`longFormSlug` set) never uses this boxed-panel frame: it gets the
+  // long-form navigation below instead (a jump list plus, past 1280px, a true gutter rail),
+  // covering the WHOLE document from the top rather than gating on a reference tail. Every other
+  // long page that earns this frame by heading count (racing, join, bylaws, and the rest) keeps
+  // it unchanged.
+  const toc = $derived(extractToc(contentHtml));
+  const showToc = $derived(toc.length >= 8 && !longFormSlug);
   // The section-panel treatment (the presentation round's Strand 2) is the pages concept's own
   // template device, not a general density-gated feature: a long post or bulletin still earns the
   // sticky gutter TOC below, but its body stays plain prose, unpanelled.
   const showPanels = $derived(showToc && data.entry.concept === 'pages');
 
   // The long-form site TOC standard's own list (Geoff, 2026-07-07): h2 sections only, computed
-  // over the WHOLE document (pitch and reference alike, not just the material past the split
-  // heading), so the navigation is present and complete from the top of the article rather than
-  // appearing only once a reader reaches the reference tail. Read by both `jumpLinks` (the
-  // in-flow list, <1280px and as the printed/no-JS baseline) and `.page-toc-rail` (the fixed
+  // over the whole document (`contentHtml`, which already excludes the hero's own lede paragraph
+  // when `mergeLedeIntoHero`), so the navigation is present and complete from the top of the
+  // article rather than appearing only once a reader reaches the tail. Read by both `jumpLinks`
+  // (the in-flow list, <1280px and as the printed/no-JS baseline) and `.page-toc-rail` (the fixed
   // gutter rail, >=1280px) below; the two never render at once, CSS toggles between them by
   // breakpoint.
-  const jumpLinks = $derived(pitchSplitId ? extractToc(data.html).filter((item) => item.level === 2) : []);
+  const jumpLinks = $derived(longFormSlug ? extractToc(contentHtml).filter((item) => item.level === 2) : []);
 
   /** Splits rendered HTML at each top-level `<h2>` boundary: everything before the first h2 (the
    *  lede under the title) is the preamble, and each h2 through the content up to (but excluding)
@@ -164,14 +178,49 @@
     return `<section class="content-panel">${withLede}</section>`;
   }
 
-  // Splits `referenceHtml`, not the raw document: on a split page that is already just the
-  // material below the pitch/reference boundary, so `preambleHtml` (rare there, since the split
-  // heading is itself an h2) and `sectionsHtml` only ever cover the reference material this
-  // template panelizes.
-  const split = $derived(showToc ? splitAtH2(referenceHtml) : null);
-  const preambleHtml = $derived(split ? split.preamble : referenceHtml);
+  // Splits `contentHtml`, the whole document (minus a merged-away hero lede): `preambleHtml`
+  // (rare, since the split heading is itself an h2) and `sectionsHtml` only ever cover the
+  // material this template panelizes.
+  const split = $derived(showToc ? splitAtH2(contentHtml) : null);
+  const preambleHtml = $derived(split ? split.preamble : contentHtml);
   const sectionsHtml = $derived(
     split ? split.sections.map((section) => (showPanels ? toPanel(section) : section)).join('') : '',
+  );
+
+  /** Splits rendered HTML at each of `boundaries`' heading ids, in the order they actually occur
+   *  in the document, returning one segment per span between two boundaries (plus the leading
+   *  span before the first one). Each segment carries the label of the divider that precedes it
+   *  (`null` for the leading span, which gets no divider). A `headingId` not found in the document
+   *  is silently dropped, so its neighboring spans merge into one larger group instead of
+   *  throwing or losing content. */
+  function splitAtHeadingIds(
+    html: string,
+    boundaries: { headingId: string; label: string }[],
+  ): { html: string; label: string | null }[] {
+    const found = boundaries
+      .map((boundary) => ({ label: boundary.label, index: new RegExp(`<h[23] id="${boundary.headingId}"`).exec(html)?.index }))
+      .filter((boundary): boundary is { label: string; index: number } => boundary.index !== undefined)
+      .sort((a, b) => a.index - b.index);
+    const segments: { html: string; label: string | null }[] = [];
+    let start = 0;
+    let label: string | null = null;
+    for (const boundary of found) {
+      segments.push({ html: html.slice(start, boundary.index), label });
+      start = boundary.index;
+      label = boundary.label;
+    }
+    segments.push({ html: html.slice(start), label });
+    return segments;
+  }
+
+  // A long-form page's own preamble/body split (the material before its first h2, and everything
+  // from there on), so the jump-links nav can sit right after the intro the same way it always
+  // has, ahead of the grouped sections below.
+  const longFormSplit = $derived(longFormSlug ? splitAtH2(contentHtml) : null);
+  const longFormPreamble = $derived(longFormSplit ? longFormSplit.preamble : '');
+  const longFormBody = $derived(longFormSplit ? contentHtml.slice(longFormPreamble.length) : '');
+  const groupSegments = $derived(
+    longFormSlug ? splitAtHeadingIds(longFormBody, GROUP_HEADINGS[longFormSlug] ?? []) : [],
   );
 
   // The sticky gutter TOC's active-section highlight (Strand 2, and shared by the long-form gutter
@@ -180,12 +229,12 @@
   // whichever section is at the top of the reading area rather than merely anywhere onscreen. No
   // transition is declared on the highlight style anywhere in this file's style block below, so
   // there is nothing to gate behind prefers-reduced-motion: the swap is already instant.
-  const spyItems = $derived(pitchSplitId ? jumpLinks : toc);
+  const spyItems = $derived(longFormSlug ? jumpLinks : toc);
   let activeId: string | null = $state(null);
   const highlightedId = $derived(activeId ?? spyItems[0]?.id ?? null);
 
   $effect(() => {
-    if (!showToc && !pitchSplitId) return;
+    if (!showToc && !longFormSlug) return;
     const headings = spyItems
       .map((item) => document.getElementById(item.id))
       .filter((el): el is HTMLElement => el !== null);
@@ -225,7 +274,7 @@
 
 <CairnHead seo={data.seo} titleTemplate={(title) => `${title} — ${siteConfig.siteName}`} />
 
-<article class="prose" class:long-form-page={Boolean(pitchSplitId)}>
+<article class="prose" class:long-form-page={Boolean(longFormSlug)}>
   {#if isGovernanceSubpage}
     <a href="/governance/" class="not-prose back-link">
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -235,9 +284,12 @@
     </a>
   {/if}
   {#if isPageHero}
-    <div class="page-title-hero not-prose">
+    <div class="page-title-hero not-prose" class:hero-has-lede={mergeLedeIntoHero}>
       <div class="page-title-hero-text">
         {@render titleBlock()}
+        {#if heroLede}
+          <div class="hero-lede">{@html heroLede}</div>
+        {/if}
       </div>
       <figure class="page-title-hero-figure">
         <img src={data.heroImage?.url} alt={data.heroImage?.alt} />
@@ -254,15 +306,13 @@
     {/if}
     {@render titleBlock()}
   {/if}
-  {#if pitchSplitId}
-    {@const pitchIntro = splitAtH2(pitchHtml)}
+  {#if longFormSlug}
     <!-- The long-form page (education, 2026-07-07): a whole-document article, no boxed panels, no
          measure change. The navigation sits right after the intro, before the first section, so
-         it is present from the top rather than appearing only once a reader reaches the
-         reference tail; `.jump-links` and `.page-toc-rail` render the same list and never both
-         show at once (CSS toggles by breakpoint, `jumpLinks`'s own comment above explains the
-         shared source). -->
-    {@html pitchIntro.preamble}
+         it is present from the top rather than appearing only once a reader reaches the tail;
+         `.jump-links` and `.page-toc-rail` render the same list and never both show at once (CSS
+         toggles by breakpoint, `jumpLinks`'s own comment above explains the shared source). -->
+    {@html longFormPreamble}
     <nav class="jump-links not-prose" aria-label="Jump to section">
       <span class="jump-links-label">On this page</span>
       {@render tocList(jumpLinks, null)}
@@ -273,14 +323,17 @@
         {@render tocList(jumpLinks, highlightedId)}
       </nav>
     </aside>
-    {@html pitchIntro.sections.join('')}
-    <!-- The pitch-to-reference hand-off: a plain typographic break, not a boxed section start,
-         announcing the shift from persuasion prose to reference material (education's pitch ends
-         mid-registration; the reference material starts at "Swim Test, Capsize Drill..."). -->
-    <div class="pitch-reference-divider not-prose">
-      <span class="pitch-reference-label">Reference &amp; policies</span>
-    </div>
-    {@html referenceHtml}
+    <!-- The page's own named groups (axis B, 2026-07-08): a hairline-and-label divider announces
+         the start of each part after the first, so the multi-part shape reads at a glance across
+         a long scroll. `segment.label` is `null` for the leading group, which gets no divider. -->
+    {#each groupSegments as segment, i (i)}
+      {#if segment.label}
+        <div class="group-divider not-prose">
+          <span class="group-divider-label">{segment.label}</span>
+        </div>
+      {/if}
+      {@html segment.html}
+    {/each}
   {:else}
     {#if showToc}
       <details class="toc mobile-toc">
@@ -366,27 +419,33 @@
     color: var(--color-muted);
   }
 
-  /* The pitch-to-reference hand-off: a plain typographic break (a rule plus a small label)
-     announcing the reference section starts here, rather than the reader inferring the genre
-     shift with no signal at all (the design-polish pass's original finding, 2026-07-07; kept as
-     a plain rule rather than a colored band per Geoff's 2026-07-07 ruling that content pages
-     carry no bands at all). Sits in the plain reading column; the reference material past it
-     renders as ordinary article flow, the same measure and heading scale as everything above
-     it. */
-  .pitch-reference-divider {
+  /* A long-form page's group hand-off (axis B, 2026-07-08): a plain typographic break (a rule
+     plus a small label) announcing the next named part starts here, rather than the reader
+     inferring the shift with no signal at all (the design-polish pass's original finding,
+     2026-07-07, generalized from a single pitch/reference split to however many named groups
+     GROUP_HEADINGS declares; kept as a plain rule rather than a colored band per Geoff's
+     2026-07-07 ruling that content pages carry no bands at all). Sits in the plain reading
+     column; the next group's own material renders as ordinary article flow, the same measure and
+     heading scale as everything above it.
+
+     `--flow-space` is set well past an ordinary h2's own `--spacing-xl` (prose.css): the owl
+     selector below reads it back for this element's own `margin-top`, so a group boundary's total
+     seam (this margin, plus the divider's own height, plus the next heading's own spacing-xl) is
+     decisively bigger than the gap between two sections inside the same group. */
+  .group-divider {
+    --flow-space: var(--spacing-2xl);
     display: flex;
     align-items: center;
     gap: var(--spacing-s);
-    margin-top: var(--spacing-l);
   }
-  .pitch-reference-divider::before,
-  .pitch-reference-divider::after {
+  .group-divider::before,
+  .group-divider::after {
     content: '';
     flex: 1 1 auto;
     height: var(--border);
     background: var(--color-card-border);
   }
-  .pitch-reference-label {
+  .group-divider-label {
     flex: 0 0 auto;
     font-family: var(--font-display);
     font-size: var(--text-step--1);
@@ -591,6 +650,21 @@
     .page-title-hero-figure img {
       aspect-ratio: auto;
       height: 17.5rem;
+    }
+    /* A merged lede (axis A of the 2026-07-08 benchmark-alignment pass, `hero-has-lede`, set only
+       when `mergeLedeIntoHero`) makes the text column noticeably taller than the fixed-height photo
+       above, since the title-only case that height was tuned for no longer applies once a whole
+       paragraph sits under the title. Stretching the row lets the photo grow to match the text
+       column's own content height instead, self-balancing for whatever the lede's length actually
+       renders to rather than a second hardcoded height guess; `img` fills the now-stretched
+       `<figure>` box the same way the fixed-height version filled its own. Scoped to this one
+       variant so the title-only pages above keep their tuned compact-banner height unchanged. */
+    .page-title-hero.hero-has-lede {
+      align-items: stretch;
+    }
+    .page-title-hero.hero-has-lede .page-title-hero-figure img {
+      height: 100%;
+      aspect-ratio: auto;
     }
   }
 
