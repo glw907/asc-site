@@ -24,9 +24,11 @@ before the photography existed, never a broken image. -->
   // which read as a run-on rather than a legend. This pulls it into its own quiet row, built only
   // from whichever dot kinds the live data actually renders (an empty season, or one with no
   // social events this year, never shows a label for a category with zero rows on the page).
-  // Racing carries no entry: it is the season's plain-ink default with no dot at all, so there is
-  // nothing to key a legend mark to.
+  // Racing leads the list (round-5 addendum, 2026-07-07: Geoff's own "just to make things
+  // consistent" finding gave it a dot too, replacing its old plain-ink default), matching the
+  // intro sentence's own "Racing runs May through September" ordering.
   const SEASON_LEGEND: { kind: SeasonDotKind; label: string }[] = [
+    { kind: 'racing', label: 'Racing' },
     { kind: 'class', label: 'Classes & clinics' },
     { kind: 'social', label: 'Social' },
     { kind: 'business', label: 'Club business' },
@@ -157,24 +159,26 @@ before the photography existed, never a broken image. -->
     </div>
   </section>
 
-  <!-- The notification: a hoisted pennant (the round-3 redesign, 2026-07-07), replacing the
-       gray admonition box (fill, border, bold title prefix) Geoff's live review flagged. Unboxed,
-       on the page's own white ground. Only renders while a notification is current; an expired
-       one is correct, honest silence. See NotificationStrip.svelte's own header comment.
+  <!-- The notification: the north star's own bounded block, wearing the club's pennant (the
+       round-5 rebuild, 2026-07-07, superseding the round-3 unboxed strip Geoff's live review had
+       twice found too quiet and too hero-attached). Only renders while a notification is current;
+       an expired one is correct, honest silence. See NotificationStrip.svelte's own header
+       comment for the card itself.
 
-       Round-5 fix (2026-07-07): round-4's own top gap (`pt-l`, still present below) was not
-       enough on its own; Geoff's live read still placed the strip inside the hero. The hairline
-       rule above the strip is the Season band's own containment idiom (`SeasonList.svelte`'s
-       `.season-month-label` border, a quiet 1px `--color-card-border` line that caps a group)
-       borrowed here to cap the hero instead: it spans the same `max-w-measure-wide` column every
-       other section uses (not the hero's narrower text measure), so the strip visibly starts a
-       new slot rather than trailing the hero's own copy. `pt-xl` on the section (a step up from
-       round-4's `pt-l`) and `pt-m` between the rule and the strip give the whole band more air
-       than a caption would carry, so the rule-plus-strip reads as one deliberate beat, not a
-       one-line footnote. -->
+       Placed per the north star's own reference (docs/2026-07-06-asc-home-northstar.html in this
+       repo): a compact card directly below the hero's CTA, in the hero's own left column width,
+       not the page's full `max-w-measure-wide` measure. Reusing `.hero-grid`'s own grid
+       definition (below) rather than a second width value gets that column width for free and
+       exactly right at every viewport: with only one child, the card lands in the grid's first
+       (0.75fr) track at the 900px+ desktop tier and spans the full single column at the mobile
+       tier, pixel-identical to `.hero-text` above it either way. `pt-0` (no separate top gap, and
+       the round-4/round-5 hairline-plus-gap treatment is gone outright): the hero section's own
+       `pb-xl` is the only air between the CTA and the card now, so the two read as one continuous
+       announcement moment rather than a second, separated band; the card's own bounded fill,
+       not a gap, is what still keeps it from reading as hero copy. -->
   {#if data.notification}
-    <section class="pb-xl pt-xl">
-      <div class="mx-auto max-w-measure-wide border-t border-card-border px-m pt-m">
+    <section class="pb-xl pt-0">
+      <div class="hero-grid mx-auto grid max-w-measure-wide grid-cols-1 px-m">
         <NotificationStrip notification={data.notification} />
       </div>
     </section>
@@ -365,7 +369,7 @@ before the photography existed, never a broken image. -->
             The ASC has a well-maintained collection of club boats for sailors of all ages and
             abilities:
           </p>
-          <ul class="fleet-list text-step-0 text-base-content">
+          <ul class="fleet-list text-step--1">
             {#each FLEET as boat (boat.name)}
               <li>
                 <span class="fleet-name">{boat.name}</span>
@@ -732,31 +736,40 @@ before the photography existed, never a broken image. -->
     outline-offset: 2px;
   }
 
-  /* Our fleet's own list, redesigned as a leader-dot spec sheet (round-5 fix, 2026-07-07,
-     Geoff's own art direction): round-4's numeral column read correct but plain; a class name
-     left, a dotted leader, and a right-aligned count is the classic chandlery spec-card device,
-     the list reading as one designed sheet rather than a bare table. `.fleet-name` and
-     `.fleet-count` never shrink (`flex-shrink: 0`) so a long class name or the count never
-     crowds the leader out; `.fleet-leader` is the only flexible child (`flex: 1 1 auto`), so it
-     is the leader itself that compresses at narrow widths, never the readable text on either
-     side. `align-items: baseline` puts every row's shared baseline through the leader's own
-     empty box, which (carrying no text of its own) sits its bottom margin edge, and so its
-     dotted `border-bottom`, right at that baseline for free, no manual offset needed. The count
-     keeps `tabular-nums` (every digit the same fixed width) and steps up to `font-weight: 650` in
-     `--color-base-content` (the theme's own navy ink), reading as the sheet's one emphasized
-     column against the plain-weight names. Row spacing is unchanged from round-4
-     (`--spacing-2xs`, tight but not cramped). */
+  /* Our fleet's own list, a leader-dot spec sheet (the round-5 design, Geoff's own art
+     direction): a class name left, a dotted leader, and a right-aligned count, the classic
+     chandlery spec-card device, reading as one designed sheet rather than a bare table.
+     `.fleet-name` and `.fleet-count` never shrink (`flex-shrink: 0`) so a long class name or the
+     count never crowds the leader out; `.fleet-leader` is the only flexible child (`flex: 1 1
+     auto`), so it is the leader itself that compresses at narrow widths, never the readable text
+     on either side. `align-items: baseline` puts every row's shared baseline through the leader's
+     own empty box, which (carrying no text of its own) sits its bottom margin edge, and so its
+     dotted `border-bottom`, right at that baseline for free, no manual offset needed.
+
+     Pulled onto the Facilities list's own quieter register (round-5 addendum, 2026-07-07: Geoff's
+     "still too large/loud" and "two totally unrelated list styles" finding). Both lists now share
+     one grammar, `.amenity-list`'s own type step, ink, and row rhythm, so they read as siblings:
+     `text-step--1` (set in the markup) rather than body-scale `text-step-0`, the same mid-muted
+     `color-mix` `.amenity-list` reads (set below, replacing the markup's own `text-base-content`),
+     and the same tight `0.2rem` row `padding-block` (below, replacing the prior `--spacing-2xs`).
+     The count drops its own `font-weight: 650`/`--color-base-content` emphasis (it now just
+     inherits the list's shared ink, keeping only `tabular-nums` for column alignment), and the
+     leader's own dotted line lightens (a `color-mix` fade of the same hairline token, below), so
+     neither device reads louder than the quieter register the two lists now share. Only the
+     device itself still differs by content: fleet keeps its name/leader/count, facilities keeps
+     its checkmarks. */
   .fleet-list {
     margin: 0;
     margin-top: var(--spacing-xs);
     padding: 0;
     list-style: none;
+    color: color-mix(in oklab, var(--color-muted) 67%, var(--color-base-content) 33%);
   }
   .fleet-list li {
     display: flex;
     align-items: baseline;
     gap: var(--spacing-2xs);
-    padding-block: var(--spacing-2xs);
+    padding-block: 0.2rem;
   }
   .fleet-name {
     flex-shrink: 0;
@@ -764,13 +777,11 @@ before the photography existed, never a broken image. -->
   .fleet-leader {
     flex: 1 1 auto;
     min-width: var(--spacing-m);
-    border-bottom: 1px dotted var(--color-card-border);
+    border-bottom: 1px dotted color-mix(in oklab, var(--color-card-border) 70%, transparent);
   }
   .fleet-count {
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
-    font-weight: 650;
-    color: var(--color-base-content);
   }
 
   /* Our fleet's photo (the owner-round-2 fix, 2026-07-07): unlike Facilities, this crop needs no
@@ -829,10 +840,11 @@ before the photography existed, never a broken image. -->
     overflow: hidden;
   }
 
-  /* The Season legend's three dots (the round-3 calendar rebuild): the same three colors
-     SeasonList.svelte's own row dots use (that component's copy of this rule; the legend row
-     above uses the dot outside that component, so this page still needs its own), each spending
-     no hue on the event names themselves, marks only. */
+  /* The Season legend's four dots (the round-3 calendar rebuild; a racing dot joined the other
+     three in the round-5 addendum): the same colors SeasonList.svelte's own row dots use (that
+     component's copy of this rule; the legend row above uses the dot outside that component, so
+     this page still needs its own), each spending no hue on the event names themselves, marks
+     only. */
   .season-dot {
     width: 8px;
     height: 8px;
@@ -846,7 +858,10 @@ before the photography existed, never a broken image. -->
     background: var(--color-sage-dot);
   }
   .season-dot-business {
-    background: var(--color-muted);
+    background: var(--color-business-dot);
+  }
+  .season-dot-racing {
+    background: var(--color-racing-dot);
   }
 
   /* The Season legend row (round-4 fix, 2026-07-07): a quiet, unobtrusive key, one step down in

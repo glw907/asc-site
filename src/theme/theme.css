@@ -202,14 +202,34 @@
   --color-fireweed: oklch(53.9% 0.166 352.8);
   --color-sage: oklch(96.7% 0.006 137.8);
   --color-sage-mid: oklch(93.3% 0.012 137.8);
-  /* The Season band's social-event dot (the round-3 calendar rebuild, 2026-07-07): the same
-     sage hue as `--color-sage`/`--color-sage-mid` above, darkened and given real chroma for a mark
-     rather than a band tint, the same derivation `--color-star-gold-dot` uses off `--color-star-
-     gold`. Those two tokens are pale surface tints (0.006-0.012 chroma) that would read as
-     invisible grey at 8px; this one computes to 5.88:1 against white, comfortably past the 3:1
-     WCAG non-text minimum, and close to `--color-muted`'s own 5.52:1 so the two dots read as the
-     same quiet weight. */
-  --color-sage-dot: oklch(50% 0.05 137.8);
+  /* The Season band's four dot colors, one per real D1 category (round-5 addendum, 2026-07-07:
+     Geoff's own "just to make things consistent" finding gave `racing` a dot too, replacing its
+     old plain-ink default; a follow-up finding then flagged the grey and sage dots as "almost
+     indistinguishable" at 8px, which this whole group reworks together). `--color-star-gold-dot`
+     (above) keeps the sanctioned gold for class/clinic, the mission-first mark; the three below are
+     new or reworked to read as a real system at dot scale: distinct hues, and never so close in
+     lightness alone that only hue tells them apart (`--color-sage-dot`'s prior 0.05 chroma read as
+     a pale, near-achromatic grey next to `--color-muted`'s own similarly low 0.021 chroma, the
+     exact collision Geoff caught). Each computes past the 3:1 WCAG non-text minimum against white,
+     the same bar `--color-star-gold-dot`'s own comment holds to.
+
+     `--color-sage-dot` (social): kept its name (the club-grounds "sage" story hue family) but
+     pushed from a near-grey tint to a real, saturated green, and shifted a touch further toward
+     cyan than a literal grass green (hue 155, not the brand sage's 137.8) so it stays legible on
+     the blue-yellow axis red-green color-blindness leaves intact, clear of both the gold dot's
+     warm hue and the blue dot's own hue below. Computes to ~5.4:1 against white. */
+  --color-sage-dot: oklch(46% 0.14 155);
+  /* `--color-business-dot` (operations/governance): an explicit neutral, near-zero chroma so it
+     reads as plain grey rather than the blue-tinted `--color-muted` every quiet caption on the
+     page already uses (reusing that token here was the other half of Geoff's "almost
+     indistinguishable" finding, and a blue-tinted grey would also have sat too close to the new
+     blue racing dot below). Computes to ~5.6:1 against white. */
+  --color-business-dot: oklch(48% 0 0);
+  /* `--color-racing-dot` (racing): the season's other headline activity, now marked rather than
+     left plain-ink. A clear blue, the same family as `--color-primary`'s flag navy but lightened
+     and given more chroma so the dot itself reads as a distinct blue mark rather than echoing the
+     row's own navy link ink. Computes to ~4.9:1 against white. */
+  --color-racing-dot: oklch(53% 0.15 245);
   --color-harbor-ink: oklch(24.7% 0.029 249);
   --color-footer-ink: oklch(75.1% 0.035 252.5);
   --color-footer-ink-strong: oklch(86.2% 0.022 250.2);

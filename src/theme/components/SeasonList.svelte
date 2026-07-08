@@ -37,6 +37,7 @@ the same `routeId` the full listing's spine rows and the per-event page itself r
     class: 'Class or clinic',
     social: 'Social event',
     business: 'Club business',
+    racing: 'Racing event',
   };
 </script>
 
@@ -52,7 +53,7 @@ the same `routeId` the full listing's spine rows and the per-event page itself r
           <span class="season-dot-slot" aria-hidden="true">
             {#if event.dot}<span class="season-dot season-dot-{event.dot}"></span>{/if}
           </span>
-          <a href="/events/{event.routeId}" class="season-link text-step-0 text-base-content">
+          <a href="/events/{event.routeId}" class="season-link text-base-content">
             {#if event.dot}<span class="sr-only">{DOT_LABEL[event.dot]}: </span>{/if}{event.name}
           </a>
         </div>
@@ -153,24 +154,28 @@ the same `routeId` the full listing's spine rows and the per-event page itself r
     height: 8px;
     border-radius: 999px;
   }
-  /* The C7 gold: classes and clinics, mission-first, the club's own sanctioned meaning. Darkened
-     off the brand's literal star gold for a >=3:1 mark (see `--color-star-gold-dot`'s own
-     derivation comment in theme.css). */
+  /* The four dot colors (round-5 addendum, 2026-07-07: see their own derivation comments in
+     theme.css for why the palette was reworked as a system rather than four independent picks). */
   .season-dot-class {
     background: var(--color-star-gold-dot);
   }
-  /* Social events: a sage dot, derived from the club-grounds story's own "building sage" hue
-     (theme.css's `--color-sage-dot`) rather than the pale band-tint sage tokens, which read as
-     invisible at dot size. */
   .season-dot-social {
     background: var(--color-sage-dot);
   }
-  /* Club business (operations, governance): the same slate ink the date column and every other
-     quiet caption on the page already reads, so it never introduces a fourth hue. */
   .season-dot-business {
-    background: var(--color-muted);
+    background: var(--color-business-dot);
   }
+  .season-dot-racing {
+    background: var(--color-racing-dot);
+  }
+  /* Event names step down one notch (round-5 addendum, 2026-07-07, Geoff's own "slightly too
+     large/present" finding): `text-step-0` matched ordinary body copy, reading as more present
+     than a printed calendar's own event line should. `text-step--1` (the UI-link family, the same
+     token the Season month label and every arrow link already read) restores the calmer read
+     while keeping names clearly the row's own lead over `.season-date`'s smaller, quieter
+     `text-step--2` below. */
   .season-link {
+    font-size: var(--text-step--1);
     text-decoration: none;
   }
   .season-link:hover {

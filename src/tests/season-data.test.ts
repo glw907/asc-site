@@ -31,7 +31,7 @@ describe('buildSeasonMonths', () => {
     });
   });
 
-  it('keeps a racing event plain ink: no dot at all', () => {
+  it('marks a racing event with the blue dot', () => {
     const [may] = buildSeasonMonths(
       [row({ title: 'Icebreaker Regatta', event_type: 'racing', start_date: '2026-05-24', end_date: '2026-05-24' })],
       CURRENT_YEAR,
@@ -40,11 +40,11 @@ describe('buildSeasonMonths', () => {
       dateRange: 'May 24',
       name: 'Icebreaker Regatta',
       routeId: 'an-event',
-      dot: undefined,
+      dot: 'racing',
     });
   });
 
-  it('marks a social entry with the sage dot', () => {
+  it('marks a social entry with the green dot', () => {
     const [may] = buildSeasonMonths(
       [row({ title: 'Icebreaker Potluck', event_type: 'social', start_date: '2026-05-23', end_date: '2026-05-23' })],
       CURRENT_YEAR,
@@ -52,7 +52,7 @@ describe('buildSeasonMonths', () => {
     expect(may.events[0].dot).toBe('social');
   });
 
-  it.each(['operations', 'governance'])('marks a club-business "%s" entry with the slate dot', (eventType) => {
+  it.each(['operations', 'governance'])('marks a club-business "%s" entry with the gray dot', (eventType) => {
     const [may] = buildSeasonMonths(
       [row({ title: 'Spring Work Party', event_type: eventType, start_date: '2026-05-23', end_date: '2026-05-23' })],
       CURRENT_YEAR,
@@ -123,11 +123,13 @@ describe('buildSeasonMonths', () => {
   });
 
   it('gives an undated (TBD) event no crash and an off-season placement', () => {
+    // row()'s own default event_type ('racing') now carries the blue dot (round-5 addendum), so
+    // this fixture stays a real, mapped category rather than an artificial no-dot case.
     const months = buildSeasonMonths([row({ title: 'To be scheduled' })], CURRENT_YEAR);
     expect(months).toHaveLength(1);
     expect(months[0]).toEqual({
       label: 'Off-season',
-      events: [{ dateRange: 'Date TBD', name: 'To be scheduled', routeId: 'an-event', dot: undefined }],
+      events: [{ dateRange: 'Date TBD', name: 'To be scheduled', routeId: 'an-event', dot: 'racing' }],
     });
   });
 

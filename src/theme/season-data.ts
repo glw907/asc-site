@@ -15,30 +15,36 @@
 // with `$theme/events-data.ts`'s own row shape, even though the source column is `category`.
 //
 // Taxonomy mapping (the C7-gold recipe): `class` (the synthesized tag above) gets the gold dot,
-// since the club's own mission-first emphasis is education; `racing` stays plain ink with no dot
-// at all, since racing is the season's other headline activity and its own plain-ink default.
-// `categorize()` below keeps that original two-way split (dot/muted booleans), still read by the
-// full `/events` listing's own badge (`events-data.ts`).
+// since the club's own mission-first emphasis is education. `categorize()` below keeps its own,
+// separate two-way split (dot/muted booleans), still read by the full `/events` listing's own
+// badge (`events-data.ts`), where racing stays plain ink; that boolean shape is untouched by the
+// home band's own richer taxonomy below.
 //
 // The home Season band's calendar rebuild (round-3 design review, 2026-07-07) replaces its own
 // font-weight "muted ink" category coding with a richer per-category DOT, since a font-treatment
 // split reads as an unintentionally weaker row rather than a deliberate marker (Geoff's live
 // finding). `seasonDotKind()` below is a second, home-band-only mapping over the same real D1
 // `category` values, kept separate from `categorize()` so the full listing's own boolean taxonomy
-// is untouched: `social` gets its own sage dot and `operations`/`governance` (the club's
-// administrative categories) share a slate dot, both real category values already in the ratified
-// DDL's CHECK constraint, not an invented taxonomy.
+// is untouched: every real category value in the ratified DDL's CHECK constraint gets its own dot
+// now (round-5 addendum, 2026-07-07, Geoff's own "just to make things consistent" finding: racing
+// used to be the one category with no dot at all). `social` gets a green dot, `operations`/
+// `governance` (the club's administrative categories) share a neutral gray dot, and `racing` gets
+// its own blue dot; see each dot color's own derivation comment in theme.css for why plain
+// `--color-muted` and the original pale sage tint both had to give way to more saturated,
+// dot-specific tokens (Geoff's own follow-up finding: the grey and sage dots read "almost
+// indistinguishable" at 8px).
 import type { D1Database } from '@cloudflare/workers-types';
 
 /** The home Season band's per-category dot kind (see the header comment): `class` for the gold
- *  mission-first accent, `social` for a sage dot, `business` for a slate dot marking the club's
- *  administrative categories (`operations`, `governance`). `racing`, the season's plain-ink
- *  default, carries no dot at all. */
-export type SeasonDotKind = 'class' | 'social' | 'business';
+ *  mission-first accent, `social` for a green dot, `business` for a neutral gray dot marking the
+ *  club's administrative categories (`operations`, `governance`), and `racing` for a blue dot.
+ *  Every real D1 category now maps to one of these four. */
+export type SeasonDotKind = 'class' | 'social' | 'business' | 'racing';
 
-/** One event row in the Season listing: its date range, its name, and its dot kind (undefined for
- *  a racing event, the season's plain-ink default). Every event name renders at the same body-scale
- *  reading ink; only the dot slot carries category emphasis (the round-3 calendar rebuild). */
+/** One event row in the Season listing: its date range, its name, and its dot kind (undefined only
+ *  for a category outside the ratified taxonomy, a defensive fallback that should never trip on
+ *  real data). Every event name renders at the same body-scale reading ink; only the dot slot
+ *  carries category emphasis (the round-3 calendar rebuild). */
 export interface SeasonEvent {
   dateRange: string;
   name: string;
@@ -171,12 +177,15 @@ export function categorize(eventType: string): { dot?: boolean; muted?: boolean 
 }
 
 /** The home Season band's per-category dot (see the header comment): `class` keeps the sanctioned
- *  gold accent, `social` gets a sage dot, and `operations`/`governance` (the club's administrative
- *  categories) share a slate dot. `racing` returns undefined, the season's plain-ink default. */
+ *  gold accent, `social` gets a green dot, `operations`/`governance` (the club's administrative
+ *  categories) share a neutral gray dot, and `racing` gets a blue dot. Every real category value
+ *  the ratified DDL's CHECK constraint allows maps to a dot now; `undefined` is a defensive
+ *  fallback for a value outside that taxonomy. */
 export function seasonDotKind(eventType: string): SeasonDotKind | undefined {
   if (eventType === 'class') return 'class';
   if (eventType === 'social') return 'social';
   if (eventType === 'operations' || eventType === 'governance') return 'business';
+  if (eventType === 'racing') return 'racing';
   return undefined;
 }
 
