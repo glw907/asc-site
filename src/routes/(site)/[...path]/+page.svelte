@@ -96,8 +96,35 @@
   // degrades to fewer, larger groups rather than throwing or dropping content.
   const GROUP_HEADINGS: Record<string, { headingId: string; label: string }[]> = {
     education: [
-      { headingId: 'how-to-register', label: 'Registration & logistics' },
+      { headingId: 'how-to-register--pricing', label: 'Registration & logistics' },
       { headingId: 'cancellation-and-refund-policy', label: 'Policies & questions' },
+    ],
+  };
+
+  // The round-2 registration band (owner-ratified amendment, docs/2026-07-06-asc-phase-1-design.md:
+  // "a long-form page may use ONE tinted band around its primary action group... education's
+  // registration + CTA moment is the first"): the h2 named here, through the next h2, gets wrapped
+  // in the page's one deliberate full-bleed band (wrapSectionAsBand, below). Keyed by slug for the
+  // same reason GROUP_HEADINGS is: a future long-form page can opt in with one line, and a missing
+  // id degrades to no band rather than a broken wrap.
+  const REGISTRATION_BAND_HEADING_ID: Record<string, string> = {
+    education: 'how-to-register--pricing',
+  };
+
+  // The round-2 program-section identity fix (owner's live read, 2026-07-08: "Introduction to
+  // Dinghy Sailing seems to roll straight into Fleet Tune-Up Weekend"): each heading named here,
+  // through the next heading of the SAME OR HIGHER level, gets wrapped in `.program-section`
+  // (wrapHeadingSection, below), which gives it its own photo-led identity and a decisively bigger
+  // gap before the next one than the page's ordinary inter-heading rhythm. `level` is the wrapped
+  // heading's own level (2 or 3): Adult/Youth are h3 siblings inside "Introduction to Dinghy
+  // Sailing," so their own boundary is the next h2-or-h3; Fleet Tune-Up is itself an h2, so its
+  // boundary is the next h2 only (its own "What to Expect"/"Who Can Participate" h3s stay inside
+  // its wrap, correctly, since they are its own subsections, not siblings).
+  const PROGRAM_SECTION_HEADINGS: Record<string, { headingId: string; level: 2 | 3 }[]> = {
+    education: [
+      { headingId: 'adult--teen-track-ages-13', level: 3 },
+      { headingId: 'youth-track-ages-8-12', level: 3 },
+      { headingId: 'fleet-tune-up-weekend', level: 2 },
     ],
   };
 
@@ -219,8 +246,85 @@
   const longFormSplit = $derived(longFormSlug ? splitAtH2(contentHtml) : null);
   const longFormPreamble = $derived(longFormSplit ? longFormSplit.preamble : '');
   const longFormBody = $derived(longFormSplit ? contentHtml.slice(longFormPreamble.length) : '');
+
+  /** Wraps one heading's own section (from its heading through the index `endIndex` computes) with
+   *  `wrap`, which receives the section's own raw HTML and returns the full replacement markup
+   *  (its own wrapper element(s) around that HTML). A `headingId` not found in `html` leaves it
+   *  untouched, degrading to no wrap rather than throwing (the same missing-id tolerance
+   *  splitAtHeadingIds already carries). Shared by wrapHeadingSection (program identity,
+   *  level-aware, one wrapper) and wrapSectionAsBand (the registration band, always h2-to-h2, two
+   *  nested wrappers) below. */
+  function wrapRange(html: string, headingId: string, endIndex: (afterStart: number) => number, wrap: (section: string) => string): string {
+    const match = new RegExp(`<h[23] id="${headingId}"[^>]*>`).exec(html);
+    if (!match) return html;
+    const start = match.index;
+    const end = endIndex(start + match[0].length);
+    const before = html.slice(0, start);
+    const section = html.slice(start, end);
+    const after = html.slice(end);
+    return `${before}${wrap(section)}${after}`;
+  }
+
+  /** Finds the index of the next heading whose level is <= `level`, starting the scan at
+   *  `afterStart`, or `html.length` when none follows (the section then runs to the document's own
+   *  end). Shared end-boundary logic for wrapHeadingSection (level-gated) and wrapSectionAsBand
+   *  (always h2-to-h2, i.e. level 2). */
+  function nextHeadingAtOrAbove(html: string, afterStart: number, level: 2 | 3): number {
+    const rest = html.slice(afterStart);
+    const next = /<h([23]) id="[^"]+"[^>]*>/.exec(rest);
+    return next && Number(next[1]) <= level ? afterStart + (next.index ?? 0) : html.length;
+  }
+
+  /** Wraps one program section (Adult & Teen Track, Youth Track, Fleet Tune-Up Weekend): its own
+   *  heading through the next heading whose level is <= `level` (a same-or-higher-level heading
+   *  ends it; a deeper subheading, like Fleet Tune-Up's own h3s, stays inside), in a single
+   *  `.program-section` wrapper (its own photo-led identity and inter-section rhythm; see the
+   *  style block). */
+  function wrapHeadingSection(html: string, headingId: string, level: 2 | 3): string {
+    return wrapRange(
+      html,
+      headingId,
+      (afterStart) => nextHeadingAtOrAbove(html, afterStart, level),
+      (section) => `<div class="program-section not-prose">${section}</div>`,
+    );
+  }
+
+  /** Wraps one h2 section (from its own heading through, but excluding, the next h2) in the page's
+   *  one deliberate full-bleed band (the design doc's 2026-07-08 amendment: "a long-form page may
+   *  use ONE tinted band around its primary action group"). Two nested wrappers, matching the
+   *  site's own established full-bleed-plus-recentered-content shape (`.cairn-place-full`'s figure
+   *  role is the single-element version of the same idea; a whole SECTION needs an inner element to
+   *  hold the content measure separately from the outer element that stretches the ground):
+   *  `.registration-band` bleeds to the viewport and carries the sage tint, `.registration-band-
+   *  inner` re-centers the section's own content back to `--container-measure`, so only the ground
+   *  stretches full width, never the text or the cards (the amendment's own rule). Runs AFTER
+   *  wrapHeadingSection so the band's own h2 tag (still a plain top-level match at this point) is
+   *  found correctly regardless of the earlier program-section wraps, which all close before this
+   *  heading starts. */
+  function wrapSectionAsBand(html: string, headingId: string): string {
+    return wrapRange(
+      html,
+      headingId,
+      (afterStart) => nextHeadingAtOrAbove(html, afterStart, 2),
+      (section) => `<div class="registration-band not-prose"><div class="registration-band-inner">${section}</div></div>`,
+    );
+  }
+
+  // The full long-form body pipeline, in order: each program section wraps first (their own
+  // boundaries all close before the registration band's own heading starts, so the two never
+  // overlap), then the registration band, then the divider-group split below reads the result.
+  const longFormBodyWrapped = $derived.by(() => {
+    if (!longFormSlug) return longFormBody;
+    let html = longFormBody;
+    for (const { headingId, level } of PROGRAM_SECTION_HEADINGS[longFormSlug] ?? []) {
+      html = wrapHeadingSection(html, headingId, level);
+    }
+    const bandHeadingId = REGISTRATION_BAND_HEADING_ID[longFormSlug];
+    if (bandHeadingId) html = wrapSectionAsBand(html, bandHeadingId);
+    return html;
+  });
   const groupSegments = $derived(
-    longFormSlug ? splitAtHeadingIds(longFormBody, GROUP_HEADINGS[longFormSlug] ?? []) : [],
+    longFormSlug ? splitAtHeadingIds(longFormBodyWrapped, GROUP_HEADINGS[longFormSlug] ?? []) : [],
   );
 
   // The sticky gutter TOC's active-section highlight (Strand 2, and shared by the long-form gutter
@@ -313,10 +417,16 @@
          `.jump-links` and `.page-toc-rail` render the same list and never both show at once (CSS
          toggles by breakpoint, `jumpLinks`'s own comment above explains the shared source). -->
     {@html longFormPreamble}
-    <nav class="jump-links not-prose" aria-label="Jump to section">
-      <span class="jump-links-label">On this page</span>
-      {@render tocList(jumpLinks, null)}
-    </nav>
+    <!-- Round 2 (owner's live read, 2026-07-08): "the expanded nine-item TOC eats a viewport before
+         content" at narrow widths. A <details> collapsed by default (the same chevron-disclosure
+         gesture the boxed-panel template's own `.toc` already uses below) replaces the always-open
+         flex row; the rail past 1280px is untouched (it was never the complaint). -->
+    <details class="jump-links not-prose">
+      <summary class="jump-links-label">On this page</summary>
+      <nav aria-label="Jump to section">
+        {@render tocList(jumpLinks, null)}
+      </nav>
+    </details>
     <aside class="page-toc-rail not-prose">
       <p class="page-toc-heading">On this page</p>
       <nav aria-label="On this page">
@@ -463,30 +573,52 @@
      never widens to make room for it and the article's own measure is identical whether or not
      the rail is visible (the frame above widens `.prose` instead, which is exactly what read as
      a narrowed, docs-app-framed column on education). */
+  /* Round 2, item 2 (owner's live read: "the TOC is oversized," "the expanded nine-item TOC eats a
+     viewport before content"): a collapsed-by-default disclosure, the same chevron gesture `.toc`
+     below already uses, instead of the always-open flex row round 1 shipped. */
   .jump-links {
     --flow-space: var(--spacing-s);
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--spacing-2xs) var(--spacing-m);
     margin: var(--spacing-m) 0;
     padding: var(--spacing-s) var(--spacing-m);
     background: var(--color-base-200);
     border-radius: var(--radius-box);
   }
   .jump-links-label {
-    flex: 0 0 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2xs);
+    cursor: pointer;
     font-family: var(--font-display);
     font-size: var(--text-step--1);
     font-weight: 700;
     letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
     color: var(--color-muted);
+    list-style: none;
+  }
+  .jump-links-label::-webkit-details-marker {
+    display: none;
+  }
+  .jump-links-label::before {
+    content: '\25B8';
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  .jump-links[open] .jump-links-label::before {
+    transform: rotate(90deg);
+  }
+  .jump-links nav {
+    margin-top: var(--spacing-2xs);
   }
   .jump-links :global(ul) {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-2xs) var(--spacing-m);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .jump-links-label::before {
+      transition: none;
+    }
   }
   /* site.css's own `.site-main .prose a:not(.asc-card-link)` rule (three classes, unlayered) sets
      every prose link to the primary link color; matching that weight here (the same technique
@@ -524,12 +656,30 @@
          page already reads as. The label and link list stand on their own, the same "quiet"
          reading the in-flow `.jump-links` gets below this breakpoint. */
       padding: 0 var(--spacing-m) 0 0;
+      /* Round 2's own paint-order bug, caught only by a render (a getBoundingClientRect probe said
+         "visible and correctly positioned," the screenshot showed nothing): `.registration-band`'s
+         `transform` (needed for its own full-bleed centering trick) makes it establish a stacking
+         context, and at tied `z-index: auto`, same-context siblings paint in DOM order, not by
+         `position` value — the band sits LATER in the document than this rail, so its own solid
+         sage background silently painted over the earlier fixed-position rail. A plain z-index
+         lifts the rail out of that tie; it needs no z-index of its own on `.registration-band`
+         since z-index only matters relative to siblings sharing ITS parent stacking context, and
+         this rail already isn't one of them. */
+      z-index: 1;
     }
   }
+  /* Round 2, item 2 (owner's live read: "the TOC is oversized"): dropped from the ambient body
+     size to the quiet register (`--text-step--2`, one step below every other quiet furniture on
+     this page, e.g. `.season-date`'s own `--text-step--2`) and from full ink to `--color-muted`,
+     so the rail reads as wayfinding beside the article, never a peer of it; the active item's own
+     navy-plus-gold-underline accent (below, unchanged) is what still draws the eye when it needs
+     to. */
   :global(.site-main) .prose .page-toc-rail a {
     display: block;
-    padding: 0.25rem 0;
-    color: var(--color-base-content);
+    padding: 0.2rem 0;
+    font-size: var(--text-step--2);
+    line-height: var(--leading-snug);
+    color: var(--color-muted);
     text-decoration: none;
   }
   :global(.site-main) .prose .page-toc-rail a:hover {
@@ -586,6 +736,295 @@
     .long-form-page :global(.asc-cards) {
       width: min(calc(var(--container-measure) + var(--spacing-m)), 100vw - 3rem);
     }
+  }
+
+  /* Round 2, item 3 (owner-ratified amendment, docs/2026-07-06-asc-phase-1-design.md, 2026-07-08:
+     "a long-form page may use ONE tinted band around its primary action group... education's
+     registration + CTA moment is the first"): the same full-bleed trick site.css's own
+     `.cairn-place-full` figure role uses (`width:100vw; position:relative; left:50%;
+     transform:translateX(-50%)`), applied to `.registration-band` (the wrapper wrapSectionAsBand
+     injects around "How to Register & Pricing" through "Ready to Join?") rather than touching that
+     shared file. `.registration-band-inner` re-centers the section's own content back to the plain
+     reading measure, so only the GROUND stretches full width (the amendment's own "content never
+     exceeds the wide breakout" rule right above it, never the text or the cards). */
+  .prose :global(.registration-band) {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-base-200);
+    padding-block: var(--spacing-xl);
+  }
+  .prose :global(.registration-band-inner) {
+    max-width: var(--container-measure);
+    margin-inline: auto;
+    padding-inline: var(--spacing-m);
+  }
+  /* The wrapper adds a nesting level `.prose > * + *`'s owl selector no longer reaches (the
+     design-review-round2 pattern, `.pitch-band`'s own precedent): restated one level deeper so
+     headings/paragraphs/cards inside the band keep the SAME flow rhythm they'd carry as plain
+     `.prose` children, and the heading-tight-to-its-own-body override right after it wins back the
+     specificity tie the general restatement would otherwise cost it (prose.css's own `.prose h2 +
+     *` pattern, one level deeper). */
+  .prose :global(.registration-band-inner > * + *) {
+    margin-top: var(--flow-space);
+  }
+  .prose :global(.registration-band-inner > h2 + *),
+  .prose :global(.registration-band-inner > h3 + *) {
+    margin-top: var(--spacing-xs);
+  }
+  /* The band's own cards and table read fine directly on the sage tint with no extra treatment
+     (home's own Fleet band, a plain list on the same tint, is the precedent): the pricing table's
+     white row ground and each `.asc-card`'s own `--color-base-100` both already clear the tint. The
+     registration-path row below (Your Registration Path, item 6) is the one card grid living
+     inside the band; it drops the page's usual wide breakout while here (the band's own tint
+     already gives the row presence, so breaking out past the band's own measure would compete with
+     it rather than add to it) and restyles from a 3-up grid to a numbered stack — see the next rule
+     block for why (the owner's live read: 3 different-height boxes read as "a faceplant" and
+     crowded the rail). The `article.prose` prefix (beyond `.registration-band-inner` alone) is the
+     same defensive specificity bump the Questions-card and program-photo rules below use, to beat
+     asc-components.css's own tied specificity outright regardless of build-time source order. */
+  article.prose :global(.registration-band-inner .asc-cards) {
+    width: 100%;
+    position: static;
+    left: auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-m);
+    counter-reset: registration-path;
+  }
+  /* The numbered-path badge (owner's live read, 2026-07-08: "consider whether three slimmer
+     stacked rows... reads better" than three columns; it IS a sequence of alternative paths, so
+     rows plus a numeral read that shape at a glance). A CSS counter, not a markup change: the three
+     `:::card` entries stay exactly the semantic markup they already were, this only re-skins them.
+     Flag navy for the badge fill is the color story's own "structure" use of navy (not just links),
+     the same license the header's brand mark already spends. */
+  article.prose :global(.registration-band-inner .asc-card) {
+    counter-increment: registration-path;
+    position: relative;
+    padding-left: calc(var(--spacing-m) + 2.5rem);
+  }
+  article.prose :global(.registration-band-inner .asc-card)::before {
+    content: counter(registration-path);
+    position: absolute;
+    left: var(--spacing-m);
+    top: var(--spacing-m);
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: white;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-step-0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Item 6, the Questions close (conductor's decided direction, 2026-07-08): the single "Get in
+     touch" card widens to the full content measure instead of `asc-components.css`'s own
+     centered-narrow single-card treatment (`.asc-cards:has(> :only-child)`, tuned for a small
+     closing nudge elsewhere on the site, not this page's own full-width prose-with-inline-action
+     close). Scoped to `.long-form-page` so the site-wide single-card default is untouched
+     everywhere else; `article.prose.long-form-page` (rather than the plain `.long-form-page
+     :global(...)` prefix the breakout rule above uses) adds one more type selector specifically to
+     beat asc-components.css's own tied specificity outright, regardless of build-time source
+     order, since this rule has no in-band position to rely on for a same-file tie-break. */
+  article.prose.long-form-page :global(.asc-cards:has(> :only-child)) {
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
+  }
+
+  /* Round 2, owner note 2 (live read, 2026-07-08: "Introduction to Dinghy Sailing seems to roll
+     straight into Fleet Tune-Up Weekend"): each program section (Adult & Teen Track, Youth Track,
+     Fleet Tune-Up Weekend, wrapped server-side by wrapHeadingSection above) gets a decisively
+     bigger gap BEFORE it than the page's ordinary inter-heading rhythm, so the next program reads
+     as a fresh start on scroll alone, without needing to read the heading. The wrapper again adds a
+     nesting level the owl selector doesn't reach on its own; restated one level deeper the same way
+     the registration band's own inner rhythm is, with the same heading-tight-to-its-own-photo
+     override winning the specificity tie back. */
+  :global(.program-section) {
+    --flow-space: var(--spacing-2xl);
+  }
+  .prose :global(.program-section > * + *) {
+    margin-top: var(--flow-space);
+  }
+  .prose :global(.program-section > h2 + *),
+  .prose :global(.program-section > h3 + *) {
+    margin-top: var(--spacing-xs);
+  }
+  /* The photo-led identity (owner note 2: "photo + h2 + warm first sentence as a unit"; item 7:
+     "a consistent, slightly stronger presence"). Each of the three program photos is already close
+     to 3:2 natively (verified render-first against the actual R2 bytes, not assumed from the
+     source's own reported dimensions): a fixed 3:2 frame replaces site.css's default
+     natural-height-under-a-32rem-cap sizing, so the three read as one matched set rather than three
+     different heights, still at the page's own full content-column width (no breakout). Scoped the
+     same defensive way as the Questions-card rule above (an extra `article` type selector) to beat
+     site.css's own tied specificity outright. */
+  article.prose.long-form-page :global(.program-section figure img) {
+    aspect-ratio: 3 / 2;
+    height: auto;
+    max-height: none;
+    object-fit: cover;
+  }
+
+  /* Item 4: "A Typical Course Weekend" trades its plain table for the Season calendar's own
+     grammar (SeasonList.svelte), adapted to this page's shape: a day label (small-caps, its own
+     hairline, the Season month-label recipe) instead of a month; time in the quiet register instead
+     of a compact date; the activity itself leading, full ink, instead of an event name; and a
+     filled-vs-open dot in place of Season's four hue-coded dots, since "on the water" and
+     "classroom & rigging" is a different axis from Season's class/social/business/racing taxonomy
+     and the ratified color story's dots are that taxonomy's alone (gold "marks classes and clinics
+     only," blue is "exclusively the link affordance"). Filled vs. a hollow ring spends no new hue
+     at all, in the same muted ink as the time column; the sr-only label beside each dot (in the
+     markup) is the real channel, same as Season's own per-row sr-only text. */
+  :global(.course-schedule) {
+    --flow-space: var(--spacing-l);
+  }
+  /* Mobile-first: the fixed 4-column grid (day/time/dot/focus) needs more room than a 390px
+     viewport has (a first render caught this outright: the focus column collapsed to one word per
+     line). Below 30rem, day/time/dot share a flex row and the focus text wraps onto its own line
+     below (`flex-basis: 100%` is the standard flexbox "start a new row" trick, no grid-template-
+     areas needed); the 4-column grid only applies past that width, where there is room for it. */
+  .prose :global(.course-schedule .schedule-row) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--spacing-s);
+    row-gap: 0.3rem;
+    padding-block: var(--spacing-xs);
+    border-bottom: var(--border) solid var(--color-card-border);
+  }
+  .prose :global(.course-schedule .schedule-focus) {
+    flex: 1 1 100%;
+  }
+  @media (min-width: 30rem) {
+    .prose :global(.course-schedule .schedule-row) {
+      display: grid;
+      grid-template-columns: 6.75rem 8.5rem 0.9rem 1fr;
+    }
+  }
+  .prose :global(.course-schedule .schedule-row:first-child) {
+    padding-top: 0;
+  }
+  .prose :global(.course-schedule .schedule-row:last-child) {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .prose :global(.course-schedule .schedule-day) {
+    font-family: var(--font-display);
+    font-size: var(--text-step--1);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-base-content);
+    border-bottom: 1px solid var(--color-card-border);
+    padding-bottom: 0.2rem;
+    align-self: start;
+  }
+  .prose :global(.course-schedule .schedule-time) {
+    font-variant-numeric: tabular-nums;
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+  }
+  .prose :global(.course-schedule .schedule-dot-slot) {
+    display: inline-flex;
+    align-items: center;
+  }
+  .prose :global(.course-schedule .schedule-focus) {
+    font-size: var(--text-step-0);
+    color: var(--color-base-content);
+  }
+  .prose :global(.course-schedule .schedule-dot) {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+  }
+  .prose :global(.course-schedule .schedule-dot-water) {
+    background: var(--color-muted);
+  }
+  .prose :global(.course-schedule .schedule-dot-ashore) {
+    background: transparent;
+    border: 1.5px solid var(--color-muted);
+    width: 5px;
+    height: 5px;
+  }
+  :global(.schedule-legend) {
+    margin-top: var(--spacing-s);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2xs) var(--spacing-m);
+    font-size: var(--text-step--2);
+    color: var(--color-muted);
+  }
+  :global(.schedule-legend-item) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  :global(.schedule-legend .schedule-dot) {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+  }
+  :global(.schedule-legend .schedule-dot-water) {
+    background: var(--color-muted);
+  }
+  :global(.schedule-legend .schedule-dot-ashore) {
+    background: transparent;
+    border: 1.5px solid var(--color-muted);
+    width: 5px;
+    height: 5px;
+  }
+
+  /* Owner note 5 (live read, 2026-07-08): "What You'll Learn" reorganizes from a flat ~8-bullet
+     list into 3 honest clusters (Boat handling / Seamanship & safety / Rules of the water, derived
+     from the original items, nothing invented), each under a small-caps mini-label, reusing home's
+     own facilities-list idiom (`.amenity-list`/`.season-month-label`): quiet muted ink, a dash
+     marker, a hairline under each cluster's own label. Two columns at desktop, one at 390 (the
+     family's own 40rem two-column threshold, matching `.amenity-list`'s). */
+  :global(.learn-clusters) {
+    --flow-space: var(--spacing-m);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-m) var(--spacing-l);
+  }
+  @media (min-width: 40rem) {
+    :global(.learn-clusters) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    :global(.learn-cluster-wide) {
+      grid-column: 1 / -1;
+    }
+  }
+  :global(.learn-cluster-label) {
+    margin: 0 0 var(--spacing-2xs);
+    padding-bottom: var(--spacing-3xs);
+    border-bottom: 1px solid var(--color-card-border);
+    font-family: var(--font-display);
+    font-size: var(--text-step--1);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-base-content);
+  }
+  .prose :global(.learn-cluster ul) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: color-mix(in oklab, var(--color-muted) 67%, var(--color-base-content) 33%);
+    font-size: var(--text-step--1);
+  }
+  .prose :global(.learn-cluster li) {
+    position: relative;
+    padding-block: 0.2rem;
+    padding-left: 1em;
+  }
+  .prose :global(.learn-cluster li)::before {
+    content: '\2013';
+    position: absolute;
+    left: 0;
   }
 
   /* Strand 3 (the presentation round): the pages concept's title-adjacent hero, adapted from the
@@ -666,6 +1105,29 @@
       height: 100%;
       aspect-ratio: auto;
     }
+  }
+
+  /* Round 2, item 1 (owner: the opening "should feel more like an intro than just the first
+     paragraph of a document"): the hero lede reads at the site's own designated lede register,
+     `.prose .lead` (prose.css: "step-1, slightly recessed ink, a touch more air above"), restated
+     here since the lede is injected via `{@html}` one level inside `.hero-lede`, a plain wrapper
+     div `.prose .lead`'s own selector never reaches. Not home's own hero-lede treatment (plain
+     `text-step-0`): home's hero has no competing detail paragraph below it, education's does (the
+     intro's remaining detail moves to ordinary body prose right under the hero), so the LEDE
+     itself needs to read a step above that body prose to still feel like an opening line, not
+     merely the document's first sentence. */
+  .hero-lede :global(p) {
+    margin: 0;
+    font-size: var(--text-step-1);
+    line-height: var(--leading-snug);
+    color: color-mix(in oklab, var(--color-base-content) 86%, transparent);
+  }
+  /* The lede's own trailing action link ("See class dates →"): plain prose-link weight already
+     carries it (`.prose a`, prose.css), this only widens its tap target the family's other inline
+     arrow-links already get (`.arrow-link`, home's own convention) without pulling in that whole
+     class's unrelated underline-opacity rule. */
+  .hero-lede :global(a) {
+    padding-block: 0.2rem;
   }
 
   /* The table of contents disclosure: the same chevron-rotate gesture as the FAQ directive
