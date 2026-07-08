@@ -1,5 +1,18 @@
 # asc-site status
 
+**HANDOFF (2026-07-08 afternoon, session f6adeb65 closes): education round 2 is MERGED and
+ON DEV (9f6bd4a, all gates green) awaiting Geoff's detailed review. THE NEXT DESIGN ROUND
+RUNS IN A FRESH SESSION via the new user-scoped `design-refinement` skill (its cold trial):
+artifacts are banked in docs/design-benchmark/ (benchmark PNGs + ledger.md + decisions.md
+with dose words and the education handoff state). Geoff's education notes are the round's
+input. Do NOT re-run a heavy lens panel for the round (a re-read pair was killed as
+overweight; per the skill, the conductor's own render read carries per-round quality and
+audits run once per arc). Iterate cheap (dev server/HTML), verify real once at readiness.
+Home is PINNED as the design benchmark (Geoff: "that's our new design benchmark").
+Elsewhere: cairn 0.83.0 published (publish-actions seam; ASC announce deep-link live);
+Geoff's queue: webhook mints x3, GitHub Actions billing (blocks the legacy email deploy),
+ops-410, and now the education review.**
+
 **HOME FINALIZED (2026-07-08, later): rounds 6-8 + the felt-refinement audit closed the home
 page — the triptych group-framed (radius on the band, square seams) with subgrid caption rows
 (title/desc/link y-identical at 1280-2560, measured) carrying the club's ORIGINAL copy (Geoff-

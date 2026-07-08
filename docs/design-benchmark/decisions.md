@@ -56,6 +56,22 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   derived crops fix focal problems and push to BOTH local and production R2; original-site
   copy and image selections are the specification (typos and defects always fixed, recorded).
 
+- **Education page (round 2, 2026-07-08, commit 9f6bd4a)**: the opening is an INTRO (warm
+  lede at the lead register ending in "See class dates →", location woven in, kids-in-
+  lifejackets photo, credentials in a body paragraph below). One sage band wraps How to
+  Register & Pricing through Ready to Join (the page's single band per the amended ruling).
+  The course weekend is a designed schedule in the Season's grammar (day caps, filled/open
+  dots = on-water/classroom, legend, prose detail below). Registration path = stacked
+  numbered rows (1-2-3 counter badges), not columns. What You'll Learn = three themed
+  clusters, two columns desktop. Questions closes as a warm full-width card. TOC at step -2
+  muted (wayfinding furniture), <details> accordion on mobile. Owner facts landed: youth
+  swim/capsize policy, $500-family-for-child-only, Big Lake drive times (1h15 Anchorage /
+  ~25 Wasilla / ~45 Palmer), US Sailing certification. Dose: "fun, engaging, informative
+  web page — a program brochure done well, less designed than home."
+- **Review state at handoff**: education round 2 is on dev UNREVIEWED by the owner; a lens
+  re-read was killed mid-run (fragments found no majors: focus-on-tint correct; a mobile-TOC
+  capture was being redone). The owner reviews next; his notes are the next round's input.
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
