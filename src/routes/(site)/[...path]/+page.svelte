@@ -121,7 +121,7 @@
   // both scopes to and covers the material it actually governs, complete rather than truncated.
   //
   // A split page (`pitchSplitId` set) never uses this boxed-panel frame: it gets the long-form
-  // navigation below instead (a jump list plus, past 1200px, a true gutter rail), covering the
+  // navigation below instead (a jump list plus, past 1280px, a true gutter rail), covering the
   // WHOLE document from the top rather than gating on the reference tail alone. Every other long
   // page that earns this frame by heading count (racing, join, bylaws, and the rest) keeps it
   // unchanged.
@@ -136,8 +136,9 @@
   // over the WHOLE document (pitch and reference alike, not just the material past the split
   // heading), so the navigation is present and complete from the top of the article rather than
   // appearing only once a reader reaches the reference tail. Read by both `jumpLinks` (the
-  // in-flow list, <1200px and as the printed/no-JS baseline) and `pageTocRail` (the fixed gutter
-  // rail, >=1200px) below; the two never render at once, CSS toggles between them by breakpoint.
+  // in-flow list, <1280px and as the printed/no-JS baseline) and `.page-toc-rail` (the fixed
+  // gutter rail, >=1280px) below; the two never render at once, CSS toggles between them by
+  // breakpoint.
   const jumpLinks = $derived(pitchSplitId ? extractToc(data.html).filter((item) => item.level === 2) : []);
 
   /** Splits rendered HTML at each top-level `<h2>` boundary: everything before the first h2 (the
