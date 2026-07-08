@@ -145,9 +145,10 @@ the same `routeId` the full listing's spine rows and the per-event page itself r
   .season-dot-slot {
     display: inline-flex;
     align-items: center;
-    /* Baseline-aligned with the row (see `.season-row`'s `align-items`); nudged up a hair so the
-       dot optically centers on the event name's own x-height rather than sitting on its baseline. */
-    transform: translateY(-0.35em);
+    /* Baseline-aligned with the row (see `.season-row`'s `align-items`): the slot's baseline is
+       its bottom edge, which parks the dot's center on the event name's x-height center with no
+       nudge. A former -0.35em optical nudge, tuned against a larger title size, overshot by ~8px
+       once the titles moved to text-step--1 (measured on dev, 2026-07-08). */
   }
   .season-dot {
     width: 8px;
