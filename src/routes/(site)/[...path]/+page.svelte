@@ -96,7 +96,7 @@
   // page outside `LONG_FORM_PAGE_SLUGS` never reads this map at all.
   const LONG_FORM_HERO: Record<string, { promise: string; facts: string[] }> = {
     education: {
-      promise: 'Come learn to sail on an Alaska lake.',
+      promise: 'Come learn to sail with us.',
       facts: ['4 days', 'Adults, teens & kids 8–12', 'Big Lake', 'Summer sessions'],
     },
   };
@@ -1113,8 +1113,6 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--color-base-content);
-    border-bottom: 1px solid var(--color-card-border);
-    padding-bottom: 0.2rem;
     align-self: start;
   }
   .prose :global(.course-schedule .schedule-time) {
