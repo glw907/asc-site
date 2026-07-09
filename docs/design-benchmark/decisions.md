@@ -72,6 +72,42 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   re-read was killed mid-run (fragments found no majors: focus-on-tint correct; a mobile-TOC
   capture was being redone). The owner reviews next; his notes are the next round's input.
 
+- **Education round 3 (2026-07-09, merged to main at 0827c06)**: the round-2 page had a
+  hydration DUPLICATION bug (the band wrapper was applied before the divider-group split, the
+  split cut through the wrapper's open divs, and the browser's parse repair rendered the whole
+  Registration-through-Questions block twice; the owner's "empty green band" and "three tall
+  boxes" notes were both this one defect). Invariant now enforced by a regression test: split
+  the plain body at group boundaries FIRST, then wrap within each segment; every `{@html}`
+  segment must be balanced. Shipped in the round: the band holds ONLY How to Register & Pricing;
+  a third divider group ("Preparing for class" over Swim Test / Gear / Camping); the PROMISE
+  HERO (eyebrow = page name, h1 = "Come learn to sail on an Alaska lake." in the display italic
+  voice, support lede, full-frame 3:2 postcard photo on the wide breakout, gold-dot fact strip
+  at the breakout width); valley-first unparenthesized drive times; right-of-way under
+  Seamanship & safety (third cluster retitled Racing basics); the redundant gear pull-quote cut;
+  membership benefits as a two-column checkmark grid (the facilities device's family, full ink);
+  Questions as one full-width closing card; program-section children back on the plain prose
+  rhythm (the 2xl gap is the boundary's alone); divider labels at step 0 full ink; the
+  registration badge anchored to the card's real padding token (measured 1.4px from title
+  center). The hero was picked by the conductor from three parallel static-HTML candidates
+  (owner delegated the pick).
+- **Hero photography standard**: 3:2 native, shown full frame; boxes are designed to the photo,
+  never the photo cropped to a box (the round-2 portrait box beheaded the instructor in a 3:2
+  source). The owner shoots mostly 3:2 and supplies orientations on spec when a slot needs one.
+- **PROCESS (owner rulings, 2026-07-09, binding on every future round)**: owner notes are
+  exploratory probes, not settled directives ("an opportunity for you to change and try out");
+  expect 10-15 fast iterations per arc. Iteration is FULLY LOCAL: `npm run dev` plus the
+  `.dev-media` fallback (seed once with `node scripts/sync-media-local.mjs`); the owner reviews
+  on localhost; nothing deploys to GitHub or Cloudflare until the design is finalized.
+  Per-iteration ceremony is banned: no code-simplifier, no full gate, no e2e per tweak — the
+  simplifier and the whole gate run ONCE when the arc settles and the branch merges.
+  Turnaround target per iteration: minutes. (The design-refinement skill's dispatch-builders
+  shape failed this owner's iteration economics; its next revision needs an exploratory mode.)
+- **Engine bug found by the local machinery (filed in cairn-cms ROADMAP)**: the cairn media
+  route passes the request `Headers` as R2 `get`'s `onlyIf`; production accepts it, but
+  miniflare's dev platform proxy cannot serialize `Headers`, so every `/media` read 500s under
+  a consumer's `vite dev`. The site carries a dev-only middleware workaround
+  (vite.config.ts `devMediaFallback`) that retires when the fixed engine ships.
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
