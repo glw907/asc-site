@@ -87,6 +87,20 @@
   // education only.
   const LONG_FORM_PAGE_SLUGS = new Set(['education']);
 
+  // The presentation round's "promise hero" (round 3, pass C): a long-form page named here trades
+  // the title-adjacent hero for a whole-column composition, eyebrow, an italic display promise as
+  // the page's own h1, the document's lede, a full-width photo, and a fact strip, all read top to
+  // bottom in the plain reading column (the photo is the one element that breaks out wider; see
+  // `.promise-hero-photo` below). The eyebrow is always the page's own title, not configured here.
+  // A long-form page with no entry keeps the older title-adjacent hero (`isPageHero`) unchanged; a
+  // page outside `LONG_FORM_PAGE_SLUGS` never reads this map at all.
+  const LONG_FORM_HERO: Record<string, { promise: string; facts: string[] }> = {
+    education: {
+      promise: 'Come learn to sail on an Alaska lake.',
+      facts: ['4 days', 'Adults, teens & kids 8–12', 'Big Lake', 'Summer sessions'],
+    },
+  };
+
   // A long-form page's own group structure (the 2026-07-08 benchmark-alignment pass, axis B): a
   // hairline-and-label divider announces the start of each named part after the first, so the
   // page's multi-part shape reads at a glance across a long scroll rather than as one
@@ -112,6 +126,13 @@
     education: 'how-to-register--pricing',
   };
 
+  // Round 3's closing card (owner note 9): the h2 named here, through the end of its own group
+  // segment, gets wrapped in the page's one warm close (wrapClosingSection, below). Keyed by slug
+  // for the same reason REGISTRATION_BAND_HEADING_ID is: a missing id degrades to no wrap.
+  const CLOSING_SECTION_HEADING_ID: Record<string, string> = {
+    education: 'questions',
+  };
+
   // The round-2 program-section identity fix (owner's live read, 2026-07-08: "Introduction to
   // Dinghy Sailing seems to roll straight into Fleet Tune-Up Weekend"): each heading named here,
   // through the next heading of the SAME OR HIGHER level, gets wrapped in `.program-section`
@@ -132,6 +153,10 @@
   const longFormSlug = $derived(
     data.entry.concept === 'pages' && LONG_FORM_PAGE_SLUGS.has(data.entry.slug) ? data.entry.slug : undefined,
   );
+
+  // The promise hero (round 3, pass C): set only for a long-form page with its own LONG_FORM_HERO
+  // entry. A long-form page with no entry falls through to the older title-adjacent hero below.
+  const longFormHero = $derived(longFormSlug ? LONG_FORM_HERO[longFormSlug] : undefined);
 
   /** Splits off the document's very first paragraph, when the document opens with one (no
    *  heading or other block precedes it). Falls back to no split (an empty lede, the whole
@@ -311,11 +336,24 @@
     );
   }
 
-  /** Applies one long-form page's own wraps, program sections then the registration band, to a
-   *  single already-split group segment's own html (used by groupSegments below). wrapRange's
-   *  missing-id tolerance (its own doc comment above) makes running every wrap against every
-   *  segment safe: a heading id absent from a given segment simply no-ops there, so only the
-   *  segment that actually contains a wrap's own heading is ever changed. */
+  /** Wraps one heading's own section, from its heading through the end of `html` (the whole rest
+   *  of its group segment), in the page's one warm close (round 3, owner note 9: "card + heading +
+   *  one sentence, nothing louder"). Always runs to the segment's own end rather than the next
+   *  heading, since the Questions section is the last one in its group. */
+  function wrapClosingSection(html: string, headingId: string): string {
+    return wrapRange(
+      html,
+      headingId,
+      () => html.length,
+      (section) => `<div class="questions-close not-prose">${section}</div>`,
+    );
+  }
+
+  /** Applies one long-form page's own wraps, program sections, then the registration band, then
+   *  the closing card, to a single already-split group segment's own html (used by groupSegments
+   *  below). wrapRange's missing-id tolerance (its own doc comment above) makes running every wrap
+   *  against every segment safe: a heading id absent from a given segment simply no-ops there, so
+   *  only the segment that actually contains a wrap's own heading is ever changed. */
   function wrapLongFormSegment(html: string, slug: string): string {
     let wrapped = html;
     for (const { headingId, level } of PROGRAM_SECTION_HEADINGS[slug] ?? []) {
@@ -323,12 +361,15 @@
     }
     const bandHeadingId = REGISTRATION_BAND_HEADING_ID[slug];
     if (bandHeadingId) wrapped = wrapSectionAsBand(wrapped, bandHeadingId);
+    const closingHeadingId = CLOSING_SECTION_HEADING_ID[slug];
+    if (closingHeadingId) wrapped = wrapClosingSection(wrapped, closingHeadingId);
     return wrapped;
   }
 
   // The full long-form body pipeline, in order: split the PLAIN, unwrapped body into its named
   // groups first (splitAtHeadingIds), then wrap each group's own segment independently
-  // (wrapLongFormSegment: program sections, then the registration band). Splitting before
+  // (wrapLongFormSegment: program sections, the registration band, then the closing card).
+  // Splitting before
   // wrapping, rather than after, is what keeps every segment's own html balanced for its own
   // {@html} below: a wrap applied to the whole body before the split could straddle a group
   // boundary (the registration band's own heading is also a group boundary here) and leave one
@@ -405,7 +446,35 @@
       Governance
     </a>
   {/if}
-  {#if isPageHero}
+  {#if longFormHero}
+    <!-- The promise hero (round 3, pass C, the approved candidate): eyebrow, the display promise
+         as the page's own h1, the document's lede, a full-width photo, and a fact strip, top to
+         bottom in the plain reading column. The eyebrow is a <p>, never a heading, so the promise
+         h1 stays the document's only h1. -->
+    <div class="promise-hero not-prose">
+      <p class="promise-hero-eyebrow">{data.entry.title}</p>
+      <h1 class="promise-hero-title">{longFormHero.promise}</h1>
+      {#if heroLede}
+        <div class="promise-hero-support">{@html heroLede}</div>
+      {/if}
+      {#if data.heroImage}
+        <figure class="promise-hero-photo">
+          <img src={data.heroImage.url} alt={data.heroImage.alt} />
+        </figure>
+      {/if}
+      <!-- Each fact carries its own leading separator dot as a CSS ::before (below), rather than a
+           sibling dot element between facts: a dot that is its OWN flex item can be stranded alone
+           at the end of a wrapped row, which is exactly the "balanced rows" wrap this page's own
+           reading measure (narrower here than the standalone reference render, which carried no
+           site chrome padding) needs at ordinary desktop widths, not just 390px. No whitespace
+           between the tags below either: a flex container turns even a single collapsed space
+           between inline children into its own anonymous flex item, widening the row for no
+           visible reason. -->
+      <p class="promise-hero-facts">
+        {#each longFormHero.facts as fact (fact)}<span class="promise-hero-fact">{fact}</span>{/each}
+      </p>
+    </div>
+  {:else if isPageHero}
     <div class="page-title-hero not-prose" class:hero-has-lede={mergeLedeIntoHero}>
       <div class="page-title-hero-text">
         {@render titleBlock()}
@@ -560,8 +629,12 @@
      selector below reads it back for this element's own `margin-top`, so a group boundary's total
      seam (this margin, plus the divider's own height, plus the next heading's own spacing-xl) is
      decisively bigger than the gap between two sections inside the same group. */
+  /* Round 3, owner note 8: the divider steps up from a quiet caption to a real hand-off, a
+     decisively bigger gap before it (2xl scaled up further, rather than 2xl itself) and a label
+     that reads as page ink, not muted furniture, so the multi-part shape announces itself rather
+     than needing a close look to notice. */
   .group-divider {
-    --flow-space: var(--spacing-2xl);
+    --flow-space: calc(var(--spacing-2xl) * 1.33);
     display: flex;
     align-items: center;
     gap: var(--spacing-s);
@@ -576,11 +649,11 @@
   .group-divider-label {
     flex: 0 0 auto;
     font-family: var(--font-display);
-    font-size: var(--text-step--1);
+    font-size: var(--text-step-0);
     font-weight: 700;
     letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
-    color: var(--color-muted);
+    color: var(--color-base-content);
   }
 
   /* The long-form site TOC standard (Geoff, 2026-07-07): a compact in-flow "on this page" list
@@ -715,20 +788,23 @@
     box-shadow: 0 2px 0 var(--color-star-gold);
   }
 
-  /* The long-form page's one card grid (the Registration Path, education's only remaining card
-     use): a per-element wide breakout, the same technique site.css's own `.cairn-place-wide`
-     figure role uses, so three content-sized cards read as one row at desktop while the reading
-     measure around it stays exactly `container-measure` (rule 1 of the information-presentation
-     rebuild: "the column width never changes mid-page," with a per-element exception for a card
-     row that needs it). `min(...)` clamps the breakout to the viewport itself below the width
-     where there is no room to spare, so it never overflows a narrower viewport; the grid's own
-     `repeat(auto-fill, minmax(14rem, 1fr))` (asc-components.css) still governs how many columns
-     actually fit at whatever width this resolves to.
+  /* The long-form page's own wide-breakout device (the Registration Path card row, and, since
+     round 3, the promise hero's own photo): a per-element wide breakout, the same technique
+     site.css's own `.cairn-place-wide` figure role uses, so an element that needs more than
+     `container-measure` reads as one wide band while the reading measure around it stays exactly
+     `container-measure` (rule 1 of the information-presentation rebuild: "the column width never
+     changes mid-page," with a per-element exception for the rare element that needs it). `min(...)`
+     clamps the breakout to the viewport itself below the width where there is no room to spare, so
+     it never overflows a narrower viewport. Both elements share this one clamp rather than each
+     duplicating it, so the >=80rem rail-clamp media query right below stays a single source of
+     truth for both.
 
      Below the rail's own breakpoint (the media query just past this rule) the breakout is
      unconstrained: the gutter rail is not on screen there (`.jump-links` renders in its place),
      so there is nothing for the row to run into. */
-  .long-form-page :global(.asc-cards) {
+  .long-form-page :global(.asc-cards),
+  .long-form-page .promise-hero-photo,
+  .long-form-page .promise-hero-facts {
     width: min(var(--container-measure-wide), 100vw - 3rem);
     position: relative;
     left: 50%;
@@ -751,7 +827,9 @@
      width this resolves to, three columns where it fits, two where the narrowed measure only
      leaves room for two. */
   @media (min-width: 80rem) {
-    .long-form-page :global(.asc-cards) {
+    .long-form-page :global(.asc-cards),
+    .long-form-page .promise-hero-photo,
+    .long-form-page .promise-hero-facts {
       width: min(calc(var(--container-measure) + var(--spacing-m)), 100vw - 3rem);
     }
   }
@@ -827,7 +905,10 @@
     content: counter(registration-path);
     position: absolute;
     left: var(--spacing-m);
-    top: var(--spacing-m);
+    /* Round 3 verification fix: the card's own real padding-top token (`.asc-card`'s
+       `padding: var(--spacing-s) var(--spacing-m)`, asc-components.css), not `--spacing-m`, which
+       overshot the badge past the card's own first line of text by ~7.5px. */
+    top: var(--spacing-s);
     width: 1.75rem;
     height: 1.75rem;
     border-radius: 999px;
@@ -840,6 +921,66 @@
     align-items: center;
     justify-content: center;
   }
+  /* Round 3, owner note 6: "What Membership Includes" reuses home's own facilities checkmark
+     device (`.amenity-list`/`.amenity-item`, src/routes/(site)/+page.svelte), the family's one
+     "included" mark, rather than inventing a second one: the same two-segment-border checkmark
+     geometry (7x11px, 40deg, muted border color) and the same `1lh`-based vertical centering math.
+     What differs is the context: these are real benefits inside the band, not a quieter outro
+     list, so the ink stays full body ink with no muted mix, and the layout is a two-column grid
+     (not home's CSS multi-column) at the same 768px/desktop threshold this page's own
+     program-section photos use.
+
+     The LAYOUT MECHANISM differs from home's own recipe, not just its numbers: home's amenity
+     items are flat text with no nested inline markup, so `display: flex` on the `<li>` wraps the
+     text as a single flex item next to the `::before` checkmark. This list's items carry a
+     markdown-rendered bold lead followed by plain description text (`<strong>Use of club
+     boats</strong> after qualification: ...`), two separate inline-level children; under flex,
+     EACH becomes its own anonymous flex item, so the bold lead and the description each wrap
+     independently in their own shrunk column instead of flowing as one sentence (caught by a
+     render, not evident from the CSS alone). The hanging-indent technique this file's own
+     `.learn-cluster li` already uses just above solves it instead: `position: absolute` takes the
+     checkmark out of the text's own flow entirely, so the `<strong>` and the text after it wrap
+     together as ordinary inline content within one `padding-left`-reserved margin.
+
+     `.membership-benefits` is the plain wrapper `not-prose` div the content markdown puts around
+     the list (the `.learn-cluster`/`.course-schedule` pattern above: a class-scoped div wrapping
+     raw markdown, so the grid and marker rules below target the rendered `ul`/`li` one level
+     inside it, never the wrapper itself). `article.prose.long-form-page` is the same defensive
+     specificity bump the Questions-card and program-photo rules use, to beat asc-components.css
+     outright regardless of source order. */
+  article.prose.long-form-page :global(.membership-benefits ul) {
+    margin: 0;
+    margin-top: var(--spacing-xs);
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 var(--spacing-l);
+  }
+  @media (min-width: 48rem) {
+    article.prose.long-form-page :global(.membership-benefits ul) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  article.prose.long-form-page :global(.membership-benefits li) {
+    position: relative;
+    padding-left: 1.5rem;
+    padding-block: 0.2rem;
+    break-inside: avoid;
+    font-size: var(--text-step-0);
+  }
+  article.prose.long-form-page :global(.membership-benefits li)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: calc((1lh - 11px) / 2);
+    width: 7px;
+    height: 11px;
+    border-right: 2px solid var(--color-muted);
+    border-bottom: 2px solid var(--color-muted);
+    transform: rotate(40deg);
+  }
+
   /* Item 6, the Questions close (conductor's decided direction, 2026-07-08): the single "Get in
      touch" card widens to the full content measure instead of `asc-components.css`'s own
      centered-narrow single-card treatment (`.asc-cards:has(> :only-child)`, tuned for a small
@@ -854,19 +995,54 @@
     justify-content: stretch;
   }
 
+  /* Round 3, owner note 9: the page's own warm close (wrapClosingSection above wraps the
+     "Questions?" heading through the end of its own group segment in this card), a bordered card
+     rather than plain prose trailing off the document's end. Full width of the reading measure, no
+     breakout, matching "card + heading + one sentence, nothing louder." Two levels of restatement,
+     the same shape `.registration-band-inner` uses above: the owl selector reads back inside the
+     card's own nesting (never a direct `.prose` child, so prose.css's own owl selector doesn't
+     reach it), and the heading-tight override wins the specificity tie back for the sentence right
+     under the h2. Neither restatement sets its own `--flow-space`, so both read the ambient
+     default (tokens.css's `--flow-space: 1.35em`), the plain prose rhythm, never a section-sized
+     gap. The h2 is the card's own first child (wrapClosingSection starts its wrap at the heading),
+     so the owl selector's `* + *` never matches it; the explicit `margin-top: 0` below is the
+     card's own guarantee against Tailwind's preflight to a future style change, not corrective. */
+  .prose :global(.questions-close) {
+    width: 100%;
+    background: var(--color-base-100);
+    border: var(--border) solid var(--color-card-border);
+    border-radius: var(--radius-box);
+    padding: var(--spacing-l);
+  }
+  .prose :global(.questions-close > * + *) {
+    margin-top: var(--flow-space);
+  }
+  .prose :global(.questions-close > h2 + *) {
+    margin-top: var(--spacing-xs);
+  }
+  .prose :global(.questions-close > h2) {
+    margin-top: 0;
+  }
+
   /* Round 2, owner note 2 (live read, 2026-07-08: "Introduction to Dinghy Sailing seems to roll
      straight into Fleet Tune-Up Weekend"): each program section (Adult & Teen Track, Youth Track,
      Fleet Tune-Up Weekend, wrapped server-side by wrapHeadingSection above) gets a decisively
      bigger gap BEFORE it than the page's ordinary inter-heading rhythm, so the next program reads
-     as a fresh start on scroll alone, without needing to read the heading. The wrapper again adds a
-     nesting level the owl selector doesn't reach on its own; restated one level deeper the same way
-     the registration band's own inner rhythm is, with the same heading-tight-to-its-own-photo
-     override winning the specificity tie back. */
+     as a fresh start on scroll alone, without needing to read the heading. `--flow-space` on the
+     wrapper itself is what the PARENT's owl selector (`.prose > * + *`) reads for the section's own
+     margin-top, the boundary gap this note is about.
+
+     Round 3, owner note 8 ("large gaps between some paragraphs"): custom properties inherit, so
+     that same 2xl value was also what the CHILDREN'S owl selector below picked up, giving every
+     ordinary paragraph inside a program section a section-sized gap instead of the plain prose
+     rhythm. The fix restates prose.css's own un-overridden default (tokens.css's `--flow-space:
+     1.35em` at `:root`) as a literal on the children rule, rather than reading the custom property
+     a second time, which would keep resolving to the wrapper's own overridden value. */
   :global(.program-section) {
     --flow-space: var(--spacing-2xl);
   }
   .prose :global(.program-section > * + *) {
-    margin-top: var(--flow-space);
+    margin-top: 1.35em;
   }
   .prose :global(.program-section > h2 + *),
   .prose :global(.program-section > h3 + *) {
@@ -1043,6 +1219,95 @@
     content: '\2013';
     position: absolute;
     left: 0;
+  }
+
+  /* The promise hero (round 3, pass C, the approved candidate): a whole-column composition that
+     replaces the title-adjacent hero for a long-form page with its own LONG_FORM_HERO entry. Every
+     child nests one level inside `.promise-hero`, never a direct child of `.prose`, so prose.css's
+     own `.prose > h1` selector never reaches the promise h1 and this block owns its typography
+     outright with no specificity fight to win back. */
+  .promise-hero-eyebrow {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+  }
+  .promise-hero-title {
+    margin: var(--spacing-2xs) 0 0;
+    font-family: var(--font-display);
+    font-weight: 650;
+    font-style: italic;
+    font-size: clamp(2.4rem, 2.1rem + 1.6vw, 3.4rem);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-base-content);
+    text-wrap: balance;
+  }
+  /* max-width matches the approved candidate render: at the promise hero's own larger lede size,
+     the plain `--container-measure` column runs a touch wide for comfortable line length. */
+  .promise-hero-support :global(p) {
+    margin: 0;
+    max-width: 38rem;
+    font-size: var(--text-step-1);
+    line-height: var(--leading-snug);
+  }
+  .promise-hero-support {
+    margin-top: var(--spacing-m);
+  }
+  /* The lede's own trailing action link ("See class dates →"), always the last node in its
+     paragraph: `display: block` alone drops it to its own line below the lede text, with no markup
+     change needed. Color, underline, and the focus-visible ring already come from site.css's own
+     `.site-main .prose a` rule and prose.css's `a:focus-visible` rule (both apply to this injected
+     `{@html}` markup unscoped), so only the weight this action earns beyond a plain inline link is
+     restated here. */
+  .promise-hero-support :global(a:last-child) {
+    display: block;
+    margin-top: var(--spacing-s);
+    font-family: var(--font-display);
+    font-weight: 650;
+    font-size: var(--text-step-0);
+  }
+  .promise-hero-photo {
+    margin: var(--spacing-l) 0 0;
+  }
+  .promise-hero-photo img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: var(--radius-box);
+  }
+  .promise-hero-facts {
+    margin: var(--spacing-s) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-s);
+  }
+  .promise-hero-fact {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-s);
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+  }
+  /* The separator dot lives on the item it introduces, not as its own sibling flex item: a dot
+     glued to its own fact never strands alone on a wrapped row. */
+  .promise-hero-fact:not(:first-child)::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-star-gold-dot);
+    flex-shrink: 0;
   }
 
   /* Strand 3 (the presentation round): the pages concept's title-adjacent hero, adapted from the

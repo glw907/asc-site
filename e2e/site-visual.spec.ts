@@ -52,7 +52,9 @@ for (const width of FAMILY_WIDTHS) {
 test('education — light', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/education/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Education' })).toBeVisible();
+  // Round 3, pass C (the promise hero): the page's own title ("Education") demotes to an eyebrow
+  // above the h1, and the display promise takes the h1 role instead.
+  await expect(page.getByRole('heading', { level: 1, name: 'Come learn to sail on an Alaska lake.' })).toBeVisible();
   await expect(page).toHaveScreenshot('education-light.png', { fullPage: true });
 });
 
