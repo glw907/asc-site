@@ -138,6 +138,18 @@ describe('buildClassSchedule seasonComplete', () => {
   });
 });
 
+describe('buildClassSchedule pending', () => {
+  it('marks a season with no class rows yet as pending (the post-rollover window)', () => {
+    const s = buildClassSchedule([], TODAY, '', '2027');
+    expect(s.pending).toBe(true);
+    expect(s.season).toBe('2027');
+  });
+
+  it('is not pending once any class row exists, even a dateless one', () => {
+    expect(buildClassSchedule([row({ start_date: null, end_date: null })], TODAY, '', '2027').pending).toBe(false);
+  });
+});
+
 describe('buildClassSchedule date display', () => {
   it('formats a same-month range compactly and keeps months on a cross-month range', () => {
     expect(only(row({ start_date: '2026-06-12', end_date: '2026-06-14' })).dateDisplay).toBe('Jun 12–14');

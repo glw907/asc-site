@@ -41,6 +41,10 @@ export interface ClassSchedule {
   /** True only when every listed class has dates and they have all passed: the component's cue
    *  for the season-wrapped line. */
   seasonComplete: boolean;
+  /** True when the read succeeded but the season has no class rows yet (the window right after
+   *  a year increment, before the new schedule is entered): the component's cue for the
+   *  schedule-pending line rather than the error fallback. */
+  pending: boolean;
   /** The season the entries belong to (settings `current_season`), for display. */
   season: string | null;
 }
@@ -106,5 +110,5 @@ export function buildClassSchedule(
   const entries = rows.map((row) => deriveEntry(row, todayIso, opensIso));
   const seasonComplete =
     entries.length > 0 && rows.every((row) => row.end_date !== null && row.end_date < todayIso);
-  return { entries, seasonComplete, season };
+  return { entries, seasonComplete, pending: entries.length === 0, season };
 }

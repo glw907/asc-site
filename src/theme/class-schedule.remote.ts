@@ -5,7 +5,7 @@
 import { query, getRequestEvent } from '$app/server';
 import { buildClassSchedule, type ClassSchedule, type ScheduleClassRow } from './class-schedule-data';
 
-const EMPTY: ClassSchedule = { entries: [], seasonComplete: false, season: null };
+const EMPTY: ClassSchedule = { entries: [], seasonComplete: false, pending: false, season: null };
 
 const ROWS_QUERY = `SELECT c.id, c.name, c.start_date, c.end_date, c.capacity, c.drop_in,
     (SELECT COUNT(*) FROM class_enrollments e WHERE e.class_id = c.id) AS enrolled,

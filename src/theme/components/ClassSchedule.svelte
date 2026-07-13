@@ -28,7 +28,12 @@ the same events-page pointer the fallback carries, permanently. -->
       {/each}
     </ul>
   {:then schedule}
-    {#if schedule.entries.length === 0}
+    {#if schedule.pending}
+      <p class="cs-season-note">
+        We haven't posted the {schedule.season} class schedule yet. Classes are announced in
+        early spring, and registration opens in mid-March.
+      </p>
+    {:else if schedule.entries.length === 0}
       <p>
         Class dates, openings, and sign-up links live on the
         <a href="/events/">events page</a>.
