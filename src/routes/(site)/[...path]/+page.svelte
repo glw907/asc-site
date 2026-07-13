@@ -92,14 +92,9 @@
   // the page's own h1, the document's lede, a full-width photo, and a fact strip, all read top to
   // bottom in the plain reading column (the photo is the one element that breaks out wider; see
   // `.promise-hero-photo` below). The eyebrow is always the page's own title, not configured here.
-  // A long-form page with no entry keeps the older title-adjacent hero (`isPageHero`) unchanged; a
-  // page outside `LONG_FORM_PAGE_SLUGS` never reads this map at all.
-  const LONG_FORM_HERO: Record<string, { promise: string; facts: string[] }> = {
-    education: {
-      promise: 'Come learn to sail with us.',
-      facts: ['4 days', 'Adults, teens & kids 8–12', 'Big Lake', 'Summer sessions'],
-    },
-  };
+  // A long-form page with no entry keeps the older title-adjacent hero (`isPageHero`) unchanged. The
+  // page-template pass (Task 3) moved the promise and facts into each page's own frontmatter (the
+  // pages concept's `promise`/`facts` fields); see `longFormHero` below.
 
   // A long-form page's own group structure (the 2026-07-08 benchmark-alignment pass, axis B): a
   // hairline-and-label divider announces the start of each named part after the first, so the
@@ -154,9 +149,17 @@
     data.entry.concept === 'pages' && LONG_FORM_PAGE_SLUGS.has(data.entry.slug) ? data.entry.slug : undefined,
   );
 
-  // The promise hero (round 3, pass C): set only for a long-form page with its own LONG_FORM_HERO
-  // entry. A long-form page with no entry falls through to the older title-adjacent hero below.
-  const longFormHero = $derived(longFormSlug ? LONG_FORM_HERO[longFormSlug] : undefined);
+  // The promise hero (round 3, pass C; Task 3 moved its data into frontmatter): set only for a
+  // long-form page whose own entry sets `promise`. A long-form page with no `promise` falls
+  // through to the older title-adjacent hero below.
+  const longFormHero = $derived(
+    longFormSlug && data.entry.frontmatter.promise
+      ? {
+          promise: data.entry.frontmatter.promise as string,
+          facts: (data.entry.frontmatter.facts as string[] | undefined) ?? [],
+        }
+      : undefined,
+  );
 
   /** Splits off the document's very first paragraph, when the document opens with one (no
    *  heading or other block precedes it). Falls back to no split (an empty lede, the whole
@@ -1220,10 +1223,10 @@
   }
 
   /* The promise hero (round 3, pass C, the approved candidate): a whole-column composition that
-     replaces the title-adjacent hero for a long-form page with its own LONG_FORM_HERO entry. Every
-     child nests one level inside `.promise-hero`, never a direct child of `.prose`, so prose.css's
-     own `.prose > h1` selector never reaches the promise h1 and this block owns its typography
-     outright with no specificity fight to win back. */
+     replaces the title-adjacent hero for a long-form page with its own `promise` frontmatter.
+     Every child nests one level inside `.promise-hero`, never a direct child of `.prose`, so
+     prose.css's own `.prose > h1` selector never reaches the promise h1 and this block owns its
+     typography outright with no specificity fight to win back. */
   .promise-hero-eyebrow {
     margin: 0;
     font-family: var(--font-display);

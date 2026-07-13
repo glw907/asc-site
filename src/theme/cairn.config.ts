@@ -117,6 +117,14 @@ export const cairn = defineAdapter({
         // restoring live's own governance-subpage description). Most pages carry none; the
         // catch-all template renders it only when a page sets it.
         description: fields.textarea({ label: 'Subtitle' }),
+        // The page-template pass's promise hero (Task 3): a primary page's own short display
+        // line, rendered as the promise hero's h1 in place of the plain title. Optional; most
+        // pages carry none and keep the plain title hero.
+        promise: fields.text({ label: 'Promise line' }),
+        // The promise hero's fact strip, paired with `promise`. Reuses the open, creatable
+        // multiselect shape posts' `tags` field already uses, without `taxonomy`: no vocabulary
+        // pools across entries, each page's facts are its own short freeform list.
+        facts: fields.multiselect({ label: 'Fact strip', creatable: true }),
       }),
     }),
     // The bulletins concept: short, time-sensitive announcements with their own permalinked page

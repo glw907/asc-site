@@ -3,6 +3,12 @@ title: "Education"
 image:
   src: "media:youth-intro-class-2.091a328187aa5733"
   alt: "A sailing instructor laughing with three kids aboard a club boat, everyone in life jackets."
+promise: "Come learn to sail with us."
+facts:
+  - "4 days"
+  - "Adults, teens & kids 8–12"
+  - "Big Lake"
+  - "Summer sessions"
 ---
 
 Families welcome. Every summer we run a four-day beginner course for adults, teens, and kids, with both tracks timed together so you can learn side by side. We're on Big Lake, about 25 minutes from Wasilla, 45 from Palmer, and an hour and 15 minutes north of Anchorage. [See class dates →](/events/)
