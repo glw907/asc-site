@@ -13,12 +13,32 @@ description, and register link. -->
   import EventsListing from '$theme/components/EventsListing.svelte';
 
   let { data }: { data: PageData } = $props();
+
+  // Hardened the same way the [...path] template reads `promise`: hand-editable frontmatter, so
+  // a whitespace-only or non-string value counts as absent and the plain title h1 renders.
+  const promise = $derived.by(() => {
+    const raw = data.entry.frontmatter.promise;
+    return typeof raw === 'string' ? raw.trim() : '';
+  });
 </script>
 
 <CairnHead seo={data.seo} titleTemplate={(title) => `${title} — ${siteConfig.siteName}`} />
 
 <article class="prose">
-  <h1>{data.entry.title}</h1>
+  {#if promise}
+    <!-- The light promise hero (the page-template pass): Events is a primary-nav destination, so
+         it opens with the same eyebrow-plus-promise header the [...path] template's light variant
+         gives Contact, mirrored locally because this dedicated route never passes through that
+         template. The typography below matches `.promise-hero-eyebrow`/`.promise-hero-title`
+         there; the calendar keeps its own composition (the listing's month waypoints already
+         carry the spine's gold marks, so no prose-h2 tier rule belongs here). -->
+    <header class="events-hero not-prose">
+      <p class="events-hero-eyebrow">{data.entry.title}</p>
+      <h1 class="events-hero-title">{promise}</h1>
+    </header>
+  {:else}
+    <h1>{data.entry.title}</h1>
+  {/if}
   {@html data.html}
 </article>
 
@@ -49,6 +69,33 @@ description, and register link. -->
 </section>
 
 <style>
+  /* The light promise hero's pair of type roles, matched declaration-for-declaration to the
+     [...path] template's `.promise-hero-eyebrow`/`.promise-hero-title` so the two light variants
+     read as one device. Consolidate into a shared component if a third consumer appears. */
+  .events-hero-eyebrow {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+  }
+  .events-hero-title {
+    margin: var(--spacing-2xs) 0 0;
+    font-family: var(--font-display);
+    font-weight: 650;
+    font-style: italic;
+    font-size: clamp(2.4rem, 2.1rem + 1.6vw, 3.4rem);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-base-content);
+    text-wrap: balance;
+  }
+  .events-hero {
+    margin-bottom: var(--spacing-m);
+  }
+
   .calendar-subscribe {
     margin-top: var(--spacing-m);
     padding-top: var(--spacing-xs);

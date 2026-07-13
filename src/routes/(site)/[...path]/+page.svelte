@@ -152,15 +152,18 @@
 
   // The promise hero (round 3, pass C; Task 3 moved its data into frontmatter): set only for a
   // long-form page whose own entry sets `promise`. A long-form page with no `promise` falls
-  // through to the older title-adjacent hero below.
-  const longFormHero = $derived(
-    longFormSlug && data.entry.frontmatter.promise
-      ? {
-          promise: data.entry.frontmatter.promise as string,
-          facts: (data.entry.frontmatter.facts as string[] | undefined) ?? [],
-        }
-      : undefined,
-  );
+  // through to the older title-adjacent hero below. Frontmatter is hand-editable markdown, so
+  // both reads are hardened: a whitespace-only promise counts as absent (it would otherwise
+  // render as the page's only h1 with a blank accessible name), and facts that are not a real
+  // list (a YAML scalar) render as none rather than one chip per character.
+  const longFormHero = $derived.by(() => {
+    if (!longFormSlug) return undefined;
+    const raw = data.entry.frontmatter.promise;
+    const promise = typeof raw === 'string' ? raw.trim() : '';
+    if (!promise) return undefined;
+    const facts = data.entry.frontmatter.facts;
+    return { promise, facts: Array.isArray(facts) ? (facts as string[]) : [] };
+  });
 
   /** Splits off the document's very first paragraph, when the document opens with one (no
    *  heading or other block precedes it). Falls back to no split (an empty lede, the whole
