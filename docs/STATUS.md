@@ -1,6 +1,34 @@
 # asc-site status
 
-**ACTIVE (2026-07-12): the page template system pass, Tasks 1-6 LANDED on
+**EVENING CLOSE (2026-07-12 late, Geoff's live review round, ALL RATIFIED): after the
+template pass verified below, Geoff reviewed live (localhost tab) and the round landed, all
+on design/education-round-4, gates green throughout (check 0/0, 725 tests): (1) education
+CONTENT REORGANIZED — "Dates & Registration" dissolved into the registration band (Class
+Dates & Openings first, Class Waitlist folded in as h3, old h2 removed), Recommended
+Reading moved to the prep group, lede widened past family-first ("Everyone's welcome, solo
+sailors, couples, and whole families alike"); (2) membership benefits OWNERSHIP moved —
+Join owns the content (it already had the card grid; education's checkmark section deleted
++ one-line pointer; the two unique lines folded into Join's What It Costs; dead
+.membership-benefits CSS removed); (3) the HERO CROP SYSTEM — 2:1 (owner-picked from
+side-by-side crops) with per-photo `imageFocus` frontmatter (join "50% 30%", racing
+"50% 65%", others centered; a global up-bias failed racing and was replaced); (4) INLINE
+FIGURES on primary pages = 85% FLUSH-LEFT inset above 48rem (centered read right-shifted
+to the owner's eye despite measured symmetry — the ragged-right anchor-edge optics; ruling
+in decisions.md); (5) the TOC RAIL moved clear of the hero photo's breakout (gap keyed to
+the widest element; breakpoint 82rem); (6) TWO REAL BUGS fixed — the lede CTA styled by
+a:last-child shattered racing's mid-sentence link (now stamped lede-cta structurally), and
+the events dedicated route never received tier treatment (light hero mirrored locally).
+THE IMAGE STANDARD is codified per-template in docs/image-standard.md (consult it, never
+re-derive). Rulings: geometry probes are necessary but the owner's optical read outranks
+them; content work is main-loop (Fable-level), never dispatched.
+NEXT SESSION: the settle — merge design/education-round-4 to main, push, deploy to dev,
+final production before/after on Geoff's go (the branch is pushed for durability; GitHub
+Actions still billing-blocked, so CI/deploy workflows will not fire — deploy manually via
+wrangler if unblock hasn't happened). Then: regenerate the education-light e2e baseline on
+CI once billing clears (DOUBLY stale now: round-4 + this round), and the posts/bulletins
+composition follow-up spec (the phased half of the template-system spec).**
+
+**PRIOR (2026-07-12): the page template system pass, Tasks 1-6 LANDED on
 design/education-round-4 (spec: `docs/2026-07-12-page-template-system.md`, now marked
 implemented; plan: `docs/plans/2026-07-12-page-template-system.md`). Recovered from the
 2026-07-11 crashed brainstorm. Shipped: the shared type spine (`--text-step-1` repinned to
