@@ -224,6 +224,27 @@ const donateForm = defineComponent({
   icon: 'heart',
 });
 
+// ─── Class schedule: the live season schedule, a hydrated island (2026-07-13) ─
+// Same island shape as the forms above: build() emits only the no-JavaScript fallback (a
+// pointer to the events page, the sentence this placement replaced in education.md), and
+// ClassSchedule.svelte mounts over it with the live rows (class-schedule.remote.ts).
+const classSchedule = defineComponent({
+  name: 'class-schedule',
+  label: 'Class schedule',
+  description: 'The live class schedule: dates, lifecycle status, and signup links per class, read from the club database.',
+  use: "Show the season's classes with live registration status.",
+  insertTemplate: ':::class-schedule\n:::',
+  hydrate: true,
+  build: () =>
+    h('p', { className: ['class-schedule-fallback'] }, [
+      'Class dates, openings, and sign-up links live on the ',
+      h('a', { href: '/events/' }, ['events page']),
+      '.',
+    ]),
+  group: 'Page structure',
+  icon: 'graduation-cap',
+});
+
 export const ascRegistry = defineRegistry({
-  components: [callout, passage, cards, card, membershipworks, contactForm, donateForm],
+  components: [callout, passage, cards, card, membershipworks, contactForm, donateForm, classSchedule],
 });

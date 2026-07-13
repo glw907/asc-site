@@ -39,6 +39,23 @@ session handed off to the aksailingclub-org project.
   bottom jump fires both, observer last). Verified: jump-to-bottom, stepped scroll, and
   mid-page recovery.
 
+- Live class schedule island — NEW PROBE (Geoff's ask, mirroring the live site's table):
+  `class-schedule` directive on the education registration band, quiet grid rows (name /
+  tabular dates / status chip / action door), reading asc-club live via a remote query.
+  Full lifecycle status engine (Completed / In session / Drop-in "Just show up!" / Opens
+  <date> / Full→waitlist / Open→register / Dates TBD), pure derivation + 13 unit tests.
+  Migration 0018 (drop_in column, class_registration_opens settings key) scratch-proven and
+  applied REMOTE; the 2nd Adult Intro end_date typo (2016→2026) repaired on remote; local D1
+  rebuilt from all 18 migrations and seeded with the real events/classes/settings rows (no
+  member PII). The fireweed registration-door button RETIRED from the band (rows carry their
+  own doors; page fireweed budget back to one) — flag for Geoff's verdict. Season-wrapped
+  line ("The 2026 class season has wrapped…") is new copy, guide-conformant.
+- QUEUED (Geoff, mid-round, Fable time authorized): the unified signup experience — one
+  consistent flow and language across both doors (membership join, class signup), including
+  join+register-a-class in one pass, now that MembershipWorks is out of the loop. Needs its
+  own brainstorm/spec; the schedule's Register links point at /classes/[id]/signup, which is
+  where that flow would grow.
+
 Owed at settle (unchanged from the round-4 close, plus this round): design-probe script +
 fresh-context lens fan-out + full-width render read, simplifier over the whole arc diff, full
 gate (check / 725 tests / build), decisions.md distillation, merge to main, manual wrangler

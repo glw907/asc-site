@@ -172,11 +172,10 @@ Fleet Tune-Up Weekend is open to members who have taken an ASC *Introduction to 
 
 ### Class Dates & Openings
 
-Class dates, openings, and sign-up links live on the [events page](/events/), pulled straight from the club's own calendar and kept current. Open a class there for its dates and a link to sign up.
+:::class-schedule
+:::
 
 **Classes fill fast**, sessions typically sell out within a week of registration opening in mid-March, and some fill in days. If you're planning to take a class this summer, register as soon as registration opens.
-
-<a class="asc-cta-btn" href="/events/">See class dates &amp; openings</a>
 
 ### Pricing
 

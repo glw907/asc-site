@@ -9,6 +9,7 @@ import { ascRegistry } from './markdown/components.js';
 import { ICON_PATHS } from './markdown/icons.js';
 import ContactForm from './components/ContactForm.svelte';
 import DonateForm from './components/DonateForm.svelte';
+import ClassSchedule from './components/ClassSchedule.svelte';
 import siteYaml from './site.config.yaml?raw';
 // The ?url import resolves the compiled stylesheets to their served URLs (the hashed assets in a
 // build), so the editor's preview frame can link the same sheets the (site) layout loads. They
@@ -186,7 +187,7 @@ export const cairn = defineAdapter({
     icons: ICON_PATHS,
     // The contact and donate directives' live components (completion-pass manifest item 2),
     // mounted over their build() fallback by the root layout's hydrateIslands() call.
-    islands: { 'contact-form': ContactForm, 'donate-form': DonateForm },
+    islands: { 'contact-form': ContactForm, 'donate-form': DonateForm, 'class-schedule': ClassSchedule },
   },
   editor: {
     nav: { configPath: 'src/theme/site.config.yaml', menuName: 'primary', label: 'Navigation', maxDepth: 2 },
