@@ -11,19 +11,9 @@ facts:
   - "Summer sessions"
 ---
 
-Families welcome. Every summer we run a four-day beginner course for adults, teens, and kids, with both tracks timed together so you can learn side by side. We're on Big Lake, about 25 minutes from Wasilla, 45 from Palmer, and an hour and 15 minutes north of Anchorage. [See class dates →](/events/)
+Everyone's welcome, solo sailors, couples, and whole families alike. Every summer we run a four-day beginner course for adults, teens, and kids, with both tracks timed together so a family can learn side by side. We're on Big Lake, about 25 minutes from Wasilla, 45 from Palmer, and an hour and 15 minutes north of Anchorage. [See class dates →](/events/)
 
 The Alaska Sailing Club is an education-focused 501(c)(3). Teaching people to sail is core to our mission, not an add-on. Our volunteer instructors are US Sailing certified, with decades of combined sailing experience between them, and several race competitively at the national level. Once you've taken a beginner class, come back for the free [Fleet Tune-Up Weekend](#fleet-tune-up-weekend) each June to sharpen your skills before racing season.
-
-## Dates & Registration
-
-Want to sign up? You'll need an active ASC membership first. See [How to Register & Pricing](#how-to-register--pricing) below for how that works and what it costs.
-
-Class dates, openings, and sign-up links live on the [events page](/events/), pulled straight from the club's own calendar and kept current. Open a class there for its dates and a link to sign up.
-
-**Classes fill fast**, sessions typically sell out within a week of registration opening in mid-March, and some fill in days. If you're planning to take a class this summer, register as soon as registration opens.
-
-*If a class shows as open but registration fails, it may have already filled. [Join the waitlist](#class-waitlist) and we'll contact you when a spot opens.*
 
 ## Introduction to Dinghy Sailing
 
@@ -155,10 +145,6 @@ The overall youth class schedule is similar to the agenda for the adult class, w
 - More frequent and shorter practice sessions
 - Time for unstructured play
 
-### Recommended Reading
-
-Before taking this class, we recommend reading *Learning to Sail: The Annapolis Sailing School Guide for All Ages*. This reading exercise isn't a hard requirement, but it'll give you some theoretical grounding for many of the hands-on activities in the class. You can often pick up a local copy at [Title Wave Books](http://www.wavebooks.com/), and it's also [available to order from Amazon](https://www.amazon.com/Learning-Sail-Annapolis-Sailing-School/dp/0070240140).
-
 ## Fleet Tune-Up Weekend
 
 :::figure
@@ -188,7 +174,13 @@ Fleet Tune-Up Weekend is open to members who meet one of the following:
 
 ## How to Register & Pricing
 
-**ASC membership is required to take classes.** Here's what you need to know about pricing, how to join, and how to register for a class.
+**ASC membership is required to take classes.** Here's what you need to know about class dates, pricing, how to join, and how to register for a class.
+
+### Class Dates & Openings
+
+Class dates, openings, and sign-up links live on the [events page](/events/), pulled straight from the club's own calendar and kept current. Open a class there for its dates and a link to sign up.
+
+**Classes fill fast**, sessions typically sell out within a week of registration opening in mid-March, and some fill in days. If you're planning to take a class this summer, register as soon as registration opens.
 
 ### Pricing
 
@@ -238,6 +230,12 @@ Ready to register! Check the class schedule on our [events page](/events/) and s
 :::
 ::::
 
+### Class Waitlist
+
+Our Learn to Sail classes fill up quickly! If a class session is full, join the waitlist. The Program Committee will contact you when a spot opens up. Cancellations are common in the weeks before class. Waitlisted students frequently get in.
+
+Find your class on the [events page](/events/) and open its listing. A full class shows a "Join the waitlist" option in place of Sign Up, right on the same page, no separate form. If a class shows as open but registration fails, it may have already filled, so join the waitlist.
+
 ### Ready to Join?
 
 [Join the club](/join/) — membership is active immediately upon payment.
@@ -249,6 +247,10 @@ Dinghy sailing doesn't require extreme fitness, but you need to be able to pass 
 Participants in ASC classes must wear a life jacket on the docks or a boat. We take our life jacket rules very seriously, and we will ask participants who don't comply to leave the class.
 
 Kids take the swim test and capsize drill too, and they handle it themselves: our young sailors right their own boats, in dinghies sized to fit them (an Optimist, or a Laser rigged with a smaller sail). For sailors 12 and under, life jackets stay on at all times, including during the swim test.
+
+## Recommended Reading
+
+Before taking the intro class, we recommend reading *Learning to Sail: The Annapolis Sailing School Guide for All Ages*. This reading exercise isn't a hard requirement, but it'll give you some theoretical grounding for many of the hands-on activities in the class. You can often pick up a local copy at [Title Wave Books](http://www.wavebooks.com/), and it's also [available to order from Amazon](https://www.amazon.com/Learning-Sail-Annapolis-Sailing-School/dp/0070240140).
 
 ## Recommended Gear
 
@@ -293,12 +295,6 @@ You can cancel a class up to two weeks before its first day for a refund of your
 If you cancel a class within the two-week window, you can opt to apply your class payment or voucher to a course the following year.
 
 If you need to cancel, please give us as much notice as possible. Courses at the ASC typically have a long waiting list, and we want to provide potential attendees with as much notice about openings as possible.
-
-## Class Waitlist
-
-Our Learn to Sail classes fill up quickly! If a class session is full, join the waitlist below. The Program Committee will contact you when a spot opens up. Cancellations are common in the weeks before class. Waitlisted students frequently get in.
-
-Find your class on the [events page](/events/) and open its listing. A full class shows a "Join the waitlist" option in place of Sign Up, right on the same page, no separate form.
 
 ## Questions?
 

@@ -762,11 +762,16 @@
   .page-toc-rail {
     display: none;
   }
-  /* 80rem (1280px), not the ~1200px a plain reading column would need: the rail sits OUTSIDE
-     `.prose`, so the breakpoint has to clear the reading column's own half-width plus its gutter
-     plus the rail's own width with room to spare, not just the column alone. Verified empirically
-     (computed `getBoundingClientRect`) to clear the article with a comfortable margin at 1440. */
-  @media (min-width: 80rem) {
+  /* 82rem, not the ~1200px a plain reading column would need: the rail sits OUTSIDE `.prose`,
+     so the breakpoint has to clear the reading column's own half-width plus its gutter plus the
+     rail's own width with room to spare, not just the column alone. The gutter itself keys off
+     the page's WIDEST long-form element, not the text column: the promise-hero photo and the
+     card/fact breakouts run wider than the text (the `width: min(...)` family above), and a rail
+     offset tuned to the text edge left the rail 14px from the photo (owner-flagged, 2026-07-12).
+     The extra `--spacing-l` restores a comfortable gap to the breakout edge; 82rem keeps the
+     low-end fit that 80rem had before the shift. Verified empirically (computed
+     `getBoundingClientRect` at 1312/1440/2560) against the photo edge and the viewport. */
+  @media (min-width: 82rem) {
     .jump-links {
       display: none;
     }
@@ -774,7 +779,7 @@
       display: block;
       position: fixed;
       top: var(--header-clearance);
-      left: calc(50% + (var(--container-measure) / 2) + var(--spacing-m));
+      left: calc(50% + (var(--container-measure) / 2) + var(--spacing-m) + var(--spacing-l));
       width: 14rem;
       max-height: calc(100vh - var(--header-clearance) - var(--spacing-l));
       overflow-y: auto;
