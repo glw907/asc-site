@@ -12,12 +12,19 @@ variant, or plain title hero per page) plus the gold waypoint rule on every prim
 h2s, and promise lines for all six primary pages (Education, Racing, Events, Join, Members,
 Contact). `docs/design-benchmark/education-round-4-arc.md` is distilled into
 `decisions.md` and removed. Gate at Task 6: check 0/0 (782 files), 725 tests exit 0, build
-green. **NEXT ACTION = Task 7**, the orchestrator-run visual verification fan-out (design-
-probe captures at 390/1440 plus 320/2560 spot-checks on home and education, fresh-context
-visual-verifier reads against the pinned home benchmark and education's pre-pass render,
-the hierarchy and light-variant checks) and Geoff's before/after at the deploy gate; nothing
-deploys from this pass without it. If this session dies mid-pass: the plan file is the
-resume point and per-task commits carry state.**
+green. **TASK 7 RAN (same session): four fresh-context visual verifiers + an Opus svelte
+review over pre/post captures (scratchpad reference-pre banked before T1). Verdicts:
+education PASS (all three expected deltas, zero hero drift from the frontmatter migration);
+home COSMETIC (news-card headings share step-1 and shrank; full titles now fit where they
+ellipsized — judged an improvement, in Geoff's package); hierarchy PASS (one cosmetic carry:
+education's standfirst reads near body size — left for Geoff's live education review, a
+taste call); tier variants PASS after the conductor's fix (686060c): /events/ is a DEDICATED
+route the [...path] tier gate never reaches, so it now mirrors the light promise hero
+locally (a dedicated-route primary page mirrors the light hero; consolidate to a shared
+component on a third consumer). Svelte review: no blockers; both hardening fixes applied
+(trimmed promise, Array.isArray facts). NEXT ACTION = Geoff's before/after at the deploy
+gate — nothing from this pass deploys or merges without his look; then merge to main + the
+follow-up posts/bulletins composition spec.**
 
 **PRIOR HANDOFF (2026-07-09, education round 3 closes; NEXT SESSION = the design-loop brainstorm):
 education round 3 is MERGED TO MAIN and LIVE ON DEV (0827c06 + machinery at ed8c317). The

@@ -130,6 +130,16 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   `facts`) and degrades to a light variant (no photo slot) when a page has no hero photo.
   Bands stay home-only, unaffected.
 
+- **Dedicated-route primary pages mirror the light hero locally (verification round,
+  2026-07-12)**: `/events/` never passes through `[...path]`, so the tier gate cannot reach
+  it; the route now renders the eyebrow-plus-promise light variant itself, matched
+  declaration-for-declaration to the template's, and keeps the calendar's own composition
+  (its month waypoints already carry the spine's gold marks, so no prose-h2 tier rule
+  there). Consolidate into a shared component when a third consumer appears. Two cosmetic
+  carries from the verifier fan-out await the owner's read: home's news-card headings
+  shrank with `--text-step-1` (full titles now fit where they ellipsized), and education's
+  standfirst sits near body size (distinct from body by ink recession and position only).
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
