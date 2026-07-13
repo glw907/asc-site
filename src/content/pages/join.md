@@ -46,9 +46,11 @@ Full seasonal access to club grounds, including the clubhouse, sauna, campfire, 
 
 **What's included in dues:** Access to club grounds, tent camping, club boat use (after qualification), regatta participation, member directory, and Discord community.
 
+Your $250 individual membership pays for itself in 2-3 uses of club boats (equivalent to commercial rentals at other facilities), and your dues support a 501(c)(3) nonprofit dedicated to making sailing accessible.
+
 ## Taking a Sailing Class?
 
-**ASC membership is required to take classes.** If you're joining specifically to take a beginner course, here's what to know: new individual memberships include one class credit ($100 value), and family memberships include two credits ($200 value). Your first class is effectively included in the price of joining. Credits never expire, even if your membership lapses.
+**ASC membership is required to take classes.** If you're joining specifically to take a beginner course, here's what to know: new individual memberships include one class credit ($100 value), and family memberships include two credits ($200 value). Your first class is effectively included in the price of joining. Credits never expire, even if your membership lapses. Many members discover us through classes and stay for the boats, the racing, and the community.
 
 Before you apply, check the [Education](/education/) page to see if there are open spots. Classes are popular and often fill within a week of registration opening, if a class shows as available, don't wait. Apply and pay right away: your membership is active immediately, so you can register for class the same day. Your welcome email will have everything you need to apply your credit.
 

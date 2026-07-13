@@ -33,7 +33,7 @@ Our four-day beginner course covers everything from basic boat handling to racin
 ![Sailing instructor celebrating with arms raised alongside a group of youth students on a Buccaneer at the dock](media:youth-intro-class-1.9c08687cac54de80)
 :::
 
-A kid-friendly version of our intro course, with more hands-on time, on-water games, and shorter practice sessions designed for younger learners. Parents are welcome to take the adult class simultaneously or enjoy time on our grounds.
+A kid-friendly version of our intro course, designed for younger learners. Parents are welcome to take the adult class simultaneously or enjoy time on our grounds.
 
 We require a parent on-premises during youth classes. Since there's no standalone youth membership, a child registers under the $500 Family membership, the only tier that covers kids (see [Pricing](#pricing) below).
 
@@ -194,19 +194,7 @@ When you join as a new member, your membership includes credit for your first cl
 
 **Already planning to bring family?** A family membership ($500) includes two class credits, perfect for a parent and teen taking the adult track, or a parent taking the adult class while their child takes the youth class.
 
-### What Membership Includes (Beyond Classes)
-
-<div class="membership-benefits not-prose">
-
-- **Use of club boats** after qualification: included in your beginner class
-- **Participation in regattas and races** throughout the summer season
-- **Tent camping** at our beautiful Big Lake property: unlimited weekend visits
-- **Member directory and Discord community:** connect with 100+ sailors
-- **Support a 501(c)(3) nonprofit** dedicated to making sailing accessible
-
-</div>
-
-Many members discover us through classes and stay for the boats, the racing, and the community. Your $250 individual membership pays for itself in 2-3 uses of club boats (equivalent to commercial rentals at other facilities).
+Membership includes a lot more than classes: club boats after qualification, racing, tent camping, and the club community. The [Join page](/join/#what-you-get-with-membership) has the full list.
 
 ### Your Registration Path
 

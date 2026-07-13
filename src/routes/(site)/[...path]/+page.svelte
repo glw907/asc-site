@@ -962,66 +962,6 @@
     align-items: center;
     justify-content: center;
   }
-  /* Round 3, owner note 6: "What Membership Includes" reuses home's own facilities checkmark
-     device (`.amenity-list`/`.amenity-item`, src/routes/(site)/+page.svelte), the family's one
-     "included" mark, rather than inventing a second one: the same two-segment-border checkmark
-     geometry (7x11px, 40deg, muted border color) and the same `1lh`-based vertical centering math.
-     What differs is the context: these are real benefits inside the band, not a quieter outro
-     list, so the ink stays full body ink with no muted mix, and the layout is a two-column grid
-     (not home's CSS multi-column) at the same 768px/desktop threshold this page's own
-     program-section photos use.
-
-     The LAYOUT MECHANISM differs from home's own recipe, not just its numbers: home's amenity
-     items are flat text with no nested inline markup, so `display: flex` on the `<li>` wraps the
-     text as a single flex item next to the `::before` checkmark. This list's items carry a
-     markdown-rendered bold lead followed by plain description text (`<strong>Use of club
-     boats</strong> after qualification: ...`), two separate inline-level children; under flex,
-     EACH becomes its own anonymous flex item, so the bold lead and the description each wrap
-     independently in their own shrunk column instead of flowing as one sentence (caught by a
-     render, not evident from the CSS alone). The hanging-indent technique this file's own
-     `.learn-cluster li` already uses just above solves it instead: `position: absolute` takes the
-     checkmark out of the text's own flow entirely, so the `<strong>` and the text after it wrap
-     together as ordinary inline content within one `padding-left`-reserved margin.
-
-     `.membership-benefits` is the plain wrapper `not-prose` div the content markdown puts around
-     the list (the `.learn-cluster`/`.course-schedule` pattern above: a class-scoped div wrapping
-     raw markdown, so the grid and marker rules below target the rendered `ul`/`li` one level
-     inside it, never the wrapper itself). `article.prose.long-form-page` is the same defensive
-     specificity bump the Questions-card and program-photo rules use, to beat asc-components.css
-     outright regardless of source order. */
-  article.prose.long-form-page :global(.membership-benefits ul) {
-    margin: 0;
-    margin-top: var(--spacing-xs);
-    padding: 0;
-    list-style: none;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0 var(--spacing-l);
-  }
-  @media (min-width: 48rem) {
-    article.prose.long-form-page :global(.membership-benefits ul) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  article.prose.long-form-page :global(.membership-benefits li) {
-    position: relative;
-    padding-left: 1.5rem;
-    padding-block: 0.2rem;
-    break-inside: avoid;
-    font-size: var(--text-step-0);
-  }
-  article.prose.long-form-page :global(.membership-benefits li)::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: calc((1lh - 11px) / 2);
-    width: 7px;
-    height: 11px;
-    border-right: 2px solid var(--color-muted);
-    border-bottom: 2px solid var(--color-muted);
-    transform: rotate(40deg);
-  }
-
   /* Item 6, the Questions close (conductor's decided direction, 2026-07-08): the single "Get in
      touch" card widens to the full content measure instead of `asc-components.css`'s own
      centered-narrow single-card treatment (`.asc-cards:has(> :only-child)`, tuned for a small
