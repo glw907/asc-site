@@ -1,9 +1,11 @@
 # asc-site
 
 The Alaska Sailing Club's public site: guides, news, pages, and the season calendar, built on
-`@glw907/cairn-cms` (0.81.0) using the cairn chassis structure. It replaces the club's prior
-Hugo/Blowfish site (`~/Projects/aksailingclub-org`) and its abandoned SvelteKit rebuild
-(`~/Projects/aksailingclub-sveltekit`, kept only as phase-2 evidence, not a foundation).
+`@glw907/cairn-cms` (see `package.json` for the current range) using the cairn chassis
+structure. It replaces the club's prior Hugo/Blowfish site (now at
+`~/Projects/aksailingclub-legacy` after the 2026-07-06 rename; see "The repo family" below)
+and its abandoned SvelteKit rebuild (`~/Projects/aksailingclub-sveltekit`, kept only as
+phase-2 evidence, not a foundation).
 
 @docs/STATUS.md
 
@@ -155,6 +157,14 @@ npx wrangler secret list
 - `docs/STATUS.md`: rolling status, read first.
 - `docs/2026-07-06-asc-phase-1-design.md` / `docs/2026-07-06-asc-home-northstar.html`: the design
   contract (see above).
+- `docs/design-benchmark/decisions.md`: every settled design question with its reasoning; later
+  rounds never re-litigate a logged decision unless Geoff reopens it. An in-flight live round
+  keeps a one-line-per-probe arc log beside it (`education-round-<N>-arc.md`), distilled into
+  decisions.md at settle and then removed.
+- `docs/image-standard.md`: the per-template image standard (hero crops, figure insets).
+  BINDING for any image or figure work; consult it, never re-derive.
+- `docs/2026-07-07-polish-backlog.md`: the design/content polish backlog. This repo keeps no
+  separate BACKLOG.md; carry-forwards live in STATUS entries.
 - `docs/content-migration-findings.md`: what migrated from the Hugo site and the deltas taken.
 - `docs/events-integration-findings.md`: the `EVENTS_DB` schema verification and taxonomy rules.
 - `docs/verification-findings.md`: the phase-1 verification pass, the pixel-diff rider, and the
