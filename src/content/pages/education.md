@@ -13,7 +13,7 @@ facts:
 
 Everyone's welcome, solo sailors, couples, and whole families alike. Every summer we run a four-day beginner course for adults, teens, and kids, with both tracks timed together so a family can learn side by side. We're on Big Lake, about 25 minutes from Wasilla, 45 from Palmer, and an hour and 15 minutes north of Anchorage. [See class dates →](/events/)
 
-The Alaska Sailing Club is an education-focused 501(c)(3). Teaching people to sail is core to our mission, not an add-on. Our volunteer instructors are US Sailing certified, with decades of combined sailing experience between them, and several race competitively at the national level. Once you've taken a beginner class, come back for the free [Fleet Tune-Up Weekend](#fleet-tune-up-weekend) each June to sharpen your skills before racing season.
+The Alaska Sailing Club is an education-focused 501(c)(3). Teaching people to sail is core to our mission, not an add-on. Our volunteer instructors are US Sailing certified, with decades of combined sailing experience between them, and several race competitively at the national level. Once you've taken a beginner class, come back for the free [Skills & Drills Weekend](#skills--drills-weekend) each June to sharpen your skills before racing season.
 
 ## Introduction to Dinghy Sailing
 
@@ -142,15 +142,15 @@ The overall youth class schedule is similar to the agenda for the adult class, w
 - More frequent and shorter practice sessions
 - Time for unstructured play
 
-## Fleet Tune-Up Weekend
+## Skills & Drills Weekend
 
 :::figure
 ![Two sailors aboard the dinghy Mast Casualty, one at the helm, sailing on Big Lake.](media:mast-casualty-sailing.659b55426153c22e)
 :::
 
-Ready to shake off the rust before racing season? Fleet Tune-Up Weekend is a free, three-day event with group drills, special topic clinics, and plenty of time on the water.
+Ready to shake off the rust before racing season? Skills & Drills Weekend is a free, three-day event with group drills, special topic clinics, and plenty of time on the water.
 
-**Mid-June** (3 days), free for all qualified members. No registration required, show up and sail!
+**Mid-June** (3 days), free for all qualified members. Registration required. When you register, tell us what you'd like to work on, and we'll shape the weekend around it.
 
 ### What to Expect
 
@@ -164,7 +164,7 @@ And all the usual ASC good stuff: potluck, campfire, and sauna session.
 
 ### Who Can Participate
 
-Fleet Tune-Up Weekend is open to members who have taken an ASC *Introduction to Dinghy Sailing* class (or equivalent). Members with prior sailing background also qualify if they can perform standard sailing maneuvers, including capsize recovery, and have been checked out on ASC club boats.
+Skills & Drills Weekend is open to members who have taken an ASC *Introduction to Dinghy Sailing* class (or equivalent). Members with prior sailing background also qualify if they can perform standard sailing maneuvers, including capsize recovery, and have been checked out on ASC club boats.
 
 ## How to Register & Pricing
 

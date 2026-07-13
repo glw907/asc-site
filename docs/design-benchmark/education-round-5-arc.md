@@ -56,6 +56,17 @@ session handed off to the aksailingclub-org project.
   own brainstorm/spec; the schedule's Register links point at /classes/[id]/signup, which is
   where that flow would grow.
 
+- Fleet Tune-Up RENAMED "Skills & Drills Weekend" (Geoff's pick from a four-name slate; the
+  old name read as boat repair): D1 name+slug (remote+local), education heading/anchor/lede
+  link/prose, racing page link. Product-fact corrections ratified by Geoff mid-round: the
+  event takes PRE-REGISTRATION now (drop_in flipped back to 0 both DBs; the "no registration
+  required, show up and sail" line replaced), stays free, members-only. Registration copy now
+  points at the interest question.
+- QUEUED (Geoff, mid-round): a "what would you like to learn?" free-text field on class
+  registration (shapes Skills & Drills around member interest): migration 0019 (
+  class_enrollments.interests), signup form textarea, waitlist path via existing notes
+  column, admin roster display.
+
 Owed at settle (unchanged from the round-4 close, plus this round): design-probe script +
 fresh-context lens fan-out + full-width render read, simplifier over the whole arc diff, full
 gate (check / 725 tests / build), decisions.md distillation, merge to main, manual wrangler
