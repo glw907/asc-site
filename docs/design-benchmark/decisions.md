@@ -140,6 +140,17 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   shrank with `--text-step-1` (full titles now fit where they ellipsized), and education's
   standfirst sits near body size (distinct from body by ink recession and position only).
 
+- **Hero photos crop 2:1 with per-photo focus; the image standard is codified
+  (2026-07-12)**: the owner picked the 2:1 editorial crop from side-by-side candidates
+  ("2:1 looks better") with the caution that crop location must not cut heads or break
+  composition. A global up-bias failed its second photo (racing's fleet cropped to sky),
+  so the crop window is per-photo data: the pages concept's `imageFocus` field, centered
+  default, join `50% 30%`, racing `50% 65%`. The full template-by-template imagery rules
+  now live in `docs/image-standard.md`; future page builds consult it rather than
+  re-deriving. Related fix the probe surfaced: the lede's trailing-CTA styling keyed off
+  `a:last-child` and broke racing's mid-sentence link; the CTA is now stamped
+  structurally (`lede-cta`) by the split code.
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
