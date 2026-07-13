@@ -1,6 +1,7 @@
 // The Club section's Settings screen (Task 4, extended pass 2.2): role management (grant,
 // change, or revoke an owner/admin seat by email), the waitlist offer window, the three
-// membership tier prices, and the season rollover. The parent layout guard
+// membership tier prices, the class registration-opens gate (migration 0018_class_lifecycle),
+// and the season rollover. The parent layout guard
 // (../+layout.server.ts) admits any club role into this section, so an admin can still see the
 // roster and every current value; every WRITE here is owner-only through `clubAdminAction`'s
 // `ownerOnly` option (Task 6's rider 1), since granting or revoking a seat, changing a price, and
@@ -18,7 +19,14 @@ import {
   setClubRole,
   type ClubRoleGrant,
 } from '$admin-club/lib/club-roles';
-import { getOfferWindowHours, getTierPrices, setOfferWindowHours, setTierPrice } from '$admin-club/lib/club-settings';
+import {
+  getClassRegistrationOpens,
+  getOfferWindowHours,
+  getTierPrices,
+  setClassRegistrationOpens,
+  setOfferWindowHours,
+  setTierPrice,
+} from '$admin-club/lib/club-settings';
 import type { MembershipTier } from '$admin-club/lib/demo-members';
 import { clubAdminAction } from '$admin-club/lib/club-action';
 import { getRolloverPreview, runSeasonRollover, SeasonMismatchError, type RolloverPreview } from '$admin-club/lib/rollover';
@@ -31,19 +39,29 @@ export const load: PageServerLoad = async (event) => {
       roles: [] as ClubRoleGrant[],
       offerWindowHours: null,
       tierPrices: null,
+      classRegistrationOpens: null,
       rollover: null as RolloverPreview | null,
       isOwner: false,
       error: 'CLUB_DB is not bound.',
     };
   }
-  const [roles, offerWindowHours, tierPrices, rollover, role] = await Promise.all([
+  const [roles, offerWindowHours, tierPrices, classRegistrationOpens, rollover, role] = await Promise.all([
     listClubRoles(db),
     getOfferWindowHours(db),
     getTierPrices(db),
+    getClassRegistrationOpens(db),
     getRolloverPreview(db),
     getClubRole(db, editor.email),
   ]);
-  return { roles, offerWindowHours, tierPrices, rollover, isOwner: role === 'owner', error: null as string | null };
+  return {
+    roles,
+    offerWindowHours,
+    tierPrices,
+    classRegistrationOpens,
+    rollover,
+    isOwner: role === 'owner',
+    error: null as string | null,
+  };
 };
 
 const TIER_FIELD: Record<MembershipTier, string> = {
@@ -138,6 +156,35 @@ export const actions: Actions = {
       return { ok: true };
     },
     { ownerOnly: true, action: 'update-offer-window', entity: 'setting', deniedMessage: 'Only a club owner can change this setting.' },
+  ),
+
+  updateClassRegistrationOpens: clubAdminAction(
+    async ({ form, ctx }) => {
+      const raw = form.get('classRegistrationOpens');
+      const opensIso = typeof raw === 'string' ? raw.trim() : '';
+      try {
+        await setClassRegistrationOpens(ctx.db, opensIso, ctx.editor.email);
+      } catch (err) {
+        if (err instanceof Error) {
+          ctx.audit({ action: 'update-class-registration-opens', entity: 'setting', detail: `rejected: ${err.message}` });
+          return fail(400, { error: 'Enter a valid date (YYYY-MM-DD) or leave it blank to disable the gate.' });
+        }
+        throw err;
+      }
+      ctx.audit({
+        action: 'update-class-registration-opens',
+        entity: 'setting',
+        entityId: 'class_registration_opens',
+        detail: opensIso || 'cleared',
+      });
+      return { ok: true };
+    },
+    {
+      ownerOnly: true,
+      action: 'update-class-registration-opens',
+      entity: 'setting',
+      deniedMessage: 'Only a club owner can change this setting.',
+    },
   ),
 
   updateTierPrices: clubAdminAction(

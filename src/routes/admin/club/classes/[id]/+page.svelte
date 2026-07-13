@@ -49,6 +49,7 @@ section posts to this route's own actions, independent of the main edit form bel
   let instructorNotes = $state(untrack(() => data.class?.instructorNotes ?? ''));
   let customNote = $state(untrack(() => data.class?.customNote ?? ''));
   let visible = $state(untrack(() => data.class?.visible ?? true));
+  let dropIn = $state(untrack(() => data.class?.dropIn ?? false));
 
   let newInstructorEmail = $state('');
   let newInstructorName = $state('');
@@ -99,6 +100,7 @@ section posts to this route's own actions, independent of the main edit form bel
         bind:instructorNotes
         bind:customNote
         bind:visible
+        bind:dropIn
         heroImage={data.class.heroImage}
         heroImageAlt={data.class.heroImageAlt}
       />

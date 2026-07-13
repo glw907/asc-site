@@ -63,6 +63,9 @@ export interface ClassRow {
   heroImage: string | null;
   heroImageAlt: string | null;
   visible: boolean;
+  /** A drop-in offering takes no registration at all (migration 0018): the public schedule
+   *  shows "Just show up!" instead of a Register link. */
+  dropIn: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,6 +96,7 @@ export interface ClassWrite {
   instructorNotes: string | null;
   customNote: string | null;
   visible: boolean;
+  dropIn: boolean;
 }
 
 /** One instructor assigned to a class: `email` is read off the real `members` row `member_id`
@@ -146,6 +150,7 @@ interface ClassRawRow {
   hero_image: string | null;
   hero_image_alt: string | null;
   visible: 0 | 1;
+  drop_in: 0 | 1;
   created_at: string;
   updated_at: string;
 }
@@ -168,6 +173,7 @@ function toClassRow(row: ClassRawRow): ClassRow {
     heroImage: row.hero_image,
     heroImageAlt: row.hero_image_alt,
     visible: row.visible === 1,
+    dropIn: row.drop_in === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -175,7 +181,7 @@ function toClassRow(row: ClassRawRow): ClassRow {
 
 const SELECT_COLUMNS = `id, season, name, slug, track, capacity, fee, start_date, end_date,
   location, description, instructor_notes, custom_note, hero_image, hero_image_alt, visible,
-  created_at, updated_at`;
+  drop_in, created_at, updated_at`;
 
 const ORDER_BY = 'ORDER BY start_date IS NULL, start_date ASC, name ASC';
 
@@ -258,8 +264,8 @@ export async function createClass(db: D1Database, id: string, season: number, wr
   await db
     .prepare(
       `INSERT INTO classes (id, season, name, slug, track, capacity, fee, start_date, end_date,
-        location, description, instructor_notes, custom_note, visible)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`,
+        location, description, instructor_notes, custom_note, visible, drop_in)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)`,
     )
     .bind(
       id,
@@ -276,6 +282,7 @@ export async function createClass(db: D1Database, id: string, season: number, wr
       write.instructorNotes,
       write.customNote,
       write.visible ? 1 : 0,
+      write.dropIn ? 1 : 0,
     )
     .run();
 }
@@ -286,8 +293,8 @@ export async function updateClass(db: D1Database, id: string, write: ClassWrite)
     .prepare(
       `UPDATE classes SET name = ?1, slug = ?2, track = ?3, capacity = ?4, fee = ?5, start_date = ?6,
         end_date = ?7, location = ?8, description = ?9, instructor_notes = ?10, custom_note = ?11,
-        visible = ?12, updated_at = datetime('now')
-       WHERE id = ?13`,
+        visible = ?12, drop_in = ?13, updated_at = datetime('now')
+       WHERE id = ?14`,
     )
     .bind(
       write.name,
@@ -302,6 +309,7 @@ export async function updateClass(db: D1Database, id: string, write: ClassWrite)
       write.instructorNotes,
       write.customNote,
       write.visible ? 1 : 0,
+      write.dropIn ? 1 : 0,
       id,
     )
     .run();

@@ -32,6 +32,7 @@ forward-only check collapse into the one comparison).
   // would otherwise clobber whatever the owner just typed); `untrack` marks that deliberately, the
   // same idiom the engine's own settings screens use (CairnTidySettings.svelte).
   let offerWindowHours = $state(untrack(() => (data.offerWindowHours == null ? '' : String(data.offerWindowHours))));
+  let classRegistrationOpens = $state(untrack(() => data.classRegistrationOpens ?? ''));
   let individualPrice = $state(untrack(() => (data.tierPrices == null ? '' : String(data.tierPrices.individual))));
   let familyPrice = $state(untrack(() => (data.tierPrices == null ? '' : String(data.tierPrices.family))));
   let youngAdultPrice = $state(untrack(() => (data.tierPrices == null ? '' : String(data.tierPrices['young-adult']))));
@@ -119,6 +120,32 @@ forward-only check collapse into the one comparison).
         </form>
       {:else}
         <p class="mt-3 text-sm font-semibold">{data.offerWindowHours} hours</p>
+      {/if}
+    </section>
+
+    <section>
+      <h2 class={HEADER_CELL}>Class registration opens</h2>
+      <p class="mt-1 text-sm text-muted">
+        Before this date the public class schedule shows "Opens &lt;date&gt;" instead of Open.
+        Clear it to disable the gate.
+      </p>
+      {#if data.isOwner}
+        <form method="post" action="?/updateClassRegistrationOpens" class="mt-3 flex flex-wrap items-end gap-3">
+          <label class="flex flex-col gap-1 text-sm" for="class-registration-opens">
+            Opens
+            <input
+              id="class-registration-opens"
+              class="input input-sm"
+              type="date"
+              name="classRegistrationOpens"
+              bind:value={classRegistrationOpens}
+            />
+          </label>
+          <CsrfField />
+          <button type="submit" class="btn btn-sm">Save</button>
+        </form>
+      {:else}
+        <p class="mt-3 text-sm font-semibold">{data.classRegistrationOpens || 'No gate configured'}</p>
       {/if}
     </section>
 

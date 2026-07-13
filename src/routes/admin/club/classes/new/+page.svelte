@@ -23,6 +23,7 @@ a bare form over `ClassForm`'s shared fields, posting to this route's own `creat
   let instructorNotes = $state('');
   let customNote = $state('');
   let visible = $state(true);
+  let dropIn = $state(false);
 </script>
 
 <a href="/admin/club/classes" class="mb-4 inline-flex w-fit items-center gap-1 text-sm text-muted hover:text-primary">
@@ -49,6 +50,7 @@ a bare form over `ClassForm`'s shared fields, posting to this route's own `creat
       bind:instructorNotes
       bind:customNote
       bind:visible
+      bind:dropIn
     />
     <div class="flex justify-end gap-2 border-t border-[var(--cairn-card-border)] p-6">
       <CsrfField />

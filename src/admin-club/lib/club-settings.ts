@@ -1,6 +1,7 @@
 // The `settings` table's per-key reads and writes the Club settings screen needs (Task 4): a
 // key-value row, not a per-setting column, so a later setting (the season rollover, say) reads
-// the same row shape rather than a new migration. `offer_window_hours` has a reader/writer pair;
+// the same row shape rather than a new migration. `offer_window_hours` and
+// `class_registration_opens` (migration 0018_class_lifecycle) each have a reader/writer pair;
 // `waiver_text_version` (Task 8) has a reader only, since the wording it stamps lives in
 // `$theme/waiver-text.ts`, not this table (editing that wording is a manual, deliberate act, not
 // a Club settings-screen write path this pass). `getCurrentSeason` is also the season rollover's
@@ -28,6 +29,35 @@ export async function setOfferWindowHours(db: D1Database, hours: number, updated
   await db
     .prepare("UPDATE settings SET value = ?1, updated_at = datetime('now'), updated_by = ?2 WHERE key = 'offer_window_hours'")
     .bind(String(hours), updatedBy)
+    .run();
+}
+
+const YYYY_MM_DD = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * The club-wide date registration opens for classes (migration 0018_class_lifecycle): the
+ * public class schedule (`$theme/class-schedule-data.ts`) reads this same key directly off
+ * `settings` to derive its "opens later" state, so this reader exists for the admin Settings
+ * screen's own display, not as that schedule's data path. An empty string means no gate is
+ * configured; the migration seeds the row empty, so a missing row (which should not happen
+ * post-migration) also reads as no gate.
+ */
+export async function getClassRegistrationOpens(db: D1Database): Promise<string> {
+  const row = await db.prepare("SELECT value FROM settings WHERE key = 'class_registration_opens'").first<{ value: string }>();
+  return row?.value ?? '';
+}
+
+/** Update the class registration-opens gate. `opensIso` must be an empty string (clears the
+ *  gate) or a strict YYYY-MM-DD date; unlike {@link setOfferWindowHours}'s numeric trust
+ *  boundary, this writer validates its own argument, since a malformed date string would
+ *  otherwise reach `settings` and silently break the public schedule's own gate read. */
+export async function setClassRegistrationOpens(db: D1Database, opensIso: string, updatedBy: string): Promise<void> {
+  if (opensIso !== '' && !YYYY_MM_DD.test(opensIso)) {
+    throw new Error('class_registration_opens must be an empty string or a YYYY-MM-DD date.');
+  }
+  await db
+    .prepare("UPDATE settings SET value = ?1, updated_at = datetime('now'), updated_by = ?2 WHERE key = 'class_registration_opens'")
+    .bind(opensIso, updatedBy)
     .run();
 }
 

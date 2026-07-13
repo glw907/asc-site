@@ -175,6 +175,59 @@ describe('club settings actions: owner gate', () => {
     });
   });
 
+  it('updateClassRegistrationOpens refuses a club admin (403)', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
+    const result = await actions.updateClassRegistrationOpens(
+      postEvent(admin, { classRegistrationOpens: '2026-03-15' }, { db }),
+    );
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(403);
+  });
+
+  it('updateClassRegistrationOpens fails 400 on a malformed date, still audited, and writes nothing', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    const sink = vi.fn();
+    const result = await actions.updateClassRegistrationOpens(
+      postEvent(owner, { classRegistrationOpens: 'not-a-date' }, { db, auditSink: sink }),
+    );
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(400);
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'update-class-registration-opens', entity: 'setting', editor: owner.email }),
+    );
+    expect(calls.some((c) => c.sql.startsWith('UPDATE settings'))).toBe(false);
+  });
+
+  it('updateClassRegistrationOpens succeeds for an owner with a valid date and audits it', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    const sink = vi.fn();
+    const result = await actions.updateClassRegistrationOpens(
+      postEvent(owner, { classRegistrationOpens: '2026-03-15' }, { db, auditSink: sink }),
+    );
+    expect(result).toEqual({ ok: true });
+    expect(calls.some((c) => c.sql.startsWith('UPDATE settings') && c.args[0] === '2026-03-15')).toBe(true);
+    expect(sink).toHaveBeenCalledWith({
+      action: 'update-class-registration-opens',
+      entity: 'setting',
+      entityId: 'class_registration_opens',
+      detail: '2026-03-15',
+      editor: owner.email,
+    });
+  });
+
+  it('updateClassRegistrationOpens succeeds for an owner clearing the gate to an empty string', async () => {
+    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'owner' }] } });
+    const sink = vi.fn();
+    const result = await actions.updateClassRegistrationOpens(
+      postEvent(owner, { classRegistrationOpens: '' }, { db, auditSink: sink }),
+    );
+    expect(result).toEqual({ ok: true });
+    expect(calls.some((c) => c.sql.startsWith('UPDATE settings') && c.args[0] === '')).toBe(true);
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'update-class-registration-opens', detail: 'cleared', editor: owner.email }),
+    );
+  });
+
   it('updateTierPrices refuses a club admin (403)', async () => {
     const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } });
     const result = await actions.updateTierPrices(

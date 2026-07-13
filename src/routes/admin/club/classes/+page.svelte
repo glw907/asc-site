@@ -55,7 +55,10 @@ chip reads `row.isFull`, which `classes-store.ts`'s `listClassesWithCounts` deri
               {row.name}
             </a>
           </td>
-          <td><span class="badge badge-sm font-medium {TRACK_CHIP[row.track]}">{CLASS_TRACK_LABEL[row.track]}</span></td>
+          <td>
+            <span class="badge badge-sm font-medium {TRACK_CHIP[row.track]}">{CLASS_TRACK_LABEL[row.track]}</span>
+            {#if row.dropIn}<span class="badge badge-ghost badge-sm ml-1 font-medium">Drop-in</span>{/if}
+          </td>
           <td class="text-sm tabular-nums text-muted">{row.capacity}</td>
           <td>
             <span

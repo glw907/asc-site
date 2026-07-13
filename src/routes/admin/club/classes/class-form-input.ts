@@ -53,6 +53,7 @@ export function parseClassForm(form: FormData): { write: ClassWrite } | { error:
       instructorNotes: emptyToNull(form.get('instructorNotes')),
       customNote: emptyToNull(form.get('customNote')),
       visible: form.get('visible') === 'on',
+      dropIn: form.get('dropIn') === 'on',
     },
   };
 }

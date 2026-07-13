@@ -37,6 +37,7 @@ const RAW_ROW = {
   hero_image: 'adult-intro-class-1.jpg',
   hero_image_alt: 'Student at the tiller with an instructor.',
   visible: 1 as const,
+  drop_in: 0 as const,
   created_at: '2026-01-01 00:00:00',
   updated_at: '2026-01-01 00:00:00',
 };
@@ -54,6 +55,7 @@ const WRITE: ClassWrite = {
   instructorNotes: 'Bring spare rigging.',
   customNote: 'Bring your own PFD.',
   visible: true,
+  dropIn: true,
 };
 
 describe('listClasses', () => {
@@ -111,6 +113,7 @@ describe('createClass', () => {
       'Bring spare rigging.',
       'Bring your own PFD.',
       1,
+      1,
     ]);
   });
 });
@@ -118,13 +121,14 @@ describe('createClass', () => {
 describe('updateClass', () => {
   it('updates every writable column by id, never touching season or the hero image fields', async () => {
     const { db, calls } = fakeD1();
-    await updateClass(db, 'fleet-tune-up-weekend', { ...WRITE, visible: false });
+    await updateClass(db, 'fleet-tune-up-weekend', { ...WRITE, visible: false, dropIn: true });
     expect(calls).toHaveLength(1);
     expect(calls[0].sql).toContain('UPDATE classes SET');
     expect(calls[0].sql).not.toContain('season');
     expect(calls[0].sql).not.toContain('hero_image');
     expect(calls[0].args.at(-1)).toBe('fleet-tune-up-weekend');
-    expect(calls[0].args.at(-2)).toBe(0);
+    expect(calls[0].args.at(-2)).toBe(1);
+    expect(calls[0].args.at(-3)).toBe(0);
   });
 });
 
@@ -146,6 +150,32 @@ describe('custom_note round-trip (migration 0013)', () => {
     await updateClass(db, 'fleet-tune-up-weekend', { ...WRITE, customNote: null });
     const update = calls.find((c) => c.sql.startsWith('UPDATE classes SET'));
     expect(update?.args).toContain(null);
+  });
+});
+
+describe('drop_in round-trip (migration 0018)', () => {
+  it('reads a flagged row off getClass as dropIn: true', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': { ...RAW_ROW, drop_in: 1 as const } } });
+    await expect(getClass(db, '1st_adult_teen_intro')).resolves.toEqual(expect.objectContaining({ dropIn: true }));
+  });
+
+  it('reads an unflagged row off getClass as dropIn: false', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': RAW_ROW } });
+    await expect(getClass(db, '1st_adult_teen_intro')).resolves.toEqual(expect.objectContaining({ dropIn: false }));
+  });
+
+  it('createClass writes dropIn as 1 when set', async () => {
+    const { db, calls } = fakeD1();
+    await createClass(db, 'fleet-tune-up-weekend', 2026, { ...WRITE, dropIn: true });
+    const insert = calls.find((c) => c.sql.startsWith('INSERT INTO classes'));
+    expect(insert?.args.at(-1)).toBe(1);
+  });
+
+  it('updateClass writes dropIn as 0 when cleared', async () => {
+    const { db, calls } = fakeD1();
+    await updateClass(db, 'fleet-tune-up-weekend', { ...WRITE, dropIn: false });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE classes SET'));
+    expect(update?.args.at(-2)).toBe(0);
   });
 });
 
@@ -332,6 +362,7 @@ describe('isPubliclyOpen (the freed-spot rule)', () => {
     heroImage: null,
     heroImageAlt: null,
     visible: true,
+    dropIn: false,
     createdAt: '2026-01-01 00:00:00',
     updatedAt: '2026-01-01 00:00:00',
     enrolledCount: 5,

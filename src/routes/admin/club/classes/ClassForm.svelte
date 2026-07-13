@@ -27,6 +27,7 @@ carried.
     instructorNotes = $bindable(),
     customNote = $bindable(),
     visible = $bindable(),
+    dropIn = $bindable(),
     heroImage = null,
     heroImageAlt = null,
   }: {
@@ -42,6 +43,7 @@ carried.
     instructorNotes: string;
     customNote: string;
     visible: boolean;
+    dropIn: boolean;
     heroImage?: string | null;
     heroImageAlt?: string | null;
   } = $props();
@@ -57,6 +59,15 @@ carried.
     <input type="checkbox" class="checkbox checkbox-sm" name="visible" bind:checked={visible} />
     Visible on the public calendar
   </label>
+  <div>
+    <label class="flex items-center gap-1.5 text-sm">
+      <input type="checkbox" class="checkbox checkbox-sm" name="dropIn" bind:checked={dropIn} />
+      Drop-in
+    </label>
+    <p class="mt-1 text-xs text-muted">
+      No registration. The public schedule shows "Just show up!" instead of a Register link.
+    </p>
+  </div>
   <FieldLabel label="Capacity">
     <input class="input input-sm" type="number" min="1" step="1" name="capacity" bind:value={capacity} />
   </FieldLabel>
