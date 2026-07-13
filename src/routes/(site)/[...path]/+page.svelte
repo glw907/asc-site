@@ -183,7 +183,25 @@
 
   const mergeLedeIntoHero = $derived(isPageHero && Boolean(longFormSlug));
   const ledeSplit = $derived(mergeLedeIntoHero ? splitLede(data.html) : null);
-  const heroLede = $derived(ledeSplit ? ledeSplit.lede : '');
+
+  /** Marks the lede's trailing action link ("See class dates →") so the CSS can promote it to its
+   *  own CTA line. Only an anchor that closes the paragraph counts; a link mid-sentence (racing's
+   *  "Introduction to Dinghy Sailing") stays inline, which position-based styling (`a:last-child`)
+   *  got wrong once the template generalized past education. Text-only anchors are enough here:
+   *  both real CTAs are plain text, and a non-matching lede passes through unchanged. */
+  function markTrailingCta(lede: string): string {
+    return lede.replace(/<a ([^>]*)>([^<]*)<\/a>(\s*<\/p>\s*)$/, '<a class="lede-cta" $1>$2</a>$3');
+  }
+
+  const heroLede = $derived(ledeSplit ? markTrailingCta(ledeSplit.lede) : '');
+
+  // The hero photo's crop focus (the pages concept's `imageFocus` field), validated to the one
+  // shape the style attribute accepts ("50% 30%") since it is editor-entered frontmatter headed
+  // for inline CSS; anything else falls back to the stylesheet's centered default.
+  const heroFocus = $derived.by(() => {
+    const raw = data.entry.frontmatter.imageFocus;
+    return typeof raw === 'string' && /^\d{1,3}% \d{1,3}%$/.test(raw.trim()) ? raw.trim() : undefined;
+  });
   // Every other derived value below reads `contentHtml`, never `data.html` directly, so the hero
   // lede (once split off) does not also appear a second time further down the document.
   const contentHtml = $derived(ledeSplit ? ledeSplit.rest : data.html);
@@ -471,7 +489,7 @@
       {/if}
       {#if data.heroImage}
         <figure class="promise-hero-photo">
-          <img src={data.heroImage.url} alt={data.heroImage.alt} />
+          <img src={data.heroImage.url} alt={data.heroImage.alt} style:object-position={heroFocus} />
         </figure>
       {/if}
       <!-- Each fact carries its own leading separator dot as a CSS ::before (below), rather than a
@@ -1236,13 +1254,14 @@
   .promise-hero-support {
     margin-top: var(--spacing-m);
   }
-  /* The lede's own trailing action link ("See class dates →"), always the last node in its
-     paragraph: `display: block` alone drops it to its own line below the lede text, with no markup
-     change needed. Color, underline, and the focus-visible ring already come from site.css's own
-     `.site-main .prose a` rule and prose.css's `a:focus-visible` rule (both apply to this injected
-     `{@html}` markup unscoped), so only the weight this action earns beyond a plain inline link is
-     restated here. */
-  .promise-hero-support :global(a:last-child) {
+  /* The lede's own trailing action link ("See class dates →"), stamped `lede-cta` by
+     markTrailingCta above only when the anchor closes the paragraph: `display: block` drops it to
+     its own line below the lede text. Styling by position (`a:last-child`) broke racing's lede,
+     whose only link sits mid-sentence. Color, underline, and the focus-visible ring already come
+     from site.css's own `.site-main .prose a` rule and prose.css's `a:focus-visible` rule (both
+     apply to this injected `{@html}` markup unscoped), so only the weight this action earns
+     beyond a plain inline link is restated here. */
+  .promise-hero-support :global(a.lede-cta) {
     display: block;
     margin-top: var(--spacing-s);
     font-family: var(--font-display);
@@ -1252,10 +1271,18 @@
   .promise-hero-photo {
     margin: var(--spacing-l) 0 0;
   }
+  /* 2:1, not the source photos' native 3:2 (owner's pick from crops, 2026-07-12): the flatter
+     editorial lead-image ratio returns ~160px of first viewport, pulling the fact strip (and on
+     other primary pages the first content section) above the fold. The crop window defaults to
+     center; a photo whose subject fights that (join's members sit high in frame, racing's fleet
+     sits low) sets the pages concept's `imageFocus` frontmatter field, applied above as an inline
+     `object-position` after validation. A global bias was tried first and failed its second photo
+     (35% up-bias cropped racing's hulls to sky), so the crop is per-photo data, not a theme
+     constant. */
   .promise-hero-photo img {
     display: block;
     width: 100%;
-    aspect-ratio: 3 / 2;
+    aspect-ratio: 2 / 1;
     object-fit: cover;
     border-radius: var(--radius-box);
   }

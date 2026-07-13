@@ -121,6 +121,10 @@ export const cairn = defineAdapter({
         // line, rendered as the promise hero's h1 in place of the plain title. Optional; most
         // pages carry none and keep the plain title hero.
         promise: fields.text({ label: 'Promise line' }),
+        // Where the hero photo's 2:1 crop centers, as a CSS object-position pair ("50% 30%").
+        // Optional; the crop centers when unset. Set it when the photo's subject sits high or
+        // low in the frame (join's members, racing's fleet at the waterline).
+        imageFocus: fields.text({ label: 'Hero crop focus (e.g. 50% 30%)' }),
         // The promise hero's fact strip, paired with `promise`. Reuses the open, creatable
         // multiselect shape posts' `tags` field already uses, without `taxonomy`: no vocabulary
         // pools across entries, each page's facts are its own short freeform list.
