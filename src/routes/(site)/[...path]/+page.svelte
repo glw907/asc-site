@@ -670,6 +670,21 @@
     margin-bottom: var(--spacing-2xs);
   }
 
+  /* Inline figures step to an 85% flush-left inset above mobile widths (the image standard's
+     hierarchy rule: the hero is the page's largest image, and a many-figure page like education
+     reads calmer when section photos sit a clear step below it). Flush-left, not centered: in a
+     ragged-right column the eye anchors on the hard left edge, so a geometrically centered inset
+     reads right-shifted (owner-flagged; the probe measured perfect 49px symmetry and it still
+     looked pushed right). Keeping the text's left edge and giving the spare room to the rag side
+     is the editorial fix. The hero figure carries its own class and keeps full width; narrow
+     viewports keep full width too, where the measure is already tight. */
+  @media (min-width: 48rem) {
+    article.prose.long-form-page :global(figure:not(.promise-hero-photo)) {
+      width: 85%;
+      margin-inline: 0 auto;
+    }
+  }
+
   /* A long-form page's group hand-off (axis B, 2026-07-08): a plain typographic break (a rule
      plus a small label) announcing the next named part starts here, rather than the reader
      inferring the shift with no signal at all (the design-polish pass's original finding,

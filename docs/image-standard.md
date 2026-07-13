@@ -39,10 +39,16 @@ standard's generic rules. Any image change re-verifies against
   eyebrow plus promise line with no photo slot (Contact, Events). Never force a photo.
 - **Fact strip only with real facts.** No fact strip exists without frontmatter
   `facts`.
-- **Inline figures: text measure, native ratio (usually 3:2), uncropped.** The
-  breakout belongs to the hero alone.
-- Open item, owner verdict pending: on a many-figure page (education runs six),
-  stepping inline figures to ~85% of the measure to sharpen the hero's seniority.
+- **Inline figures: an 85% flush-left inset above 48rem, full width below it; native
+  ratio (usually 3:2), uncropped.** The inset keeps the hero unmistakably senior on a
+  many-figure page; the breakout belongs to the hero alone. Flush-left, never
+  centered: in a ragged-right column the eye anchors on the hard left edge, so a
+  geometrically centered inset reads right-shifted (measured perfectly symmetric and
+  still owner-flagged as off). The rule rides the primary-template class
+  (`long-form-page`) in the catch-all route, so it is per-template, never per-page.
+- **The hero's extra width is deliberate emphasis.** Wider-than-column reads as
+  senior; narrower-than-column reads as misaligned. If the breakout ever reads
+  accidental, widen it; never shrink it to the measure.
 
 ## Secondary pages (every interior page)
 
@@ -50,7 +56,8 @@ standard's generic rules. Any image change re-verifies against
   them.
 - When a photo genuinely helps, it gets the quiet title-adjacent hero at native
   ratio. Never a promise hero, fact strip, or breakout on a secondary page.
-- Inline figures follow the same rule as primary: text measure, native ratio.
+- Inline figures: full text measure, native ratio. The primary tier's 85% inset does
+  not apply here; a document's rare figure is content, not composition.
 
 ## Posts (interim, pending the composition follow-up spec)
 
@@ -58,7 +65,8 @@ standard's generic rules. Any image change re-verifies against
   treatment, whether they borrow the gold marker) settles in the posts/bulletins
   follow-up spec.
 - Until then: an optional hero from the `image` field renders at 2:1 for family
-  consistency; inline figures follow the primary-page rule.
+  consistency; inline figures run full text measure (the primary tier's 85% inset is
+  a pages-template rule and does not reach posts until their spec says so).
 
 ## Bulletins
 

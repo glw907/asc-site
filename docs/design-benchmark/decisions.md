@@ -151,6 +151,15 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   `a:last-child` and broke racing's mid-sentence link; the CTA is now stamped
   structurally (`lede-cta`) by the split code.
 
+- **Inline figures: 85% flush-left inset on primary pages (ratified at the evening
+  close, 2026-07-12)**: the step-down sharpens the hero's seniority on many-figure
+  pages. Centered was tried first and the owner read it as right-aligned despite
+  measured 49px/49px symmetry; the ragged-right column's hard left anchor makes a
+  centered inset read displaced, so flush-left (spare room to the rag side) is the
+  ruling. The hero's extra-width breakout is confirmed deliberate (wider-than-column =
+  senior; if it ever reads accidental, widen it, never shrink). Per-template, not
+  per-page; codified in `docs/image-standard.md`.
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
