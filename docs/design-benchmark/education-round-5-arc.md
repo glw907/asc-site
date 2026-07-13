@@ -62,10 +62,25 @@ session handed off to the aksailingclub-org project.
   event takes PRE-REGISTRATION now (drop_in flipped back to 0 both DBs; the "no registration
   required, show up and sail" line replaced), stays free, members-only. Registration copy now
   points at the interest question.
-- QUEUED (Geoff, mid-round): a "what would you like to learn?" free-text field on class
-  registration (shapes Skills & Drills around member interest): migration 0019 (
-  class_enrollments.interests), signup form textarea, waitlist path via existing notes
-  column, admin roster display.
+- The "what would you like to learn?" question — LANDED (Geoff's ask): migration 0019
+  (class_enrollments.interests, scratch-proven, applied remote+local), optional textarea on
+  the public signup form, waitlist path via the existing notes column, quiet "Wants to
+  learn:" lines on the admin roster (Sonnet dispatch 9fffa1f, gate green 754). Conductor's
+  review found and fixed a data-loss seam the dispatch scope excluded: BOTH offer-claim
+  paths (public token, portal) deleted the waitlist row without carrying notes onto the new
+  enrollment's interests column; fixed with the binds pinned in tests on each path.
+- Admin fields for 0018 — LANDED (Sonnet dispatch c23fb6a, reviewed): Drop-in checkbox on
+  the class form, Drop-in badge on the classes list, owner-only "Class registration opens"
+  date field on Settings (writer validates YYYY-MM-DD or empty).
+- cairn-cms 0.84.2 bump (Geoff's ask at close): the admin cold-isolate token-hang fix; full
+  gate on the bump (check 0/0 over 786 files, 754 tests, build green); dev server restarted
+  on the new package and smoked (page 200, island mounts, media 200).
+
+- Schedule-pending state (Geoff's ask: "when we increment years, we won't immediately have
+  the new class dates"): an empty season now renders "We haven't posted the {season} class
+  schedule yet…" instead of the events-page fallback (which stays for a genuine read
+  failure); a dateless ROW keeps its per-row Dates TBD chip. Not visible with 2026 data;
+  covered by unit tests (15/15).
 
 Owed at settle (unchanged from the round-4 close, plus this round): design-probe script +
 fresh-context lens fan-out + full-width render read, simplifier over the whole arc diff, full

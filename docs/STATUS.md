@@ -1,6 +1,38 @@
 # asc-site status
 
-**LIVE ROUND 5 (2026-07-13 afternoon, run from the cairn-cms session; work moves HERE now —
+**ROUND 5 EXTENDED (2026-07-13 evening, this repo's first live session; Geoff live-reviewed
+throughout, then called for a state save ahead of a context clear): the education page grew
+its LIVE CLASS SCHEDULE (Geoff's ask, mirroring the old site's table) — a `class-schedule`
+island in the registration band, quiet grid rows reading asc-club through a remote query,
+with the FULL lifecycle status engine (Completed / In session / Drop-in "Just show up!" /
+Opens <date> via the new class_registration_opens settings gate / Full→Join waitlist /
+Open→Register to our own /classes/[id]/signup / Dates TBD / season-wrapped line /
+schedule-pending line for the post-rollover empty season). Everything relevant is on
+`design/education-round-4`, gates green at close (check 0/0 over 786 files, 754 tests,
+build green, cairn bumped to 0.84.2). Data facts settled with Geoff live: Fleet Tune-Up
+RENAMED "Skills & Drills Weekend" (his pick from a slate; old name read as boat repair; D1
+name+slug remote+local, education + racing prose, anchor #skills--drills-weekend), the
+event now takes PRE-REGISTRATION (drop_in=0; free; members-only), and signup asks
+"Anything specific you'd like to learn?" (migration 0019; answers ride waitlist→enrollment
+through both offer-claim paths — a conductor-caught data-loss fix). Migrations 0018
+(drop_in + registration gate) and 0019 (enrollment interests) are scratch-proven and
+APPLIED TO THE REAL asc-club; the 2nd Adult Intro end_date typo (2016→2026) repaired;
+local D1 rebuilt from all 19 migrations and seeded with real events/classes/settings (no
+member PII). Admin: Drop-in checkbox + classes-list badge + owner-only "Class registration
+opens" Settings field (two reviewed Sonnet dispatches, c23fb6a + 9fffa1f). FLAGGED FOR
+GEOFF'S VERDICT: the band's fireweed registration-door button is RETIRED (schedule rows
+carry their own doors; page fireweed budget back to ONE — the closing email CTA).
+NEXT SESSION: the MEMBERSHIPWORKS DATA IMPORT (Geoff has data; start from
+docs/mw-export-findings.md, the partial export at ~/.local/asc-data/mw-export-2026-07-07.csv,
+and the two-database import doctrine in the cairn-aksailingclub-effort memory). QUEUED
+BEHIND IT: the unified-signup brainstorm (one flow + language across the join and class
+doors, join+class in one pass — Geoff authorized Fable time; the arc log holds the framing),
+the .page-cta rollout to the five Questions-style pages (behind ratification), and the
+ROUND SETTLE (unchanged owed list at the arc log's foot). The dev server machinery:
+`npm run dev` + `npm run media:seed` (cairn-media-seed; the old sync-media-local.mjs is
+retired since 0.84.1).**
+
+**PRIOR (LIVE ROUND 5, 2026-07-13 afternoon, run from the cairn-cms session; work moves HERE now —
 Geoff's ruling at handoff): seven education-page probes on `design/education-round-4`, all
 PROVISIONAL-KEEP (Geoff iterated forward on each; no per-item ratification yet), logged
 one-per-line in `docs/design-benchmark/education-round-5-arc.md` (READ IT FIRST on resume):
