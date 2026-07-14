@@ -33,7 +33,7 @@ never invented into a new member; their assignments and waitlist entries stay un
 |---|---|---|
 | `id` | n/a | `ops-assignment-<asc-ops id>`, a stable natural key |
 | `asset_type` | `asset_type` | verbatim |
-| `membership_id` | `person_id` (via email) | resolved: ops person -> asc-club member by email -> that member's household -> the household's `memberships` row for `settings.current_season` |
+| `membership_id` | `person_id` (via email) | resolved: ops person -> asc-club member by email -> that member's household -> the household's MOST RECENT PAID `memberships` row (max `paid_at`, `paid_at IS NOT NULL`) |
 | `description` | `description` | verbatim |
 | `status` | `status` | `'active'` -> `'active'`, `'cancelled'` -> `'released'` |
 | `created_at` | `created_at` | preserved verbatim as a genuine historical timestamp |
@@ -45,12 +45,58 @@ history (the ratified DDL's own comment: "per-season fee state lives in payments
 as a mutable flag"). The admin screens read only `status = 'active'` for the two "who holds
 what now" lenses; a released row is imported but not surfaced there, by design.
 
+**The membership_id resolution is by MOST RECENT PAID row, never `season =
+settings.current_season`** (fixed 2026-07-14, `resolveCurrentMembershipByHousehold`). The
+club's rolling-renewal doctrine (migration `0009_member_auth`'s own ruling, Geoff's mid-pass
+2026-07-07 correction: a household's standing derives from `memberships.paid_at` plus one
+year plus a grace window -- `settings.renewal_grace_days`, 30 by default -- never a season
+boundary; `season` is purely a period label, never itself the currency test) means a
+household paid recently can still carry its latest `memberships` row labeled a PRIOR
+season -- the mw-members import's own season-rewrite lands a row at the season its real
+transaction actually computed to, not necessarily `settings.current_season`. Resolving by
+season alone silently missed that household's assignments entirely: the live dry-run against
+the corrected mw-members data reported 6 rows "matched a member with no current-season
+membership" that were really just paid recently under a different season label. A household
+whose most-recent-paid row is itself STALE (`paid_at` `STALE_MEMBERSHIP_DAYS` = 400+ days
+before the run) is excluded from resolution, so its assignments still report `skipped:
+'no-current-membership'` and the run's own WARNING line: attaching an asset to a genuinely
+long-lapsed membership is the real "unexpected" case worth a human's look, not a
+season-labeling artifact. **400 is a documented heuristic, not the real grace window**: this
+script reads `asc-club`'s `settings` table for `current_season` already but does not (yet)
+also read `renewal_grace_days` and compute `365 + graceDays` precisely -- 400 sits a few days
+past the default 30-day grace (`365 + 30 = 395`) as a deliberately conservative stand-in,
+close enough that the two only diverge if `renewal_grace_days` is ever tuned well away from
+its default. A future pass can read the real setting the same way `current_season` already
+is, if that divergence ever matters in practice.
+
 **Unmatched holders are never invented into new members.** An asc-ops `people` row whose
 email has no matching `members.email` (a real club member the MembershipWorks import never
 captured, or one of asc-ops's own leftover QA-seed rows) has its assignments and waitlist
 entries left unimported. The live run (2026-07-07) held back 5 assignments across 3 real
 holders; the full machine-local report (real names and emails, never committed) lives at
 `~/.local/asc-data/ops-assets-unmatched.md`, regenerated on every run.
+
+### Override map
+
+Two of the three 2026-07-07 unmatched holders turned out to exist in the club's
+MembershipWorks records under a different email than asc-ops held for them (MW email drift,
+not an asc-ops data problem); the third resolves on its own once the MW member import lands,
+since its ops email matches its MW email exactly. For the two that do not, the script carries
+an explicit `OVERRIDES` map, ops `people.id` -> MembershipWorks account id:
+
+```js
+export const OVERRIDES = {
+  '18': '661f6b677abbb920560b306b',
+  '120': '662f056a120ba1f321076c25',
+};
+```
+
+Both ids are opaque and carry no name or email, so the map is safe to commit. `resolveMember`
+consults `OVERRIDES` first, resolving the MW account id through `members.mw_account_id` (the
+MembershipWorks import's own provenance column); only when that lookup finds no member row yet
+does resolution fall through to the ordinary email match, and from there to the unmatched
+report like any other holder. An override is never itself a refusal, so a run made before the
+MW member import lands still behaves exactly as it did without the map.
 
 ### `asset_payments`
 

@@ -3,7 +3,7 @@ import { fakeD1 } from './_fake-d1';
 import { updateProfile, validatePhone } from '$member-portal/lib/profile';
 
 describe('validatePhone', () => {
-  it('accepts a well-formed E.164 number', () => {
+  it('accepts a well-formed E.164 number unchanged', () => {
     expect(validatePhone('+19075551234')).toEqual({ ok: true, value: '+19075551234' });
   });
 
@@ -11,12 +11,16 @@ describe('validatePhone', () => {
     expect(validatePhone('  ')).toEqual({ ok: true, value: null });
   });
 
-  it('refuses a number missing the country code', () => {
-    expect(validatePhone('9075551234')).toEqual({ error: expect.stringContaining('country code') });
+  it('normalizes a bare 10-digit number missing the country code', () => {
+    expect(validatePhone('9075551234')).toEqual({ ok: true, value: '+19075551234' });
   });
 
-  it('refuses a non-digit-shaped string', () => {
-    expect(validatePhone('+1 (907) 555-1234')).toEqual({ error: expect.stringContaining('country code') });
+  it('normalizes a formatted number to E.164', () => {
+    expect(validatePhone('(907) 555-1234')).toEqual({ ok: true, value: '+19075551234' });
+  });
+
+  it('refuses an unparseable phone rather than storing it raw', () => {
+    expect(validatePhone('call the office')).toEqual({ error: expect.stringContaining('phone number') });
   });
 });
 
@@ -31,11 +35,35 @@ describe('updateProfile', () => {
     expect(update?.args).toEqual(['member@example.com', '+19075551234', '1990-05-01', 'mem-1']);
   });
 
-  it('refuses (writing nothing) on a bad phone number before touching the database', async () => {
+  it('normalizes a messy phone number to E.164 before writing', async () => {
     const { db, calls } = fakeD1();
-    const result = await updateProfile(db, 'mem-1', { ...VALID, phone: 'not-a-phone' });
-    expect(result).toEqual({ error: expect.stringContaining('country code') });
+    const result = await updateProfile(db, 'mem-1', { ...VALID, phone: '(907) 555-1234' });
+    expect(result).toEqual({ ok: true });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE members'));
+    expect((update?.args as unknown[])[1]).toBe('+19075551234');
+  });
+
+  it('refuses (writing nothing) on an unparseable phone number before touching the database', async () => {
+    const { db, calls } = fakeD1();
+    const result = await updateProfile(db, 'mem-1', { ...VALID, phone: 'call the office' });
+    expect(result).toEqual({ error: expect.stringContaining('phone number') });
     expect(calls.some((c) => c.sql.startsWith('UPDATE'))).toBe(false);
+  });
+
+  it('lowercases an uppercase email before writing', async () => {
+    const { db, calls } = fakeD1();
+    const result = await updateProfile(db, 'mem-1', { ...VALID, email: 'MEMBER@EXAMPLE.COM' });
+    expect(result).toEqual({ ok: true });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE members'));
+    expect((update?.args as unknown[])[0]).toBe('member@example.com');
+  });
+
+  it('passes an already-clean email and phone through byte-identical', async () => {
+    const { db, calls } = fakeD1();
+    const result = await updateProfile(db, 'mem-1', VALID);
+    expect(result).toEqual({ ok: true });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE members'));
+    expect(update?.args).toEqual(['member@example.com', '+19075551234', '1990-05-01', 'mem-1']);
   });
 
   it('refuses on a bad email', async () => {

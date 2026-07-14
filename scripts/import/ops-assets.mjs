@@ -9,12 +9,22 @@
  * ASSETS ATTACH TO MEMBERSHIPS, NOT PEOPLE (the redesign's own correction of asc-ops's
  * workaround model, the ratified schema's own header comment): every ops person is matched to
  * an asc-club `members` row BY EMAIL, and a matched assignment lands on that member's
- * household's CURRENT (this season's) membership. A person with no matching `members.email`
- * (a real club member never captured in the MembershipWorks import, or one of ops's own
- * leftover QA-seed rows) is never invented into a new member here; their assignments stay
- * unimported, listed in the machine-local unmatched report
- * (`~/.local/asc-data/ops-assets-unmatched.md`, real names and emails, never committed) for
- * manual resolution.
+ * household's CURRENT membership -- resolved as the household's MOST RECENT PAID row (max
+ * `paid_at`, `paid_at IS NOT NULL`), never `season = settings.current_season` ({@link
+ * resolveCurrentMembershipByHousehold}'s own header carries the full rolling-renewal reasoning,
+ * 2026-07-14). A person with no matching `members.email` (a real club member never captured in
+ * the MembershipWorks import, or one of ops's own leftover QA-seed rows) is never invented into a
+ * new member here; their assignments stay unimported, listed in the machine-local unmatched
+ * report (`~/.local/asc-data/ops-assets-unmatched.md`, real names and emails, never committed)
+ * for manual resolution.
+ *
+ * A SMALL EXPLICIT OVERRIDE MAP RECONCILES THE TWO HOLDERS EMAIL COULD NOT: `OVERRIDES` below
+ * maps an ops `person_id` straight to the MembershipWorks account id the 2026-07-13 member
+ * import gave that same person under a different email than asc-ops held for them (see
+ * `ops-assets.README.md`'s "Override map" section for the reason). An override is consulted
+ * AHEAD of the email match, resolved through `members.mw_account_id`; when the override's
+ * account id has no matching member row yet, resolution falls through to the ordinary email
+ * match and, failing that, the unmatched report -- an override is never itself a refusal.
  *
  * FULL ASSIGNMENT HISTORY CARRIES OVER, ACTIVE AND RELEASED ALIKE: asc-ops's own
  * `status IN ('active','cancelled')` maps onto asc-club's `status IN ('active','released')`
@@ -113,6 +123,40 @@ export function resolveMemberByEmail(email, memberByEmail) {
 }
 
 /**
+ * Explicit reconciliation overrides for holders the email match cannot reach on its own: ops
+ * `person_id` -> the MembershipWorks account id the 2026-07-13 member import gave that same
+ * person under an email different from the one asc-ops holds (module header and
+ * `ops-assets.README.md`'s "Override map" section carry the full reason). Opaque MW account
+ * ids, safe to commit; no name or email appears here.
+ * @type {Record<string, string>}
+ */
+export const OVERRIDES = {
+  '18': '661f6b677abbb920560b306b',
+  '120': '662f056a120ba1f321076c25',
+};
+
+/**
+ * Resolve one asc-ops person's real `members.id` (and household), consulting `OVERRIDES` ahead
+ * of the email match. An override id with no matching `members.mw_account_id` row yet (the
+ * import hasn't landed, or the id was mistyped) is not a refusal on its own: resolution falls
+ * through to the ordinary email match, and from there to the unmatched report like any other
+ * holder.
+ * @param {number | string} personId the ops `people.id`
+ * @param {string | null} email
+ * @param {Map<string, { id: string, householdId: string }>} memberByEmail lowercased email -> member
+ * @param {Map<string, { id: string, householdId: string }>} memberByMwAccountId mw_account_id -> member
+ * @returns {{ id: string, householdId: string } | null}
+ */
+export function resolveMember(personId, email, memberByEmail, memberByMwAccountId) {
+  const overrideAccountId = OVERRIDES[String(personId)];
+  if (overrideAccountId) {
+    const overridden = memberByMwAccountId.get(overrideAccountId);
+    if (overridden) return overridden;
+  }
+  return resolveMemberByEmail(email, memberByEmail);
+}
+
+/**
  * @typedef {object} OpsAssignmentSrc
  * @property {number} id
  * @property {number} person_id
@@ -153,19 +197,68 @@ function isAssignmentSkip(value) {
   return 'skipped' in value;
 }
 
+/** Heuristic staleness threshold for a household's most-recent-paid membership: this script has
+ *  no access to the club's actual grace-period setting, so ~400 days (a year plus generous
+ *  slack) stands in for "paid_at + 1 year + grace, clearly past". A household this far past its
+ *  last real payment is genuinely lapsed, not merely season-mislabeled -- attaching an asset to
+ *  it is the real "unexpected" case this import still warns about. */
+export const STALE_MEMBERSHIP_DAYS = 400;
+
+/**
+ * Resolves each household's CURRENT membership as its MOST RECENT PAID row (max `paid_at`,
+ * `paid_at IS NOT NULL`) -- never `season = settings.current_season`. The rolling-renewal
+ * doctrine (migration 0009's own ruling: a household is current through `paid_at + 1 year`;
+ * `season` is purely a period label, never itself the currency test) means a household paid
+ * recently can still carry its latest row labeled a PRIOR season: the mw-members import's own
+ * season-rewrite (2026-07-14 correction) lands a membership row at the season its real
+ * transaction actually computed to, which is not always `settings.current_season`. Resolving by
+ * season alone silently misses that household's assignments entirely (root cause of the
+ * ops-assets dry-run's own false "no current-season membership" warnings, 2026-07-14).
+ *
+ * A household whose most-recent-paid row is itself stale ({@link STALE_MEMBERSHIP_DAYS} days or
+ * more before `asOf`) is excluded from the result, so its assignments still report as skipped --
+ * a long-lapsed membership is the genuinely unexpected case worth a human's look.
+ * @param {{ householdId: string, id: string, paidAt: string | null }[]} memberships every
+ *   membership row (paid_at may be null; those are simply never a household's own "most recent
+ *   paid" candidate)
+ * @param {Date} [asOf] defaults to the real current time; a fixed date makes the staleness check testable
+ * @returns {Map<string, string>} householdId -> its most-recent-paid, non-stale membership id
+ */
+export function resolveCurrentMembershipByHousehold(memberships, asOf = new Date()) {
+  /** @type {Map<string, { id: string, paidAt: string }>} */
+  const latestByHousehold = new Map();
+  for (const m of memberships) {
+    if (!m.paidAt) continue;
+    const current = latestByHousehold.get(m.householdId);
+    if (!current || m.paidAt > current.paidAt) latestByHousehold.set(m.householdId, { id: m.id, paidAt: m.paidAt });
+  }
+
+  /** @type {Map<string, string>} */
+  const result = new Map();
+  for (const [householdId, m] of latestByHousehold) {
+    const ageDays = (asOf.getTime() - new Date(m.paidAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (ageDays >= STALE_MEMBERSHIP_DAYS) continue; // genuinely lapsed; the household reports as skipped instead
+    result.set(householdId, m.id);
+  }
+  return result;
+}
+
 /**
  * One asc-ops `assignments` row -> one asc-club `asset_assignments` row, or a refusal reason if
- * this row cannot be imported (no matching member, or a matched member whose household carries
- * no current-season membership -- should not happen post-MW-import, but answered honestly rather
- * than assumed away).
+ * this row cannot be imported (no matching member, or a matched member whose household has no
+ * current -- most-recently-paid, non-stale -- membership, per
+ * {@link resolveCurrentMembershipByHousehold}; should be rare post-MW-import, but answered
+ * honestly rather than assumed away).
  * @param {Pick<OpsAssignmentSrc, 'id' | 'person_id' | 'asset_type' | 'description' | 'status' | 'created_at'>} src
  * @param {string | null} email the ops person's email (already looked up by `person_id`)
  * @param {Map<string, { id: string, householdId: string }>} memberByEmail
- * @param {Map<string, string>} currentMembershipByHousehold householdId -> this season's membership id
+ * @param {Map<string, string>} currentMembershipByHousehold householdId -> its most-recent-paid,
+ *   non-stale membership id, per {@link resolveCurrentMembershipByHousehold}
+ * @param {Map<string, { id: string, householdId: string }>} [memberByMwAccountId] mw_account_id -> member; consulted for `src.person_id` via `OVERRIDES` ahead of the email match
  * @returns {AssetAssignmentRow | SkippedRow}
  */
-export function toAssetAssignmentRow(src, email, memberByEmail, currentMembershipByHousehold) {
-  const member = resolveMemberByEmail(email, memberByEmail);
+export function toAssetAssignmentRow(src, email, memberByEmail, currentMembershipByHousehold, memberByMwAccountId = new Map()) {
+  const member = resolveMember(src.person_id, email, memberByEmail, memberByMwAccountId);
   if (!member) return { skipped: 'unmatched', sourceId: src.id, email };
   const membershipId = currentMembershipByHousehold.get(member.householdId);
   if (!membershipId) return { skipped: 'no-current-membership', sourceId: src.id, email };
@@ -247,13 +340,14 @@ function isWaitlistSkip(value) {
  * One asc-ops `waitlist` row (already filtered to `waitlist_type != 'class'`) -> one asc-club
  * `asset_waitlist` row, or a refusal reason. `item` reads as the target `asset_types.id` (this
  * module's own header, a documented judgment call).
- * @param {Pick<OpsWaitlistSrc, 'id' | 'item' | 'position' | 'requested_at' | 'notes'>} src
+ * @param {Pick<OpsWaitlistSrc, 'id' | 'person_id' | 'item' | 'position' | 'requested_at' | 'notes'>} src
  * @param {string | null} email
  * @param {Map<string, { id: string, householdId: string }>} memberByEmail
+ * @param {Map<string, { id: string, householdId: string }>} [memberByMwAccountId] mw_account_id -> member; consulted for `src.person_id` via `OVERRIDES` ahead of the email match
  * @returns {AssetWaitlistRow | SkippedRow}
  */
-export function toAssetWaitlistRow(src, email, memberByEmail) {
-  const member = resolveMemberByEmail(email, memberByEmail);
+export function toAssetWaitlistRow(src, email, memberByEmail, memberByMwAccountId = new Map()) {
+  const member = resolveMember(src.person_id, email, memberByEmail, memberByMwAccountId);
   if (!member) return { skipped: 'unmatched', sourceId: src.id, email };
   if (src.position == null) return { skipped: 'no-position', sourceId: src.id, email };
   return {
@@ -271,7 +365,10 @@ export function toAssetWaitlistRow(src, email, memberByEmail) {
  * Plans the whole run against already-fetched, plain-object source and lookup data (no database
  * or filesystem access here, so this stays unit-testable against a small synthetic fixture):
  * asset types, every mapped-and-refused assignment, its derived payment (if any), and every
- * mapped-and-refused waitlist row.
+ * mapped-and-refused waitlist row. `club.currentMembershipByHousehold` is the caller's job to
+ * build (householdId -> its most-recent-paid, non-stale membership id, per
+ * {@link resolveCurrentMembershipByHousehold}); `planImport` itself only ever reads the finished
+ * map.
  * @param {{
  *   assetTypes: Parameters<typeof toAssetTypeRow>[0][],
  *   assignments: OpsAssignmentSrc[],
@@ -280,6 +377,7 @@ export function toAssetWaitlistRow(src, email, memberByEmail) {
  * }} ops
  * @param {{
  *   memberByEmail: Map<string, { id: string, householdId: string }>,
+ *   memberByMwAccountId?: Map<string, { id: string, householdId: string }>,
  *   currentMembershipByHousehold: Map<string, string>,
  *   currentSeason: number,
  * }} club
@@ -290,7 +388,7 @@ export function planImport(ops, club) {
 
   const assignmentResults = ops.assignments.map((src) => {
     const email = ops.emailByPersonId.get(src.person_id) ?? null;
-    return toAssetAssignmentRow(src, email, club.memberByEmail, club.currentMembershipByHousehold);
+    return toAssetAssignmentRow(src, email, club.memberByEmail, club.currentMembershipByHousehold, club.memberByMwAccountId);
   });
   const assignmentRows = assignmentResults.filter(isAssignmentRow);
   const assignmentSkips = assignmentResults.filter(isAssignmentSkip);
@@ -307,7 +405,7 @@ export function planImport(ops, club) {
 
   const waitlistResults = ops.waitlist.map((src) => {
     const email = ops.emailByPersonId.get(src.person_id) ?? null;
-    return toAssetWaitlistRow(src, email, club.memberByEmail);
+    return toAssetWaitlistRow(src, email, club.memberByEmail, club.memberByMwAccountId);
   });
   const waitlistRows = waitlistResults.filter(isWaitlistRow);
   const waitlistSkips = waitlistResults.filter(isWaitlistSkip);
@@ -387,20 +485,29 @@ async function main() {
   /** @type {Map<number, string>} */
   const nameByPersonId = new Map(opsPeople.map((p) => [Number(p.id), String(p.name)]));
 
-  const clubMembers = query(CLUB_DB_NAME, `SELECT id, email, household_id FROM members`);
+  const clubMembers = query(CLUB_DB_NAME, `SELECT id, email, household_id, mw_account_id FROM members`);
   /** @type {Map<string, { id: string, householdId: string }>} */
   const memberByEmail = new Map(
     clubMembers
       .filter((m) => m.email)
       .map((m) => [String(m.email).trim().toLowerCase(), { id: String(m.id), householdId: String(m.household_id) }]),
   );
-  const clubMemberships = query(CLUB_DB_NAME, `SELECT household_id, season, id FROM memberships WHERE season = ${currentSeason}`);
-  /** @type {Map<string, string>} */
-  const currentMembershipByHousehold = new Map(clubMemberships.map((m) => [String(m.household_id), String(m.id)]));
+  /** @type {Map<string, { id: string, householdId: string }>} mw_account_id -> member, for `OVERRIDES` */
+  const memberByMwAccountId = new Map(
+    clubMembers
+      .filter((m) => m.mw_account_id)
+      .map((m) => [String(m.mw_account_id), { id: String(m.id), householdId: String(m.household_id) }]),
+  );
+  // Resolved by MOST RECENT PAID row, never by `season = currentSeason`: see
+  // `resolveCurrentMembershipByHousehold`'s own header for the rolling-renewal reasoning.
+  const clubMemberships = query(CLUB_DB_NAME, `SELECT household_id, id, paid_at FROM memberships WHERE paid_at IS NOT NULL`);
+  const currentMembershipByHousehold = resolveCurrentMembershipByHousehold(
+    clubMemberships.map((m) => ({ householdId: String(m.household_id), id: String(m.id), paidAt: String(m.paid_at) })),
+  );
 
   const plan = planImport(
     { assetTypes: opsAssetTypes, assignments: opsAssignments, waitlist: opsWaitlist, emailByPersonId },
-    { memberByEmail, currentMembershipByHousehold, currentSeason },
+    { memberByEmail, memberByMwAccountId, currentMembershipByHousehold, currentSeason },
   );
 
   // Every ops person with zero matched-and-unmatched assignments/waitlist entries above is not
@@ -452,7 +559,10 @@ async function main() {
       `unmatched ${plan.assignmentSkips.filter((s) => s.skipped === 'unmatched').length} assignment(s) across ${unmatchedByPerson.size} holder(s)`,
   );
   if (noCurrentMembership.length > 0) {
-    console.log(`ops-assets: WARNING ${noCurrentMembership.length} row(s) matched a member with no current-season membership (unexpected, skipped)`);
+    console.log(
+      `ops-assets: WARNING ${noCurrentMembership.length} row(s) matched a member whose household has no current (most-recently-paid, ` +
+        `non-stale) membership -- missing, or last paid ${STALE_MEMBERSHIP_DAYS}+ days ago (unexpected, skipped)`,
+    );
   }
   console.log(`ops-assets: ${plan.waitlistRows.length} asset-waitlist row(s) to import, ${plan.waitlistSkips.length} skipped`);
   console.log(`ops-assets: unmatched-holders report written to ${UNMATCHED_REPORT_PATH}`);

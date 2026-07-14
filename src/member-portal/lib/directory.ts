@@ -10,7 +10,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 import type { DirectoryVisibility } from './household';
 
 /** A stored E.164 `+1` number (10 digits after the country code), the shape `profile.ts`'s own
- *  `validatePhone` accepts and the only one this club's members have. */
+ *  `validatePhone` (and the MW import) produce for every parseable number, and the only one this
+ *  club's members have when their phone parsed at write time. */
 const US_E164 = /^\+1(\d{3})(\d{3})(\d{4})$/;
 
 /**

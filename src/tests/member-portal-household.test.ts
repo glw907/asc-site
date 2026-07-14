@@ -42,6 +42,27 @@ describe('addHouseholdMember', () => {
     const insert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
     expect(insert?.args).toEqual([id, 'hh-1', 'Kid Scratch', null, null, '2016-03-01']);
   });
+
+  it('lowercases the email and normalizes a messy phone to E.164', async () => {
+    const { db, calls } = fakeD1();
+    const id = await addHouseholdMember(db, 'hh-1', { name: 'Kid Scratch', email: 'Kid@Example.COM', phone: '(907) 555-0100', birthdate: null });
+    const insert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect(insert?.args).toEqual([id, 'hh-1', 'Kid Scratch', 'kid@example.com', '+19075550100', null]);
+  });
+
+  it('stores an unparseable phone trimmed raw rather than refusing', async () => {
+    const { db, calls } = fakeD1();
+    const id = await addHouseholdMember(db, 'hh-1', { name: 'Kid Scratch', email: null, phone: '  call the office  ', birthdate: null });
+    const insert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect(insert?.args).toEqual([id, 'hh-1', 'Kid Scratch', null, 'call the office', null]);
+  });
+
+  it('recases an all-caps name', async () => {
+    const { db, calls } = fakeD1();
+    const id = await addHouseholdMember(db, 'hh-1', { name: 'JOHN SMITH', email: null, phone: null, birthdate: null });
+    const insert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect(insert?.args).toEqual([id, 'hh-1', 'John Smith', null, null, null]);
+  });
 });
 
 describe('removeHouseholdMember', () => {

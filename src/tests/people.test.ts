@@ -12,6 +12,16 @@ describe('ensureMember', () => {
     expect(calls.some((c) => c.sql.startsWith('INSERT'))).toBe(false);
   });
 
+  it('matches an existing row against the normalized (lowercased) email', async () => {
+    const { db, calls } = fakeD1({
+      firstResults: { 'FROM members WHERE email': { id: 'mem-1', household_id: 'hh-1' } },
+    });
+    const result = await ensureMember(db, { name: 'Jamie Rivera', email: 'Jamie@Example.COM' });
+    expect(result).toEqual({ memberId: 'mem-1', householdId: 'hh-1', created: false });
+    const select = calls.find((c) => c.sql.startsWith('SELECT id, household_id'));
+    expect(select?.args).toEqual(['jamie@example.com']);
+  });
+
   it('never overwrites an existing member\'s name/phone, even when the call args differ', async () => {
     const { db, calls } = fakeD1({
       firstResults: { 'FROM members WHERE email': { id: 'mem-1', household_id: 'hh-1' } },
@@ -44,5 +54,44 @@ describe('ensureMember', () => {
     await ensureMember(db, { name: 'No Phone', email: 'nophone@example.com' });
     const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
     expect((memberInsert?.args as unknown[])[4]).toBeNull();
+  });
+
+  it('lowercases the email for both the lookup and a fresh insert', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM members WHERE email': null } });
+    const result = await ensureMember(db, { name: 'Jamie Rivera', email: 'Jamie@Example.COM' });
+    const select = calls.find((c) => c.sql.startsWith('SELECT id, household_id'));
+    expect(select?.args).toEqual(['jamie@example.com']);
+    const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect(memberInsert?.args).toEqual([result.memberId, result.householdId, 'Jamie Rivera', 'jamie@example.com', null]);
+  });
+
+  it('normalizes a messy phone number to E.164 on a fresh insert', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM members WHERE email': null } });
+    await ensureMember(db, { name: 'Jamie Rivera', email: 'jamie@example.com', phone: '(907) 555-0100' });
+    const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect((memberInsert?.args as unknown[])[4]).toBe('+19075550100');
+  });
+
+  it('stores an unparseable phone trimmed raw rather than refusing', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM members WHERE email': null } });
+    await ensureMember(db, { name: 'Jamie Rivera', email: 'jamie@example.com', phone: '  call the office  ' });
+    const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect((memberInsert?.args as unknown[])[4]).toBe('call the office');
+  });
+
+  it('recases an all-caps name on a fresh insert, for both the member and the household', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM members WHERE email': null } });
+    const result = await ensureMember(db, { name: 'JOHN SMITH', email: 'john@example.com' });
+    const householdInsert = calls.find((c) => c.sql.startsWith('INSERT INTO households'));
+    expect(householdInsert?.args).toEqual([result.householdId, 'John Smith']);
+    const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect((memberInsert?.args as unknown[])[2]).toBe('John Smith');
+  });
+
+  it('passes an already-clean name, email, and phone through byte-identical', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM members WHERE email': null } });
+    const result = await ensureMember(db, { name: 'Jamie Rivera', email: 'jamie@example.com', phone: '+19075551234' });
+    const memberInsert = calls.find((c) => c.sql.startsWith('INSERT INTO members'));
+    expect(memberInsert?.args).toEqual([result.memberId, result.householdId, 'Jamie Rivera', 'jamie@example.com', '+19075551234']);
   });
 });

@@ -1,8 +1,15 @@
 // The portal's own profile update (design doc's "4. Profile"): the lean fields only (email,
 // phone, birthdate), matching 0005_member_domain's own `members` columns. Validation lives here
 // (a plain typed-result function, this codebase's own convention: `class-form-input.ts`'s own
-// header), never thrown; the route's own action turns a refusal into a form error.
+// header), never thrown; the route's own action turns a refusal into a form error. Email and
+// phone are also normalized here via `member-normalize.js`, the shared rule this codebase's other
+// live write paths apply too (`admin-club/lib/people.ts`, `member-portal/lib/household.ts`) --
+// EXCEPT that this is the one write path that keeps a validation error for an unparseable phone
+// (the ruling below): `ensureMember` (public signup) and `addHouseholdMember` stay lenient because
+// blocking a stranger's signup or a primary adding a covered dependent over a phone format is the
+// wrong trade; a member editing their own profile can take a moment to fix a malformed number.
 import type { D1Database } from '@cloudflare/workers-types';
+import { normalizeEmail, normalizePhoneE164 } from '$admin-club/lib/member-normalize.js';
 
 /** A user-facing refusal, matching `offers.ts`/`enrollments.ts`'s own `{ error }` shape so every
  *  portal write path answers refusals the same way. */
@@ -10,28 +17,31 @@ export interface ProfileActionError {
   error: string;
 }
 
-/** E.164: a leading `+`, then 8-15 digits total (the ITU's own length bound), no other
- *  characters — the schema's own `phone` column comment ("E.164 stored, formatted on render",
- *  design doc's own "4. Profile"). */
-const E164_PATTERN = /^\+[1-9]\d{7,14}$/;
-
-/** Validate a phone number is E.164-shaped, or refuse with a plain-words reason. An empty string
- *  is valid (the field is optional, matching `members.phone`'s own nullability). */
+/** Validate and normalize a phone number for storage (`member-normalize.js`'s
+ *  `normalizePhoneE164`). An empty string is valid (`ok: true, value: null`, the field is
+ *  optional, matching `members.phone`'s own nullability). Anything `normalizePhoneE164` can parse
+ *  (a bare 10-digit number, an already-E.164 number, a formatted number) stores its normalized
+ *  E.164 form. A phone that does NOT parse refuses with a plain-words reason: unlike
+ *  `ensureMember`/`addHouseholdMember`, which must never block a signup or a household add over a
+ *  phone format and store the trimmed raw value instead, the portal's own profile-edit form is
+ *  the one place a member can fix a malformed number before saving. */
 export function validatePhone(phone: string): { ok: true; value: string | null } | ProfileActionError {
   const trimmed = phone.trim();
   if (!trimmed) return { ok: true, value: null };
-  if (!E164_PATTERN.test(trimmed)) {
-    return { error: 'Enter a phone number with a country code, like +19075551234.' };
+  const normalized = normalizePhoneE164(trimmed);
+  if (normalized === null) {
+    return { error: 'Enter a valid phone number, like 9075551234 or +19075551234.' };
   }
-  return { ok: true, value: trimmed };
+  return { ok: true, value: normalized };
 }
 
 /** A plain, permissive email shape check (this codebase's own bar, matching the public
  *  class-signup form's own bare `type="email"` input — no stricter check anywhere else in this
- *  domain). An empty string is valid: a covered dependent may have no email on file (0005's own
- *  schema comment). */
+ *  domain), over the normalized value (`member-normalize.js`'s `normalizeEmail`: trimmed,
+ *  lowercased). An empty string is valid: a covered dependent may have no email on file (0005's
+ *  own schema comment). */
 function validateEmail(email: string): { ok: true; value: string | null } | ProfileActionError {
-  const trimmed = email.trim();
+  const trimmed = normalizeEmail(email);
   if (!trimmed) return { ok: true, value: null };
   if (!trimmed.includes('@') || trimmed.startsWith('@') || trimmed.endsWith('@')) {
     return { error: 'Enter a valid email address.' };

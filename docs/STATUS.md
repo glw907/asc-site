@@ -1,6 +1,34 @@
 # asc-site status
 
-**ROUND 5 EXTENDED (2026-07-13 evening, this repo's first live session; Geoff live-reviewed
+**THE MEMBERSHIPWORKS DATA IMPORT IS LIVE (2026-07-13 night session, Geoff live throughout):
+the real asc-club now holds the club's COMPLETE MW record — 148 households, 285 members (all
+with `mw_account_id` provenance, migration 0020; the one pet row refused), 235 membership rows
+spanning seasons 2024-2026 with REAL payment facts (dates, Stripe/PayPal refs, true amounts
+incl. discounts and comps; the July-7 paid_at-from-renewal-date approximation fully retired,
+incl. one delete of a fully-refunded membership), 15 classes (10 historical instances minted),
+172 enrollments with >95% exact attendee identity from MW's per-event rosters (signup answers +
+check-ins in audit provenance), and 89 asset assignments (the 3 formerly-unmatched holders
+resolved: one by sub-member email, two by the new ops-person→MW-account override map).
+Machinery: `scripts/import/mw-members.mjs` v2 (six phases + accounting pre-processing + roster
+identification, idempotent — post-apply re-run plans ZERO changes; 915 tests), built by a
+workflow (4 implementers + 2 Opus review lenses) plus five conductor-driven fix rounds off real
+dry-runs. Sources committed age-encrypted at `data/membershipworks/` (members, canon accounting
+export, 14 attendee rosters; plaintext machine-local only); pre-import backup at
+`~/.local/asc-data/backups/`. Rulings recorded in CLAUDE.md: asc-club schema fully evolvable
+(never write around it), encrypted exports in-repo, normalization on every write path (emails
+lower, phones E.164, conservative name recasing — live paths done: ensureMember, portal
+profile/household; portal profile still validates unparseable phones). ROADMAP.md born:
+`qbo-integration` logged as the phase-2 accounting project (ledger-shaped transactions table;
+Geoff's ruling). FOR GEOFF/COMMITTEE: (1) the Wright household + Elayne C Hunter hold active
+asset assignments but memberships stale >400 days — 6 assignment rows correctly skipped until
+renewal or a hand-recorded payment; (2) Jerry Edward Amundsen's fully-refunded May-2026
+membership row was deleted per accounting-is-canon; (3) Joseph Oliver's two-tier 2024
+transaction ruled family (override in-script). NEXT: the unified-signup brainstorm (Geoff
+authorized Fable time), the .page-cta rollout behind ratification, the round-5 settle (owed
+list at the education arc log's foot), and the admin review round (+ Geoff's new ask: a spot
+for both Members and Memberships, or one household-grouped screen + a money/renewals view).**
+
+**PRIOR (ROUND 5 EXTENDED, 2026-07-13 evening, this repo's first live session; Geoff live-reviewed
 throughout, then called for a state save ahead of a context clear): the education page grew
 its LIVE CLASS SCHEDULE (Geoff's ask, mirroring the old site's table) — a `class-schedule`
 island in the registration band, quiet grid rows reading asc-club through a remote query,

@@ -38,3 +38,6 @@ test-results/
 # scratch tool for the pass that wrote it, not shipped tooling).
 scripts/_*-tmp.mjs
 .review-shots/
+
+# MW export plaintext must never land in git; only the .age copies are committed
+data/membershipworks/*.csv

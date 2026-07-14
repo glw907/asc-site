@@ -71,6 +71,26 @@ the change), then the one-check gate above. The family five-viewport bar (320, 3
 is the CI-enforced form of it, and any change that alters rendering must regenerate its baselines
 in the same change, never leave them stale.
 
+## The asc-club schema is fully evolvable — never write around it (Geoff, 2026-07-13)
+
+`asc-club` is this application's own database, and its schema serves the application, not the
+other way around. When a feature or a data fix wants a different shape, change the schema with a
+real migration (scratch-proven, forward/rollback/verify, then applied to the live database) —
+never absorb a schema shortcoming into application code. Writing around bad database design in
+code is the named anti-pattern; optimal database design at all times is the standard. This
+freedom is asc-club's alone: cairn's engine database (`AUTH_DB`, cairn-cms's own migrations)
+belongs to the cairn package, and `EVENTS_DB` stays read-only per the rule below.
+
+## Member-data imports (MembershipWorks)
+
+Source exports are committed to this repo age-encrypted under `data/membershipworks/`
+(`*.csv.age`, encrypted to the ASC age key; decrypt with `age -d -i $AGE_KEY_FILE`, the key at
+`~/.config/age/asc-key.txt`, never committed). Plaintext copies live machine-local only at
+`~/.local/asc-data/`; never commit a plaintext export. Import scripts live in `scripts/import/`
+(verified-import-script pattern: dry-run plan, audit trail, verify.sql, rollback). Member data
+regularizes on every write path, import and live alike: emails lowercase, phones E.164 (+1
+default), names conservatively recased.
+
 ## The D1 EVENTS_DB rule — read-only, never migrate it here
 
 `EVENTS_DB` (bound in `wrangler.toml`, database `asc-ops`) is the club's own ops stack's

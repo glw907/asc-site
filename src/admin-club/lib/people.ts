@@ -6,6 +6,7 @@
 // by email so the same person's second signup or a repeat instructor assignment finds their
 // existing row rather than minting a duplicate.
 import type { D1Database } from '@cloudflare/workers-types';
+import { normalizeEmail, normalizeNameCaps, normalizePhoneE164 } from './member-normalize.js';
 
 /** `ensureMember`'s input: the minimal shape a public form or an admin action can supply. `phone`
  *  is optional: not every caller collects one (the classes admin's instructor assignment form
@@ -38,21 +39,32 @@ export interface EnsureMemberResult {
  * household with `primary_member_id` unset, insert its first member, then set the household's
  * `primary_member_id` to that member, so a caller never observes a household with no primary
  * member or a member with no household.
+ *
+ * The lookup itself matches on the normalized email (`member-normalize.js`'s `normalizeEmail`),
+ * since that is what a prior call, live or imported, would have stored. A fresh row's name,
+ * email, and phone are normalized the same way this codebase's other live write paths do
+ * (`member-portal/lib/profile.ts`, `member-portal/lib/household.ts`); a phone that does not
+ * parse to E.164 is never a reason to refuse a signup, so it stores trimmed as given rather than
+ * blocking the caller.
  */
 export async function ensureMember(db: D1Database, input: EnsureMemberInput): Promise<EnsureMemberResult> {
+  const email = normalizeEmail(input.email);
   const existing = await db
     .prepare('SELECT id, household_id FROM members WHERE email = ?1 LIMIT 1')
-    .bind(input.email)
+    .bind(email)
     .first<{ id: string; household_id: string }>();
   if (existing) return { memberId: existing.id, householdId: existing.household_id, created: false };
+
+  const name = normalizeNameCaps(input.name);
+  const phone = input.phone ? (normalizePhoneE164(input.phone) ?? input.phone.trim()) : null;
 
   const householdId = crypto.randomUUID();
   const memberId = crypto.randomUUID();
   await db.batch([
-    db.prepare('INSERT INTO households (id, name) VALUES (?1, ?2)').bind(householdId, input.name),
+    db.prepare('INSERT INTO households (id, name) VALUES (?1, ?2)').bind(householdId, name),
     db
       .prepare('INSERT INTO members (id, household_id, name, email, phone) VALUES (?1, ?2, ?3, ?4, ?5)')
-      .bind(memberId, householdId, input.name, input.email, input.phone ?? null),
+      .bind(memberId, householdId, name, email, phone),
     db.prepare('UPDATE households SET primary_member_id = ?1 WHERE id = ?2').bind(memberId, householdId),
   ]);
 

@@ -4,6 +4,7 @@
 // reads them for real. `directory_visibility` lives on `members` (0005's own schema); this module
 // is the one place that reads and writes it from the member-facing side.
 import type { D1Database } from '@cloudflare/workers-types';
+import { normalizeEmail, normalizeNameCaps, normalizePhoneE164 } from '$admin-club/lib/member-normalize.js';
 
 /** The schema's own three-state directory visibility (0005_member_domain's `CHECK`). */
 export type DirectoryVisibility = 'visible' | 'partial' | 'hidden';
@@ -79,16 +80,22 @@ export async function listHouseholdMembers(db: D1Database, householdId: string):
 /** Add a new household member (the welcome page's "add each household member" promise,
  *  fulfilled from the household screen: design doc's own "5. Household"). Email is optional
  *  (a covered child may have none, 0005's own schema comment); a household member added here has
- *  no `directory_visibility` opinion yet, so it defaults to the schema's own `'partial'`. */
+ *  no `directory_visibility` opinion yet, so it defaults to the schema's own `'partial'`. Name,
+ *  email, and phone are normalized the same way this codebase's other live write paths do
+ *  (`member-normalize.js`); a phone that does not parse to E.164 is never a reason to refuse the
+ *  add, so it stores trimmed as given rather than blocking the primary. */
 export async function addHouseholdMember(
   db: D1Database,
   householdId: string,
   input: { name: string; email: string | null; phone: string | null; birthdate: string | null },
 ): Promise<string> {
   const id = crypto.randomUUID();
+  const name = normalizeNameCaps(input.name);
+  const email = input.email ? normalizeEmail(input.email) : null;
+  const phone = input.phone ? (normalizePhoneE164(input.phone) ?? input.phone.trim()) : null;
   await db
     .prepare('INSERT INTO members (id, household_id, name, email, phone, birthdate) VALUES (?1, ?2, ?3, ?4, ?5, ?6)')
-    .bind(id, householdId, input.name, input.email, input.phone, input.birthdate)
+    .bind(id, householdId, name, email, phone, input.birthdate)
     .run();
   return id;
 }
