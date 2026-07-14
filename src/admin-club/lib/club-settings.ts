@@ -95,8 +95,8 @@ const TIER_PRICE_KEY: Record<MembershipTier, string> = {
 };
 
 /** The migration's own seed values: used only if a row is ever missing, which should not happen
- *  post-migration. Matches `demo-members.ts`'s `TIER_PRICING` fixture exactly, though that
- *  constant stays fixture-only; this is the real, admin-editable source once a caller reads it. */
+ *  post-migration. This is the real, admin-editable source; a caller never hardcodes a tier
+ *  price of its own. */
 const DEFAULT_TIER_PRICE: Record<MembershipTier, number> = { individual: 250, family: 500, 'young-adult': 100 };
 
 /** The three membership tiers' current prices, whole dollars: the join/renewal flow's own read

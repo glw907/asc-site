@@ -99,24 +99,53 @@ describe('dedupeEmails', () => {
   });
 });
 
+function daysAgo(days: number): string {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 describe('currentMemberEmails', () => {
-  it('includes a current member with an email on file', () => {
-    expect(currentMemberEmails()).toContain('erik.larsen@example.com');
+  it('includes a non-archived member with an email in a current household', async () => {
+    const { db } = fakeD1({
+      allResults: {
+        'FROM households h': [{ household_id: 'hh-larsen', paid_at: daysAgo(10) }],
+        'FROM members': [{ email: 'erik.larsen@example.com' }],
+      },
+    });
+    await expect(currentMemberEmails(db)).resolves.toContain('erik.larsen@example.com');
   });
 
-  it('excludes a lapsed household (no current-season membership row)', () => {
-    expect(currentMemberEmails()).not.toContain('tom.whitfield@example.com');
-    expect(currentMemberEmails()).not.toContain('ada.okonkwo@example.com');
+  it('excludes a lapsed household entirely: the members query never runs', async () => {
+    const { db, calls } = fakeD1({
+      allResults: { 'FROM households h': [{ household_id: 'hh-whitfield', paid_at: daysAgo(400) }] },
+    });
+    const emails = await currentMemberEmails(db);
+    expect(emails).toEqual([]);
+    expect(calls.some((c) => c.sql.startsWith('SELECT email FROM members'))).toBe(false);
   });
 
-  it('excludes an individually archived member even though their household is current', () => {
-    // Vera Petrova: archivedAt set, household (the Petrovs) otherwise current.
-    expect(currentMemberEmails()).not.toContain('vera.petrova@example.com');
-    expect(currentMemberEmails()).toContain('dimitri.petrov@example.com');
+  it('scopes the member query to archived_at IS NULL, so an archived member is excluded by construction', async () => {
+    const { db, calls } = fakeD1({
+      allResults: {
+        'FROM households h': [{ household_id: 'hh-petrov', paid_at: daysAgo(10) }],
+        'FROM members': [{ email: 'dimitri.petrov@example.com' }],
+      },
+    });
+    await currentMemberEmails(db);
+    const memberCall = calls.find((c) => c.sql.startsWith('SELECT email FROM members'));
+    expect(memberCall?.sql).toContain('archived_at IS NULL');
   });
 
-  it('answers a deduplicated list (no repeats even though the fixture has none by construction)', () => {
-    const emails = currentMemberEmails();
+  it('answers a deduplicated list', async () => {
+    const { db } = fakeD1({
+      allResults: {
+        'FROM households h': [
+          { household_id: 'hh-a', paid_at: daysAgo(10) },
+          { household_id: 'hh-b', paid_at: daysAgo(5) },
+        ],
+        'FROM members': [{ email: 'shared@example.com' }, { email: 'shared@example.com' }],
+      },
+    });
+    const emails = await currentMemberEmails(db);
     expect(new Set(emails).size).toBe(emails.length);
   });
 });

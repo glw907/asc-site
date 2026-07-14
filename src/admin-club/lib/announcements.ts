@@ -12,6 +12,7 @@
 // foreign key (the same reasoning `events`/`classes` never reference a git-owned concept).
 import type { D1Database } from '@cloudflare/workers-types';
 import { deriveExcerpt } from '@glw907/cairn-cms/delivery/data';
+import { renewalExpiryFrom } from '$member-auth/lib/standing';
 import { sendClubEmail, type EmailBindingEnv } from './club-email';
 import {
   ANNOUNCE_CHANNELS,
@@ -21,7 +22,6 @@ import {
   type DiscordBindingEnv,
   type DiscordChannel,
 } from './discord';
-import { members as demoMembers, segmentForMember } from './demo-members';
 
 /** The Announce form's own "Summary" prefill budget: wider than `deriveExcerpt`'s general-purpose
  *  200-char default (a list card's blind teaser), since this text is reviewed and edited by a
@@ -168,17 +168,49 @@ export function dedupeEmails(emails: readonly string[]): string[] {
   return [...byKey.values()];
 }
 
+interface CurrentHouseholdGroundingRow {
+  household_id: string;
+  paid_at: string;
+}
+
 /**
- * Every current member's email, deduplicated (see {@link dedupeEmails}), in fixture declaration
- * order. Reads `demo-members.ts`'s own `segmentForMember` (that module's header explains why it,
- * not `member-auth/lib/standing.ts`'s rolling-year derivation, is "the standing logic the
- * Members screen uses": the live `/admin/club/members` screen reads this same fixture, since
- * pass 2.2's real D1 member store has not landed yet). A member with no email on file (a covered
- * child, design choice 2 of that module's header) is silently skipped, never sent to.
+ * Every non-archived member's email in a household with `'current'` standing (a household's
+ * most recently paid, non-refunded `memberships` row's `paid_at` plus one year has not yet
+ * passed): `member-auth/lib/standing.ts`'s own {@link renewalExpiryFrom} is the one boundary
+ * function, reused rather than re-derived, so this reads "current" exactly the way
+ * `getHouseholdStanding` does. Two set-based queries -- the grounding row per household, then
+ * the eligible members -- never a per-household round trip. A member with no email on file (a
+ * covered child) is silently skipped, never sent to.
  */
-export function currentMemberEmails(): string[] {
-  const current = demoMembers.filter((member) => member.email && segmentForMember(member.id) === 'current');
-  return dedupeEmails(current.map((member) => member.email));
+export async function currentMemberEmails(db: D1Database): Promise<string[]> {
+  const { results: grounding } = await db
+    .prepare(
+      `SELECT h.id AS household_id, gm.paid_at
+       FROM households h
+       JOIN memberships gm ON gm.id = (
+         SELECT id FROM memberships mm
+         WHERE mm.household_id = h.id AND mm.paid_at IS NOT NULL AND mm.refunded_at IS NULL
+         ORDER BY mm.paid_at DESC LIMIT 1
+       )`,
+    )
+    .all<CurrentHouseholdGroundingRow>();
+
+  const now = new Date();
+  const currentHouseholdIds = grounding
+    .filter((row) => now <= renewalExpiryFrom(row.paid_at))
+    .map((row) => row.household_id);
+  if (currentHouseholdIds.length === 0) return [];
+
+  const placeholders = currentHouseholdIds.map((_, index) => `?${index + 1}`).join(', ');
+  const { results: memberRows } = await db
+    .prepare(
+      `SELECT email FROM members
+       WHERE archived_at IS NULL AND email IS NOT NULL AND household_id IN (${placeholders})`,
+    )
+    .bind(...currentHouseholdIds)
+    .all<{ email: string }>();
+
+  return dedupeEmails(memberRows.map((row) => row.email));
 }
 
 /** The Cloudflare Email Sending API's own combined to/cc/bcc cap per call (50); `sendAnnouncementEmails`

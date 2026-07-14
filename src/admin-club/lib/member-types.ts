@@ -1,9 +1,6 @@
 // The member-domain vocabulary: three type unions every membership consumer needs (tier,
-// directory visibility, batch-email segment), extracted from `demo-members.ts` (Task 1,
-// `docs/plans/2026-07-14-membership-admin.md`) so a type-only importer never pulls in that
-// fixture's data or its eventual live-store replacement. `demo-members.ts` re-exports these three
-// so its own remaining (data) importers see no change; this module is the one definition once
-// `demo-members.ts` itself is deleted (Task 8).
+// directory visibility, batch-email segment), the one definition every live store and screen
+// imports (`docs/plans/2026-07-14-membership-admin.md`).
 
 /** The three membership tiers, source-verified against the club's published pricing:
  *  `individual` ($250/year, one person, one class credit), `family` ($500/year, the whole

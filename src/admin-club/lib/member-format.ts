@@ -1,7 +1,8 @@
-// The member-domain chip vocabularies the Members list and detail screens read off
-// demo-members.ts's data. Kept out of demo-members.ts itself, which stays data-and-derivation
-// only (no markup or CSS class strings), and out of ui.ts, which holds the screen-agnostic
-// primitives (`ChipStyle`, the civil-date and dollar formatters) these records build on.
+// The member-domain chip vocabularies the Members list and household desk read off live
+// `asc-club` data. Kept out of the stores themselves (`households-store.ts`, `money-store.ts`
+// stay data-and-derivation only, no markup or CSS class strings) and out of ui.ts, which holds
+// the screen-agnostic primitives (`ChipStyle`, the civil-date and dollar formatters) these
+// records build on.
 import type { ChipStyle } from './ui';
 import type { DirectoryVisibility, MemberSegment, MembershipTier } from './member-types';
 import type { HouseholdStandingStatus } from './households-store';
@@ -26,8 +27,8 @@ export const SEGMENT_CHIP: Record<MemberSegment, ChipStyle> = {
 export const PAYMENT_PENDING_LABEL = 'Payment due';
 export const PAYMENT_PENDING_CLS = 'text-warning font-medium';
 
-/** Display labels for the three membership tiers (the household's own membership tier, not a
- *  per-member fact; see demo-members.ts's design choice 2). */
+/** Display labels for the three membership tiers (a household's own membership tier, not a
+ *  per-member fact: a `Membership` is one household's per-season purchase). */
 export const TIER_LABEL: Record<MembershipTier, string> = {
   individual: 'Individual',
   family: 'Family',

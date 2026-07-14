@@ -6,7 +6,7 @@
 import type { PageServerLoad } from './$types';
 import { requireSession } from '@glw907/cairn-cms/sveltekit';
 import { resolveClubDb } from '$admin-club/lib/club-roles';
-import { pendingSignupReviews } from '$admin-club/lib/demo-members';
+import { pendingSignupReviews } from '$admin-club/lib/signup-reviews-store';
 import { listPendingAssetRequests } from '$member-portal/lib/assets';
 
 /** Offers nearing expiry: unresolved, expiring within the next 24 hours — the admin's own early
@@ -24,7 +24,8 @@ export const load: PageServerLoad = async (event) => {
   const soon = new Date(now.getTime() + NEAR_EXPIRY_HOURS * 60 * 60 * 1000);
   const toSqliteDatetime = (d: Date) => d.toISOString().slice(0, 19).replace('T', ' ');
 
-  const [pendingRequests, nearExpiryRow] = await Promise.all([
+  const [signupReviews, pendingRequests, nearExpiryRow] = await Promise.all([
+    pendingSignupReviews(db),
     listPendingAssetRequests(db),
     db
       .prepare('SELECT COUNT(*) AS n FROM class_offers WHERE resolved IS NULL AND expires_at > ?1 AND expires_at <= ?2')
@@ -33,7 +34,7 @@ export const load: PageServerLoad = async (event) => {
   ]);
 
   return {
-    pendingSignups: pendingSignupReviews().length,
+    pendingSignups: signupReviews.length,
     pendingRequests: pendingRequests.length,
     offersNearExpiry: nearExpiryRow?.n ?? 0,
   };

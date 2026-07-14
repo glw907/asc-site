@@ -186,7 +186,15 @@ describe('/admin/club/announce/[id] send action', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
+  // A current household plus one member with an email on file, so `currentMemberEmails`'s own
+  // grounding-and-members query pair has a real recipient to find (the emailAll tests below).
+  const asAdmin = {
+    allResults: {
+      'FROM club_roles': [{ role: 'club-admin' }],
+      'FROM households h': [{ household_id: 'hh-larsen', paid_at: new Date().toISOString().slice(0, 10) }],
+      'FROM members': [{ email: 'erik.larsen@example.com' }],
+    },
+  };
 
   it('refuses an editor with no club role (403), auditing the rejected attempt', async () => {
     const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });

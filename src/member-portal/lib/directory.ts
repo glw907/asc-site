@@ -1,8 +1,8 @@
 // The member directory (design doc's own "member directory" benefit, MembershipWorks absorption
 // item 4): reads `members.directory_visibility` directly off 0005_member_domain's own schema, the
 // same three-state column `household.ts`'s `setDirectoryVisibility` writes. `hidden` and archived
-// members never leave this module (design choice 6 in `demo-members.ts`'s header: an archived
-// member is excluded from the directory by default, the same as every other list). `partial`
+// members never leave this module: an archived member is excluded from the directory by default,
+// the same as every other list. `partial`
 // members appear by name only; `visible` members carry their one email and one phone too. There
 // is no per-field suppression column, so a `partial` row's contact fields are simply `null` here
 // rather than the caller having to know which state means what.

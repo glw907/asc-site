@@ -1,7 +1,6 @@
 // The Club section's Members screen (household-grouped list; Task 4, docs/plans/2026-07-14-
 // membership-admin.md): reads `listHouseholds` off the live `asc-club` CLUB_DB, replacing the
-// fixture-backed demo-members.ts read this route previously carried (see that module's own
-// header, now superseded for this screen). Search, standing-segment, and archived filtering all
+// fixture-backed read this route previously carried. Search, standing-segment, and archived filtering all
 // happen server-side: `listHouseholds` computes a matched member's own email hit as part of its
 // one query, and `HouseholdListRow`'s member chips deliberately never expose a raw email to the
 // client, so a client-side re-filter could never reproduce an email match. The `q`/`segment`/
