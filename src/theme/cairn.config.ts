@@ -41,6 +41,12 @@ export const clubAdminNav: AdminNavSection = {
     { label: 'Events', icon: 'calendar', href: '/admin/club/events' },
     { label: 'Classes', icon: 'clipboard-list', href: '/admin/club/classes' },
     { label: 'Members', icon: 'users', href: '/admin/club/members' },
+    // Task 7 (docs/plans/2026-07-14-membership-admin.md): the season-flat Money & Renewals
+    // screen, beside Members rather than off in Club Settings, since it is a routine read/write
+    // screen a volunteer visits often, not a config page. Every allowlisted icon is already
+    // claimed (this file's own header on Announce's reused 'inbox' names the same constraint);
+    // 'table' fits the screen's own season-flat table best.
+    { label: 'Money', icon: 'table', href: '/admin/club/money' },
     { label: 'Signups', icon: 'list', href: '/admin/club/signups' },
     { label: 'Assets', icon: 'package', href: '/admin/club/assets' },
     // portal-capstone: the asset-request review inbox (the signup queue's own pattern).
