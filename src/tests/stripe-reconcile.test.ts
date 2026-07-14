@@ -341,7 +341,7 @@ describe('reconcileCheckoutSession: donation', () => {
 });
 
 describe('reconcileCheckoutSession: join', () => {
-  const JOIN_MEMBERSHIP_ROW = { id: 'mem-join-1', household_id: 'hh-join-1', tier: 'family' as const, season: 2026, price_paid: 500, paid_at: null };
+  const JOIN_MEMBERSHIP_ROW = { id: 'mem-join-1', household_id: 'hh-join-1', tier: 'family' as const, season: 2026, paid_at: null };
   const HOUSEHOLD_ROW = { name: 'The Rivera Household' };
   const PURCHASER_ROW = { name: 'Jamie Rivera', email: 'jamie@example.com' };
   const JOIN_WELCOME_TEMPLATE_ROW = {
@@ -360,9 +360,9 @@ describe('reconcileCheckoutSession: join', () => {
     updated_at: '2026-07-13 00:00:00',
     updated_by: 'authored:unified-signup',
   };
-  const CLASS_ROWS: Record<string, { class_name: string; fee: number }> = {
-    'enr-covered-1': { class_name: 'Basic Sailing', fee: 50 },
-    'enr-paid-1': { class_name: 'Advanced Racing', fee: 100 },
+  const ENROLLMENT_ROWS: Record<string, { id: string; class_name: string; household_id: string }> = {
+    'enr-covered-1': { id: 'enr-covered-1', class_name: 'Basic Sailing', household_id: 'hh-join-1' },
+    'enr-paid-1': { id: 'enr-paid-1', class_name: 'Advanced Racing', household_id: 'hh-join-1' },
   };
   const JOIN_SESSION: StripeCheckoutSession = {
     id: 'cs_join_1',
@@ -374,17 +374,21 @@ describe('reconcileCheckoutSession: join', () => {
       covered_enrollment_ids: 'enr-covered-1',
       grant_credits: '1',
       purchaser_member_id: 'member-purchaser-1',
+      dues_cents: '50000',
+      paid_fee_cents: '10000',
     },
   };
 
-  function fakeJoinDb() {
+  function fakeJoinDb(enrollmentRows: Record<string, { id: string; class_name: string; household_id: string }> = ENROLLMENT_ROWS) {
     return fakeD1({
       firstResults: {
         'FROM memberships WHERE id': JOIN_MEMBERSHIP_ROW,
-        'FROM class_enrollments ce JOIN classes c': (args: unknown[]) => CLASS_ROWS[args[0] as string] ?? null,
         'FROM households WHERE id': HOUSEHOLD_ROW,
         'FROM members WHERE id': PURCHASER_ROW,
         'FROM email_templates WHERE id': (args: unknown[]) => (args[0] === 'join_welcome' ? JOIN_WELCOME_TEMPLATE_ROW : BOARD_TEMPLATE_ROW),
+      },
+      allResults: {
+        'FROM class_enrollments ce': (args: unknown[]) => args.map((id) => enrollmentRows[id as string]).filter((row): row is { id: string; class_name: string; household_id: string } => row !== undefined),
       },
     });
   }
@@ -394,6 +398,10 @@ describe('reconcileCheckoutSession: join', () => {
     const { db, calls } = fakeJoinDb();
     const outcome = await reconcileCheckoutSession(db, { EMAIL: { send }, PUBLIC_ORIGIN: 'https://dev.aksailingclub.org' }, 'join', 'mem-join-1', JOIN_SESSION);
     expect(outcome).toEqual({ ok: true });
+
+    const claim = calls.find((c) => c.sql.startsWith('INSERT INTO processed_stripe_sessions'));
+    expect(claim?.sql).not.toContain('OR IGNORE');
+    expect(claim?.args).toEqual(['cs_join_1', 'join', 'mem-join-1']);
 
     const update = calls.find((c) => c.sql.startsWith('UPDATE memberships'));
     expect(update?.args).toEqual([JOIN_SESSION.id, 'mem-join-1']);
@@ -431,6 +439,96 @@ describe('reconcileCheckoutSession: join', () => {
     expect(boardNotice.text).toContain('Basic Sailing, Advanced Racing');
   });
 
+  it('composes every mutation -- claim, flip, grant, redemptions, enrollment flips, and the ledger -- into ONE db.batch()', async () => {
+    const send = vi.fn().mockResolvedValue(undefined);
+    const { db } = fakeJoinDb();
+    const batchSpy = vi.spyOn(db, 'batch');
+    const outcome = await reconcileCheckoutSession(db, { EMAIL: { send } }, 'join', 'mem-join-1', JOIN_SESSION);
+    expect(outcome).toEqual({ ok: true });
+    expect(batchSpy).toHaveBeenCalledTimes(1);
+
+    const batched = batchSpy.mock.calls[0][0] as unknown as Array<{ sql: string }>;
+    expect(batched[0].sql).toContain('INSERT INTO processed_stripe_sessions');
+    expect(batched[0].sql).not.toContain('OR IGNORE');
+    expect(batched.some((s) => s.sql.startsWith("UPDATE memberships SET paid_at = datetime('now')"))).toBe(true);
+    expect(batched.some((s) => s.sql.startsWith('INSERT INTO credit_grants'))).toBe(true);
+    expect(batched.some((s) => s.sql.startsWith('INSERT INTO credit_redemptions'))).toBe(true);
+    expect(batched.some((s) => s.sql === 'UPDATE class_enrollments SET fee_paid = 1 WHERE id = ?1')).toBe(true);
+    expect(batched.some((s) => s.sql.startsWith('UPDATE class_enrollments SET fee_paid = 1, stripe_ref'))).toBe(true);
+    expect(batched.some((s) => s.sql.startsWith('INSERT INTO transactions'))).toBe(true);
+    expect(batched.filter((s) => s.sql.startsWith('INSERT INTO transaction_lines'))).toHaveLength(2);
+  });
+
+  it('reads every referenced enrollment in ONE bulk IN query, never a per-id round-trip', async () => {
+    const { db, calls } = fakeJoinDb();
+    await reconcileCheckoutSession(db, {}, 'join', 'mem-join-1', JOIN_SESSION);
+    const bulkReads = calls.filter((c) => c.sql.includes('FROM class_enrollments ce') && c.sql.includes(' IN ('));
+    expect(bulkReads).toHaveLength(1);
+    expect(bulkReads[0]?.args).toEqual(['enr-covered-1', 'enr-paid-1']);
+  });
+
+  it('refuses loudly, writing nothing, when a referenced enrollment does not belong to the membership\'s own household', async () => {
+    const send = vi.fn();
+    const { db, calls } = fakeJoinDb({
+      'enr-covered-1': { id: 'enr-covered-1', class_name: 'Basic Sailing', household_id: 'hh-join-1' },
+      'enr-paid-1': { id: 'enr-paid-1', class_name: 'Advanced Racing', household_id: 'hh-someone-elses' },
+    });
+    const outcome = await reconcileCheckoutSession(db, { EMAIL: { send } }, 'join', 'mem-join-1', JOIN_SESSION);
+    expect(outcome).toEqual({ ok: false, reason: expect.stringContaining("does not belong to membership mem-join-1's household") });
+    expect(send).not.toHaveBeenCalled();
+    expect(calls.some((c) => c.sql.startsWith('UPDATE') || c.sql.startsWith('INSERT'))).toBe(false);
+  });
+
+  it('throws when the snapshotted dues/paid-fee cents do not sum to session.amount_total, writing nothing (the retryable-mismatch path)', async () => {
+    const { db, calls } = fakeJoinDb();
+    await expect(
+      reconcileCheckoutSession(db, {}, 'join', 'mem-join-1', {
+        ...JOIN_SESSION,
+        metadata: { ...JOIN_SESSION.metadata, dues_cents: '49000' } as Record<string, string>,
+      }),
+    ).rejects.toThrow(/ledger: lines sum to/);
+    expect(calls.some((c) => c.sql.startsWith('UPDATE') || c.sql.startsWith('INSERT'))).toBe(false);
+  });
+
+  it('propagates a batch failure (a concurrent delivery colliding on the claim primary key) as a rejected promise', async () => {
+    const throwingDb = {
+      prepare(sql: string) {
+        const stmt = {
+          sql,
+          args: [] as unknown[],
+          bind(...args: unknown[]) {
+            stmt.args = args;
+            return stmt;
+          },
+          async first() {
+            return JOIN_MEMBERSHIP_ROW;
+          },
+          async all() {
+            return { results: [], success: true, meta: {} };
+          },
+        };
+        return stmt;
+      },
+      async batch() {
+        throw new Error('UNIQUE constraint failed: processed_stripe_sessions.session_id');
+      },
+    } as unknown as D1Database;
+
+    await expect(
+      reconcileCheckoutSession(
+        throwingDb,
+        {},
+        'join',
+        'mem-join-1',
+        {
+          ...JOIN_SESSION,
+          amount_total: 50000,
+          metadata: { ...JOIN_SESSION.metadata, enrollment_ids: '', covered_enrollment_ids: '', paid_fee_cents: '' } as Record<string, string>,
+        },
+      ),
+    ).rejects.toThrow('UNIQUE constraint');
+  });
+
   it('grants no credits on a welcome-back renewal (grant_credits=0)', async () => {
     const send = vi.fn().mockResolvedValue(undefined);
     const { db, calls } = fakeJoinDb();
@@ -448,11 +546,10 @@ describe('reconcileCheckoutSession: join', () => {
     expect(welcome.text).not.toContain('class credit');
   });
 
-  it('is a clean no-op when the membership is already paid (idempotent replay)', async () => {
+  it('is a clean no-op when the membership is already paid (idempotent replay), before checking anything else about the session', async () => {
     const send = vi.fn();
     const { db, calls } = fakeD1({
-      firstResults: { 'FROM memberships WHERE id': JOIN_MEMBERSHIP_ROW },
-      runResults: { 'UPDATE memberships SET paid_at': { changes: 0 } },
+      firstResults: { 'FROM memberships WHERE id': { ...JOIN_MEMBERSHIP_ROW, paid_at: '2026-07-13 00:00:00' } },
     });
     const outcome = await reconcileCheckoutSession(db, { EMAIL: { send } }, 'join', 'mem-join-1', JOIN_SESSION);
     expect(outcome).toEqual({ ok: true, reason: expect.stringContaining('already paid') });
@@ -474,11 +571,11 @@ describe('reconcileCheckoutSession: join', () => {
     expect(calls.some((c) => c.sql.startsWith('UPDATE') || c.sql.startsWith('INSERT'))).toBe(false);
   });
 
-  it('handles a solo join with no class picks: dues-only ledger line, no covered/paid enrollment writes', async () => {
+  it('handles a solo join with no class picks: dues-only ledger line, no covered/paid enrollment writes, no bulk read', async () => {
     const send = vi.fn().mockResolvedValue(undefined);
     const { db, calls } = fakeD1({
       firstResults: {
-        'FROM memberships WHERE id': { id: 'mem-join-2', household_id: 'hh-join-2', tier: 'individual' as const, season: 2026, price_paid: 250, paid_at: null },
+        'FROM memberships WHERE id': { id: 'mem-join-2', household_id: 'hh-join-2', tier: 'individual' as const, season: 2026, paid_at: null },
         'FROM households WHERE id': { name: 'The Nguyen Household' },
         'FROM members WHERE id': PURCHASER_ROW,
         'FROM email_templates WHERE id': (args: unknown[]) => (args[0] === 'join_welcome' ? JOIN_WELCOME_TEMPLATE_ROW : BOARD_TEMPLATE_ROW),
@@ -489,11 +586,25 @@ describe('reconcileCheckoutSession: join', () => {
       { EMAIL: { send } },
       'join',
       'mem-join-2',
-      { id: 'cs_join_2', amount_total: 25000, metadata: { kind: 'join', refId: 'mem-join-2', enrollment_ids: '', covered_enrollment_ids: '', grant_credits: '1', purchaser_member_id: 'member-purchaser-1' } },
+      {
+        id: 'cs_join_2',
+        amount_total: 25000,
+        metadata: {
+          kind: 'join',
+          refId: 'mem-join-2',
+          enrollment_ids: '',
+          covered_enrollment_ids: '',
+          grant_credits: '1',
+          purchaser_member_id: 'member-purchaser-1',
+          dues_cents: '25000',
+          paid_fee_cents: '',
+        },
+      },
     );
     expect(outcome).toEqual({ ok: true });
     expect(calls.some((c) => c.sql.startsWith('UPDATE class_enrollments'))).toBe(false);
     expect(calls.some((c) => c.sql.startsWith('INSERT INTO credit_redemptions'))).toBe(false);
+    expect(calls.some((c) => c.sql.includes('FROM class_enrollments ce'))).toBe(false);
     const lineInserts = calls.filter((c) => c.sql.startsWith('INSERT INTO transaction_lines'));
     expect(lineInserts).toHaveLength(1);
     expect(lineInserts[0]?.args).toEqual([expect.any(String), expect.any(String), 'dues', 'Individual Membership -- 2026 season', 25000, 'mem-join-2', null, null]);

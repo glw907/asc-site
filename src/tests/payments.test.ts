@@ -88,6 +88,15 @@ describe('buildCheckoutBody', () => {
     expect(params.get('line_items[0][price_data][unit_amount]')).toBe(String(ARGS.amountCents));
     expect(params.has('line_items[1][price_data][unit_amount]')).toBe(false);
   });
+
+  it('never lets caller metadata collide with the reserved kind/refId keys', () => {
+    const params = new URLSearchParams(
+      buildCheckoutBody({ ...ARGS, metadata: { kind: 'donation', refId: 'evil-id', note: 'hi' } }),
+    );
+    expect(params.get('metadata[kind]')).toBe('class-fee');
+    expect(params.get('metadata[refId]')).toBe('enr-1');
+    expect(params.get('metadata[note]')).toBe('hi');
+  });
 });
 
 describe('createCheckout', () => {

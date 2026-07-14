@@ -288,6 +288,17 @@ async function createJoinCheckout(env: JoinApplyEnv, origin: string, plan: JoinC
         covered_enrollment_ids: plan.coveredEnrollmentIds.join(','),
         grant_credits: plan.grantCredits ? '1' : '0',
         purchaser_member_id: plan.purchaserMemberId,
+        // `reconcileJoin`'s own snapshotted-cents contract (`stripe-reconcile.ts`'s own header):
+        // the dues line and each paid enrollment's own class-fee line are built from these
+        // values at reconcile time, never a re-read of `classes.fee`/`price_paid`, so a settings
+        // or fee change between checkout and webhook delivery can never desync the ledger from
+        // what Stripe actually charged. `paid_fee_cents` is aligned one-to-one with the paid
+        // (uncovered) subset of `enrollment_ids`, in that same order -- true by construction
+        // here, since `plan.paidLines` is built from the identical pick order `plan.enrollmentIds`
+        // itself came from (both callers of this function, the fresh-join and welcome-back paths
+        // alike, build them from the same ordered pass over picks).
+        dues_cents: String(plan.duesCents),
+        paid_fee_cents: plan.paidLines.map((line) => line.amountCents).join(','),
       },
     });
   } catch (err) {

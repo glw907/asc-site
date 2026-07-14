@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateJoinInput } from '../member-signup/lib/validate.js';
+import { MAX_CLASS_PICKS, validateJoinInput } from '../member-signup/lib/validate.js';
 import type { JoinInput } from '../member-signup/lib/types.js';
 
 const TODAY = '2026-07-13';
@@ -123,6 +123,19 @@ describe('validateJoinInput', () => {
       });
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('A class pick refers to a household member that was not entered.');
+    });
+
+    it(`accepts exactly ${MAX_CLASS_PICKS} picks on the purchaser`, () => {
+      const classPicks = Array.from({ length: MAX_CLASS_PICKS }, (_, i) => ({ memberIndex: 0, classId: `class-${i}` }));
+      const result = validateJoinInput(individualInput({ classPicks }), { today: TODAY });
+      expect(result.valid).toBe(true);
+    });
+
+    it(`rejects more than ${MAX_CLASS_PICKS} picks with a friendly message, never truncating silently`, () => {
+      const classPicks = Array.from({ length: MAX_CLASS_PICKS + 1 }, (_, i) => ({ memberIndex: 0, classId: `class-${i}` }));
+      const result = validateJoinInput(individualInput({ classPicks }), { today: TODAY });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain(`You can select up to ${MAX_CLASS_PICKS} classes at once; for a larger group, please contact us.`);
     });
   });
 

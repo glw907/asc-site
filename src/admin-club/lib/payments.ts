@@ -118,6 +118,12 @@ export class CheckoutUnavailableError extends Error {}
 
 const STRIPE_CHECKOUT_SESSIONS_URL = 'https://api.stripe.com/v1/checkout/sessions';
 
+/** `args.metadata`'s own keys this module already writes itself (`kind`/`refId`, both set from
+ *  `args.kind`/`args.refId` above, never from caller-supplied metadata): skipped in the loop
+ *  below so the doc comment's "cannot collide with either" claim on {@link CreateCheckoutArgs.metadata}
+ *  is actually true, rather than merely intended. */
+const RESERVED_METADATA_KEYS = new Set(['kind', 'refId']);
+
 /**
  * The `application/x-www-form-urlencoded` body for `POST /v1/checkout/sessions`, generalizing
  * `donate-pricing.ts`'s own `buildStripeCheckoutBody` across every payment kind. `success_url` is
@@ -160,6 +166,7 @@ export function buildCheckoutBody(args: CreateCheckoutArgs): string {
     ...(customerEmail ? { customer_email: customerEmail } : {}),
   });
   for (const [key, value] of Object.entries(metadata ?? {})) {
+    if (RESERVED_METADATA_KEYS.has(key)) continue;
     params.set(`metadata[${key}]`, value);
   }
   return `${params.toString()}&success_url=${origin}${args.successPath}?session_id={CHECKOUT_SESSION_ID}`;

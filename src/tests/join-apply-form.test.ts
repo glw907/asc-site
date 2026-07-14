@@ -124,6 +124,8 @@ describe('handleJoinApply', () => {
     expect(params.get('metadata[enrollment_ids]')).toBe('');
     expect(params.get('metadata[covered_enrollment_ids]')).toBe('');
     expect(params.get('metadata[grant_credits]')).toBe('1');
+    expect(params.get('metadata[dues_cents]')).toBe('25000');
+    expect(params.get('metadata[paid_fee_cents]')).toBe('');
     expect(params.get('line_items[0][price_data][unit_amount]')).toBe('25000');
     expect(params.get('line_items[1][price_data][unit_amount]')).toBeNull();
   });
@@ -240,6 +242,8 @@ describe('handleJoinApply', () => {
       const params = new URLSearchParams(body);
       expect(params.get('metadata[grant_credits]')).toBe('0');
       expect(params.get('metadata[purchaser_member_id]')).toBe('member-1');
+      expect(params.get('metadata[dues_cents]')).toBe('25000');
+      expect(params.get('metadata[paid_fee_cents]')).toBe('');
     });
 
     it('reuses an already-unpaid row for the target season instead of minting a duplicate', async () => {
@@ -392,5 +396,47 @@ describe('handleJoinApply', () => {
     expect((params.get('metadata[covered_enrollment_ids]') ?? '').split(',').filter(Boolean)).toHaveLength(2);
 
     expect(calls.filter((c) => c.sql.startsWith('INSERT INTO class_enrollments'))).toHaveLength(2);
+  });
+
+  it('snapshots dues and the paid subset\'s own fee cents into checkout metadata, aligned with the paid subset of enrollment_ids', async () => {
+    const { db } = fakeD1({
+      allResults: { tier_price_family: TIER_PRICE_ROWS },
+      firstResults: {
+        "'waiver_text_version'": { value: '2026-01' },
+        "'current_season'": { value: '2026' },
+        'FROM classes WHERE id': (args: unknown[]) => {
+          const id = args[0] as string;
+          if (id === 'intro-sailing') return classRow('intro-sailing', 100);
+          if (id === 'youth-sailing') return classRow('youth-sailing', 75);
+          return classRow('advanced-racing', 150);
+        },
+      },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ url: 'https://checkout.stripe.com/pay/cs_test_cents' }), { status: 200 })),
+    );
+
+    // Family grants two credits: the first two picks (in pick order) are covered, leaving the
+    // third (advanced-racing, $150) as the only paid line.
+    await handleJoinApply(
+      submission({
+        tier: 'family',
+        members: [
+          { name: 'Bob Lovelace', birthdate: '2012-01-01', email: '' },
+          { name: 'Cleo Lovelace', birthdate: '2015-01-01', email: '' },
+        ],
+        picks: ['intro-sailing', 'youth-sailing', 'advanced-racing'],
+      }),
+      { CLUB_DB: db, STRIPE_SECRET_KEY: 'sk_test_1' },
+      '203.0.113.5',
+      ORIGIN,
+    );
+
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+    const body = (fetchMock.mock.calls[0][1] as RequestInit).body as string;
+    const params = new URLSearchParams(body);
+    expect(params.get('metadata[dues_cents]')).toBe('50000');
+    expect(params.get('metadata[paid_fee_cents]')).toBe('15000');
   });
 });

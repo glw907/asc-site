@@ -13,6 +13,14 @@ import type { JoinInput, JoinMember, JoinPurchaser, NormalizedMember, Normalized
  *  is not eligible, including on their exact birthday. */
 const YOUNG_ADULT_MAX_AGE = 26;
 
+/** The most class picks one join submission may carry. A checkout session's own metadata
+ *  carries `enrollment_ids`/`covered_enrollment_ids`/`paid_fee_cents` as comma-joined lists
+ *  bound to Stripe's 500-character-per-value limit; this cap keeps every list well under that
+ *  ceiling regardless of id length. A genuinely larger group is rare enough that a friendly
+ *  refusal pointing them at the club directly is the right shape, not a form that silently
+ *  truncates or a checkout that silently fails at Stripe's own limit. */
+export const MAX_CLASS_PICKS = 8;
+
 /**
  * A person's age in whole years as of `asOfIso`, counting a birthday that lands ON `asOfIso`
  * itself as already had (so turning 26 today reads as 26, not 25): the edge case the design's
@@ -87,6 +95,10 @@ export function validateJoinInput(input: JoinInput, opts: { today: string }): Va
       errors.push('A class pick refers to a household member that was not entered.');
     }
   });
+
+  if (input.classPicks.length > MAX_CLASS_PICKS) {
+    errors.push(`You can select up to ${MAX_CLASS_PICKS} classes at once; for a larger group, please contact us.`);
+  }
 
   if (errors.length > 0) return { valid: false, errors, normalized: null };
 

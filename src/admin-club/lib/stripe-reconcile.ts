@@ -22,14 +22,18 @@
 // header explains why a 500 here is worse than useless: Stripe retries a non-2xx delivery for up to
 // three days, and a persistently-wrong `refId` can never self-heal from a retry).
 //
-// `donation` is the one deliberate exception to both of the above. It has no domain row for a
-// natural-state guard to fall back on, so this module gives it its own atomic claim instead of the
-// route's own pre-claim (see `reconcileDonation`'s own header): a rejected promise from it is
-// allowed to propagate, and the route answers 500 for that kind alone so Stripe retries. This is
-// safe there and nowhere else because a donation carries no wrong-`refId` poison case -- malformed
+// `donation` and `join` are the two deliberate exceptions to both of the above. `donation` has no
+// domain row for a natural-state guard to fall back on, so it gives itself its own atomic claim
+// instead of the route's own pre-claim (see `reconcileDonation`'s own header). `join` DOES have a
+// domain row (the membership) but composes every one of its mutations -- the claim, the guarded
+// flip, the credit grant/redemptions, the enrollment fee_paid flips, and the ledger statements --
+// into ONE `db.batch()` (see `reconcileJoin`'s own header): a combined checkout with several
+// moving parts must not commit some of them and not others. A rejected promise from either is
+// allowed to propagate, and the route answers 500 for both kinds alone so Stripe retries. This is
+// safe there and nowhere else because neither carries a wrong-`refId` poison case -- malformed
 // metadata is already rejected 400 before any database touch -- so a retry can never get stuck
 // retrying forever against a request that will never succeed.
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, D1PreparedStatement } from '@cloudflare/workers-types';
 import { PAYMENT_KINDS, type PaymentKind } from './payments';
 import { sendClubEmail, type EmailBindingEnv } from './club-email';
 import { getCurrentSeason } from './club-settings';
@@ -411,22 +415,39 @@ async function reconcileDonation(db: D1Database, refId: string, session: StripeC
   return { ok: true };
 }
 
-interface JoinMembershipReconcileRow {
-  id: string;
-  household_id: string;
-  tier: 'individual' | 'family' | 'young-adult';
-  season: number;
-  price_paid: number;
-  paid_at: string | null;
-}
-
 interface HouseholdNameRow {
   name: string;
 }
 
-interface EnrollmentClassRow {
+/** One `class_enrollments` row a `join` session's metadata referenced, as the bulk read below
+ *  fetches it: the class name (for the ledger line's description and the board notice's
+ *  summary) and the enrolled member's OWN household id, which {@link reconcileJoin}'s household
+ *  scoping check compares against the membership's household before writing anything. */
+interface JoinEnrollmentRow {
+  id: string;
   class_name: string;
-  fee: number;
+  household_id: string;
+}
+
+/** Reads every `enrollmentIds` row in ONE `WHERE ce.id IN (...)` query, bound params, never a
+ *  per-id round-trip: the shape {@link reconcileJoin}'s own header requires. Answers an empty
+ *  map without querying at all for a solo join with no class picks. */
+async function loadJoinEnrollments(db: D1Database, enrollmentIds: string[]): Promise<Map<string, JoinEnrollmentRow>> {
+  const rows = new Map<string, JoinEnrollmentRow>();
+  if (enrollmentIds.length === 0) return rows;
+  const placeholders = enrollmentIds.map((_, i) => `?${i + 1}`).join(', ');
+  const { results } = await db
+    .prepare(
+      `SELECT ce.id AS id, c.name AS class_name, m.household_id AS household_id
+       FROM class_enrollments ce
+       JOIN classes c ON c.id = ce.class_id
+       JOIN members m ON m.id = ce.member_id
+       WHERE ce.id IN (${placeholders})`,
+    )
+    .bind(...enrollmentIds)
+    .all<JoinEnrollmentRow>();
+  for (const row of results) rows.set(row.id, row);
+  return rows;
 }
 
 /** Local duplicate of `member-signup/lib/pricing.ts`'s own `CREDIT_GRANT_AMOUNT`: deliberate, not
@@ -454,38 +475,52 @@ function parseIdList(value: string | undefined): string[] {
     .filter((id) => id.length > 0);
 }
 
+/** Split a comma-joined metadata list of integer-cents strings into numbers, the same
+ *  empty-value handling as {@link parseIdList}. A malformed or short-of-length entry parses to
+ *  `NaN`/`undefined`, which is deliberately not caught here: it flows straight into
+ *  {@link buildTransactionStatements}'s own lines, whose sum-invariant check against
+ *  `session.amount_total` throws loudly on the mismatch that produces (this module's own header
+ *  on why `join`'s reconciliation is allowed to throw and let the route answer 500). */
+function parseCentsList(value: string | undefined): number[] {
+  return parseIdList(value).map((entry) => Number.parseInt(entry, 10));
+}
+
 /** `kind: 'join'`: `refId` is a `memberships.id` (Task 1's `buildJoinStatements`). The session's
  *  metadata (`payments.ts`'s own `createCheckout` call site, Task 3) carries `enrollment_ids` and
  *  `covered_enrollment_ids` (both comma-joined `class_enrollments.id`s -- the covered list is a
  *  subset of the full list, the picks a class credit paid for), `grant_credits` (`'1'`/`'0'`:
- *  `'0'` on a welcome-back renewal, which never grants credits again), and `purchaser_member_id`.
+ *  `'0'` on a welcome-back renewal, which never grants credits again), `purchaser_member_id`, and
+ *  the checkout's own snapshotted cents (`dues_cents`, `paid_fee_cents` -- comma-joined, aligned
+ *  one-to-one with the paid subset of `enrollment_ids` in that same order): the ledger lines below
+ *  are built from these snapshotted amounts, never a re-read of `classes.fee`/`price_paid` at
+ *  reconcile time, so a live price or fee change between checkout and webhook delivery can never
+ *  desync the ledger from what Stripe actually charged.
  *
- *  Guarded the same way {@link reconcileDues} is (`WHERE paid_at IS NULL`): that flip is the
- *  idempotency anchor past the session claim, so a replayed webhook is a clean no-op here too. On
- *  a fresh flip: grants the tier's class credits when `grant_credits`, redeems one credit per
- *  covered pick, flips `fee_paid` on every enrollment the session paid for (covered by a credit or
- *  by card alike -- both are settled), records ONE ledger transaction (a `dues` line plus a
- *  `class-fee` line per PAID enrollment only; a credit-covered enrollment moves no money and gets
- *  no line, per the design's own ruling), and sends the `join_welcome` email plus the board
- *  notification.
+ *  Every mutation -- the session claim, the guarded membership flip, the credit grant, the
+ *  credit-redemption and enrollment `fee_paid` flips, and the ledger transaction/lines -- composes
+ *  into ONE `db.batch()`, the same atomicity `reconcileDonation` already uses (this module's own
+ *  header): a combined checkout with several moving parts must not commit some of them and not
+ *  others. Every READ (the membership row, then every referenced enrollment row in one bulk `IN`
+ *  query) runs first; if the membership is already paid, this returns the existing no-op outcome
+ *  before writing anything, and before checking anything else about the session -- a replay of an
+ *  already-settled join is a clean no-op regardless of what its metadata says. Past that: every
+ *  metadata-referenced enrollment must belong to a member of the membership's OWN household, or
+ *  this refuses loudly and writes nothing (a forged or stale `refId` pointing at someone else's
+ *  enrollment is never a partial write). The `UPDATE ... WHERE paid_at IS NULL` inside the batch
+ *  stays as a belt alongside the read-first check above; the claim `INSERT`'s own primary key is
+ *  what actually catches a genuinely concurrent double delivery, whose losing batch throws and
+ *  propagates (the route answers 500 so Stripe retries; the retry then finds the membership
+ *  already paid and no-ops via the read-first check).
  */
 async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
   const membership = await db
-    .prepare('SELECT id, household_id, tier, season, price_paid, paid_at FROM memberships WHERE id = ?1')
+    .prepare('SELECT id, household_id, tier, season, paid_at FROM memberships WHERE id = ?1')
     .bind(refId)
-    .first<JoinMembershipReconcileRow>();
+    .first<MembershipReconcileRow>();
   if (!membership) return { ok: false, reason: `no such membership: ${refId}` };
 
   const amountTotalCents = requireAmountTotalCents(session);
   if (amountTotalCents === null) return { ok: false, reason: `session ${session.id} carries no amount_total` };
-
-  const update = await db
-    .prepare("UPDATE memberships SET paid_at = datetime('now'), stripe_ref = ?1 WHERE id = ?2 AND paid_at IS NULL")
-    .bind(session.id, refId)
-    .run();
-  if ((update.meta.changes ?? 0) !== 1) return { ok: true, reason: `membership ${refId} already paid; no-op` };
-
-  await writeAudit(db, 'membership', refId, `kind=join session=${session.id} tier=${membership.tier} season=${membership.season}`);
 
   const meta = session.metadata ?? {};
   const enrollmentIds = parseIdList(meta.enrollment_ids);
@@ -493,46 +528,50 @@ async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: strin
   const paidIds = enrollmentIds.filter((id) => !coveredIds.has(id));
   const grantCredits = meta.grant_credits === '1';
   const purchaserMemberId = meta.purchaser_member_id ?? '';
+  const duesCents = Number.parseInt(meta.dues_cents ?? '', 10);
+  const paidFeeCents = parseCentsList(meta.paid_fee_cents);
 
-  if (grantCredits) {
-    await db
-      .prepare('INSERT INTO credit_grants (id, household_id, membership_id, credits) VALUES (?1, ?2, ?3, ?4)')
-      .bind(crypto.randomUUID(), membership.household_id, refId, CREDIT_GRANT_AMOUNT[membership.tier])
-      .run();
+  const enrollmentRows = await loadJoinEnrollments(db, enrollmentIds);
+
+  if (membership.paid_at !== null) return { ok: true, reason: `membership ${refId} already paid; no-op` };
+
+  for (const enrollmentId of enrollmentIds) {
+    const row = enrollmentRows.get(enrollmentId);
+    if (!row || row.household_id !== membership.household_id) {
+      return { ok: false, reason: `enrollment ${enrollmentId} does not belong to membership ${refId}'s household` };
+    }
   }
 
-  const classRows = new Map<string, EnrollmentClassRow>();
-  for (const enrollmentId of enrollmentIds) {
-    const row = await db
-      .prepare(
-        `SELECT c.name AS class_name, c.fee AS fee
-         FROM class_enrollments ce JOIN classes c ON c.id = ce.class_id
-         WHERE ce.id = ?1`,
-      )
-      .bind(enrollmentId)
-      .first<EnrollmentClassRow>();
-    if (row) classRows.set(enrollmentId, row);
+  const statements: D1PreparedStatement[] = [
+    db.prepare('INSERT INTO processed_stripe_sessions (session_id, kind, ref_id) VALUES (?1, ?2, ?3)').bind(session.id, 'join', refId),
+    db.prepare("UPDATE memberships SET paid_at = datetime('now'), stripe_ref = ?1 WHERE id = ?2 AND paid_at IS NULL").bind(session.id, refId),
+  ];
+
+  if (grantCredits) {
+    statements.push(
+      db
+        .prepare('INSERT INTO credit_grants (id, household_id, membership_id, credits) VALUES (?1, ?2, ?3, ?4)')
+        .bind(crypto.randomUUID(), membership.household_id, refId, CREDIT_GRANT_AMOUNT[membership.tier]),
+    );
   }
 
   for (const enrollmentId of coveredIds) {
-    await db
-      .prepare('INSERT INTO credit_redemptions (id, household_id, enrollment_id, redeemed_by) VALUES (?1, ?2, ?3, ?4)')
-      .bind(crypto.randomUUID(), membership.household_id, enrollmentId, purchaserMemberId)
-      .run();
-    await db.prepare('UPDATE class_enrollments SET fee_paid = 1 WHERE id = ?1').bind(enrollmentId).run();
+    statements.push(
+      db
+        .prepare('INSERT INTO credit_redemptions (id, household_id, enrollment_id, redeemed_by) VALUES (?1, ?2, ?3, ?4)')
+        .bind(crypto.randomUUID(), membership.household_id, enrollmentId, purchaserMemberId),
+      db.prepare('UPDATE class_enrollments SET fee_paid = 1 WHERE id = ?1').bind(enrollmentId),
+    );
   }
 
-  const paidLines: Array<{ enrollmentId: string; description: string; amountCents: number }> = [];
-  for (const enrollmentId of paidIds) {
-    await db.prepare('UPDATE class_enrollments SET fee_paid = 1, stripe_ref = ?1 WHERE id = ?2').bind(session.id, enrollmentId).run();
-    const className = classRows.get(enrollmentId)?.class_name ?? 'class';
-    const feeDollars = classRows.get(enrollmentId)?.fee ?? 0;
-    paidLines.push({ enrollmentId, description: `${className} class fee`, amountCents: Math.round(feeDollars * 100) });
-  }
+  const paidLines: Array<{ enrollmentId: string; description: string; amountCents: number }> = paidIds.map((enrollmentId, index) => {
+    statements.push(db.prepare('UPDATE class_enrollments SET fee_paid = 1, stripe_ref = ?1 WHERE id = ?2').bind(session.id, enrollmentId));
+    const className = enrollmentRows.get(enrollmentId)?.class_name ?? 'class';
+    return { enrollmentId, description: `${className} class fee`, amountCents: paidFeeCents[index] };
+  });
 
   const itemDisplayName = `${TIER_LABEL[membership.tier]} Membership -- ${membership.season} season`;
-  const duesCents = Math.round(membership.price_paid * 100);
-  await recordTransaction(
+  const { statements: ledgerStatements } = buildTransactionStatements(
     db,
     { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: membership.household_id },
     [
@@ -540,6 +579,11 @@ async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: strin
       ...paidLines.map((line) => ({ item: 'class-fee' as const, description: line.description, amountCents: line.amountCents, enrollmentId: line.enrollmentId })),
     ],
   );
+  statements.push(...ledgerStatements);
+
+  await db.batch(statements);
+
+  await writeAudit(db, 'membership', refId, `kind=join session=${session.id} tier=${membership.tier} season=${membership.season}`);
 
   const household = await db.prepare('SELECT name FROM households WHERE id = ?1').bind(membership.household_id).first<HouseholdNameRow>();
   const purchaser = purchaserMemberId
@@ -566,7 +610,7 @@ async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: strin
     });
   }
 
-  const classesSummary = enrollmentIds.length > 0 ? enrollmentIds.map((id) => classRows.get(id)?.class_name ?? 'a class').join(', ') : 'none';
+  const classesSummary = enrollmentIds.length > 0 ? enrollmentIds.map((id) => enrollmentRows.get(id)?.class_name ?? 'a class').join(', ') : 'none';
   await sendClubEmail(db, env, {
     to: BOARD_NOTIFICATION_EMAIL,
     templateId: 'board_join_notice',
@@ -584,13 +628,14 @@ async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: strin
 /**
  * Reconcile one `checkout.session.completed` session: dispatches to the `kind`-specific writer,
  * each of which mutates its own row, audits, and emails a receipt. For `dues`/`class-fee`/
- * `asset-fee`/`join`, the caller must have already called {@link claimStripeSession} and
- * confirmed it returned `true`, and none of the four ever throws -- a D1 error inside one of them
- * surfaces as a rejected promise the webhook route's own outer `try`/`catch` logs and still
- * answers 200 for, per that route's header on why a reconciliation failure must never become a
- * 500 for those kinds. `donation` is the one exception: it claims its own session atomically
- * (`reconcileDonation`'s own header), and a rejected promise from it is meant to propagate so the
- * route can answer 500 and let Stripe retry.
+ * `asset-fee`, the caller must have already called {@link claimStripeSession} and confirmed it
+ * returned `true`, and neither ever throws -- a D1 error inside one of them surfaces as a
+ * rejected promise the webhook route's own outer `try`/`catch` logs and still answers 200 for,
+ * per that route's header on why a reconciliation failure must never become a 500 for those
+ * kinds. `donation` and `join` are the two exceptions: each claims its session atomically as
+ * part of its own `db.batch()` (`reconcileDonation`'s and `reconcileJoin`'s own headers), and a
+ * rejected promise from either is meant to propagate so the route can answer 500 and let Stripe
+ * retry.
  */
 export async function reconcileCheckoutSession(
   db: D1Database,

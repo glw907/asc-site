@@ -178,4 +178,59 @@ describe('POST /api/stripe/webhook', () => {
     const response = await POST(eventFor(request, { STRIPE_WEBHOOK_SECRET: SECRET, CLUB_DB: throwingDb }));
     expect(response.status).toBe(500);
   });
+
+  const JOIN_MEMBERSHIP_ROW = { id: 'mem-join-1', household_id: 'hh-join-1', tier: 'individual' as const, season: 2026, paid_at: null };
+  const JOIN_METADATA = {
+    kind: 'join',
+    refId: 'mem-join-1',
+    enrollment_ids: '',
+    covered_enrollment_ids: '',
+    grant_credits: '1',
+    purchaser_member_id: 'member-purchaser-1',
+    dues_cents: '25000',
+    paid_fee_cents: '',
+  };
+
+  it('reconciles a join without pre-claiming: the atomic claim+writes batch is the only claim', async () => {
+    const { db, calls } = fakeD1({
+      firstResults: {
+        'FROM memberships WHERE id': JOIN_MEMBERSHIP_ROW,
+        'FROM households WHERE id': { name: 'The Nguyen Household' },
+        'FROM members WHERE id': { name: 'Sam Nguyen', email: 'sam@example.com' },
+      },
+    });
+    const request = await signedRequest(completedSessionEvent({ id: 'cs_join_1', amount_total: 25000, metadata: JOIN_METADATA }));
+    const response = await POST(eventFor(request, { STRIPE_WEBHOOK_SECRET: SECRET, CLUB_DB: db }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ received: true });
+    expect(calls.some((c) => c.sql.startsWith('INSERT OR IGNORE INTO processed_stripe_sessions'))).toBe(false);
+    const claimInsert = calls.find((c) => c.sql.startsWith('INSERT INTO processed_stripe_sessions'));
+    expect(claimInsert?.sql).not.toContain('OR IGNORE');
+  });
+
+  it('500s a join whose reconciliation throws, so Stripe retries', async () => {
+    const throwingDb = {
+      prepare(sql: string) {
+        const stmt = {
+          sql,
+          args: [] as unknown[],
+          bind(...args: unknown[]) {
+            stmt.args = args;
+            return stmt;
+          },
+          async first() {
+            return JOIN_MEMBERSHIP_ROW;
+          },
+        };
+        return stmt;
+      },
+      async batch() {
+        throw new Error('D1 outage mid-batch');
+      },
+    } as unknown as D1Database;
+
+    const request = await signedRequest(completedSessionEvent({ id: 'cs_join_1', amount_total: 25000, metadata: JOIN_METADATA }));
+    const response = await POST(eventFor(request, { STRIPE_WEBHOOK_SECRET: SECRET, CLUB_DB: throwingDb }));
+    expect(response.status).toBe(500);
+  });
 });
