@@ -62,6 +62,18 @@ this cheap but it must be an explicit step), content updates pointing join/renew
 the real flows, the fresh-context verification pass, Geoff's before/after, the apex
 DNS cutover, the soak, then the MW subscription cancel and GCE retirement.
 
+### Class management `class-management`
+The season-operations tooling for classes, on top of the pass-2.1 admin (events,
+classes, waitlists, offers, and settings already run on live D1): season rollover
+(mint next season's class instances instead of hand-editing rows — `classes-store.ts`
+already anticipates this), attendance and check-in against the roster (MW's per-event
+check-ins set the bar), roster exports for instructors, class-fee refunds through the
+ledger's refund machinery, and instructors reading their own rosters via the declared
+`instructor` role once `membership-admin` lands the cairn roles seam. Key tooling for
+the site (Geoff, 2026-07-13) but not a cutover blocker — the 2026 season already runs
+on the existing admin. Outside the mw-* program; can start any time after
+`membership-admin`. The class-roster email segment rides `segment-email`.
+
 ### QuickBooks Online integration `qbo-integration`
 Sync the club's money events to QuickBooks Online: `qbo_ref` population, entity
 mapping (SalesReceipt/Refund/Deposit onto ledger rows), and the OAuth/API plumbing.
