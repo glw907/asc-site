@@ -68,6 +68,15 @@ A later charge that itself later gets refunded still counts as a valid list-pric
 amount actually charged, whatever happened after) -- refund status is orthogonal to whether a
 price was real.
 
+**A comped EVENT row with no paid-row price falls back, never refuses.** When every occurrence of
+an event `Reference` in the export happens to be comped, `buildListPriceIndex` has no price to
+give: the row falls back (1) to the `classes.fee` of the class that `Reference` resolves to via
+`mw-members.mjs`'s own `HISTORICAL_CLASS_MAP` (converted dollars-to-cents), and, failing that too,
+(2) to a 0-cent item line with no `discount` line and a memo, `"list price unknown; comped"` (the
+row's own zero total, so the lines-sum-to-total invariant still holds). A comped MEMBERSHIP row
+with no list price is unaffected by this fallback and still refuses -- there is no class to fall
+back to.
+
 ## Domain linking -- best-effort, never a requirement to write the row
 
 - A `dues` line links to the `memberships` row sharing this transaction's household, `paid_at`
@@ -84,24 +93,39 @@ price was real.
 ## Household resolution and refusals
 
 `Account ID` -> `households` via the already-imported `members.mw_account_id` map. A
-Membership or Event row whose account resolves to no household is REFUSED loudly (never silently
-skipped) -- `mw-members.mjs` resolved every real account, so a miss here is a defect to surface,
-same rule that script follows. A Donation row is exempt: `household_id` stays null, and
+Membership or Event row whose account is NON-BLANK but resolves to no household is REFUSED loudly
+(never silently skipped) -- `mw-members.mjs` resolved every real account, so a miss here is a
+defect to surface, same rule that script follows. A Donation row is exempt from that refusal
+regardless of its account.
+
+**A BLANK Account ID never refuses, for any Transaction Type.** `household_id` stays null, and
 `payer_name`/`payer_email` snapshot the row's own `Name`/`Email` columns instead (regularized the
 same way every other write path is: `normalizeNameCaps`/`normalizeEmail`,
-`src/admin-club/lib/member-normalize.js`).
+`src/admin-club/lib/member-normalize.js`), same as a Donation row. The row's `memo` notes the
+blank account, folding in the `Discount Code` when the row carries one (a voided $0 site-test row,
+say, self-describing as `"blank Account ID (discount code: sitetest)"` rather than a bare "why is
+this here").
 
 ## Refund linking
 
-A `refund`-kind row links to its originating charge via the same netting key
+A `refund`-kind row links to its originating charge within the same netting key
 `mw-members.mjs`'s `preprocessAccounting` uses for its OWN (destructive) netting: same
-`Account ID` and `Transaction Type`, plus `Reference` for an Event row, matched against the most
-recent prior UNCONSUMED charge of the identical absolute amount. Unlike that script, BOTH rows
-land in the ledger here -- this only records `refunds_transaction_id`, never drops either side.
-An unlinkable refund (its charge predates this export, say) keeps `refunds_transaction_id` null;
-the spec marks that FK "when identifiable", not mandatory. A row this deep into the plan is worth
-a human's look even when it never blocks the write, so an unlinkable refund is also reported as a
-loud warning line in the plan output.
+`Account ID` and `Transaction Type`, plus `Reference` for an Event row. Two preferences, in order:
+
+1. the most recent prior UNCONSUMED charge of the IDENTICAL absolute amount (a full refund).
+2. failing that -- a PARTIAL refund -- the most recent prior UNCONSUMED charge within the WIDER
+   `Account ID` + `Transaction Type` group ALONE, dropping the `Reference` restriction (the real
+   export carries a `2st`/`2nd` typo'd-vs-correct `Reference` pair for the identical instance, so a
+   charge and its own partial refund can legitimately disagree on `Reference`), whose own `Items`
+   text matches (normalized: trimmed, case-insensitive), whose date is on or before the refund's,
+   and whose amount is at least the refund's own (a refund can never exceed what it refunds).
+
+Unlike `mw-members.mjs`'s own netting, BOTH rows land in the ledger here -- this only records
+`refunds_transaction_id`, never drops either side. An unlinkable refund under either preference
+(its charge predates this export, say) keeps `refunds_transaction_id` null; the spec marks that FK
+"when identifiable", not mandatory. A row this deep into the plan is worth a human's look even
+when it never blocks the write, so an unlinkable refund is also reported as a loud warning line in
+the plan output.
 
 **Cross-run linking uses the real database id.** A charge already imported in a PRIOR run keeps
 its REAL `transactions.id` when this run re-plans it (rather than minting a fresh, throwaway id),
@@ -138,9 +162,11 @@ Refused rows never touch the real database, reported with an account id and a pl
 reason (never a name or email -- this script's own report stays structural, unlike
 `mw-members.mjs`'s, since this backfill runs without a conductor's per-row review step):
 
-- A Membership or Event row whose `Account ID` resolves to no household.
-- A comped row whose tier or event `Reference` has no real (non-comped) price anywhere in this
-  export to derive a list price from.
+- A Membership or Event row whose NON-BLANK `Account ID` resolves to no household (a BLANK
+  `Account ID` never refuses -- see "Household resolution and refusals" above).
+- A comped MEMBERSHIP row whose tier has no real (non-comped) price anywhere in this export to
+  derive a list price from (a comped EVENT row falls back instead of refusing -- see "Comps: the
+  list-price problem" above).
 - A row whose line breakdown does not sum to its own `Transaction Total` (a defensive check --
   never expected to fire against well-formed real data, the last line of defense against a
   malformed source row reaching a written statement).

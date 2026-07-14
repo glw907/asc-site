@@ -8,3 +8,8 @@
 "Apr 1, 2026","Casey Sixington","","","","","","","","","90","","","","","","","90","0","90","Membership","","Voided","","acct-6","","was Single membership - Renewal","",""
 "May 1, 2026","Anonymous Donor","","","","","","","","donor@example.com","","","25.50","","","","","25.50","0","25.50","Donation","","","","","","","",""
 "Jun 1, 2026","Unknown Household","","","","","","","","","100","","","","","","","100","3","100","Membership","","Single membership - Renewal","ch_unk1","acct-unknown","","","",""
+"Jul 1, 2026","Site Test","","","","","","","","","","0","","","","","","0","0","0","Event","","Voided","","","sitetest","site test seat","",""
+"Aug 1, 2026","Robin Sevenington","","","","","","","","","","0","","","","","","0","0","0","Event","Event: 2nd Adult/Teen Intro to Sailing Class (Thu Jul 18 2024, 01:00pm AKDT)","2nd Adult/Teen Intro to Sailing Class - Comp","","acct-7","COMP2024","","",""
+"Aug 2, 2026","Casey Eightington","","","","","","","","","","0","","","","","","0","0","0","Event","Event: Totally Unknown Class (Foo Bar)","Totally Unknown Class - Comp","","acct-8","COMPUNK","","",""
+"Sep 1, 2026","Jamie Nineington","","","","","","","","","","200","","","","","","200","6","200","Event","Event: Fall Regatta Prep (Sat Sep 5 2026)","Fall Regatta Prep - Registration","ch_evt9","acct-9","","","",""
+"Sep 10, 2026","Jamie Nineington","","","","","","","","","","-100","","","","","","-100","0","-100","Event","Event: Fall Regatta Prep -- correction (Sat Sep 5 2026)","FALL REGATTA PREP - REGISTRATION","ch_evt9r","acct-9","","partial refund, Reference typo'd differently than the charge -- mirrors the real export's 2st/2nd variant","",""

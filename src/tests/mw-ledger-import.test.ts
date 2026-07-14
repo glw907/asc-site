@@ -40,12 +40,19 @@ function existingState() {
       ['acct-4', 'household-4'],
       ['acct-5', 'household-5'],
       ['acct-6', 'household-6'],
+      ['acct-7', 'household-7'],
+      ['acct-8', 'household-8'],
+      ['acct-9', 'household-9'],
     ]),
     memberships: [{ id: 'membership-1', householdId: 'household-1', paidAt: '2026-01-10', pricePaid: 150 }],
     enrollments: [{ id: 'enrollment-1', householdId: 'household-4', stripeRef: 'ch_evt1' }],
     existingMwRefs: new Set<string>(),
     existingIdByMwRef: new Map<string, string>(),
     headersMissingLines: [] as { id: string; mwRef: string }[],
+    // acct-7's comp row (fixture Reference 'Event: 2nd Adult/Teen Intro to Sailing Class (Thu Jul
+    // 18 2024, 01:00pm AKDT)') resolves via HISTORICAL_CLASS_MAP to season 2024, slug
+    // 'adult-intro-class-2' -- the real class this fixture's list-price fallback matches against.
+    classFeeCentsBySeasonSlug: new Map([['2024:adult-intro-class-2', 10000]]),
   };
 }
 
@@ -192,6 +199,22 @@ describe('planTransactionRow: donation', () => {
     expect(planned.payerEmail).toBe('donor@example.com');
     // Donation Sub-Total is fractional ($25.50) in the fixture -- 2550 cents, not 2500.
     expect(planned.lines).toEqual([{ item: 'donation', description: 'Donation', amountCents: 2550, membershipId: null, enrollmentId: null, assignmentId: null }]);
+    // The fixture's donation row itself carries a blank Account ID -- FIX A's memo note.
+    expect(planned.memo).toBe('blank Account ID');
+  });
+});
+
+describe('planTransactionRow: blank Account ID (FIX A)', () => {
+  it('never refuses a blank-Account-ID row, for a non-Donation Transaction Type either', () => {
+    const rows = loadRows();
+    const row = rows.find((r) => r.Items?.trim() === 'Voided' && r['Discount Code']?.trim() === 'sitetest')!;
+    expect(row['Account ID']?.trim()).toBe('');
+    const planned = planTransactionRow(row, existingState(), buildListPriceIndex(rows));
+    expect(planned.kind).toBe('void');
+    expect(planned.householdId).toBeNull();
+    expect(planned.amountTotalCents).toBe(0);
+    // The discount code rides along in the memo, so the site-test void is self-describing.
+    expect(planned.memo).toBe('blank Account ID (discount code: sitetest)');
   });
 });
 
@@ -200,6 +223,31 @@ describe('planTransactionRow: unmatchable row', () => {
     const rows = loadRows();
     const row = rows.find((r) => r['Account ID'] === 'acct-unknown')!;
     expect(() => planTransactionRow(row, existingState(), buildListPriceIndex(rows))).toThrow(RowRefusedError);
+  });
+});
+
+describe('planTransactionRow: all-comped event, no paid row for the key (FIX B)', () => {
+  it('falls back to the class fee when the comp links to a minted historical class', () => {
+    const rows = loadRows();
+    const row = rows.find((r) => r['Account ID'] === 'acct-7')!;
+    const planned = planTransactionRow(row, existingState(), buildListPriceIndex(rows));
+    expect(planned.source).toBe('comp');
+    expect(planned.amountTotalCents).toBe(0);
+    expect(planned.lines).toEqual([
+      { item: 'class-fee', description: 'Class fee (comp)', amountCents: 10000, membershipId: null, enrollmentId: null, assignmentId: null },
+      { item: 'discount', description: 'Comp discount', amountCents: -10000, membershipId: null, enrollmentId: null, assignmentId: null },
+    ]);
+    expect(planned.memo).toBeNull();
+  });
+
+  it('plans a 0-cent line with no discount line and a memo when no class fee is findable either', () => {
+    const rows = loadRows();
+    const row = rows.find((r) => r['Account ID'] === 'acct-8')!;
+    const planned = planTransactionRow(row, existingState(), buildListPriceIndex(rows));
+    expect(planned.source).toBe('comp');
+    expect(planned.amountTotalCents).toBe(0);
+    expect(planned.lines).toEqual([{ item: 'class-fee', description: 'Class fee (comp)', amountCents: 0, membershipId: null, enrollmentId: null, assignmentId: null }]);
+    expect(planned.memo).toBe('list price unknown; comped');
   });
 });
 
@@ -232,6 +280,27 @@ describe('linkRefunds', () => {
     expect(orphanRefund.refundsTransactionId).toBeNull();
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain('acct-9');
+  });
+
+  it('links a PARTIAL refund to its charge by matching Transaction Type, normalized Items text, and date, even when the Event Reference itself differs (FIX C)', () => {
+    // Mirrors the real export's own quirk: a charge and its later PARTIAL refund can carry two
+    // different Event Reference strings for the identical instance (the export's own `2st`/`2nd`
+    // typo pair, in the real data) -- the fixture's charge and refund rows deliberately use two
+    // different References, so this only passes if the fallback match ignores Reference and
+    // groups on account + Transaction Type alone.
+    const rows = loadRows();
+    const index = buildListPriceIndex(rows);
+    const existing = existingState();
+    const acct9Rows = rows.filter((r) => r['Account ID'] === 'acct-9');
+    expect(new Set(acct9Rows.map((r) => r.Reference)).size).toBe(2); // the charge and refund really do disagree on Reference
+    const planned = acct9Rows.map((row) => ({ ...planTransactionRow(row, existing, index), id: crypto.randomUUID(), refundsTransactionId: null as string | null }));
+    const warnings = linkRefunds(planned);
+    const charge = planned.find((t) => t.kind === 'charge')!;
+    const refund = planned.find((t) => t.kind === 'refund')!;
+    expect(charge.amountTotalCents).toBe(20000);
+    expect(refund.amountTotalCents).toBe(10000); // a PARTIAL refund -- not equal to the charge
+    expect(refund.refundsTransactionId).toBe(charge.id);
+    expect(warnings).toHaveLength(0);
   });
 
   it('links a refund to a charge already imported in a prior run, by its REAL database id', () => {
@@ -407,8 +476,11 @@ describe('buildTransactionInsertStatements', () => {
       householdId: 'household-1',
       payerName: null,
       payerEmail: null,
+      memo: null,
       lines: [{ item: 'dues', description: 'Membership dues', amountCents: 15000, membershipId: 'membership-1', enrollmentId: null, assignmentId: null }],
       refundLinkKey: null,
+      itemsText: 'family membership - renewal',
+      transactionType: 'Membership',
       accountId: 'acct-1',
     };
     const statements = buildTransactionInsertStatements(t);

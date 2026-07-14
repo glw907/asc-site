@@ -17,24 +17,31 @@
  * a line from -- {@link buildListPriceIndex} derives a "list price" per tier (Membership rows) or
  * per `Reference` (Event rows) from the SAME export's own highest non-comped charge for that key,
  * and the comp gets a positive item line at that price plus a matching negative `discount` line,
- * netting to the row's real zero total.
+ * netting to the row's real zero total. A comped EVENT row whose key has no such paid-row price
+ * (every seat for that event happened to be comped) falls back to the class it resolves to via
+ * `mw-members.mjs`'s `HISTORICAL_CLASS_MAP` and that class's own `fee`, and, failing that too,
+ * plans the item line at 0 cents with no discount line and a memo noting the price is unknown --
+ * never refused. A comped MEMBERSHIP row with no list price still refuses; there is no analogous
+ * class to fall back to.
  *
  * Domain linking is best-effort, never a hard requirement of writing the row: a `dues` line links
  * to the already-imported `memberships` row matching the transaction's household, date, and price
  * (the same three columns `mw-members.mjs` wrote them from); a `class-fee` line links to the
  * `class_enrollments` row sharing the transaction's `Payment ID` as `stripe_ref`, when exactly one
  * such row exists for the household (a multi-seat group purchase is left unlinked, never guessed
- * at). A transaction whose `Account ID` resolves to NO household is refused loudly (Membership/
- * Event rows only -- `mw-members.mjs` resolved every real account, so a miss here is a defect to
- * surface); a
- * Donation row's `household_id` is simply left null, using the row's own `Name`/`Email` as a
- * payer snapshot, since donors need not be members. A refund is linked to its original charge by
- * matching the most recent prior unconsumed same-account/same-type(/same-`Reference`-for-Event)
- * charge of the same absolute amount, `preprocessAccounting`'s own netting key (`mw-members.mjs`)
- * -- unlinkable when no such charge exists in the database OR this run's own inserts, in which
- * case the link is left null and reported as a loud warning ({@link linkRefunds}). A charge
- * already imported in a prior run carries its REAL database id here, so a refund arriving for the
- * first time in a LATER run still links correctly.
+ * at). A transaction whose `Account ID` is NON-BLANK but resolves to NO household is refused
+ * loudly (Membership/Event rows only -- `mw-members.mjs` resolved every real account, so a miss
+ * here is a defect to surface). A BLANK `Account ID` never refuses, for any Transaction Type: it
+ * plans with `household_id` null, `payer_name`/`payer_email` snapshotted from the row's own
+ * `Name`/`Email`, and a memo noting the blank account (the row's `Discount Code`, when set, rides
+ * along in that memo). A refund is linked to its original charge by matching, within the same
+ * account/type(/`Reference`-for-Event) key, the most recent prior unconsumed charge of the
+ * IDENTICAL absolute amount first, or -- for a PARTIAL refund -- the most recent prior unconsumed
+ * charge whose `Items` text matches (normalized), occurred on or before the refund, and whose
+ * amount is at least the refund's ({@link linkRefunds}). Unlinkable under either preference (no
+ * such charge exists in the database OR this run's own inserts) leaves the link null and reports
+ * a loud warning. A charge already imported in a prior run carries its REAL database id here, so a
+ * refund arriving for the first time in a LATER run still links correctly.
  *
  * Every amount this script writes is CENTS end to end ({@link parseMoneyToCents}): the real
  * export carries genuine fractional-dollar fees a whole-dollars-only parser would refuse outright.
@@ -64,7 +71,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeEmail, normalizeNameCaps } from '../../src/admin-club/lib/member-normalize.js';
-import { RowRefusedError, deriveMembershipTier, parseMwCsv, parseMwDateToIso, sqlInt } from './mw-members.mjs';
+import { HISTORICAL_CLASS_MAP, RowRefusedError, deriveMembershipTier, parseMwCsv, parseMwDateToIso, sqlInt } from './mw-members.mjs';
 
 const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -84,6 +91,16 @@ function sqlLiteral(value) {
 /** @param {Record<string, string>} row @returns {{ accountId: string, accountName: string, email: string }} */
 function rowContext(row) {
   return { accountId: row['Account ID']?.trim() ?? '', accountName: row.Name?.trim() ?? '', email: row.Email?.trim() ?? '' };
+}
+
+/** Normalizes a row's `Items` text for the {@link linkRefunds} same-description match: trimmed
+ *  and lowercased, so a refund and its originating charge compare equal despite incidental case
+ *  drift the export itself never guarantees stays consistent.
+ * @param {string | undefined} raw
+ * @returns {string}
+ */
+function normalizeItemsText(raw) {
+  return String(raw ?? '').trim().toLowerCase();
 }
 
 // ---------------------------------------------------------------------------
@@ -277,6 +294,9 @@ export function buildListPriceIndex(rows) {
  *   that row (see {@link linkRefunds}) points at the id the row actually has in the database, not
  *   a throwaway one this run happens to generate
  * @property {ExistingHeaderMissingLines[]} headersMissingLines
+ * @property {Map<string, number>} classFeeCentsBySeasonSlug every `classes.fee` (dollars in the
+ *   database, converted here to cents), keyed `${season}:${slug}` -- the comped-Event list-price
+ *   fallback's second preference (see {@link planTransactionRow})
  */
 
 /**
@@ -300,9 +320,20 @@ export function buildListPriceIndex(rows) {
  * @property {string | null} householdId
  * @property {string | null} payerName
  * @property {string | null} payerEmail
+ * @property {string | null} memo free-text import note (a blank-Account-ID row, a comped row
+ *   whose list price could not be derived) -- null when this row carries none
  * @property {PlannedLine[]} lines
  * @property {string | null} refundLinkKey netting key for refund->charge linking, null for
  *   non-refund/non-charge rows that never participate
+ * @property {string} itemsText this row's own `Items` text, normalized ({@link
+ *   normalizeItemsText}) -- {@link linkRefunds}'s second-preference match compares this between a
+ *   refund and a candidate charge
+ * @property {string} transactionType the row's own `Transaction Type` column (`Membership`,
+ *   `Event`, `Donation`) -- {@link linkRefunds}'s second-preference match groups by this and
+ *   `accountId` alone, WITHOUT `Reference`: the real export's own `2st`/`2nd` typo'd-vs-correct
+ *   Event Reference variants for the identical class instance means a charge and its own refund
+ *   can carry two different Reference strings, which {@link refundLinkKey} (Reference-scoped for
+ *   an Event) would never bridge
  * @property {string | null} accountId `Account ID`, kept for the report
  */
 
@@ -334,12 +365,22 @@ export function planTransactionRow(row, existing, listPrices) {
 
   const accountId = ctx.accountId || null;
   const householdId = accountId ? (existing.householdIdByMwAccountId.get(accountId) ?? null) : null;
-  if (type !== 'Donation' && !householdId) {
-    throw new RowRefusedError(`no household resolves for account ${accountId ?? '(blank)'}`, ctx);
+  // A BLANK Account ID never refuses, for any Transaction Type: it plans with household_id null
+  // and a payer snapshot below, same shape a Donation row already gets. A NON-blank account that
+  // fails to resolve a household is a real defect (`mw-members.mjs` resolved every real account)
+  // and still refuses, Donation rows exempted as before.
+  if (accountId && type !== 'Donation' && !householdId) {
+    throw new RowRefusedError(`no household resolves for account ${accountId}`, ctx);
   }
 
   const payerName = !householdId && row.Name?.trim() ? normalizeNameCaps(row.Name.trim()) : null;
   const payerEmail = !householdId && row.Email?.trim() ? normalizeEmail(row.Email.trim()) : null;
+
+  /** @type {string[]} */
+  const memoNotes = [];
+  if (!accountId) {
+    memoNotes.push(discountCode ? `blank Account ID (discount code: ${discountCode})` : 'blank Account ID');
+  }
 
   /** @type {PlannedLine[]} */
   let lines;
@@ -347,12 +388,32 @@ export function planTransactionRow(row, existing, listPrices) {
     const compItem = type === 'Membership' ? 'dues' : type === 'Event' ? 'class-fee' : null;
     if (!compItem) throw new RowRefusedError(`comp row of unsupported transaction type: ${type}`, ctx);
     const key = type === 'Membership' ? deriveMembershipTier(row.Items, ctx).tier : row.Reference?.trim();
-    const listPriceCents = type === 'Membership' ? listPrices.membershipCentsByTier.get(key) : listPrices.eventCentsByReference.get(key);
-    if (!listPriceCents) throw new RowRefusedError(`no list price found for comped ${type.toLowerCase()} (key: ${key})`, ctx);
-    lines = [
-      { item: compItem, description: compItem === 'dues' ? 'Membership dues (comp)' : 'Class fee (comp)', amountCents: listPriceCents, membershipId: null, enrollmentId: null, assignmentId: null },
-      { item: 'discount', description: 'Comp discount', amountCents: -listPriceCents, membershipId: null, enrollmentId: null, assignmentId: null },
-    ];
+    let listPriceCents = type === 'Membership' ? listPrices.membershipCentsByTier.get(key) : listPrices.eventCentsByReference.get(key);
+
+    // The comped-Event fallback chain: no paid row for this event key established a list price
+    // (every seat for it happened to be comped), so fall back to the class this Event Reference
+    // resolves to (the same {@link HISTORICAL_CLASS_MAP} `mw-members.mjs` mints historical
+    // classes from) and its own `classes.fee`. A Membership comp with no list price still
+    // refuses outright below -- there is no analogous "class" to fall back to.
+    if (!listPriceCents && type === 'Event') {
+      const mapped = HISTORICAL_CLASS_MAP[row.Reference];
+      const classKey = mapped ? `${mapped.season}:${mapped.slug}` : null;
+      listPriceCents = classKey ? existing.classFeeCentsBySeasonSlug.get(classKey) : undefined;
+    }
+
+    if (listPriceCents) {
+      lines = [
+        { item: compItem, description: compItem === 'dues' ? 'Membership dues (comp)' : 'Class fee (comp)', amountCents: listPriceCents, membershipId: null, enrollmentId: null, assignmentId: null },
+        { item: 'discount', description: 'Comp discount', amountCents: -listPriceCents, membershipId: null, enrollmentId: null, assignmentId: null },
+      ];
+    } else if (type === 'Event') {
+      // Second fallback: no class fee either. Plan the item line at 0 cents with no discount
+      // line (the invariant below still holds: 0 sums to the row's own 0 total) and note why.
+      lines = [{ item: compItem, description: 'Class fee (comp)', amountCents: 0, membershipId: null, enrollmentId: null, assignmentId: null }];
+      memoNotes.push('list price unknown; comped');
+    } else {
+      throw new RowRefusedError(`no list price found for comped ${type.toLowerCase()} (key: ${key})`, ctx);
+    }
   } else {
     lines = buildSubtotalLines(row, ctx).map((l) => ({ ...l, membershipId: null, enrollmentId: null, assignmentId: null }));
   }
@@ -375,8 +436,11 @@ export function planTransactionRow(row, existing, listPrices) {
     householdId,
     payerName,
     payerEmail,
+    memo: memoNotes.length > 0 ? memoNotes.join('; ') : null,
     lines,
     refundLinkKey,
+    itemsText: normalizeItemsText(row.Items),
+    transactionType: type,
     accountId,
   };
 }
@@ -386,40 +450,74 @@ export function planTransactionRow(row, existing, listPrices) {
 // ---------------------------------------------------------------------------
 
 /**
- * Links every `refund`-kind planned transaction to its originating `charge`, in place, by the
- * same netting key `mw-members.mjs`'s `preprocessAccounting` uses (account + type, plus
- * `Reference` for an Event): the most recent prior UNCONSUMED charge sharing the key and the
- * refund's own absolute amount. Unlike that script, both rows stay in the ledger -- this only
- * records the link, never drops either row. A charge already imported in a prior run carries its
- * REAL database id here (`planMwLedgerImport`'s id-assignment step), so a refund arriving for the
- * first time in a LATER run still links to the id the charge actually has in the database, not a
- * throwaway id this run would otherwise mint for a row it never re-inserts.
+ * Links every `refund`-kind planned transaction to its originating `charge`, in place. Two
+ * preferences, in order, sharing one CONSUMED flag per charge (a match under either preference
+ * takes the charge out of consideration for every other refund):
+ *   1. EXACT match: within the refund's own `refundLinkKey` (account + type, plus `Reference` for
+ *      an Event -- the same netting key `mw-members.mjs`'s `preprocessAccounting` uses), the most
+ *      recent prior UNCONSUMED charge of the IDENTICAL absolute amount (a full refund).
+ *   2. PARTIAL match: failing that, within the WIDER `accountId` + `transactionType` group ONLY
+ *      (no `Reference` restriction -- the real export carries a `2st`/`2nd` typo'd-vs-correct
+ *      Event Reference pair for the identical class instance, so a charge and its own partial
+ *      refund can legitimately disagree on `Reference` alone), the most recent prior UNCONSUMED
+ *      charge whose own `Items` text matches (normalized), occurred on or before the refund's own
+ *      date, and whose amount is at least the refund's (the refund can never exceed what it
+ *      refunds).
+ * Unlike `mw-members.mjs`'s own (destructive) netting, both rows stay in the ledger here -- this
+ * only records the link, never drops either row. A charge already imported in a prior run carries
+ * its REAL database id here (`planMwLedgerImport`'s id-assignment step), so a refund arriving for
+ * the first time in a LATER run still links to the id the charge actually has in the database,
+ * not a throwaway id this run would otherwise mint for a row it never re-inserts.
  *
- * A refund with no matching charge -- in the database or in this run's own inserts (its charge
- * predates this export, say) -- is left with `refundsTransactionId: null`, never refused (the
- * spec marks the FK "when identifiable", not mandatory), but is reported back as a loud warning:
- * a dangling refund is worth a human's look even though it never blocks the write.
+ * A refund with no matching charge under either preference -- in the database or in this run's
+ * own inserts (its charge predates this export, say) -- is left with `refundsTransactionId: null`,
+ * never refused (the spec marks the FK "when identifiable", not mandatory), but is reported back
+ * as a loud warning: a dangling refund is worth a human's look even though it never blocks the
+ * write.
  * @param {(PlannedTransaction & { id: string, refundsTransactionId: string | null })[]} planned
  *   every planned row, IN ORIGINAL FILE ORDER, already assigned an `id` (a real database id when
  *   the row is already imported, a fresh one otherwise)
  * @returns {string[]} one human-readable warning per unlinkable refund
  */
 export function linkRefunds(planned) {
-  /** @type {Map<string, { id: string; amountCents: number; consumed: boolean }[]>} */
+  /** @typedef {{ id: string; amountCents: number; occurredAt: string; itemsText: string; consumed: boolean }} ChargeCandidate */
+  /** @type {Map<string, ChargeCandidate[]>} */
   const chargesByKey = new Map();
+  /** @type {Map<string, ChargeCandidate[]>} */
+  const chargesByAccountType = new Map();
   for (const t of planned) {
     if (t.kind === 'charge' && t.refundLinkKey) {
-      const list = chargesByKey.get(t.refundLinkKey) ?? [];
-      list.push({ id: t.id, amountCents: t.amountTotalCents, consumed: false });
-      chargesByKey.set(t.refundLinkKey, list);
+      // ONE candidate object shared by both indices, so consuming it under either preference
+      // removes it from consideration under the other.
+      /** @type {ChargeCandidate} */
+      const candidate = { id: t.id, amountCents: t.amountTotalCents, occurredAt: t.occurredAt, itemsText: t.itemsText, consumed: false };
+
+      const keyList = chargesByKey.get(t.refundLinkKey) ?? [];
+      keyList.push(candidate);
+      chargesByKey.set(t.refundLinkKey, keyList);
+
+      const accountTypeKey = `${t.transactionType}:${t.accountId}`;
+      const accountTypeList = chargesByAccountType.get(accountTypeKey) ?? [];
+      accountTypeList.push(candidate);
+      chargesByAccountType.set(accountTypeKey, accountTypeList);
     }
   }
   /** @type {string[]} */
   const warnings = [];
   for (const t of planned) {
     if (t.kind !== 'refund' || !t.refundLinkKey) continue;
-    const candidates = chargesByKey.get(t.refundLinkKey) ?? [];
-    const match = [...candidates].reverse().find((c) => !c.consumed && c.amountCents === t.amountTotalCents);
+
+    const exactCandidates = chargesByKey.get(t.refundLinkKey) ?? [];
+    let match = [...exactCandidates].reverse().find((c) => !c.consumed && c.amountCents === t.amountTotalCents);
+
+    if (!match) {
+      const accountTypeKey = `${t.transactionType}:${t.accountId}`;
+      const partialCandidates = (chargesByAccountType.get(accountTypeKey) ?? [])
+        .filter((c) => !c.consumed && c.itemsText === t.itemsText && c.occurredAt <= t.occurredAt && c.amountCents >= t.amountTotalCents)
+        .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt)); // most recent first
+      match = partialCandidates[0];
+    }
+
     if (match) {
       match.consumed = true;
       t.refundsTransactionId = match.id;
@@ -602,7 +700,7 @@ function buildLineInsertStatement(transactionId, line) {
  */
 export function buildTransactionInsertStatements(t) {
   return [
-    `INSERT INTO transactions (id, kind, source, occurred_at, amount_total_cents, fee_cents, processor_ref, refunds_transaction_id, household_id, payer_name, payer_email, mw_ref) VALUES (${sqlLiteral(t.id)}, ${sqlLiteral(t.kind)}, ${sqlLiteral(t.source)}, ${sqlLiteral(t.occurredAt)}, ${sqlInt(t.amountTotalCents)}, ${t.feeCents === null ? 'NULL' : sqlInt(t.feeCents)}, ${sqlLiteral(t.processorRef)}, ${sqlLiteral(t.refundsTransactionId)}, ${sqlLiteral(t.householdId)}, ${sqlLiteral(t.payerName)}, ${sqlLiteral(t.payerEmail)}, ${sqlLiteral(t.mwRef)})`,
+    `INSERT INTO transactions (id, kind, source, occurred_at, amount_total_cents, fee_cents, processor_ref, refunds_transaction_id, household_id, payer_name, payer_email, memo, mw_ref) VALUES (${sqlLiteral(t.id)}, ${sqlLiteral(t.kind)}, ${sqlLiteral(t.source)}, ${sqlLiteral(t.occurredAt)}, ${sqlInt(t.amountTotalCents)}, ${t.feeCents === null ? 'NULL' : sqlInt(t.feeCents)}, ${sqlLiteral(t.processorRef)}, ${sqlLiteral(t.refundsTransactionId)}, ${sqlLiteral(t.householdId)}, ${sqlLiteral(t.payerName)}, ${sqlLiteral(t.payerEmail)}, ${sqlLiteral(t.memo ?? null)}, ${sqlLiteral(t.mwRef)})`,
     ...t.lines.map((line) => buildLineInsertStatement(t.id, line)),
   ];
 }
@@ -685,7 +783,12 @@ function readExistingState() {
     `SELECT t.id, t.mw_ref FROM transactions t LEFT JOIN transaction_lines tl ON tl.transaction_id = t.id WHERE t.mw_ref IS NOT NULL AND tl.id IS NULL`,
   ).map((r) => ({ id: String(r.id), mwRef: String(r.mw_ref) }));
 
-  return { householdIdByMwAccountId, memberships, enrollments, existingMwRefs, existingIdByMwRef, headersMissingLines };
+  // classes.fee is whole DOLLARS (mw-members.mjs's own HISTORICAL_CLASS_FEE convention);
+  // converted to cents here, this script's own unit throughout.
+  const classRows = query(`SELECT season, slug, fee FROM classes`);
+  const classFeeCentsBySeasonSlug = new Map(classRows.map((r) => [`${r.season}:${r.slug}`, Number(r.fee) * 100]));
+
+  return { householdIdByMwAccountId, memberships, enrollments, existingMwRefs, existingIdByMwRef, headersMissingLines, classFeeCentsBySeasonSlug };
 }
 
 async function main() {
