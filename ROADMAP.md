@@ -63,16 +63,36 @@ the real flows, the fresh-context verification pass, Geoff's before/after, the a
 DNS cutover, the soak, then the MW subscription cancel and GCE retirement.
 
 ### Class management `class-management`
-The season-operations tooling for classes, on top of the pass-2.1 admin (events,
-classes, waitlists, offers, and settings already run on live D1): season rollover
-(mint next season's class instances instead of hand-editing rows — `classes-store.ts`
-already anticipates this), attendance and check-in against the roster (MW's per-event
-check-ins set the bar), roster exports for instructors, class-fee refunds through the
-ledger's refund machinery, and instructors reading their own rosters via the declared
-`instructor` role once `membership-admin` lands the cairn roles seam. Key tooling for
-the site (Geoff, 2026-07-13) but not a cutover blocker — the 2026 season already runs
-on the existing admin. Outside the mw-* program; can start any time after
-`membership-admin`. The class-roster email segment rides `segment-email`.
+The in-season operations tooling for classes, on top of the pass-2.1 admin (events,
+classes, waitlists, offers, and settings already run on live D1): attendance and
+check-in against the roster (MW's per-event check-ins set the bar), roster exports for
+instructors, class-fee refunds through the ledger's refund machinery, and instructors
+reading their own rosters via the declared `instructor` role once `membership-admin`
+lands the cairn roles seam. Key tooling for the site (Geoff, 2026-07-13) but not a
+cutover blocker — the 2026 season already runs on the existing admin. Outside the
+mw-* program; can start any time after `membership-admin`. The class-roster email
+segment rides `segment-email`; the annual transition is `season-rollover`'s own scope.
+
+### Season rollover `season-rollover`
+The annual transition designed as ONE operation — Geoff's 2026-07-13 ruling that
+rollover impacts functions across the whole site, not just classes. The inventory it
+touches: the `current_season` setting (read by the class schedule island, whose
+schedule-pending empty-season state already exists, the events listings, and the home
+Season band), minting the new season's class instances (`classes-store.ts` anticipates
+a rollover creating new rows, never mutating), resetting the `class_registration_opens`
+gate, renewal season assignment (unified-signup's next-unclaimed-season rule reads
+`current_season`), seasonal storage re-upping against standing (the portal design's
+retention-by-request semantics; the asset staleness gate), the annual
+`waiver_text_version` review, and the season-stamped copy across content pages. The
+design goal: an admin-guided sequence with a verified checklist of what flipped, never
+a scatter of hand edits across settings, D1 rows, and markdown. The working precedent
+is the ops dashboard's one-button `startNewSeason` (Geoff's pointer;
+`aksailingclub-legacy/ops/src/services/settings.js`): it flips CURRENT_SEASON, resets
+active asset assignments to unpaid, clears class waitlists/applicants, and resets
+class registration state — the same inventory, though this site mints new per-season
+class rows and keeps history where ops mutates in place. Ordered beside
+`class-management` after `membership-admin`; the two can land as one pass if the
+design says so. First real exercise: the 2026→2027 transition.
 
 ### QuickBooks Online integration `qbo-integration`
 Sync the club's money events to QuickBooks Online: `qbo_ref` population, entity
