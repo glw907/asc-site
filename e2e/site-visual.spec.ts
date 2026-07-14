@@ -57,6 +57,13 @@ test('education — light', async ({ page }) => {
   // `promise` field (education.md), updated by a later headline pass (ad590de) that this
   // assertion had fallen behind.
   await expect(page.getByRole('heading', { level: 1, name: 'Come learn to sail with us.' })).toBeVisible();
+  // The class-schedule island (unified-signup arc, ClassSchedule.svelte) reads its rows through a
+  // remote query, not SSR: while the read is in flight it renders five ghost rows, a different
+  // height than the one real fixture class's resolved row, so a screenshot taken before the await
+  // settles flakes on height alone. Waiting for the ghost list to clear (its own `aria-busy`
+  // marker) is the fix, matching the sibling long-form-pipeline test's own hydration wait below.
+  await expect(page.locator('.class-schedule ul[aria-busy="true"]')).toHaveCount(0);
+  await page.waitForTimeout(300);
   await expect(page).toHaveScreenshot('education-light.png', { fullPage: true });
 });
 
@@ -148,6 +155,32 @@ test('class detail — light', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/classes/test-intro-class/signup');
   await expect(page).toHaveScreenshot('class-detail-light.png', { fullPage: true });
 });
+
+// The public join door (plan Task 8, the unified-signup arc): tier selection with live
+// settings-driven prices, the purchaser's own fields, and the optional class-pick list, reading
+// the same fixture classes/settings the join-and-class-door functional spec exercises. The
+// Turnstile widget's own script is blocked here for the same reason the functional spec blocks
+// it (join-and-class-door.spec.ts's own header): left unblocked, a real network path to
+// Cloudflare's challenge platform renders non-deterministic third-party widget content this
+// suite has no reason to pixel-diff.
+test('join apply — light', async ({ page }) => {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/join/apply/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Join the club' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Individual/ })).toBeVisible();
+  await expect(page).toHaveScreenshot('join-apply-light.png', { fullPage: true });
+});
+
+for (const width of FAMILY_WIDTHS) {
+  test(`join apply — light — ${width}px`, async ({ page }) => {
+    await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/join/apply/');
+    await expect(page).toHaveScreenshot(`join-apply-light-${width}.png`, { fullPage: true });
+  });
+}
 
 // /events/[id].ics: the per-event add-to-calendar endpoint, exactly one VEVENT.
 test('event detail .ics — real feed', async ({ page }) => {

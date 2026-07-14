@@ -9,16 +9,17 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   retries: process.env.CI ? 2 : 0,
-  // wrangler dev, not vite preview: the Season section and /events read the CLUB_DB D1 binding
-  // at request time (repointed from EVENTS_DB by pass 2.1's Task 9), and vite preview carries no
-  // Cloudflare platform bindings at all (platform is undefined there), which would always render
-  // an empty calendar. The seed step loads fixture rows into the gitignored local D1 replica
-  // (never the real asc-club data the admin screens and import scripts own; see
-  // e2e/fixtures/events-seed.sql's header), then wrangler dev serves the real build with local
-  // bindings so the Season/events templates render their full, real shape.
+  // wrangler dev, not vite preview: the Season section, /events, /join/apply, and the class
+  // signup/door specs all read the CLUB_DB D1 binding at request time (repointed from EVENTS_DB
+  // by pass 2.1's Task 9), and vite preview carries no Cloudflare platform bindings at all
+  // (platform is undefined there), which would always render an empty calendar or a 503. The
+  // bootstrap step (e2e/fixtures/bootstrap-club-db.mjs) applies the real asc-club schema and
+  // reseeds the suite's own fixture rows into the gitignored local D1 replica (never the real
+  // asc-club data the admin screens and import scripts own; see that script's own header), then
+  // wrangler dev serves the real build with local bindings so the Season/events/join/class-door
+  // templates render their full, real shape.
   webServer: {
-    command:
-      'npx wrangler d1 execute asc-club --local --file=e2e/fixtures/events-seed.sql && npm run build && npx wrangler dev --port 4173 --local',
+    command: 'node e2e/fixtures/bootstrap-club-db.mjs && npm run build && npx wrangler dev --port 4173 --local',
     port: 4173,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
