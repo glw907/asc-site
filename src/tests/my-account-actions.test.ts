@@ -50,7 +50,7 @@ describe('?/renew', () => {
         'FROM households WHERE id': { primary_member_id: 'mem-1' },
         "'current_season'": { value: '2026' },
         'AND paid_at IS NOT NULL LIMIT 1': null,
-        'AND paid_at IS NULL LIMIT 1': null,
+        'AND (paid_at IS NULL OR refunded_at IS NOT NULL) LIMIT 1': null,
       },
       allResults: { tier_price_individual: TIER_PRICE_ROWS },
     });
@@ -80,7 +80,7 @@ describe('?/renew', () => {
         'FROM households WHERE id': { primary_member_id: 'mem-1' },
         "'current_season'": { value: '2026' },
         'AND paid_at IS NOT NULL LIMIT 1': null,
-        'AND paid_at IS NULL LIMIT 1': null,
+        'AND (paid_at IS NULL OR refunded_at IS NOT NULL) LIMIT 1': null,
       },
       allResults: { tier_price_individual: TIER_PRICE_ROWS },
     });
@@ -106,7 +106,7 @@ describe('?/renew', () => {
         'FROM households WHERE id': { primary_member_id: 'mem-1' },
         "'current_season'": { value: '2026' },
         'AND paid_at IS NOT NULL LIMIT 1': null,
-        'AND paid_at IS NULL LIMIT 1': { id: 'ms-existing' },
+        'AND (paid_at IS NULL OR refunded_at IS NOT NULL) LIMIT 1': { id: 'ms-existing' },
       },
       allResults: { tier_price_individual: TIER_PRICE_ROWS },
     });
@@ -134,7 +134,7 @@ describe('?/renew', () => {
         'FROM households WHERE id': { primary_member_id: 'mem-1' },
         "'current_season'": { value: '2026' },
         'AND paid_at IS NOT NULL LIMIT 1': null,
-        'AND paid_at IS NULL LIMIT 1': null,
+        'AND (paid_at IS NULL OR refunded_at IS NOT NULL) LIMIT 1': null,
       },
       allResults: { tier_price_individual: TIER_PRICE_ROWS },
     });

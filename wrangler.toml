@@ -71,8 +71,16 @@ bucket_name = "asc-site-media"
 # reminder sends. `src/jobs/runner.ts` is the `scheduled()` handler this trigger invokes, wired in
 # by `scripts/wire-scheduled-handler.mjs` (see that script's own header for why a post-build
 # step, not a `main` override, is the correct mechanism here).
-[triggers]
-crons = ["0 8 * * *"]
+# DISABLED UNTIL THE APEX CUTOVER (Geoff, 2026-07-14). This worker is pre-production: it holds
+# the real imported member data, but MW and the legacy stack remain the system of record, so
+# nothing here may email members. The 2026-07-14 tick proved the risk: the first run after the
+# MW import fired 655 catch-up reminder sends (184 delivered) to real members. The live schedule
+# was removed via the API the same day; keeping the trigger out of this file keeps every
+# `wrangler deploy` from silently re-creating it. Re-enabling is an explicit `mw-cutover` step,
+# and rides on the reminder-blast guard (staleness cutoff + per-tick send cap + renewal-marker
+# cycle key) landing first.
+# [triggers]
+# crons = ["0 8 * * *"]
 
 [vars]
 # Canonical origin for magic-link confirmation links, never read from a request header. The dev

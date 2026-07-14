@@ -2,7 +2,7 @@
 // without the island runtime, the same `*-data.ts` split `class-schedule-data.ts` already
 // establishes for a hydrated island's derivation logic.
 import { formatDollars } from '$admin-club/lib/ui';
-import type { MembershipTier } from '$admin-club/lib/demo-members';
+import type { MembershipTier } from '$admin-club/lib/member-types';
 
 /**
  * The tier's current settings price, formatted the same way every other dollar figure on the

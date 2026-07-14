@@ -1,15 +1,11 @@
 // The portal's own real-D1 reads/writes against the credit ledger (0005_member_domain's
 // `credit_grants`/`credit_redemptions`): grants minus redemptions, computed fresh, never stored
-// (that migration's own header). `$admin-club/lib/demo-members.ts`'s `creditBalance` computes the
-// identical shape against its in-memory fixture; this module is the real-D1 twin the portal reads
-// and writes against, the same relationship `standing.ts` already has to that fixture's own
-// `segmentForMember`.
+// (that migration's own header).
 import type { D1Database } from '@cloudflare/workers-types';
 
 /** A household's class-credit balance: total granted minus total redeemed. Deliberately does not
  *  check the household's standing: the published promise is that credits never expire, not even
- *  if the membership lapses (0005_member_domain's own header, `demo-members.ts`'s `creditBalance`
- *  docstring). Never negative in valid data. */
+ *  if the membership lapses (0005_member_domain's own header). Never negative in valid data. */
 export async function getCreditBalance(db: D1Database, householdId: string): Promise<number> {
   const row = await db
     .prepare(

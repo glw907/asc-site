@@ -36,8 +36,9 @@ function submission(overrides: Partial<JoinApplySubmission> = {}): JoinApplySubm
 
 /** Fixtures shared by every welcome-back scenario: a matched, previously-paid member ("member-1"
  *  of "household-1"), used by `findMemberByEmail` and `getMemberStanding`'s own two reads
- *  (`members` by id, `households` by id). Callers layer their own `paid_at IS NOT NULL ORDER BY
- *  paid_at DESC` (the paid-row read) and `FROM members WHERE household_id` (the roster read) on
+ *  (`members` by id, `households` by id). Callers layer their own `paid_at IS NOT NULL AND
+ *  refunded_at IS NULL ORDER BY paid_at DESC` (the paid-row read) and `FROM members WHERE
+ *  household_id` (the roster read) on
  *  top, since those vary per scenario. */
 function knownMemberFixtures() {
   return {
@@ -144,7 +145,7 @@ describe('handleJoinApply', () => {
     const { db, calls } = fakeD1({
       firstResults: {
         ...knownMemberFixtures(),
-        'paid_at IS NOT NULL ORDER BY paid_at DESC': { tier: 'individual', season: 2025, paid_at: '2025-06-01' },
+        'paid_at IS NOT NULL AND refunded_at IS NULL ORDER BY paid_at DESC': { tier: 'individual', season: 2025, paid_at: '2025-06-01' },
       },
     });
     const send = vi.fn().mockResolvedValue(undefined);
@@ -168,7 +169,7 @@ describe('handleJoinApply', () => {
     const { db, calls } = fakeD1({
       firstResults: {
         ...knownMemberFixtures(),
-        'paid_at IS NOT NULL ORDER BY paid_at DESC': { tier: 'individual', season: 2025, paid_at: '2025-06-01' },
+        'paid_at IS NOT NULL AND refunded_at IS NULL ORDER BY paid_at DESC': { tier: 'individual', season: 2025, paid_at: '2025-06-01' },
       },
     });
 

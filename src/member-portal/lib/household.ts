@@ -1,8 +1,8 @@
 // The portal's own household reads/writes (design doc's "4. Household" and the landing's
 // household card): households/members are 0005_member_domain's own tables, read directly here
-// (not through `demo-members.ts`, the admin-club fixture) the same way `standing.ts` already
-// reads them for real. `directory_visibility` lives on `members` (0005's own schema); this module
-// is the one place that reads and writes it from the member-facing side.
+// the same way `standing.ts` already reads them for real. `directory_visibility` lives on
+// `members` (0005's own schema); this module is the one place that reads and writes it from the
+// member-facing side.
 import type { D1Database } from '@cloudflare/workers-types';
 import { normalizeEmail, normalizeNameCaps, normalizePhoneE164 } from '$admin-club/lib/member-normalize.js';
 
@@ -11,8 +11,9 @@ export type DirectoryVisibility = 'visible' | 'partial' | 'hidden';
 
 /** One household member, as the household card and the household-management screen both read
  *  it. `isPrimary` is derived against the household's own `primary_member_id`, never stored on
- *  the member row itself (design choice 1's own reasoning, `demo-members.ts`'s header, still
- *  true of the real schema). */
+ *  the member row itself: a household designates exactly one primary member, the household's
+ *  own billing and renewal contact, a foreign key on the household rather than a boolean
+ *  scattered across members. */
 export interface HouseholdMemberRow {
   id: string;
   name: string;

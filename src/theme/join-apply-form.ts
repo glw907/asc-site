@@ -26,7 +26,7 @@ import { validateJoinInput } from '$member-signup/lib/validate.js';
 import { computeJoinPricing } from '$member-signup/lib/pricing.js';
 import { buildJoinStatements } from '$member-signup/lib/statements.js';
 import type { JoinInput } from '$member-signup/lib/types.js';
-import type { MembershipTier } from '$admin-club/lib/demo-members';
+import type { MembershipTier } from '$admin-club/lib/member-types';
 import { getClassWithCounts, isPubliclyOpen } from '$admin-club/lib/classes-store';
 import { hasActiveOfferForClass } from '$admin-club/lib/offers';
 import { getCurrentSeason, getTierPrices, getWaiverTextVersion } from '$admin-club/lib/club-settings';

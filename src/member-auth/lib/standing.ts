@@ -24,6 +24,14 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { getRenewalGraceDays } from '$admin-club/lib/club-settings';
 import { toSqliteDatetime } from './crypto';
 
+// REFUND-AWARE (migration 0023, docs/plans/2026-07-14-membership-admin.md Task 2): every
+// membership lookup in this module carries AND refunded_at IS NULL, so a refunded row reads as
+// though it never existed for standing purposes (ruling 4 in the design doc: refunds mark, never
+// delete, so the row itself stays for history; only its effect on standing disappears). The
+// household-keyed entry point below, getHouseholdStanding, is what the admin's Members list and
+// the class/join doors' gate share alongside the member-keyed getMemberStanding, so the admin and
+// the public doors can never disagree about who is current.
+
 /** The three membership tiers, matching the ratified schema's own `memberships.tier` CHECK
  *  constraint (`migrations/asc-club/0005_member_domain/forward.sql`). */
 export type MembershipTier = 'individual' | 'family' | 'young-adult';
@@ -76,6 +84,26 @@ interface PaidMembershipRow {
   tier: MembershipTier;
   season: number;
   paid_at: string;
+  price_paid: number;
+}
+
+/** A household's renewal standing, keyed by household id rather than a member: `'none'` when the
+ *  household has never had a non-refunded paid `memberships` row (a state {@link getMemberStanding}
+ *  folds into its own `'lapsed'` for a member-facing landing, but the admin's Members list needs
+ *  distinct from a household that simply lapsed). */
+export type HouseholdStandingStatus = 'current' | 'grace' | 'lapsed' | 'none';
+
+export interface HouseholdStanding {
+  status: HouseholdStandingStatus;
+  /** The grounding row's own `season` label, display only; `null` when `status` is `'none'`. */
+  lastSeason: number | null;
+  /** The grounding row's tier; `null` when `status` is `'none'`. */
+  tier: MembershipTier | null;
+  /** The grounding row's `price_paid` snapshot (dollars), honestly reflecting a comp ($0) or a
+   *  discount off the settings price; `null` when `status` is `'none'`. */
+  pricePaid: number | null;
+  /** The grounding row's `paid_at`, raw (not the derived expiry); `null` when `status` is `'none'`. */
+  paidAt: string | null;
 }
 
 const LONG_DATE = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' });
@@ -108,6 +136,55 @@ function plusOneYear(date: Date): Date {
 
 function plusDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+interface StandingWindow {
+  status: 'current' | 'grace' | 'lapsed';
+  expiry: Date;
+  graceEnd: Date;
+}
+
+/** The current/grace/lapsed transition, computed once off a grounding row's `paid_at` and the
+ *  Club's `renewal_grace_days` setting: shared by {@link getHouseholdStanding} (status only) and
+ *  {@link getMemberStanding} (status plus the display-shaped `expiresOn`/`graceEndsOn`/`statusLine`)
+ *  so the boundary math lives in exactly one place. */
+async function standingWindowFor(db: D1Database, paidAt: string, now: Date): Promise<StandingWindow> {
+  const graceDays = await getRenewalGraceDays(db);
+  const expiry = plusOneYear(parseStoredDate(paidAt));
+  const graceEnd = plusDays(expiry, graceDays);
+  const status: 'current' | 'grace' | 'lapsed' = now <= expiry ? 'current' : now <= graceEnd ? 'grace' : 'lapsed';
+  return { status, expiry, graceEnd };
+}
+
+/**
+ * A household's renewal standing, keyed directly by `householdId` (no member lookup): `'none'`
+ * when the household has never had a non-refunded paid `memberships` row, otherwise
+ * current/grace/lapsed off its most recently paid such row's `paid_at` (the same rolling math this
+ * module's own header describes). Every membership query in this module, this one included, carries
+ * `AND refunded_at IS NULL`: a refunded row never grounds a household's standing, so a household
+ * whose only paid row for the current season was refunded reads `'lapsed'` (against an older
+ * non-refunded row) or `'none'` (if it has no other paid row), never `'current'`.
+ */
+export async function getHouseholdStanding(db: D1Database, householdId: string): Promise<HouseholdStanding> {
+  const paidRow = await db
+    .prepare(
+      'SELECT tier, season, paid_at, price_paid FROM memberships WHERE household_id = ?1 AND paid_at IS NOT NULL AND refunded_at IS NULL ORDER BY paid_at DESC LIMIT 1',
+    )
+    .bind(householdId)
+    .first<PaidMembershipRow>();
+
+  if (!paidRow) {
+    return { status: 'none', lastSeason: null, tier: null, pricePaid: null, paidAt: null };
+  }
+
+  const { status } = await standingWindowFor(db, paidRow.paid_at, new Date());
+  return {
+    status,
+    lastSeason: paidRow.season,
+    tier: paidRow.tier,
+    pricePaid: paidRow.price_paid,
+    paidAt: paidRow.paid_at,
+  };
 }
 
 /**
@@ -144,12 +221,9 @@ export async function getMemberStanding(db: D1Database, memberId: string): Promi
     .first<HouseholdRow>();
   const householdName = household?.name ?? member.name;
 
-  const paidRow = await db
-    .prepare('SELECT tier, season, paid_at FROM memberships WHERE household_id = ?1 AND paid_at IS NOT NULL ORDER BY paid_at DESC LIMIT 1')
-    .bind(member.household_id)
-    .first<PaidMembershipRow>();
+  const standing = await getHouseholdStanding(db, member.household_id);
 
-  if (!paidRow) {
+  if (standing.status === 'none' || standing.paidAt === null) {
     return {
       memberId: member.id,
       memberName: member.name,
@@ -164,12 +238,7 @@ export async function getMemberStanding(db: D1Database, memberId: string): Promi
     };
   }
 
-  const graceDays = await getRenewalGraceDays(db);
-  const expiry = plusOneYear(parseStoredDate(paidRow.paid_at));
-  const graceEnd = plusDays(expiry, graceDays);
-  const now = new Date();
-
-  const status: MemberStandingStatus = now <= expiry ? 'current' : now <= graceEnd ? 'grace' : 'lapsed';
+  const { status, expiry, graceEnd } = await standingWindowFor(db, standing.paidAt, new Date());
   const statusLine =
     status === 'current'
       ? `Current through ${formatCivilDate(expiry)}`
@@ -183,8 +252,8 @@ export async function getMemberStanding(db: D1Database, memberId: string): Promi
     householdId: member.household_id,
     householdName,
     status,
-    tier: paidRow.tier,
-    season: paidRow.season,
+    tier: standing.tier,
+    season: standing.lastSeason,
     expiresOn: toSqliteDatetime(expiry),
     graceEndsOn: toSqliteDatetime(graceEnd),
     statusLine,

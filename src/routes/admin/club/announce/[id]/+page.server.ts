@@ -119,7 +119,7 @@ export const actions: Actions = {
 
       let emailCount = 0;
       if (emailAll) {
-        const recipients = currentMemberEmails();
+        const recipients = await currentMemberEmails(ctx.db);
         const result = await sendAnnouncementEmails(ctx.db, env, { postId: id, subject, message, url, recipients });
         emailCount = result.sentCount;
       }

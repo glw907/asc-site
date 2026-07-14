@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildCheckoutBody, CheckoutUnavailableError, createCheckout, PAYMENT_KINDS } from '$admin-club/lib/payments';
+import { buildCheckoutBody, buildRefundIdempotencyKey, CheckoutUnavailableError, createCheckout, issueStripeRefund, PAYMENT_KINDS } from '$admin-club/lib/payments';
 
 const ARGS = {
   kind: 'class-fee' as const,
@@ -127,5 +127,84 @@ describe('createCheckout', () => {
   it('throws CheckoutUnavailableError when the network call itself fails', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
     await expect(createCheckout({ STRIPE_SECRET_KEY: 'sk_test_1' }, ARGS)).rejects.toBeInstanceOf(CheckoutUnavailableError);
+  });
+});
+
+describe('issueStripeRefund', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('answers ok: false when STRIPE_SECRET_KEY is not bound, never throwing', async () => {
+    const result = await issueStripeRefund({}, { processorRef: 'pi_test_1', amountCents: 5000, idempotencyKey: 'key-1' });
+    expect(result).toEqual({ ok: false, error: 'STRIPE_SECRET_KEY is not configured.' });
+  });
+
+  it('refunds a payment intent ref directly, with one fetch call carrying the Idempotency-Key header', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ id: 're_test_1' }), { status: 200 }));
+    const result = await issueStripeRefund({ STRIPE_SECRET_KEY: 'sk_test_1' }, { processorRef: 'pi_test_1', amountCents: 5000, idempotencyKey: 'key-1' });
+    expect(result).toEqual({ ok: true, refundId: 're_test_1' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.stripe.com/v1/refunds',
+      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ 'Idempotency-Key': 'key-1' }) }),
+    );
+  });
+
+  it('resolves a checkout session ref to its payment intent first, then refunds it', async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ payment_intent: 'pi_resolved' }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 're_test_2' }), { status: 200 }));
+    const result = await issueStripeRefund({ STRIPE_SECRET_KEY: 'sk_test_1' }, { processorRef: 'cs_test_1', amountCents: 5000, idempotencyKey: 'key-2' });
+    expect(result).toEqual({ ok: true, refundId: 're_test_2' });
+    expect(fetchMock).toHaveBeenNthCalledWith(1, 'https://api.stripe.com/v1/checkout/sessions/cs_test_1', expect.anything());
+    const refundBody = fetchMock.mock.calls[1][1] as RequestInit;
+    expect(new URLSearchParams(refundBody.body as string).get('payment_intent')).toBe('pi_resolved');
+  });
+
+  it('answers ok: false for an unrecognized processor reference, with no fetch call', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    const result = await issueStripeRefund({ STRIPE_SECRET_KEY: 'sk_test_1' }, { processorRef: 'ch_unrecognized', amountCents: 5000, idempotencyKey: 'key-3' });
+    expect(result.ok).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('answers ok: false when Stripe refuses the refund', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('nope', { status: 402 }));
+    const result = await issueStripeRefund({ STRIPE_SECRET_KEY: 'sk_test_1' }, { processorRef: 'pi_test_1', amountCents: 5000, idempotencyKey: 'key-4' });
+    expect(result.ok).toBe(false);
+  });
+
+  it('answers ok: false when the network call itself fails', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
+    const result = await issueStripeRefund({ STRIPE_SECRET_KEY: 'sk_test_1' }, { processorRef: 'pi_test_1', amountCents: 5000, idempotencyKey: 'key-5' });
+    expect(result.ok).toBe(false);
+  });
+});
+
+describe('buildRefundIdempotencyKey', () => {
+  it('is deterministic: the same inputs produce the same key', async () => {
+    const picks = [
+      { lineId: 'line-fee', amountCents: 10000 },
+      { lineId: 'line-dues', amountCents: 25000 },
+    ];
+    const first = await buildRefundIdempotencyKey('tx-1', 0, picks);
+    const second = await buildRefundIdempotencyKey('tx-1', 0, [...picks].reverse());
+    expect(first).toBe(second);
+    expect(first).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('produces a different key once refundedSoFarCents advances', async () => {
+    const picks = [{ lineId: 'line-dues', amountCents: 10000 }];
+    const before = await buildRefundIdempotencyKey('tx-1', 0, picks);
+    const after = await buildRefundIdempotencyKey('tx-1', 15000, picks);
+    expect(before).not.toBe(after);
+  });
+
+  it('produces a different key for a different selection', async () => {
+    const a = await buildRefundIdempotencyKey('tx-1', 0, [{ lineId: 'line-dues', amountCents: 10000 }]);
+    const b = await buildRefundIdempotencyKey('tx-1', 0, [{ lineId: 'line-dues', amountCents: 12000 }]);
+    expect(a).not.toBe(b);
   });
 });

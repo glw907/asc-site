@@ -15,7 +15,9 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { renewalExpiryFrom } from '$member-auth/lib/standing';
 import { sendClubEmail } from '$admin-club/lib/club-email';
 import { formatCivilDate } from '$admin-club/lib/ui';
-import type { Job, JobSummary } from './registry';
+import { UNLIMITED_SEND_BUDGET, type Job, type JobSummary } from './registry';
+
+const JOB_NAME = 'renewal-reminders';
 
 /** `date`'s own civil-date portion ("YYYY-MM-DD"), UTC: `renewalExpiryFrom`'s result is always a
  *  UTC-derived boundary (`standing.ts`'s own `parseStoredDate`/`plusOneYear`), so reading it back
@@ -48,16 +50,30 @@ function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
+/** A touch's own due date more than this many days in the past is never due, permanently (the
+ *  2026-07-14 incident: the first cron tick after a member-data import found every touch for
+ *  every household with a paid membership due at once and fired all of them). A future import,
+ *  backfill, or long cron outage degrades to silence instead of a blast; a short outage (a missed
+ *  day or two) still catches up normally, since a touch within the window still fires. */
+const STALENESS_CUTOFF_DAYS = 10;
+
+/** Whether `touchDate` is due at `now`: `now` has reached it, but not so long ago that the touch
+ *  is stale (see {@link STALENESS_CUTOFF_DAYS}). */
+function isDue(touchDate: Date, now: Date): boolean {
+  return now >= touchDate && now <= addDays(touchDate, STALENESS_CUTOFF_DAYS);
+}
+
 /**
  * Which of a household's four touches are due, in cadence order: `now` has reached the touch's
- * own date (`expiresOn` plus that touch's offset) and `alreadySent` does not already carry it.
- * Pure and D1-free on purpose, so the due-selection rule (the four offsets, and the no-double-fire
- * rule) is directly testable with plain `Date`s (this module's own test suite).
+ * own date (`expiresOn` plus that touch's offset), that date is not stale (see
+ * {@link STALENESS_CUTOFF_DAYS}), and `alreadySent` does not already carry it. Pure and D1-free on
+ * purpose, so the due-selection rule (the four offsets, the staleness cutoff, and the
+ * no-double-fire rule) is directly testable with plain `Date`s (this module's own test suite).
  */
 export function dueTouches(expiresOn: Date, now: Date, alreadySent: ReadonlySet<RenewalTouch>): RenewalTouch[] {
   return TOUCH_ORDER.filter((touch) => {
     if (alreadySent.has(touch)) return false;
-    return now >= addDays(expiresOn, TOUCH_OFFSET_DAYS[touch]);
+    return isDue(addDays(expiresOn, TOUCH_OFFSET_DAYS[touch]), now);
   });
 }
 
@@ -122,49 +138,63 @@ async function resolveHouseholdContact(db: D1Database, householdId: string): Pro
   return fallback ? { email: fallback.email, name: fallback.name } : null;
 }
 
-async function alreadySentTouches(db: D1Database, householdId: string): Promise<Set<RenewalTouch>> {
+/** `touch`s already sent for `householdId`'s CURRENT renewal cycle only (migration
+ *  0024_renewal_marker_cycle): scoped by `expiresOnCivil`, the household's own boundary
+ *  (`toCivilDateString(renewalExpiryFrom(...))`), rather than by `household_id` alone. Before
+ *  0024, a mark was keyed `(household_id, touch)` forever, so a household that renewed never got
+ *  its next cycle's reminders -- the same touch name, sent once, suppressed every future cycle.
+ *  Scoping by the cycle's own boundary means a new `paid_at` (a renewal) produces a new
+ *  `expiresOnCivil`, and last cycle's marks simply do not match it. */
+async function alreadySentTouches(db: D1Database, householdId: string, expiresOnCivil: string): Promise<Set<RenewalTouch>> {
   const { results } = await db
-    .prepare('SELECT touch FROM renewal_reminders_sent WHERE household_id = ?1')
-    .bind(householdId)
+    .prepare('SELECT touch FROM renewal_reminders_sent WHERE household_id = ?1 AND expires_on = ?2')
+    .bind(householdId, expiresOnCivil)
     .all<{ touch: RenewalTouch }>();
   return new Set(results.map((row) => row.touch));
 }
 
-/** `INSERT OR IGNORE`: the primary key `(household_id, touch)` is the no-double-fire guarantee
- *  itself, so a concurrent or re-run tick that raced this same touch for this same household
- *  fails silently rather than erroring, the same idempotent-seed posture migration
- *  0010_tier_prices's own `INSERT OR IGNORE` documents. Marked BEFORE the send attempt, not
- *  after: a delivery failure is still a completed attempt (mirrors `offers.ts`'s own "log loudly,
- *  never re-fail the state transition already committed" posture for a notification failure), so
- *  a bad address never wedges this touch into firing again every single day. */
-async function markTouchSent(db: D1Database, householdId: string, touch: RenewalTouch): Promise<void> {
+/** `INSERT OR IGNORE`: `UNIQUE (household_id, touch, expires_on)` is the no-double-fire guarantee
+ *  for this cycle, so a concurrent or re-run tick that raced this same touch for this same
+ *  household and cycle fails silently rather than erroring, the same idempotent-seed posture
+ *  migration 0010_tier_prices's own `INSERT OR IGNORE` documents. Marked BEFORE the send attempt,
+ *  not after: a delivery failure is still a completed attempt (mirrors `offers.ts`'s own "log
+ *  loudly, never re-fail the state transition already committed" posture for a notification
+ *  failure), so a bad address never wedges this touch into firing again every single day. */
+async function markTouchSent(db: D1Database, householdId: string, touch: RenewalTouch, expiresOnCivil: string): Promise<void> {
   await db
-    .prepare('INSERT OR IGNORE INTO renewal_reminders_sent (household_id, touch) VALUES (?1, ?2)')
-    .bind(householdId, touch)
+    .prepare('INSERT OR IGNORE INTO renewal_reminders_sent (household_id, touch, expires_on) VALUES (?1, ?2, ?3)')
+    .bind(householdId, touch, expiresOnCivil)
     .run();
 }
 
 export const renewalRemindersJob: Job = {
-  name: 'renewal-reminders',
+  name: JOB_NAME,
 
   async run(env, ctx) {
+    const budget = ctx.budget ?? UNLIMITED_SEND_BUDGET;
     const households = await listHouseholdsWithPaidMembership(ctx.db);
     let sent = 0;
     let householdsTouched = 0;
 
     for (const row of households) {
       const expiresOn = renewalExpiryFrom(row.paid_at);
-      const alreadySent = await alreadySentTouches(ctx.db, row.household_id);
+      const expiresOnCivil = toCivilDateString(expiresOn);
+      const alreadySent = await alreadySentTouches(ctx.db, row.household_id, expiresOnCivil);
       const due = dueTouches(expiresOn, ctx.now, alreadySent);
       if (due.length === 0) continue;
       householdsTouched += 1;
 
       const contact = await resolveHouseholdContact(ctx.db, row.household_id);
-      const expiresOnDisplay = formatCivilDate(toCivilDateString(expiresOn));
+      const expiresOnDisplay = formatCivilDate(expiresOnCivil);
 
       for (const touch of due) {
-        await markTouchSent(ctx.db, row.household_id, touch);
+        // Marked sent regardless of whether the per-tick send cap below still has room: a
+        // marked-but-unsent touch is an accepted tradeoff in a blast scenario (the household
+        // simply never gets that one touch this cycle, rather than the cap forcing a
+        // re-derivation of "already attempted" some other way).
+        await markTouchSent(ctx.db, row.household_id, touch, expiresOnCivil);
         if (!contact) continue;
+        if (!(await budget.reserve(JOB_NAME))) continue;
         await sendClubEmail(ctx.db, env, {
           to: contact.email,
           templateId: RENEWAL_TEMPLATE_ID,

@@ -21,14 +21,39 @@ export interface JobRunnerEnv extends EmailBindingEnv {
   PUBLIC_ORIGIN?: string;
 }
 
+/** A per-tick email send budget, shared by every job in a single `runScheduledJobs` call (the
+ *  2026-07-14 incident: the first cron tick after a member-data import found 655 catch-up
+ *  reminder sends due at once and fired every one of them, 471 past the account's own sending
+ *  quota). `reserve` returns `true` while the tick still has capacity for one more send; once
+ *  spent, it returns `false` for the rest of the tick and writes exactly one `send_cap_hit`
+ *  audit row (`runner.ts`'s own `createSendBudget`), never more than one even if a second job
+ *  also runs dry against the same shared budget. */
+export interface SendBudget {
+  /** Reserve capacity for one more send under `jobName`. The caller must not send when this
+   *  resolves `false`. */
+  reserve(jobName: string): Promise<boolean>;
+}
+
+/** A budget with no cap: the default when `JobRunContext.budget` is not supplied, so a job
+ *  invoked directly (as most of this module's own test suites do) is not forced to construct a
+ *  budget just to satisfy the type. `runner.ts` always supplies the real, capped budget for a
+ *  production tick. */
+export const UNLIMITED_SEND_BUDGET: SendBudget = {
+  async reserve() {
+    return true;
+  },
+};
+
 /** What every job's `run` receives beyond `env`: `db` is `CLUB_DB`, already resolved so no job
  *  re-resolves it; `now` is an injectable clock (real time in production, a fixed `Date` in a
  *  test), the same seam `claimOffer`'s own test suite already relies on via `vi.setSystemTime`,
  *  made explicit here since a job's own due-work query needs "now" as a first-class value rather
- *  than an ambient `new Date()` scattered through its own body. */
+ *  than an ambient `new Date()` scattered through its own body. `budget` is optional; see
+ *  {@link UNLIMITED_SEND_BUDGET}. */
 export interface JobRunContext {
   db: D1Database;
   now: Date;
+  budget?: SendBudget;
 }
 
 /** A job's own report of what it did this tick: `examined` is how many candidate rows it looked

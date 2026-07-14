@@ -10,22 +10,34 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { MembershipTier } from '$member-auth/lib/standing';
 
-interface UnpaidMembershipRow {
+interface ReclaimableMembershipRow {
   id: string;
 }
 
-async function findUnpaidMembershipForSeason(db: D1Database, householdId: string, season: number): Promise<UnpaidMembershipRow | null> {
+/** The season's own `memberships` row to reclaim rather than insert a fresh one, when one exists:
+ *  an abandoned unpaid row from a prior retry (`paid_at IS NULL`, this module's own prior
+ *  behavior), OR a refunded row (`refunded_at IS NOT NULL`) -- migration 0023's own reclaim rule,
+ *  the same one `manual-payment.ts`'s admin-side reclaim already applies, kept consistent here
+ *  (docs/plans/2026-07-14-membership-admin.md's own "Interactions with unified-signup" gap). A
+ *  NON-refunded, ALREADY-PAID row for this season never reaches this query at all: `season` is
+ *  always {@link nextUnclaimedRenewalSeason}'s own answer, which already skips past any season a
+ *  paid, non-refunded row already claims. */
+async function findReclaimableMembershipForSeason(db: D1Database, householdId: string, season: number): Promise<ReclaimableMembershipRow | null> {
   return db
-    .prepare('SELECT id FROM memberships WHERE household_id = ?1 AND season = ?2 AND paid_at IS NULL LIMIT 1')
+    .prepare('SELECT id FROM memberships WHERE household_id = ?1 AND season = ?2 AND (paid_at IS NULL OR refunded_at IS NOT NULL) LIMIT 1')
     .bind(householdId, season)
-    .first<UnpaidMembershipRow>();
+    .first<ReclaimableMembershipRow>();
 }
 
-/** Whether `householdId` already has a PAID `memberships` row for `season`: the season-assignment
- *  loop's own stopping condition (see {@link nextUnclaimedRenewalSeason}). */
+/** Whether `householdId` already has a non-refunded PAID `memberships` row for `season`: the
+ *  season-assignment loop's own stopping condition (see {@link nextUnclaimedRenewalSeason}). Carries
+ *  `AND refunded_at IS NULL` (migration 0023, `docs/plans/2026-07-14-membership-admin.md` Task 2)
+ *  so a refunded season reads as unclaimed, matching `standing.ts`'s own refund-aware queries: a
+ *  household whose only row for a season was refunded can renew straight back into that same
+ *  season. */
 async function hasPaidMembershipForSeason(db: D1Database, householdId: string, season: number): Promise<boolean> {
   const row = await db
-    .prepare('SELECT 1 AS found FROM memberships WHERE household_id = ?1 AND season = ?2 AND paid_at IS NOT NULL LIMIT 1')
+    .prepare('SELECT 1 AS found FROM memberships WHERE household_id = ?1 AND season = ?2 AND paid_at IS NOT NULL AND refunded_at IS NULL LIMIT 1')
     .bind(householdId, season)
     .first<{ found: number }>();
   return row !== null;
@@ -59,8 +71,13 @@ export interface RenewalMembership {
  * priced from `priceDollars` (the caller's own current-settings read, never re-read here so the
  * price a member saw on the card is the price charged). A retry after an abandoned checkout
  * reuses the same still-unpaid row instead of failing the `UNIQUE(household_id, season)`
- * constraint (the join flow's own "duplicate protection" rule), updating the tier/price in place
- * when the member changed their mind between attempts. Audits as `member:<memberId>`.
+ * constraint (the join flow's own "duplicate protection" rule); renewing a season whose only row
+ * was refunded reclaims that SAME row the identical way, resetting it back to the unpaid state
+ * ({@link findReclaimableMembershipForSeason}'s own header) so the checkout this call sets up for
+ * gives the webhook (`stripe-reconcile.ts`'s `reconcileDues`, guarded on `paid_at IS NULL`) a row
+ * ready to flip paid again, rather than inserting a second row and hitting the constraint the
+ * refunded row itself still occupies. Both cases update the tier/price in place when the member
+ * changed their mind between attempts. Audits as `member:<memberId>`.
  */
 export async function mintOrReuseRenewalMembership(
   db: D1Database,
@@ -71,11 +88,14 @@ export async function mintOrReuseRenewalMembership(
   currentSeason: number,
 ): Promise<RenewalMembership> {
   const season = await nextUnclaimedRenewalSeason(db, householdId, currentSeason);
-  const unpaid = await findUnpaidMembershipForSeason(db, householdId, season);
-  const membershipId = unpaid?.id ?? crypto.randomUUID();
+  const reclaimable = await findReclaimableMembershipForSeason(db, householdId, season);
+  const membershipId = reclaimable?.id ?? crypto.randomUUID();
 
-  if (unpaid) {
-    await db.prepare('UPDATE memberships SET tier = ?1, price_paid = ?2 WHERE id = ?3').bind(tier, priceDollars, membershipId).run();
+  if (reclaimable) {
+    await db
+      .prepare('UPDATE memberships SET tier = ?1, price_paid = ?2, paid_at = NULL, refunded_at = NULL, stripe_ref = NULL WHERE id = ?3')
+      .bind(tier, priceDollars, membershipId)
+      .run();
   } else {
     await db
       .prepare('INSERT INTO memberships (id, household_id, season, tier, price_paid) VALUES (?1, ?2, ?3, ?4, ?5)')
@@ -84,7 +104,7 @@ export async function mintOrReuseRenewalMembership(
   }
   await db
     .prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
-    .bind(`member:${memberId}`, unpaid ? 'renew.reuse' : 'renew.mint', 'membership', membershipId, `tier=${tier} season=${season}`)
+    .bind(`member:${memberId}`, reclaimable ? 'renew.reuse' : 'renew.mint', 'membership', membershipId, `tier=${tier} season=${season}`)
     .run();
 
   return { membershipId, season };

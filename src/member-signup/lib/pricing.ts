@@ -3,7 +3,7 @@
 // own line-item build (Task 2). Tier prices arrive as whole-dollar settings values (matching
 // `club-settings.ts`'s `getTierPrices`); every amount this module produces is integer cents, per
 // the plan's own money convention.
-import type { MembershipTier } from '$admin-club/lib/demo-members';
+import type { MembershipTier } from '$admin-club/lib/member-types';
 import type { JoinPricingResult, NormalizedJoinInput } from './types.js';
 
 /** How many class credits a household receives when it joins at each tier (the design's ruling

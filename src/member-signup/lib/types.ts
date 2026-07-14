@@ -5,7 +5,7 @@
 // renewal) import these exact names, so nothing here renames or reshapes without touching every
 // consumer.
 import type { D1PreparedStatement } from '@cloudflare/workers-types';
-import type { MembershipTier } from '$admin-club/lib/demo-members';
+import type { MembershipTier } from '$admin-club/lib/member-types';
 
 /** The purchaser's own details, as the join form collects them: `memberIndex: 0` in
  *  {@link JoinClassPick} always refers to this person. Only the purchaser accepts the waiver

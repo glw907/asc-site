@@ -293,6 +293,17 @@ gate green.
 
 ## Close ritual (conductor, not an implementer task)
 
+0. Rider task (dispatched once the 8 tasks finish, before the review lenses' findings are
+   folded): the reminder-blast guard, from the 2026-07-14 incident (first cron tick after
+   the MW import fired 655 catch-up sends; 471 hit the account sending quota, 184
+   delivered). Three pieces, all site-level (Geoff ruled no engine bug — cairn has no
+   jobs/email seam): (a) staleness cutoff in `dueClassTouches` and `dueTouches` — a touch
+   whose due date is more than 10 days past is never sent, with tests; (b) a per-tick
+   send cap in `src/jobs/runner.ts`, well under the account quota, that stops the tick
+   loudly with an audit row when hit; (c) fix `renewal_reminders_sent` dedup so markers
+   key on the household's renewal boundary, not household+touch forever (today a renewed
+   household would never get next cycle's reminders) — this needs a small migration
+   riding 0023's pattern.
 1. code-simplifier over the pass diff; fold accepted findings.
 2. Review lenses on the full diff: `cloudflare-workers-reviewer` (D1 batches, migration,
    Stripe fetch), `web-auth-security-reviewer` (refund authz, merge/move authz, the money

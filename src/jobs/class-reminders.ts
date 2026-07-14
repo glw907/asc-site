@@ -14,7 +14,9 @@ import { sendClubEmail } from '$admin-club/lib/club-email';
 import { formatCivilDate } from '$admin-club/lib/ui';
 import { resolveClassContact } from '$admin-club/lib/class-contact';
 import type { ClassTrack } from '$admin-club/lib/classes-store';
-import type { Job, JobSummary } from './registry';
+import { UNLIMITED_SEND_BUDGET, type Job, type JobSummary } from './registry';
+
+const JOB_NAME = 'class-reminders';
 
 /** The three cron-driven touches this job drives (`welcome` is the fourth touch of the set, but
  *  fires synchronously elsewhere, never through this job -- see this module's own header). Shares
@@ -28,6 +30,19 @@ function addDays(date: Date, days: number): Date {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
+/** A touch's own due date more than this many days in the past is never due, permanently (the
+ *  2026-07-14 incident: the first cron tick after a member-data import found every touch for
+ *  every scheduled class due at once and fired all of them). A future import, backfill, or long
+ *  cron outage degrades to silence instead of a blast; a short outage (a missed day or two) still
+ *  catches up normally, since a touch within the window still fires. */
+const STALENESS_CUTOFF_DAYS = 10;
+
+/** Whether `touchDate` is due at `now`: `now` has reached it, but not so long ago that the touch
+ *  is stale (see {@link STALENESS_CUTOFF_DAYS}). */
+function isDue(touchDate: Date, now: Date): boolean {
+  return now >= touchDate && now <= addDays(touchDate, STALENESS_CUTOFF_DAYS);
+}
+
 /**
  * Which of a class's three cron touches are due, given its own `startDate`/`endDate` and `now`.
  * Pure and D1-free, so the offset rule is directly testable with plain `Date`s (this module's own
@@ -37,10 +52,10 @@ function addDays(date: Date, days: number): Date {
 export function dueClassTouches(startDate: Date | null, endDate: Date | null, now: Date): ClassReminderTouch[] {
   if (!startDate) return [];
   const touches: ClassReminderTouch[] = [];
-  if (now >= addDays(startDate, -7)) touches.push('week_out');
-  if (now >= addDays(startDate, -1)) touches.push('day_before');
+  if (isDue(addDays(startDate, -7), now)) touches.push('week_out');
+  if (isDue(addDays(startDate, -1), now)) touches.push('day_before');
   const followupReference = endDate ?? startDate;
-  if (now >= addDays(followupReference, 1)) touches.push('followup');
+  if (isDue(addDays(followupReference, 1), now)) touches.push('followup');
   return touches;
 }
 
@@ -106,9 +121,10 @@ async function markTouchSent(db: D1Database, enrollmentId: string, touch: ClassR
 }
 
 export const classRemindersJob: Job = {
-  name: 'class-reminders',
+  name: JOB_NAME,
 
   async run(env, ctx) {
+    const budget = ctx.budget ?? UNLIMITED_SEND_BUDGET;
     const classes = await listScheduledClasses(ctx.db);
     let sent = 0;
     let touchesFired = 0;
@@ -125,9 +141,14 @@ export const classRemindersJob: Job = {
         touchesFired += 1;
 
         for (const enrollment of unsent) {
+          // Marked sent regardless of whether the per-tick send cap below still has room: a
+          // marked-but-unsent touch is an accepted tradeoff in a blast scenario (the enrollee
+          // simply never gets that one touch, rather than the cap forcing a re-derivation of
+          // "already attempted" some other way).
           await markTouchSent(ctx.db, enrollment.enrollment_id, touch);
           const contact = await resolveClassContact(ctx.db, enrollment.member_id, cls.track);
           if (!contact) continue;
+          if (!(await budget.reserve(JOB_NAME))) continue;
           await sendClubEmail(ctx.db, env, {
             to: contact.email,
             templateId: TOUCH_TEMPLATE_ID[touch],

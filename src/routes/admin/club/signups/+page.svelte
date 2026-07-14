@@ -2,9 +2,9 @@
 @component
 The Club section's signup-review queue (docs/superpowers/specs/2026-07-06-asc-phase-2-design-
 suite.md, Part B: the review-inbox pattern, the decision never far from the evidence). THE COPY
-HERE IS LOAD-BEARING: membership activates immediately on payment (demo-members.ts's design
-choice 5), so every row reads "under background review", never "awaiting approval" -- there is
-nothing here for a member to be waiting on.
+HERE IS LOAD-BEARING: membership activates immediately on payment, so every row reads "under
+background review", never "awaiting approval" -- there is nothing here for a member to be
+waiting on.
 
 Two DaisyUI v5 shapes from docs/internal/daisyui-v5-hard-components.md, chosen deliberately over
 the Events/Members screens' own `<table>`: a `list`/`list-row` (a decision belongs beside its
@@ -100,7 +100,7 @@ a local guess) and simpler than reconciling client and server state for a screen
             <p class="py-2 text-sm text-muted">
               This clears the case from the queue as a board decision; it does not touch {row.memberName}'s
               membership or payment. Letting them know is still a manual step today (a member-
-              communication send is a TODO for pass 2.2's real store).
+              communication send is not built yet).
             </p>
             <form method="dialog">
               <input type="hidden" name="id" value={row.id} />

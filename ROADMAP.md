@@ -59,8 +59,11 @@ and rate limiting on the new public money forms (a named cutover blocker).
 The program's final act: a fresh MW delta re-import (members keep joining/renewing on
 MW between the 2026-07-13 snapshot and cutover; the idempotent import script makes
 this cheap but it must be an explicit step), content updates pointing join/renewal at
-the real flows, the fresh-context verification pass, Geoff's before/after, the apex
-DNS cutover, the soak, then the MW subscription cancel and GCE retirement.
+the real flows, re-enabling this worker's reminder cron (`wrangler.toml` [triggers],
+disabled 2026-07-14 because a pre-production worker must not email members; requires the
+reminder-blast guard, landed at `membership-admin`), the fresh-context verification
+pass, Geoff's before/after, the apex DNS cutover, the soak, then the MW subscription
+cancel and GCE retirement.
 
 ### Class management `class-management`
 The in-season operations tooling for classes, on top of the pass-2.1 admin (events,

@@ -4,7 +4,7 @@
 // own convention for boundary-precise date math). Synthetic fixtures only.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeD1 } from './_fake-d1';
-import { getMemberStanding } from '$member-auth/lib/standing';
+import { getHouseholdStanding, getMemberStanding } from '$member-auth/lib/standing';
 
 const MEMBER = { id: 'mem-1', household_id: 'hh-1', name: 'Scratch Member' };
 const HOUSEHOLD = { name: 'The Scratches' };
@@ -191,5 +191,100 @@ describe('getMemberStanding', () => {
     const standing = await getMemberStanding(db, MEMBER.id);
     expect(standing?.season).toBe(2025);
     expect(standing?.status).toBe('current');
+  });
+
+  it('ignores a refunded row: a household whose only grounding row is refunded reads "lapsed" with no membership on file (member-keyed path)', async () => {
+    // The real query carries AND refunded_at IS NULL, so a household whose only paid row was
+    // refunded has nothing left to ground on -- the fake DB simulates that by answering null, the
+    // same shape the "never paid" test uses. The SQL text itself is asserted below to prove the
+    // real query would actually filter the refunded row, not merely that this fixture assumes it.
+    const { db, calls } = fakeD1({
+      firstResults: {
+        'FROM members WHERE id': MEMBER,
+        'FROM households WHERE id': HOUSEHOLD,
+        'FROM memberships WHERE household_id': null,
+        "'renewal_grace_days'": GRACE_SETTING,
+      },
+    });
+    const standing = await getMemberStanding(db, MEMBER.id);
+    expect(standing?.status).toBe('lapsed');
+    expect(standing?.statusLine).toBe('No membership on file yet.');
+
+    const membershipQuery = calls.find((c) => c.sql.includes('FROM memberships WHERE household_id'));
+    expect(membershipQuery?.sql).toContain('AND refunded_at IS NULL');
+  });
+});
+
+describe('getHouseholdStanding', () => {
+  const HOUSEHOLD_ID = 'hh-1';
+  const NOW = new Date('2027-06-15T12:00:00Z');
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('answers "none" when the household has never had a non-refunded paid row', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM memberships WHERE household_id': null } });
+    const standing = await getHouseholdStanding(db, HOUSEHOLD_ID);
+    expect(standing).toEqual({ status: 'none', lastSeason: null, tier: null, pricePaid: null, paidAt: null });
+  });
+
+  it('reads "current" before the paid_at + 1 year boundary, carrying the price snapshot', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        'FROM memberships WHERE household_id': { tier: 'family', season: 2026, paid_at: paidAtDaysAgo(NOW, 30), price_paid: 324 },
+        "'renewal_grace_days'": GRACE_SETTING,
+      },
+    });
+    const standing = await getHouseholdStanding(db, HOUSEHOLD_ID);
+    expect(standing).toEqual({ status: 'current', lastSeason: 2026, tier: 'family', pricePaid: 324, paidAt: paidAtDaysAgo(NOW, 30) });
+  });
+
+  it('reads "grace" the instant after the boundary, within the grace window', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        'FROM memberships WHERE household_id': { tier: 'individual', season: 2026, paid_at: paidAtDaysAgo(NOW, 365 + 20), price_paid: 250 },
+        "'renewal_grace_days'": GRACE_SETTING,
+      },
+    });
+    const standing = await getHouseholdStanding(db, HOUSEHOLD_ID);
+    expect(standing.status).toBe('grace');
+  });
+
+  it('reads "lapsed" once the grace window passes', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        'FROM memberships WHERE household_id': { tier: 'individual', season: 2026, paid_at: paidAtDaysAgo(NOW, 365 + 31), price_paid: 250 },
+        "'renewal_grace_days'": GRACE_SETTING,
+      },
+    });
+    const standing = await getHouseholdStanding(db, HOUSEHOLD_ID);
+    expect(standing.status).toBe('lapsed');
+  });
+
+  it('reads a comped ($0) row honestly, not as "none"', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        'FROM memberships WHERE household_id': { tier: 'individual', season: 2026, paid_at: paidAtDaysAgo(NOW, 30), price_paid: 0 },
+        "'renewal_grace_days'": GRACE_SETTING,
+      },
+    });
+    const standing = await getHouseholdStanding(db, HOUSEHOLD_ID);
+    expect(standing.status).toBe('current');
+    expect(standing.pricePaid).toBe(0);
+  });
+
+  it('ignores a refunded row via the AND refunded_at IS NULL predicate: a household with only a refunded current-season row reads "none"', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM memberships WHERE household_id': null } });
+    const standing = await getHouseholdStanding(db, HOUSEHOLD_ID);
+    expect(standing.status).toBe('none');
+
+    const membershipQuery = calls.find((c) => c.sql.includes('FROM memberships WHERE household_id'));
+    expect(membershipQuery?.sql).toContain('AND refunded_at IS NULL');
   });
 });

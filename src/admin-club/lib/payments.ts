@@ -201,3 +201,122 @@ export async function createCheckout(env: CreateCheckoutEnv, args: CreateCheckou
   const session = (await response.json()) as { url: string };
   return { url: session.url };
 }
+
+/** {@link issueStripeRefund}'s own arguments: `processorRef` is a ledger charge's own
+ *  `processorRef` (`money-store.ts`'s `TimelineTransaction`), a Checkout Session id (`cs_...`) or
+ *  a payment intent id (`pi_...`) -- the two prefixes `apiEligible` already restricts a refundable
+ *  charge to (`money-store.ts`'s own `isApiEligible`). `amountCents` is the refund's own amount,
+ *  which may be less than the charge's full total (a partial refund). `idempotencyKey` is
+ *  {@link buildRefundIdempotencyKey}'s own output, always required so the header below is never
+ *  optional at the call site. */
+export interface IssueRefundArgs {
+  processorRef: string;
+  amountCents: number;
+  idempotencyKey: string;
+}
+
+/** One line the admin selected to refund, as {@link buildRefundIdempotencyKey} needs it: mirrors
+ *  `refunds.ts`'s own `RefundLineSelection` shape structurally without importing it, since that
+ *  module already imports THIS one for {@link issueStripeRefund} and a reverse import would cycle. */
+export interface RefundLinePick {
+  lineId: string;
+  amountCents: number;
+}
+
+async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Derive a Stripe `Idempotency-Key` for one refund attempt: a SHA-256 hex digest of the charge's
+ * own id, how many cents of that charge had already come back BEFORE this attempt
+ * (`refundedSoFarCents`, `refunds.ts`'s own read off `money-store.ts`'s per-line `refundedCents`),
+ * and the sorted `lineId=amountCents` pairs of what is being refunded now. Same inputs always
+ * produce the same key, which is exactly the self-healing property this exists for: if Stripe
+ * succeeds but the ledger write that follows it fails (a transient D1 error), nothing in this
+ * charge's own refunded state has changed, so the admin's retry recomputes the IDENTICAL key,
+ * Stripe answers with the SAME refund object instead of creating a second one, and the retry's
+ * ledger batch then lands cleanly -- no double money moved. Once the charge's own refunded-so-far
+ * state genuinely advances (an earlier or later, unrelated refund against the same charge),
+ * `refundedSoFarCents` differs and the key changes, so a genuinely new refund is never blocked by
+ * an old one's key.
+ */
+export async function buildRefundIdempotencyKey(chargeTransactionId: string, refundedSoFarCents: number, picks: RefundLinePick[]): Promise<string> {
+  const pairs = [...picks]
+    .sort((a, b) => a.lineId.localeCompare(b.lineId))
+    .map((pick) => `${pick.lineId}=${pick.amountCents}`)
+    .join(',');
+  return sha256Hex(`refund:${chargeTransactionId}:${refundedSoFarCents}:${pairs}`);
+}
+
+/** `issueStripeRefund`'s success shape: the Stripe refund object's own id, so the caller can
+ *  snapshot it as the ledger refund transaction's `processorRef`. */
+export type IssueRefundResult = { ok: true; refundId: string } | { ok: false; error: string };
+
+const STRIPE_API_BASE = 'https://api.stripe.com/v1';
+
+/**
+ * Issue a refund against a charge this site's own checkout created (never an imported MW row, a
+ * PayPal row, or a check/cash row -- `refunds.ts`'s own `apiEligible` gate keeps those on the
+ * record-only path instead). A `cs_...` session id is resolved to its payment intent with a GET
+ * first, since Stripe's refunds endpoint refunds a payment intent (or a charge), never a session
+ * directly; a `pi_...` ref refunds straight away. Raw fetch with `STRIPE_SECRET_KEY`, matching
+ * {@link createCheckout}'s own idiom -- no Stripe SDK, `application/x-www-form-urlencoded`
+ * bodies. The refund POST itself carries `args.idempotencyKey` as Stripe's own `Idempotency-Key`
+ * header ({@link buildRefundIdempotencyKey}'s own header explains the dedupe/self-healing
+ * property this buys); the session-resolution GET carries no such header, since it mutates
+ * nothing. Never throws: every failure (no key configured, an unreachable network, an
+ * unrecognized ref, a non-2xx Stripe response) answers `{ ok: false }` so the caller
+ * (`refunds.ts`'s `executeRefund`) can turn it into "writes nothing" without a `try`/`catch` of
+ * its own.
+ */
+export async function issueStripeRefund(env: CreateCheckoutEnv, args: IssueRefundArgs): Promise<IssueRefundResult> {
+  const stripeKey = env.STRIPE_SECRET_KEY;
+  if (!stripeKey) return { ok: false, error: 'STRIPE_SECRET_KEY is not configured.' };
+
+  let paymentIntentId = args.processorRef;
+  if (args.processorRef.startsWith('cs_')) {
+    let sessionResponse: Response;
+    try {
+      sessionResponse = await fetch(`${STRIPE_API_BASE}/checkout/sessions/${args.processorRef}`, {
+        headers: { Authorization: `Bearer ${stripeKey}` },
+      });
+    } catch {
+      return { ok: false, error: 'We could not reach the payment service to resolve this charge. You can email board@aksailingclub.org instead.' };
+    }
+    if (!sessionResponse.ok) {
+      return { ok: false, error: 'The payment service could not find that checkout session.' };
+    }
+    const session = (await sessionResponse.json()) as { payment_intent: string | null };
+    if (!session.payment_intent) {
+      return { ok: false, error: 'That checkout session carries no payment to refund.' };
+    }
+    paymentIntentId = session.payment_intent;
+  } else if (!args.processorRef.startsWith('pi_')) {
+    return { ok: false, error: `Unrecognized processor reference: ${args.processorRef}` };
+  }
+
+  let refundResponse: Response;
+  try {
+    refundResponse = await fetch(`${STRIPE_API_BASE}/refunds`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${stripeKey}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Idempotency-Key': args.idempotencyKey,
+      },
+      body: new URLSearchParams({ payment_intent: paymentIntentId, amount: String(args.amountCents) }).toString(),
+    });
+  } catch {
+    return { ok: false, error: 'We could not reach the payment service to issue this refund. You can email board@aksailingclub.org instead.' };
+  }
+  if (!refundResponse.ok) {
+    return { ok: false, error: 'The payment service refused this refund. You can email board@aksailingclub.org instead.' };
+  }
+
+  const refund = (await refundResponse.json()) as { id: string };
+  return { ok: true, refundId: refund.id };
+}

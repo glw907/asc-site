@@ -9,7 +9,7 @@
 // directly rather than through a setter here, since its write must ride the same `db.batch()` as
 // its audit row (see `rollover.ts`'s own header on why).
 import type { D1Database } from '@cloudflare/workers-types';
-import type { MembershipTier } from './demo-members';
+import type { MembershipTier } from './member-types';
 
 /** The ratified default (Geoff, 2026-07-07), also the migration's own seed value: used only if
  *  the row is ever missing, which should not happen post-migration. */
@@ -95,8 +95,8 @@ const TIER_PRICE_KEY: Record<MembershipTier, string> = {
 };
 
 /** The migration's own seed values: used only if a row is ever missing, which should not happen
- *  post-migration. Matches `demo-members.ts`'s `TIER_PRICING` fixture exactly, though that
- *  constant stays fixture-only; this is the real, admin-editable source once a caller reads it. */
+ *  post-migration. This is the real, admin-editable source; a caller never hardcodes a tier
+ *  price of its own. */
 const DEFAULT_TIER_PRICE: Record<MembershipTier, number> = { individual: 250, family: 500, 'young-adult': 100 };
 
 /** The three membership tiers' current prices, whole dollars: the join/renewal flow's own read

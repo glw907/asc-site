@@ -36,6 +36,30 @@ describe('dueClassTouches (the three cron-driven offsets)', () => {
   it('a class with no start_date is never due for anything', () => {
     expect(dueClassTouches(null, END, new Date('2099-01-01'))).toEqual([]);
   });
+
+  it('a touch whose own due date is 9 days in the past still fires (normal catch-up)', () => {
+    // week_out's own due date is START-7; 9 days past that is START+2.
+    expect(dueClassTouches(START, END, daysAfter(START, 2))).toContain('week_out');
+  });
+
+  it('a touch whose own due date is more than 10 days in the past never fires (the staleness cutoff)', () => {
+    // week_out's own due date is START-7; 11 days past that is START+4 -- day_before and followup
+    // are still within their own cutoffs at this point, so only week_out drops out.
+    const due = dueClassTouches(START, END, daysAfter(START, 4));
+    expect(due).not.toContain('week_out');
+    expect(due).toEqual(['day_before', 'followup']);
+  });
+
+  it('followup respects the same cutoff: still due 9 days past its own due date', () => {
+    // With no end_date, followup's own due date is START+1. week_out (due START-7) and
+    // day_before (due START-1) are both well past their own cutoffs by START+10; only followup
+    // remains.
+    expect(dueClassTouches(START, null, daysAfter(START, 10))).toEqual(['followup']);
+  });
+
+  it('followup never fires once more than 10 days past its own due date', () => {
+    expect(dueClassTouches(START, null, daysAfter(START, 12))).toEqual([]);
+  });
 });
 
 describe('classRemindersJob.run', () => {

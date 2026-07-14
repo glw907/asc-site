@@ -1,15 +1,14 @@
 // The portal's own age-gate math (docs/2026-07-07-member-portal-design.md's "Who's taking this
 // class?" section): a class's `track` (`$admin-club/lib/classes-store.ts`'s `ClassTrack`, 'youth'
 // 8-12 or 'adult-teen' 13+) gates which household member a parent may enroll. Deliberately its
-// own small module rather than folded into `classes-store.ts` (an admin-club module) or
-// `demo-members.ts` (a fixture): the portal reads real birthdates off real `members` rows
-// (0005_member_domain), and the age math itself has no club-admin or fixture dependency at all.
+// own small module rather than folded into `classes-store.ts` (an admin-club module): the portal
+// reads real birthdates off real `members` rows (0005_member_domain), and the age math itself has
+// no club-admin dependency at all.
 //
-// `ageInSeason` (`$admin-club/lib/demo-members.ts`) is a near-identical age calculation already in
-// the codebase, but keyed to a season's July 1 midpoint for Young Adult tier eligibility, a
-// different question (a membership tier, not a class track) with a different reference date (a
-// season midpoint, not "today"); this module computes a plain age as of a given moment instead,
-// the shape a live class-registration screen needs, not duplicated from that fixture-only helper.
+// `member-signup/lib/validate.ts`'s `ageAsOf` is a near-identical age calculation elsewhere in the
+// codebase, but answers a different question (Young Adult tier eligibility as of "today") with a
+// different reference date than this module's plain age-as-of-a-given-moment, the shape a live
+// class-registration screen needs.
 import type { ClassTrack } from '$admin-club/lib/classes-store';
 
 /** The youth track's own age window (design doc: "youth 8-12"). */

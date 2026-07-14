@@ -27,7 +27,7 @@ import {
   setOfferWindowHours,
   setTierPrice,
 } from '$admin-club/lib/club-settings';
-import type { MembershipTier } from '$admin-club/lib/demo-members';
+import type { MembershipTier } from '$admin-club/lib/member-types';
 import { clubAdminAction } from '$admin-club/lib/club-action';
 import { getRolloverPreview, runSeasonRollover, SeasonMismatchError, type RolloverPreview } from '$admin-club/lib/rollover';
 
