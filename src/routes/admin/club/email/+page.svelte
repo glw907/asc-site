@@ -2,8 +2,9 @@
 @component
 The Club section's Email screen: the template list (office idiom, one row per `email_templates`
 row, linking to its edit screen, pass 2.3's own subject/body form with a variable palette and a
-sample-data preview) and the send log (a filterable-by-eye list of `email_log` rows, newest
-first).
+sample-data preview), the send log (a filterable-by-eye list of `email_log` rows, newest first),
+and the header's own "Compose" entry point into the segment-targeted one-off Compose screen
+(`/admin/club/email/compose`, segment-email).
 -->
 <script lang="ts">
   import type { PageData } from './$types';
@@ -23,6 +24,10 @@ first).
 </script>
 
 <OfficeList eyebrow="Club" title="Email" {subtitle}>
+  {#snippet action()}
+    <a href="/admin/club/email/compose" class="btn btn-primary btn-sm">Compose</a>
+  {/snippet}
+
   <table class="table">
     <caption class="sr-only">Email templates, alphabetical by id</caption>
     <thead>
