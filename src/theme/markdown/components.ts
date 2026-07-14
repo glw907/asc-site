@@ -220,7 +220,7 @@ const membershipPricing = defineComponent({
   hydrate: true,
   build: (ctx) => {
     const tier = strAttr(ctx, 'tier') ?? 'individual';
-    return h('a', { className: ['membership-pricing-fallback'], href: '/join/apply/' }, [`current ${tier} pricing`]);
+    return h('a', { className: ['membership-pricing-fallback'], href: '/join/apply' }, [`current ${tier} pricing`]);
   },
   attributes: {
     tier: fields.select({ label: 'Tier', required: true, options: ['individual', 'family', 'young-adult'] }),

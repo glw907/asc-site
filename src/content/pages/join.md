@@ -70,7 +70,7 @@ If you're joining for the boats, the racing, or the community rather than a begi
 
 ### New Members
 
-1. **[Apply and pay online](/join/apply/).** Your membership is active immediately.
+1. **[Apply and pay online](/join/apply).** Your membership is active immediately.
 2. **Check your email** for your welcome message with your class credit, Discord invite, and account link.
 3. **The board reviews** new applications in the background (typically 2-3 business days). You won't hear anything unless there's an issue.
 
@@ -85,7 +85,7 @@ Already a member? Renewing is straightforward: log in to your account and comple
 ### Apply Now
 
 :::callout[Ready to Join?]{tone="note"}
-[Apply and pay online](/join/apply/).
+[Apply and pay online](/join/apply).
 :::
 
 ## About the Club
