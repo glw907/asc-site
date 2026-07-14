@@ -289,7 +289,7 @@ earlier "sign in instead" dead end, unchanged. -->
 
     <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
 
-    <button type="submit" class="btn btn-primary self-start" disabled={!!applyJoin.pending}>
+    <button type="submit" class="btn btn-accent self-start" disabled={!!applyJoin.pending}>
       {applyJoin.pending ? 'Submitting…' : 'Join and continue to payment'}
     </button>
 

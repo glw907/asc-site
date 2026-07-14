@@ -101,7 +101,10 @@ test('education — long-form pipeline renders no duplicate section', async ({ p
 test('events — light', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/events/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Events' })).toBeVisible();
+  // The 2026-07-12 template pass gave /events/ the light promise hero: the page title is the
+  // eyebrow line and the h1 carries the promise (686060c).
+  await expect(page.getByRole('heading', { level: 1, name: "There's always something happening at the club." })).toBeVisible();
+  await expect(page.locator('.events-hero-eyebrow', { hasText: 'Events' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Off-Season' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Meetings & Governance' })).toBeVisible();
   // A spine row from each section, proving the full read/group/render pipeline, not just the

@@ -81,12 +81,12 @@ Turnstile.
     `paid_at` NULL) + enrollments (`fee_paid = 0`) or waitlist rows for full classes +
     waiver acceptance (`context = 'join'`) + audit rows, for one `db.batch()`.
 
-- [ ] Failing unit tests first: young-adult age gate (edge: 26th birthday is `today`),
+- [x] Failing unit tests first: young-adult age gate (edge: 26th birthday is `today`),
   family multi-seat pricing (two parents + three kids: 2 covered, 3 paid), pick-order
   credit application, non-family tier rejecting extra members, full-class pick landing
   in waitlist statements, normalization of email/phone/name, statement shape (unpaid
   membership, waiver context).
-- [ ] Implement to green; full gate; commit.
+- [x] Implement to green; full gate; commit.
 
 ### Task 2: The `join` payment kind — migration 0022, checkout lines, `reconcileJoin`
 
@@ -121,11 +121,11 @@ Turnstile.
   status, Discord invite — style guide's system-email rules) and `board_join_notice`
   (internal: household, tier, classes; sent to the board reply address).
 
-- [ ] Failing tests first: multi-line param emission (indexed line_items, single-line
+- [x] Failing tests first: multi-line param emission (indexed line_items, single-line
   callers byte-identical), reconcileJoin happy path (flip + grants + redemptions +
   fee_paid + one transaction with summing lines), replay no-op, `grant_credits='0'`
   path granting nothing, welcome-back metadata shape, missing-membership refusal.
-- [ ] Implement to green; full gate; commit. Conductor scratch-proves and live-applies
+- [x] Implement to green; full gate; commit. Conductor scratch-proves and live-applies
   0022 after review.
 
 ### Task 3: The `/join/apply` route and form
@@ -160,10 +160,10 @@ Turnstile.
 - UI follows the locked design system: quiet composition, the page's fireweed budget
   (at most the submit door), tokens only, no new chrome vocabulary.
 
-- [ ] Failing tests first: action happy path (batch then redirect), duplicate-email
+- [x] Failing tests first: action happy path (batch then redirect), duplicate-email
   pivot (no writes), unpaid-row reuse on retry, running-total math delegated to
   `computeJoinPricing` (no duplicated pricing logic in the route), Turnstile refusal.
-- [ ] Implement to green; full gate; commit. Conductor reads a full-page render before
+- [x] Implement to green; full gate; commit. Conductor reads a full-page render before
   the task closes (one-check discipline; Geoff's before/after waits for the deploy
   gate at settle).
 
@@ -185,10 +185,10 @@ Turnstile.
   email-blur `checkKnownEmail` + standing probe pivots before the rest is filled.
   The signed-in portal class flow is untouched.
 
-- [ ] Failing tests first: the three branches (current proceeds, grace proceeds,
+- [x] Failing tests first: the three branches (current proceeds, grace proceeds,
   no-match/lapsed pivots with carried fields), member resolution uses normalized
   email, no behavioral change for the portal flow.
-- [ ] Implement to green; full gate; commit.
+- [x] Implement to green; full gate; commit.
 
 ### Task 5: Welcome-back renewal on the public door
 
@@ -206,11 +206,11 @@ Turnstile.
   `join`-kind checkout with `grant_credits='0'`. Existing unexpired credits still
   apply to picks (the credit ledger is household-scoped and never expires).
 
-- [ ] Failing tests first: match renders renewal not a duplicate household, season
+- [x] Failing tests first: match renders renewal not a duplicate household, season
   assignment (current season already paid → next season), `grant_credits='0'` in the
   session, new-member addition audited, existing-member edits impossible, credit
   application for a household holding an unredeemed grant.
-- [ ] Implement to green; full gate; commit.
+- [x] Implement to green; full gate; commit.
 
 ### Task 6: Portal renew and the asset-fee call site
 
@@ -230,9 +230,9 @@ Turnstile.
   unpaid asset assignment shows its fee and a pay door through the `asset-fee`
   checkout. The stub copy ("online renewal is coming soon") is gone.
 
-- [ ] Failing tests first: mint-then-checkout action, tier change repricing from
+- [x] Failing tests first: mint-then-checkout action, tier change repricing from
   settings, unpaid-row reuse, asset pay door only on approved+unpaid assignments.
-- [ ] Implement to green; full gate; commit.
+- [x] Implement to green; full gate; commit.
 
 ### Task 7: The content and language pass — CONDUCTOR-OWNED
 
@@ -244,7 +244,7 @@ Main-loop work per the standing ruling (content is never dispatched). Rewrite
 `membershipworks` directive from the registry, regenerate the manifest. Copy through
 the content-review gates; standing vocabulary consistent with the flows.
 
-- [ ] Rewrites drafted against the style guide, content-review pass, manifest
+- [x] Rewrites drafted against the style guide, content-review pass, manifest
   regenerated, full gate, commit.
 
 ### Task 8: Settle — e2e, visual, reviewer fan-out
@@ -257,7 +257,7 @@ the content-review gates; standing vocabulary consistent with the flows.
   action — against the local D1 seed (no member PII).
 - [ ] Visual: `/join/apply` and the changed portal card join the five-viewport suite;
   baselines regenerate in this change.
-- [ ] Reviewer fan-out (workflow lenses): `web-auth-security-reviewer` over the public
+- [x] Reviewer fan-out (workflow lenses): `web-auth-security-reviewer` over the public
   money paths (join action, welcome-back, class gate, webhook changes),
   `svelte-reviewer` over the new UI, `cloudflare-workers-reviewer` over
   payments/reconcile/webhook diffs. Conductor triages; confirmed findings fixed.
@@ -273,6 +273,6 @@ dispatch fails and needs isolation, but the default is the listed order.
 
 ## Live-DB checklist (conductor)
 
-- [ ] Scratch-prove 0022 (forward, verify, rollback, verify-empty) on a disposable D1.
-- [ ] Apply 0022 to live asc-club; verify template rows.
-- [ ] Rebuild local D1 with 0022 for the dev server and e2e seeds.
+- [x] Scratch-prove 0022 (forward, verify, rollback, verify-empty) on a disposable D1.
+- [x] Apply 0022 to live asc-club; verify template rows.
+- [x] Rebuild local D1 with 0022 for the dev server and e2e seeds.
