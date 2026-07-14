@@ -1,6 +1,16 @@
 # asc-site status
 
-**INITIATIVE 2 (unified-signup) IS BUILT, REVIEWED, AND ON DEV AWAITING GEOFF'S
+**INITIATIVE 3 (membership-admin) IS IN FLIGHT (2026-07-14, this session): spec
+`docs/2026-07-14-membership-admin-design.md` (Geoff-approved; rulings: one
+household-grouped Members screen + a Money & Renewals view, member-first search,
+Stripe-API refunds marking `refunded_at` and never deleting history, household
+merge/move in scope, no renewal-chase send action) + plan
+`docs/plans/2026-07-14-membership-admin.md` (8 tasks, workflow-executed on branch
+feat/membership-admin; Geoff authorized run-to-merge including push and queueing the
+next initiative). If this session crashed: resume from the plan. Migration 0023 applies
+LOCAL/scratch only during tasks; the live apply is a conductor close-ritual step.**
+
+**PRIOR (INITIATIVE 2, unified-signup) IS BUILT, REVIEWED, AND ON DEV AWAITING GEOFF'S
 BEFORE/AFTER (2026-07-13→14, the program's second session; spec
 `docs/2026-07-13-unified-signup-design.md` + plan `docs/plans/2026-07-13-unified-signup.md`,
 both implemented). What landed: the `src/member-signup/lib/` pure engine (validate /
