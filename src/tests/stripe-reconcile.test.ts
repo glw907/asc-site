@@ -17,8 +17,8 @@ const RECEIPT_TEMPLATE_ROW = {
 };
 
 describe('parseSessionMetadata', () => {
-  it('accepts a valid dues/class-fee/asset-fee metadata pair', () => {
-    for (const kind of ['dues', 'class-fee', 'asset-fee'] as const) {
+  it('accepts a valid dues/class-fee/asset-fee/donation metadata pair', () => {
+    for (const kind of ['dues', 'class-fee', 'asset-fee', 'donation'] as const) {
       expect(parseSessionMetadata({ ...SESSION, metadata: { kind, refId: 'row-1' } })).toEqual({ kind, refId: 'row-1' });
     }
   });
@@ -29,7 +29,7 @@ describe('parseSessionMetadata', () => {
   });
 
   it('rejects an unrecognized kind', () => {
-    expect(parseSessionMetadata({ ...SESSION, metadata: { kind: 'donation', refId: 'row-1' } })).toBeNull();
+    expect(parseSessionMetadata({ ...SESSION, metadata: { kind: 'bogus', refId: 'row-1' } })).toBeNull();
   });
 
   it('rejects a missing or empty refId', () => {
@@ -78,6 +78,13 @@ describe('reconcileCheckoutSession: dues', () => {
     const audit = calls.find((c) => c.sql.startsWith('INSERT INTO audit_log'));
     expect(audit?.args).toEqual(['system:stripe-webhook', 'payment.reconcile', 'membership', 'mem-1', expect.stringContaining('kind=dues')]);
 
+    const txnInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsert?.args).toEqual([
+      expect.any(String), 'charge', 'stripe', expect.any(String), 25000, null, SESSION.id, null, 'hh-1', null, null, null, null,
+    ]);
+    const lineInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transaction_lines'));
+    expect(lineInsert?.args).toEqual([expect.any(String), txnInsert?.args[0], 'dues', 'Family Membership -- 2026 season', 25000, 'mem-1', null, null]);
+
     expect(send).toHaveBeenCalledTimes(1);
     const message = send.mock.calls[0][0] as { to: string; subject: string };
     expect(message.to).toBe('jamie@example.com');
@@ -101,6 +108,7 @@ describe('reconcileCheckoutSession: dues', () => {
     expect(outcome).toEqual({ ok: true, reason: expect.stringContaining('already paid') });
     expect(send).not.toHaveBeenCalled();
     expect(calls.some((c) => c.sql.startsWith('INSERT INTO audit_log'))).toBe(false);
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO transactions'))).toBe(false);
   });
 
   it('reconciles without sending when the household has no primary member on file', async () => {
@@ -118,9 +126,15 @@ describe('reconcileCheckoutSession: dues', () => {
 });
 
 describe('reconcileCheckoutSession: class-fee', () => {
-  const ENROLLMENT_ROW = { class_id: 'fleet-tune-up-weekend', class_name: 'Fleet Tune-Up Weekend', member_name: 'Jamie Rivera', member_email: 'jamie@example.com' };
+  const ENROLLMENT_ROW = {
+    class_id: 'fleet-tune-up-weekend',
+    class_name: 'Fleet Tune-Up Weekend',
+    member_name: 'Jamie Rivera',
+    member_email: 'jamie@example.com',
+    household_id: 'hh-2',
+  };
 
-  it('marks the enrollment fee paid, audits, and emails the member', async () => {
+  it('marks the enrollment fee paid, audits, emails the member, and writes the ledger', async () => {
     const send = vi.fn().mockResolvedValue(undefined);
     const { db, calls } = fakeD1({
       firstResults: { 'FROM class_enrollments ce': ENROLLMENT_ROW, 'FROM email_templates WHERE id': RECEIPT_TEMPLATE_ROW },
@@ -133,6 +147,15 @@ describe('reconcileCheckoutSession: class-fee', () => {
     expect(send).toHaveBeenCalledTimes(1);
     const message = send.mock.calls[0][0] as { subject: string };
     expect(message.subject).toContain('Fleet Tune-Up Weekend class fee');
+
+    const txnInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsert?.args).toEqual([
+      expect.any(String), 'charge', 'stripe', expect.any(String), 25000, null, SESSION.id, null, 'hh-2', null, null, null, null,
+    ]);
+    const lineInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transaction_lines'));
+    expect(lineInsert?.args).toEqual([
+      expect.any(String), txnInsert?.args[0], 'class-fee', 'Fleet Tune-Up Weekend class fee', 25000, null, 'enr-1', null,
+    ]);
   });
 
   it('refuses an unknown enrollment id', async () => {
@@ -141,28 +164,30 @@ describe('reconcileCheckoutSession: class-fee', () => {
     expect(outcome).toEqual({ ok: false, reason: expect.stringContaining('no such class_enrollments row') });
   });
 
-  it('is a clean no-op when the fee is already paid (idempotence)', async () => {
+  it('is a clean no-op when the fee is already paid (idempotence), writing no ledger row', async () => {
     const send = vi.fn();
-    const { db } = fakeD1({
+    const { db, calls } = fakeD1({
       firstResults: { 'FROM class_enrollments ce': ENROLLMENT_ROW },
       runResults: { 'UPDATE class_enrollments SET fee_paid': { changes: 0 } },
     });
     const outcome = await reconcileCheckoutSession(db, { EMAIL: { send } }, 'class-fee', 'enr-1', SESSION);
     expect(outcome).toEqual({ ok: true, reason: expect.stringContaining('already paid') });
     expect(send).not.toHaveBeenCalled();
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO transactions'))).toBe(false);
   });
 });
 
 describe('reconcileCheckoutSession: asset-fee', () => {
   const ASSIGNMENT_ROW = {
     asset_type_name: 'RV Storage',
+    household_id: 'hh-3',
     household_name: 'The Rivera Household',
     primary_member_name: 'Jamie Rivera',
     primary_member_email: 'jamie@example.com',
   };
   const SETTINGS_ROW = { value: '2026' };
 
-  it('records the asset payment for the current season, audits, and emails the primary member', async () => {
+  it('records the asset payment for the current season, audits, emails the primary member, and writes the ledger', async () => {
     const send = vi.fn().mockResolvedValue(undefined);
     const { db, calls } = fakeD1({
       firstResults: {
@@ -179,6 +204,15 @@ describe('reconcileCheckoutSession: asset-fee', () => {
     expect(send).toHaveBeenCalledTimes(1);
     const message = send.mock.calls[0][0] as { subject: string };
     expect(message.subject).toContain('RV Storage fee -- 2026 season');
+
+    const txnInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsert?.args).toEqual([
+      expect.any(String), 'charge', 'stripe', expect.any(String), 25000, null, SESSION.id, null, 'hh-3', null, null, null, null,
+    ]);
+    const lineInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transaction_lines'));
+    expect(lineInsert?.args).toEqual([
+      expect.any(String), txnInsert?.args[0], 'asset-fee', 'RV Storage fee -- 2026 season', 25000, null, null, 'assign-1',
+    ]);
   });
 
   it('refuses an unknown assignment id', async () => {
@@ -187,14 +221,60 @@ describe('reconcileCheckoutSession: asset-fee', () => {
     expect(outcome).toEqual({ ok: false, reason: expect.stringContaining('no such asset_assignments row') });
   });
 
-  it('is a clean no-op when the season is already paid (idempotence)', async () => {
+  it('is a clean no-op when the season is already paid (idempotence), writing no ledger row', async () => {
     const send = vi.fn();
-    const { db } = fakeD1({
+    const { db, calls } = fakeD1({
       firstResults: { 'FROM asset_assignments aa': ASSIGNMENT_ROW, current_season: SETTINGS_ROW },
       runResults: { 'INSERT INTO asset_payments': { changes: 0 } },
     });
     const outcome = await reconcileCheckoutSession(db, { EMAIL: { send } }, 'asset-fee', 'assign-1', SESSION);
     expect(outcome).toEqual({ ok: true, reason: expect.stringContaining('already paid') });
     expect(send).not.toHaveBeenCalled();
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO transactions'))).toBe(false);
+  });
+});
+
+describe('reconcileCheckoutSession: donation', () => {
+  const DONATION_SESSION: StripeCheckoutSession = {
+    id: 'cs_test_donation_1',
+    amount_total: 5000,
+    metadata: { kind: 'donation', refId: 'txn-fixed-1' },
+    customer_details: { name: 'Jamie Rivera', email: 'jamie@example.com' },
+  };
+
+  it('records the donation as a charge transaction with a donation line, no domain write', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM transactions WHERE id': null } });
+    const outcome = await reconcileCheckoutSession(db, {}, 'donation', 'txn-fixed-1', DONATION_SESSION);
+    expect(outcome).toEqual({ ok: true });
+
+    const txnInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsert?.args).toEqual([
+      'txn-fixed-1', 'charge', 'stripe', expect.any(String), 5000, null, 'cs_test_donation_1', null, null, 'Jamie Rivera', 'jamie@example.com', null, null,
+    ]);
+    const lineInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transaction_lines'));
+    expect(lineInsert?.args).toEqual([expect.any(String), 'txn-fixed-1', 'donation', expect.any(String), 5000, null, null, null]);
+
+    const audit = calls.find((c) => c.sql.startsWith('INSERT INTO audit_log'));
+    expect(audit?.args).toEqual(['system:stripe-webhook', 'payment.reconcile', 'transaction', 'txn-fixed-1', expect.stringContaining('kind=donation')]);
+  });
+
+  it('records no payer snapshot when the session carries no customer_details', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM transactions WHERE id': null } });
+    const outcome = await reconcileCheckoutSession(db, {}, 'donation', 'txn-fixed-2', {
+      ...DONATION_SESSION,
+      id: 'cs_test_donation_2',
+      customer_details: null,
+    });
+    expect(outcome).toEqual({ ok: true });
+    const txnInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsert?.args[9]).toBeNull();
+    expect(txnInsert?.args[10]).toBeNull();
+  });
+
+  it('is idempotent on a PK collision: a transaction already recorded under this id is a clean no-op', async () => {
+    const { db, calls } = fakeD1({ firstResults: { 'FROM transactions WHERE id': { id: 'txn-fixed-1' } } });
+    const outcome = await reconcileCheckoutSession(db, {}, 'donation', 'txn-fixed-1', DONATION_SESSION);
+    expect(outcome).toEqual({ ok: true, reason: expect.stringContaining('already recorded') });
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO transactions'))).toBe(false);
   });
 });

@@ -27,6 +27,7 @@ import { sendClubEmail, type EmailBindingEnv } from './club-email';
 import { getCurrentSeason } from './club-settings';
 import { formatClubTimestamp, formatDollars } from './ui';
 import { toSqliteDatetime } from './offers';
+import { recordTransaction } from './ledger';
 
 /** The slice of a Stripe Checkout Session object this module actually reads: `amount_total` is
  *  the authoritative, Stripe-confirmed charge (cents), read from the event payload rather than
@@ -36,6 +37,10 @@ export interface StripeCheckoutSession {
   id: string;
   amount_total: number | null;
   metadata: Record<string, string> | null | undefined;
+  /** Present on a donation's session (no signed-in member, so no household to resolve): the
+   *  ledger snapshots whichever of `name`/`email` Stripe collected, per the donation reconciler
+   *  below. Absent or `null` on the other three kinds, which resolve their own household instead. */
+  customer_details?: { name?: string | null; email?: string | null } | null;
 }
 
 /** `session.metadata.kind`/`session.metadata.refId`, validated: `null` for a session with no
@@ -158,6 +163,14 @@ async function reconcileDues(db: D1Database, env: EmailBindingEnv, refId: string
 
   await writeAudit(db, 'membership', refId, `kind=dues session=${session.id}`);
 
+  const itemDisplayName = `${TIER_LABEL[membership.tier]} Membership -- ${membership.season} season`;
+  const amountTotalCents = session.amount_total ?? 0;
+  await recordTransaction(
+    db,
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: membership.household_id },
+    [{ item: 'dues', description: itemDisplayName, amountCents: amountTotalCents, membershipId: refId }],
+  );
+
   const household = await db.prepare('SELECT primary_member_id FROM households WHERE id = ?1').bind(membership.household_id).first<HouseholdPrimaryRow>();
   const primary = household?.primary_member_id
     ? await db.prepare('SELECT name, email FROM members WHERE id = ?1').bind(household.primary_member_id).first<MemberContactRow>()
@@ -168,7 +181,7 @@ async function reconcileDues(db: D1Database, env: EmailBindingEnv, refId: string
       templateId: 'stripe_payment_receipt',
       vars: {
         person_name: primary.name,
-        item_display_name: `${TIER_LABEL[membership.tier]} Membership -- ${membership.season} season`,
+        item_display_name: itemDisplayName,
         ...receiptVars(session, 'finance-committee@aksailingclub.org'),
       },
     });
@@ -181,6 +194,7 @@ interface EnrollmentReconcileRow {
   class_name: string;
   member_name: string;
   member_email: string | null;
+  household_id: string;
 }
 
 /** `kind: 'class-fee'`: `refId` is a `class_enrollments.id`. The row already exists (the public
@@ -196,7 +210,7 @@ interface EnrollmentReconcileRow {
 async function reconcileClassFee(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
   const enrollment = await db
     .prepare(
-      `SELECT c.id AS class_id, c.name AS class_name, m.name AS member_name, m.email AS member_email
+      `SELECT c.id AS class_id, c.name AS class_name, m.name AS member_name, m.email AS member_email, m.household_id AS household_id
        FROM class_enrollments ce
        JOIN classes c ON c.id = ce.class_id
        JOIN members m ON m.id = ce.member_id
@@ -214,13 +228,21 @@ async function reconcileClassFee(db: D1Database, env: EmailBindingEnv, refId: st
 
   await writeAudit(db, 'enrollment', refId, `kind=class-fee session=${session.id} class=${enrollment.class_id}`);
 
+  const itemDisplayName = `${enrollment.class_name} class fee`;
+  const amountTotalCents = session.amount_total ?? 0;
+  await recordTransaction(
+    db,
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: enrollment.household_id },
+    [{ item: 'class-fee', description: itemDisplayName, amountCents: amountTotalCents, enrollmentId: refId }],
+  );
+
   if (enrollment.member_email) {
     await sendClubEmail(db, env, {
       to: enrollment.member_email,
       templateId: 'stripe_payment_receipt',
       vars: {
         person_name: enrollment.member_name,
-        item_display_name: `${enrollment.class_name} class fee`,
+        item_display_name: itemDisplayName,
         ...receiptVars(session, 'program-committee@aksailingclub.org'),
       },
     });
@@ -230,6 +252,7 @@ async function reconcileClassFee(db: D1Database, env: EmailBindingEnv, refId: st
 
 interface AssignmentReconcileRow {
   asset_type_name: string;
+  household_id: string;
   household_name: string;
   primary_member_name: string | null;
   primary_member_email: string | null;
@@ -247,7 +270,7 @@ interface AssignmentReconcileRow {
 async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
   const assignment = await db
     .prepare(
-      `SELECT at.name AS asset_type_name, h.name AS household_name, pm.name AS primary_member_name, pm.email AS primary_member_email
+      `SELECT at.name AS asset_type_name, h.id AS household_id, h.name AS household_name, pm.name AS primary_member_name, pm.email AS primary_member_email
        FROM asset_assignments aa
        JOIN asset_types at ON at.id = aa.asset_type
        JOIN memberships m ON m.id = aa.membership_id
@@ -260,7 +283,8 @@ async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: st
   if (!assignment) return { ok: false, reason: `no such asset_assignments row: ${refId}` };
 
   const season = await getCurrentSeason(db);
-  const amountDollars = Math.round((session.amount_total ?? 0) / 100);
+  const amountTotalCents = session.amount_total ?? 0;
+  const amountDollars = Math.round(amountTotalCents / 100);
   const upsert = await db
     .prepare(
       `INSERT INTO asset_payments (id, assignment_id, season, amount, method, stripe_ref, paid_at)
@@ -275,17 +299,55 @@ async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: st
 
   await writeAudit(db, 'assignment', refId, `kind=asset-fee session=${session.id} type=${assignment.asset_type_name}`);
 
+  const itemDisplayName = `${assignment.asset_type_name} fee -- ${season} season`;
+  await recordTransaction(
+    db,
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: assignment.household_id },
+    [{ item: 'asset-fee', description: itemDisplayName, amountCents: amountTotalCents, assignmentId: refId }],
+  );
+
   if (assignment.primary_member_email) {
     await sendClubEmail(db, env, {
       to: assignment.primary_member_email,
       templateId: 'stripe_payment_receipt',
       vars: {
         person_name: assignment.primary_member_name ?? assignment.household_name,
-        item_display_name: `${assignment.asset_type_name} fee -- ${season} season`,
+        item_display_name: itemDisplayName,
         ...receiptVars(session, 'finance-committee@aksailingclub.org'),
       },
     });
   }
+  return { ok: true };
+}
+
+/** `kind: 'donation'`: `refId` is a fresh uuid `donate.remote.ts` mints and passes to
+ *  `createCheckout` as the Checkout Session's `metadata.refId`, then hands to this reconciler as
+ *  the ledger's own transaction id (`ledger.ts`'s own doc comment on why a caller-supplied id lets
+ *  a Stripe retry collide on the primary key). No domain row to flip, so the guard here is a plain
+ *  existence check on that id rather than a `changes: 1` compare-and-set, the natural-state guard
+ *  every other reconciler in this module already uses for the identical race, and no receipt
+ *  email (`docs/2026-07-13-money-ledger-design.md`'s "Live write path": donations get none in
+ *  this initiative). */
+async function reconcileDonation(db: D1Database, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
+  const existing = await db.prepare('SELECT id FROM transactions WHERE id = ?1').bind(refId).first<{ id: string }>();
+  if (existing) return { ok: true, reason: `donation ${refId} already recorded; no-op` };
+
+  const amountTotalCents = session.amount_total ?? 0;
+  await recordTransaction(
+    db,
+    {
+      id: refId,
+      kind: 'charge',
+      source: 'stripe',
+      occurredAt: toSqliteDatetime(new Date()),
+      amountTotalCents,
+      processorRef: session.id,
+      payerName: session.customer_details?.name ?? null,
+      payerEmail: session.customer_details?.email ?? null,
+    },
+    [{ item: 'donation', description: 'Donation to the Alaska Sailing Club', amountCents: amountTotalCents }],
+  );
+  await writeAudit(db, 'transaction', refId, `kind=donation session=${session.id}`);
   return { ok: true };
 }
 
@@ -311,5 +373,7 @@ export async function reconcileCheckoutSession(
       return reconcileClassFee(db, env, refId, session);
     case 'asset-fee':
       return reconcileAssetFee(db, env, refId, session);
+    case 'donation':
+      return reconcileDonation(db, refId, session);
   }
 }

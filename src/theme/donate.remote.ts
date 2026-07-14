@@ -3,11 +3,18 @@
 // src/lib/handlers/donate.js. STRIPE_SECRET_KEY is a site-owned Worker secret this environment
 // has not provisioned yet (see src/app.d.ts); with it absent, the form degrades to the same
 // graceful message the live handler itself falls back to, rather than a broken checkout.
+//
+// The Checkout Session itself now goes through `$admin-club/lib/payments`'s `createCheckout`
+// (the money-ledger design, "Live write path": a fourth `donation` kind joined the other three),
+// rather than this module's own hand-rolled fetch: the webhook's donation reconciler needs the
+// same `metadata.kind`/`metadata.refId` pair every other kind already carries to record the
+// donation in the ledger, and `createCheckout` is the one place that pair gets set.
 import * as v from 'valibot';
 import { invalid } from '@sveltejs/kit';
 import { form, getRequestEvent } from '$app/server';
-import { donationAmountError, buildStripeCheckoutBody } from '$theme/donate-pricing';
+import { donationAmountError } from '$theme/donate-pricing';
 import { verifyTurnstile } from '$theme/turnstile';
+import { createCheckout, CheckoutUnavailableError } from '$admin-club/lib/payments';
 
 const donateSchema = v.object({
   // The dollar amount the client-side preset buttons or the custom-amount input settled on,
@@ -30,22 +37,26 @@ export const createDonationCheckout = form(donateSchema, async ({ amount, note, 
     invalid('Please complete the verification.');
   }
 
-  const stripeKey = platform?.env?.STRIPE_SECRET_KEY;
-  if (!stripeKey) {
-    invalid('Payment service is temporarily unavailable. You can email board@aksailingclub.org instead.');
+  let result: Awaited<ReturnType<typeof createCheckout>>;
+  try {
+    result = await createCheckout(platform?.env ?? {}, {
+      kind: 'donation',
+      refId: crypto.randomUUID(),
+      amountCents,
+      description: 'Donation for the Alaska Sailing Club',
+      productDescription: 'Tax-deductible donation to the Alaska Sailing Club, a 501(c)(3) nonprofit.',
+      origin: url.origin,
+      successPath: '/payment/confirmation/',
+      cancelPath: '/donate/',
+      ...(note ? { metadata: { note } } : {}),
+    });
+  } catch (err) {
+    if (err instanceof CheckoutUnavailableError) invalid(err.message);
+    throw err;
   }
 
-  const body = buildStripeCheckoutBody({ amountCents, note: note || undefined, origin: url.origin });
-  const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${stripeKey}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  }).catch(() => invalid('We could not reach the payment service. You can email board@aksailingclub.org instead.'));
-
-  if (!response.ok) {
+  if ('stub' in result) {
     invalid('Payment service is temporarily unavailable. You can email board@aksailingclub.org instead.');
   }
-
-  const session = (await response.json()) as { url: string };
-  return { url: session.url };
+  return { url: result.url };
 });

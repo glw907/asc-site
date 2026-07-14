@@ -26,8 +26,12 @@
 // both kinds (`stripe-reconcile.ts`) is already built and tested; only the call sites that CREATE
 // the session are missing, deliberately left to the worktree that owns those screens.
 
-/** The three kinds of payment the club collects through Stripe Checkout today. */
-export const PAYMENT_KINDS = ['dues', 'class-fee', 'asset-fee'] as const;
+/** The four kinds of payment the club collects through Stripe Checkout today. `donation` joined
+ *  the other three (`docs/2026-07-13-money-ledger-design.md`'s "Live write path") once the
+ *  ledger gave a donation somewhere durable to land; `donate.remote.ts` mints its own `refId`
+ *  (a fresh uuid with no domain row behind it) rather than pointing at one, since a donation has
+ *  no domain row of its own. */
+export const PAYMENT_KINDS = ['dues', 'class-fee', 'asset-fee', 'donation'] as const;
 
 /** One allowed payment kind, also the webhook's own dispatch key. */
 export type PaymentKind = (typeof PAYMENT_KINDS)[number];
@@ -60,6 +64,15 @@ export interface CreateCheckoutArgs {
   /** Pre-fills Stripe's own email field when the payer's address is already known (a signed-in
    *  member paying dues, say); omitted, Stripe collects it fresh. */
   customerEmail?: string;
+  /** Stripe's own `product_data.description`, the line item's longer strapline below its name
+   *  (distinct from {@link description} above, which is the product's display name). Only the
+   *  donation kind uses this today (the tax-deductible notice `donate.remote.ts` used to carry
+   *  in its own hand-rolled body). */
+  productDescription?: string;
+  /** Extra session metadata beyond the `kind`/`refId` pair every reconciler already reads (a
+   *  donor's optional note, say). Merged in after `kind`/`refId`, so a caller cannot collide
+   *  with either. */
+  metadata?: Record<string, string>;
 }
 
 /** `createCheckout`'s success shape: the Checkout Session's own redirect URL. */
@@ -94,18 +107,22 @@ const STRIPE_CHECKOUT_SESSIONS_URL = 'https://api.stripe.com/v1/checkout/session
  * placeholder Stripe expects literal.
  */
 export function buildCheckoutBody(args: CreateCheckoutArgs): string {
-  const { kind, refId, amountCents, description, origin, cancelPath, customerEmail } = args;
+  const { kind, refId, amountCents, description, origin, cancelPath, customerEmail, productDescription, metadata } = args;
   const params = new URLSearchParams({
     mode: 'payment',
     'line_items[0][price_data][currency]': 'usd',
     'line_items[0][price_data][unit_amount]': String(amountCents),
     'line_items[0][price_data][product_data][name]': description,
+    ...(productDescription ? { 'line_items[0][price_data][product_data][description]': productDescription } : {}),
     'line_items[0][quantity]': '1',
     cancel_url: `${origin}${cancelPath}`,
     'metadata[kind]': kind,
     'metadata[refId]': refId,
     ...(customerEmail ? { customer_email: customerEmail } : {}),
   });
+  for (const [key, value] of Object.entries(metadata ?? {})) {
+    params.set(`metadata[${key}]`, value);
+  }
   return `${params.toString()}&success_url=${origin}${args.successPath}?session_id={CHECKOUT_SESSION_ID}`;
 }
 

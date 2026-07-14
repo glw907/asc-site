@@ -78,7 +78,7 @@ describe('POST /api/stripe/webhook', () => {
   });
 
   it('400s a checkout.session.completed event with malformed metadata', async () => {
-    const body = completedSessionEvent({ metadata: { kind: 'donation', refId: 'x' } });
+    const body = completedSessionEvent({ metadata: { kind: 'bogus', refId: 'x' } });
     const request = await signedRequest(body);
     const response = await POST(eventFor(request, { STRIPE_WEBHOOK_SECRET: SECRET }));
     expect(response.status).toBe(400);

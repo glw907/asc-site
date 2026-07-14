@@ -12,8 +12,8 @@ const ARGS = {
 };
 
 describe('PAYMENT_KINDS', () => {
-  it('lists the three kinds the webhook dispatches on', () => {
-    expect(PAYMENT_KINDS).toEqual(['dues', 'class-fee', 'asset-fee']);
+  it('lists the four kinds the webhook dispatches on', () => {
+    expect(PAYMENT_KINDS).toEqual(['dues', 'class-fee', 'asset-fee', 'donation']);
   });
 });
 
@@ -33,6 +33,27 @@ describe('buildCheckoutBody', () => {
     expect(new URLSearchParams(buildCheckoutBody(ARGS)).has('customer_email')).toBe(false);
     const withEmail = new URLSearchParams(buildCheckoutBody({ ...ARGS, customerEmail: 'jamie@example.com' }));
     expect(withEmail.get('customer_email')).toBe('jamie@example.com');
+  });
+
+  it('omits the product description and any extra metadata when neither is given', () => {
+    const params = new URLSearchParams(buildCheckoutBody(ARGS));
+    expect(params.has('line_items[0][price_data][product_data][description]')).toBe(false);
+    expect(params.has('metadata[note]')).toBe(false);
+  });
+
+  it('carries a product description and extra metadata when given', () => {
+    const params = new URLSearchParams(
+      buildCheckoutBody({
+        ...ARGS,
+        kind: 'donation',
+        productDescription: 'Tax-deductible donation to the Alaska Sailing Club, a 501(c)(3) nonprofit.',
+        metadata: { note: 'In memory of a good sailor' },
+      }),
+    );
+    expect(params.get('line_items[0][price_data][product_data][description]')).toBe(
+      'Tax-deductible donation to the Alaska Sailing Club, a 501(c)(3) nonprofit.',
+    );
+    expect(params.get('metadata[note]')).toBe('In memory of a good sailor');
   });
 });
 
