@@ -1,6 +1,22 @@
 # asc-site status
 
-**INITIATIVE 1 (money-ledger) IS COMPLETE AND LIVE (2026-07-13, the program's first
+**INITIATIVE 2 (unified-signup) BRAINSTORMED, SPEC + PLAN COMMITTED, AWAITING GEOFF'S
+REVIEW (2026-07-13, the program's second session): spec
+`docs/2026-07-13-unified-signup-design.md`, plan `docs/plans/2026-07-13-unified-signup.md`.
+Rulings banked in the spec: classes members-only (non-member pivots to join), ONE
+combined join checkout (dues + uncovered class-fee lines; family multi-seat is the
+driving case), young-adult = under 26 with 1 credit, purchaser-only waiver at join, no
+board email anywhere in the join story (board notified, never a gate). CORRECTION
+LANDED (e16054f + memory): the 2026-07-07 craft sweep had invented a board-approval
+gate on join.md/renewing-your-membership.md; the live process is MW self-serve, active
+immediately, background review — both pages restored, and member-facing process claims
+now verify against the legacy live site. Execution is Geoff-pre-authorized as a
+workflow (serial Sonnet implementers, conductor reviews, content task conductor-owned,
+0022 scratch-proof + live apply conductor-owned). NEXT ACTION: Geoff reviews spec+plan;
+on approval, run the workflow (Tasks 1-8), then the settle (reviewer fan-out, e2e +
+visual baselines, dev deploy, Geoff's before/after).**
+
+**PRIOR (INITIATIVE 1, money-ledger) IS COMPLETE AND LIVE (2026-07-13, the program's first
 session): the MW REPLACEMENT PROGRAM is on ROADMAP.md (Geoff-approved; one go-live —
 apex cutover waits for membership signup/renewal/admin, MW cancels right after):
 money-ledger → unified-signup → membership-admin → segment-email → payments-live-smoke →
