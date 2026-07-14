@@ -6,9 +6,13 @@ waitlist instead), a running total delegated to the same `computeJoinPricing` th
 uses (no duplicated pricing math), the waiver, and Turnstile. Submits through `applyJoin`
 (join-apply.remote.ts): a fresh join redirects to Stripe, a checkout-unavailable submission shows
 the same stub message every other payment form on this site shows, and a purchaser email that
-already belongs to a real member answers the welcome-back pivot Task 5 owns rendering. -->
+already belongs to a real member answers the welcome-back pivot Task 5 owns rendering. A visitor
+carried over from the class door's own invitation (Task 4, `?class=<id>&name=…&email=…&phone=…`)
+has those fields and the class pick pre-filled from `data.prefill`, so they never have to enter
+them twice. -->
 <script lang="ts">
   import { browser } from '$app/environment';
+  import { untrack } from 'svelte';
   import type { PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
   import { applyJoin, checkKnownEmail } from '$theme/join-apply.remote';
@@ -22,13 +26,13 @@ already belongs to a real member answers the welcome-back pivot Task 5 owns rend
   let { data }: { data: PageData } = $props();
 
   let tier = $state<MembershipTier>('individual');
-  let purchaserName = $state('');
-  let purchaserEmail = $state('');
-  let purchaserPhone = $state('');
+  let purchaserName = $state(untrack(() => data.prefill.name));
+  let purchaserEmail = $state(untrack(() => data.prefill.email));
+  let purchaserPhone = $state(untrack(() => data.prefill.phone));
   let purchaserBirthdate = $state('');
   let members = $state<{ name: string; birthdate: string; email: string }[]>([]);
   // Index-aligned with the roster: picks[0] is the purchaser's pick, picks[i] is members[i - 1]'s.
-  let picks = $state<string[]>(['']);
+  let picks = $state<string[]>(untrack(() => [data.prefill.classId]));
   let knownEmailHint = $state(false);
 
   const { waiverAccepted } = applyJoin.fields;

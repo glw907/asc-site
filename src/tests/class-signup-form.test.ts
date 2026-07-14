@@ -30,6 +30,21 @@ const CLASS_ROW = {
   updated_at: '2026-01-01 00:00:00',
 };
 
+/** The class-door standing gate's own lookups (Task 4): every fixture below signs up as a member
+ *  in `current` standing (a paid `memberships` row from well within the last year), since these
+ *  tests exercise capacity/Turnstile/interests behavior, not the standing gate itself (that gate
+ *  has its own describe block further down). The `paid_at` date is computed relative to the real
+ *  clock (matching the standing-gate describe block's own `isoDaysAgo` idiom) so these fixtures
+ *  never go stale as the calendar moves on. */
+const RECENT_PAID_AT = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const STANDING_ELIGIBLE = {
+  'FROM members WHERE email': { id: 'member-1', household_id: 'household-1' },
+  'FROM members WHERE id': { id: 'member-1', household_id: 'household-1', name: 'Jamie Rivera' },
+  'FROM households WHERE id': { name: 'Rivera Household' },
+  'FROM memberships WHERE household_id': { tier: 'individual', season: 2026, paid_at: RECENT_PAID_AT },
+  "'renewal_grace_days'": { value: '30' },
+};
+
 function freeCapacityDb() {
   return fakeD1({
     firstResults: {
@@ -37,6 +52,7 @@ function freeCapacityDb() {
       'FROM class_enrollments WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 9 }),
       'FROM class_waitlist WHERE class_id': { n: 0 },
       "'waiver_text_version'": { value: '2026-01' },
+      ...STANDING_ELIGIBLE,
     },
   });
 }
@@ -51,6 +67,7 @@ function fullClassDb() {
       "COALESCE(MAX(position)": { next_position: 1 },
       'FROM class_waitlist WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 0 }),
       "'waiver_text_version'": { value: '2026-01' },
+      ...STANDING_ELIGIBLE,
     },
   });
 }
@@ -179,5 +196,101 @@ describe('the interests answer (migration 0019_enrollment_interests)', () => {
 
     expect(result.success).toBe(false);
     expect(result.issues?.map((issue) => issue.message)).toContain('Please keep your answer under 1000 characters.');
+  });
+});
+
+describe('the class-door standing gate (Task 4)', () => {
+  const HOUSEHOLD_ROW = { id: 'household-1', name: 'Rivera Household' };
+  const MEMBER_ROW = { id: 'member-1', household_id: HOUSEHOLD_ROW.id, name: 'Jamie Rivera' };
+
+  function isoDaysAgo(days: number): string {
+    return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  }
+
+  /** A free-capacity class DB (`freeCapacityDb`'s own shape) plus the standing-gate's own lookups:
+   *  a member (or not, for the no-match branch) whose household's most recently paid membership row
+   *  landed `paidAt` days ago (or never paid, for `paidAt: null`). */
+  function standingDb(opts: { memberFound: boolean; paidAt: string | null; email?: unknown | ((args: unknown[]) => unknown) }) {
+    return fakeD1({
+      firstResults: {
+        'FROM classes WHERE id': CLASS_ROW,
+        'FROM class_enrollments WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 9 }),
+        'FROM class_waitlist WHERE class_id': { n: 0 },
+        "'waiver_text_version'": { value: '2026-01' },
+        "'renewal_grace_days'": { value: '30' },
+        'FROM members WHERE email': opts.email ?? (opts.memberFound ? { id: MEMBER_ROW.id, household_id: MEMBER_ROW.household_id } : null),
+        'FROM members WHERE id': opts.memberFound ? MEMBER_ROW : null,
+        'FROM households WHERE id': HOUSEHOLD_ROW,
+        'FROM memberships WHERE household_id': opts.paidAt ? { tier: 'individual', season: 2025, paid_at: opts.paidAt } : null,
+      },
+    });
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('a current member proceeds through the ordinary enroll path', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { db } = standingDb({ memberFound: true, paidAt: isoDaysAgo(60) });
+
+    const result = await handleClassSignup(INPUT, { CLUB_DB: db }, '203.0.113.5');
+
+    expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
+  });
+
+  it('a member in grace standing proceeds too', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    // ~365 days past this paid_at is ~15 days ago: past the boundary, still inside the default
+    // 30-day grace window.
+    const { db } = standingDb({ memberFound: true, paidAt: isoDaysAgo(380) });
+
+    const result = await handleClassSignup(INPUT, { CLUB_DB: db }, '203.0.113.5');
+
+    expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
+  });
+
+  it('an email with no matching member pivots into the join door, carrying the submitted fields', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { db } = standingDb({ memberFound: false, paidAt: null });
+
+    const result = await handleClassSignup(INPUT, { CLUB_DB: db }, '203.0.113.5');
+
+    expect(result).toEqual({
+      pivot: 'join',
+      classId: CLASS_ROW.id,
+      name: INPUT.name,
+      email: INPUT.email,
+      phone: undefined,
+    });
+  });
+
+  it('a lapsed household pivots too, carrying an entered phone number', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    // Well past the 1-year boundary plus the 30-day grace window.
+    const { db } = standingDb({ memberFound: true, paidAt: isoDaysAgo(450) });
+
+    const result = await handleClassSignup({ ...INPUT, phone: '907-555-0100' }, { CLUB_DB: db }, '203.0.113.5');
+
+    expect(result).toEqual({
+      pivot: 'join',
+      classId: CLASS_ROW.id,
+      name: INPUT.name,
+      email: INPUT.email,
+      phone: '907-555-0100',
+    });
+  });
+
+  it('resolves the member by normalized email', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { db } = standingDb({
+      memberFound: true,
+      paidAt: isoDaysAgo(60),
+      email: (args: unknown[]) => (args[0] === 'jamie@example.com' ? { id: MEMBER_ROW.id, household_id: MEMBER_ROW.household_id } : null),
+    });
+
+    const result = await handleClassSignup({ ...INPUT, email: '  Jamie@Example.COM  ' }, { CLUB_DB: db }, '203.0.113.5');
+
+    expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
   });
 });

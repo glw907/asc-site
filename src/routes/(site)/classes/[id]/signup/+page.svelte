@@ -3,12 +3,20 @@ The public class signup/waitlist form (Task 8): reachable from the events listin
 An open class enrolls immediately on submit; a full one joins the waitlist instead, both through
 the same `joinClass` remote function (class-signup.remote.ts), which decides the outcome
 server-side (this page never guesses). Turnstile-gated, degrading gracefully with no secret
-configured, matching the family's own ContactForm/DonateForm precedent. -->
+configured, matching the family's own ContactForm/DonateForm precedent.
+
+The class-door standing gate (Task 4): `joinClass`'s own submission is gated server-side on
+membership standing, so a non-member (or lapsed household) never enrolls here — the action answers
+a `{ pivot: 'join' }` outcome instead, which this page renders as an invitation into `/join/apply`
+with the submitted fields carried over as query params. With JS available, an email-blur probe
+(`checkKnownEmail` then `checkClassEligibility`) offers the same invitation before the visitor
+fills out the rest of the form. -->
 <script lang="ts">
   import { browser } from '$app/environment';
   import type { PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
-  import { joinClass } from '$theme/class-signup.remote';
+  import { joinClass, checkClassEligibility } from '$theme/class-signup.remote';
+  import { checkKnownEmail } from '$theme/join-apply.remote';
   import { payClassFee } from '$theme/class-fee-checkout.remote';
   import { CLASS_TRACK_LABEL } from '$admin-club/lib/classes-store';
   import { WAIVER_RELEASE_TEXT } from '$theme/waiver-text';
@@ -21,6 +29,34 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
   const spotsLeft = $derived(Math.max(0, data.cls.capacity - data.cls.enrolledCount));
 
   const { name, email, phone, interests, waiverAccepted } = joinClass.fields;
+
+  /** Set once the email-blur probe finds the visitor ineligible, so the page can show the join
+   *  invitation before a full submit. `null` until a blur decides otherwise. */
+  let blurPivot = $state<{ name: string; email: string; phone: string } | null>(null);
+
+  async function onEmailBlur(): Promise<void> {
+    const enteredEmail = email.value() ?? '';
+    if (!enteredEmail.trim()) {
+      blurPivot = null;
+      return;
+    }
+    const known = await checkKnownEmail(enteredEmail);
+    const eligible = known.known ? (await checkClassEligibility(enteredEmail)).eligible : false;
+    blurPivot = eligible ? null : { name: name.value() ?? '', email: enteredEmail, phone: phone.value() ?? '' };
+  }
+
+  const pivot = $derived(
+    joinClass.result && 'pivot' in joinClass.result
+      ? { name: joinClass.result.name, email: joinClass.result.email, phone: joinClass.result.phone ?? '' }
+      : blurPivot,
+  );
+
+  const joinApplyHref = $derived.by(() => {
+    if (!pivot) return '';
+    const params = new URLSearchParams({ class: data.cls.id, name: pivot.name, email: pivot.email });
+    if (pivot.phone) params.set('phone', pivot.phone);
+    return `/join/apply?${params.toString()}`;
+  });
 
   $effect(() => {
     const url = payClassFee.result && 'url' in payClassFee.result ? payClassFee.result.url : undefined;
@@ -56,7 +92,7 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
   {/if}
 </p>
 
-{#if joinClass.result?.outcome === 'enrolled'}
+{#if joinClass.result && 'outcome' in joinClass.result && joinClass.result.outcome === 'enrolled'}
   <div class="mt-l max-w-measure-wide rounded-box border border-success bg-success/10 p-m">
     <p class="m-0 font-semibold text-base-content">You're signed up for {data.cls.name}.</p>
     {#if data.cls.fee > 0}
@@ -91,7 +127,7 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
       </p>
     {/if}
   </div>
-{:else if joinClass.result?.outcome === 'waitlisted'}
+{:else if joinClass.result && 'outcome' in joinClass.result && joinClass.result.outcome === 'waitlisted'}
   <div class="mt-l max-w-measure-wide rounded-box border border-info bg-info/10 p-m">
     <p class="m-0 font-semibold text-base-content">You're on the waitlist, position {joinClass.result.position}.</p>
     <p class="mt-xs mb-0 text-step--1 text-base-content">
@@ -99,6 +135,15 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
       claim it, good for a limited window; passing on an offer is a fine choice and keeps your place
       for a future opening.
     </p>
+  </div>
+{:else if pivot}
+  <div class="mt-l max-w-measure-wide rounded-box border border-info bg-info/10 p-m">
+    <p class="m-0 font-semibold text-base-content">Classes are for current members.</p>
+    <p class="mt-xs mb-0 text-step--1 text-base-content">
+      Join the club to sign up for {data.cls.name}; we'll carry your class pick over so you don't
+      have to enter it twice.
+    </p>
+    <a class="btn btn-primary btn-sm mt-s" href={joinApplyHref}>Join the club</a>
   </div>
 {:else}
   <form {...joinClass} class="mt-l flex max-w-measure-wide flex-col gap-m">
@@ -117,7 +162,7 @@ configured, matching the family's own ContactForm/DonateForm precedent. -->
 
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Email address</legend>
-      <input class="input w-full" autocomplete="email" required {...email.as('email')} />
+      <input class="input w-full" autocomplete="email" required {...email.as('email')} onblur={onEmailBlur} />
     </fieldset>
 
     <fieldset class="fieldset">

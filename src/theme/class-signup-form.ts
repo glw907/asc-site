@@ -11,6 +11,8 @@ import type { D1Database } from '@cloudflare/workers-types';
 import { signUpForClass, type SignUpForClassInput, type SignUpResult } from '$admin-club/lib/enrollments';
 import type { EmailBindingEnv } from '$admin-club/lib/club-email';
 import { getWaiverTextVersion } from '$admin-club/lib/club-settings';
+import { normalizeEmail } from '$admin-club/lib/member-normalize.js';
+import { getMemberStanding } from '$member-auth/lib/standing';
 import { verifyTurnstile } from './turnstile';
 
 export const classSignupSchema = v.object({
@@ -32,6 +34,40 @@ export const classSignupSchema = v.object({
 
 export type ClassSignupSubmission = v.InferOutput<typeof classSignupSchema>;
 
+/** The class-door standing gate's pivot outcome (Task 4, `docs/2026-07-13-unified-signup-design.md`'s
+ *  "The class door gate"): the submitted email never reached `signUpForClass`, because it does not
+ *  resolve to a member whose household stands `current` or `grace`. Carries the fields the visitor
+ *  already typed so the page can render an invitation into `/join/apply` with them pre-filled. */
+export interface ClassSignupPivot {
+  pivot: 'join';
+  classId: string;
+  name: string;
+  email: string;
+  phone?: string;
+}
+
+/** `handleClassSignup`'s full result: today's enroll-or-waitlist outcome, or the standing gate's
+ *  pivot into the join door. */
+export type ClassSignupOutcome = SignUpResult | ClassSignupPivot;
+
+/**
+ * The class-door standing gate: true only when `email` (normalized) resolves to a member whose
+ * household currently stands `current` or `grace`. A no-match, or a `lapsed` household, answers
+ * false, and the caller (`handleClassSignup`, or the email-blur probe in `class-signup.remote.ts`)
+ * pivots the visitor into the join door instead of the ordinary enroll/waitlist path. This is the
+ * one gate the public form's submission runs through; the signed-in portal class flow
+ * (`$member-portal/lib/classes.ts`) never calls it, since a member reaching that page is already
+ * authenticated.
+ */
+export async function resolveClassEligibility(db: D1Database, email: string): Promise<boolean> {
+  const normalized = normalizeEmail(email);
+  const member = await db.prepare('SELECT id FROM members WHERE email = ?1 LIMIT 1').bind(normalized).first<{ id: string }>();
+  if (!member) return false;
+
+  const standing = await getMemberStanding(db, member.id);
+  return standing?.status === 'current' || standing?.status === 'grace';
+}
+
 /** The slice of `App.Platform['env']` this handler actually reads, narrowed the same way
  *  `club-roles.ts`'s own `resolveClubDb` narrows `platform.env`: a plain `env: unknown` argument,
  *  cast internally, so a caller (or a test) never has to satisfy the engine's full
@@ -50,13 +86,15 @@ interface ClassSignupEnv {
 
 /** Sign up for a class from the public form's own submission: Turnstile-gated (degrading
  *  gracefully when no secret is configured, matching `contact.remote.ts`/`donate.remote.ts`),
- *  reads the current liability-release wording version, then hands off to `enrollments.ts`'s
+ *  gated on the class-door standing check ({@link resolveClassEligibility}; a no-match or lapsed
+ *  household pivots into the join door and never reaches the rest of this function), then reads
+ *  the current liability-release wording version and hands off to `enrollments.ts`'s
  *  `signUpForClass` for the actual enroll-or-waitlist decision. */
 export async function handleClassSignup(
   input: ClassSignupSubmission,
   env: unknown,
   clientAddress: string,
-): Promise<SignUpResult> {
+): Promise<ClassSignupOutcome> {
   const platformEnv = env as ClassSignupEnv | undefined;
   const secret = platformEnv?.TURNSTILE_SECRET_KEY;
   const token = input['cf-turnstile-response'];
@@ -67,6 +105,16 @@ export async function handleClassSignup(
   const db = platformEnv?.CLUB_DB;
   if (!db) {
     invalid('Class signup is not available right now. You can email board@aksailingclub.org instead.');
+  }
+
+  if (!(await resolveClassEligibility(db, input.email))) {
+    return {
+      pivot: 'join',
+      classId: input.classId,
+      name: input.name,
+      email: input.email,
+      phone: input.phone || undefined,
+    };
   }
 
   const waiverVersion = await getWaiverTextVersion(db);
