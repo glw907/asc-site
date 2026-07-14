@@ -33,12 +33,24 @@ promise hero). Gate at close: check 0/0 (813 files), 1050 tests, build green, e2
 27/27. Budgets: ~3.1M subagent tokens + the Fable main loop; 2 question rounds to
 Geoff, 1 Geoff-initiated correction (the invented board-approval copy, e16054f +
 memory). Roadmap: `class-management` and `season-rollover` logged (Geoff's rulings;
-rollover is sitewide, ops startNewSeason is the precedent). NEXT: Geoff's before/after
-on dev (join.md → /join/apply, class-door pivot, portal renew card), his verdict on the
-welcome-back amendment + the fireweed submit; then INITIATIVE 3 membership-admin (fresh
-session per the ruling). Known debt: GitHub Actions billing still blocked (deploys stay
-manual); Turnstile enforcement + rate limiting ride payments-live-smoke; the
-education-round-4 branch still owes its merge to main at Geoff's go.**
+rollover is sitewide, ops startNewSeason is the precedent). MERGED TO MAIN cd09deb on
+Geoff's go (2026-07-14): the whole education-round-4 arc landed; the conflict resolved
+to main's cairn-cms ^0.84.4 pin (his cairn-side bumps), full gate green post-merge (815
+files, 1050 tests, e2e suite previously 27/27), dev redeployed from main and smoked.
+The two flagged calls (the welcome-back magic-link amendment, the fireweed submit)
+stand unless Geoff reopens them at his dev walkthrough.
+NEXT SESSION (fresh context, per the ruling): INITIATIVE 3, membership-admin — read
+this entry + ROADMAP.md's membership-admin entry + the consumer brief
+docs/2026-07-13-cairn-editor-roles-consumer-brief.md, then brainstorm. The opening fork
+is Geoff's screen-shape question (two Members/Memberships screens vs one
+household-grouped screen + a money/renewals view) — drive mockups from the REAL
+285-member data (the messy shapes: Wright stale-membership-with-assets, comped
+memberships with no dues line, Joseph Oliver's two-charge 2024). The staff-roles
+collapse onto cairn's editor-roles seam WAITS for the cairn release (Geoff building it;
+sequence the screens/CRUD/refunds work first). Refunds write the ledger through the
+0021 invariants. Known debt: GitHub Actions billing still blocked (deploys stay
+manual); Turnstile enforcement + rate limiting ride payments-live-smoke; portal-renew
+e2e wants a member-auth login helper.**
 
 **PRIOR (INITIATIVE 1, money-ledger) IS COMPLETE AND LIVE (2026-07-13, the program's first
 session): the MW REPLACEMENT PROGRAM is on ROADMAP.md (Geoff-approved; one go-live —
