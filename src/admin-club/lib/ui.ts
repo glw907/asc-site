@@ -43,6 +43,16 @@ export function formatDollars(amount: number | null): string {
   return amount == null ? '—' : `$${amount}`;
 }
 
+/** US dollars and cents off the ledger's own signed integer-cents amounts (`transactions.
+ *  amount_total_cents`, `transaction_lines.amount_cents`): the money-ledger domain is the one
+ *  place in this app that carries fractional dollars (a `$324` dues row is still whole, but a
+ *  processor fee or a partial refund is not), so this stays a separate formatter from the whole-
+ *  dollar `formatDollars` above rather than folding cents-awareness into every caller of that one. */
+export function formatCents(amountCents: number): string {
+  const sign = amountCents < 0 ? '-' : '';
+  return `${sign}$${(Math.abs(amountCents) / 100).toFixed(2)}`;
+}
+
 // Pinned to the club's own timezone rather than `undefined` (the runtime's local zone): this
 // renders on the server, and a Cloudflare Worker's runtime zone is UTC, not Alaska's. `undefined`
 // would print a SQLite UTC timestamp as if it were already Anchorage wall-clock, nine or eight
