@@ -1,6 +1,22 @@
 # asc-site status
 
-**THE MEMBERSHIPWORKS DATA IMPORT IS LIVE (2026-07-13 night session, Geoff live throughout):
+**THE MW REPLACEMENT PROGRAM IS APPROVED AND EXECUTING (2026-07-13, follow-on session):
+six initiatives on ROADMAP.md (Geoff-approved; one go-live — the apex cutover waits for
+membership signup/renewal/admin, MW cancels right after): money-ledger → unified-signup →
+membership-admin → segment-email → payments-live-smoke → mw-cutover; qbo-integration
+narrowed to the sync (the ledger table moved into initiative 1). Scope rulings: email =
+announce + segments (not a campaign tool). INITIATIVE 1 (money-ledger) IS IN FLIGHT:
+spec at docs/2026-07-13-money-ledger-design.md, plan at
+docs/plans/2026-07-13-money-ledger.md (Tasks 1-4 workflow-dispatched Sonnet builds:
+migration 0021 transactions/transaction_lines, ledger.ts seam, reconciler wiring + the
+donation fourth kind, mw-ledger.mjs backfill; Task 5 conductor-owned live DB ops).
+Sessions clear context between initiatives (Geoff's ruling this session). On resume
+mid-initiative: read the plan, check `git log` for which tasks committed, continue from
+the first uncommitted task. NEXT AFTER INITIATIVE 1: the unified-signup brainstorm
+(Fable-authorized), then initiative 3; the round-5 settle and admin review round remain
+queued from the prior entries.**
+
+**PRIOR (THE MEMBERSHIPWORKS DATA IMPORT IS LIVE, 2026-07-13 night session, Geoff live throughout):
 the real asc-club now holds the club's COMPLETE MW record — 148 households, 285 members (all
 with `mw_account_id` provenance, migration 0020; the one pet row refused), 235 membership rows
 spanning seasons 2024-2026 with REAL payment facts (dates, Stripe/PayPal refs, true amounts
