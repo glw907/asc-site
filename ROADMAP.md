@@ -36,7 +36,11 @@ Swap the admin members screens' demo fixtures for the real 285-member D1 and set
 the screen-shape question (two screens vs. one household-grouped screen plus a
 money/renewals view) in its design. Adds the missing CRUD: manual payments
 (check/cash/comp), tier changes, archive, directory-visibility management,
-current/lapsed segments, and refunds against the ledger.
+current/lapsed segments, and refunds against the ledger. Also user/role management
+(Geoff, 2026-07-13): a proper memberships admin area plus management of club roles
+(owner/club-admin/instructor — grant/revoke exists owner-only in Settings today) and
+cairn editor accounts (AUTH_DB allowlist, currently hand-seeded with no UI; the design
+decides whether that screen lands here or upstream in cairn-cms).
 
 ### Segment email `segment-email`
 Announce stays; add segment targeting (current, lapsed, class roster, instructors)
