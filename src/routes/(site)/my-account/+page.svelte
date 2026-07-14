@@ -1,15 +1,25 @@
 <!-- @component
 /my-account: the sign-in form when signed out (mockup frame 01), or the signed-in landing (frames
 02/03): the standing card, the task list (rendered only when a task exists — no tasks, no empty
-state), the household card, the assets summary, and a short receipts list. Renewal and asset
-payment are honest stubs (a real Stripe key is pending): both actions record intent and say so
-on-screen, per this task's own instruction. -->
+state), the household card, the assets summary, and a short receipts list. Renewal (Task 6) mints
+or reuses a real unpaid membership row and redirects to a real `dues` Checkout Session; the assets
+section's own "Pay" doors do the same for an approved, unpaid asset assignment through the
+`asset-fee` checkout. Either degrades to the site's standard payment-stub message when
+`STRIPE_SECRET_KEY` is not bound, never a broken button. -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { ActionData, PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
-  import { MEMBERSHIP_TIER_LABEL } from '$member-auth/lib/standing';
+  import { MEMBERSHIP_TIER_LABEL, type MembershipTier } from '$member-auth/lib/standing';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
+
+  const MEMBERSHIP_TIERS: readonly MembershipTier[] = ['individual', 'family', 'young-adult'];
+
+  // Seeded once from the household's own last tier (or 'individual' with no membership history
+  // yet); the renew form re-renders this same component instance across a failed submit, but the
+  // tier picker never needs to re-seed from `data` after that first read.
+  let renewTier = $state<MembershipTier>(untrack(() => data.standing?.tier ?? 'individual'));
 
   function formatDollars(cents: number): string {
     return `$${cents.toLocaleString('en-US')}`;
@@ -80,20 +90,26 @@ on-screen, per this task's own instruction. -->
         </p>
       {/if}
       {#if data.standing.status !== 'current'}
-        <!-- SEAM: the ?/renew action records intent today; the dues Stripe Checkout wires in here
-             once the join/renewal flow mints an unpaid memberships row to pay against, via
-             createCheckout({ kind: 'dues', refId: membership.id }) (payments.ts names this seam).
-             stripe-reconcile.ts already handles the resulting session's dues reconciliation. -->
-        <form method="POST" action="?/renew" class="mt-s">
+        <form method="POST" action="?/renew" class="mt-s flex flex-wrap items-end gap-xs">
           <input type="hidden" name="csrf" value={data.csrf} />
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Tier</legend>
+            <select class="select select-sm" name="tier" bind:value={renewTier}>
+              {#each MEMBERSHIP_TIERS as tier (tier)}
+                <option value={tier}>{MEMBERSHIP_TIER_LABEL[tier]} — {formatDollars(data.tierPrices?.[tier] ?? 0)}</option>
+              {/each}
+            </select>
+          </fieldset>
           <button type="submit" class="btn btn-primary btn-sm">Renew</button>
-          {#if form && 'renewRequested' in form && form.renewRequested}
-            <p class="mt-xs mb-0 text-step--1 text-base-content">
-              Thanks — online renewal is coming soon. The club will follow up to complete your
-              renewal in the meantime.
-            </p>
-          {/if}
         </form>
+        {#if form && 'renewStubbed' in form && form.renewStubbed}
+          <p class="mt-xs mb-0 text-step--1 text-base-content">
+            Online payment isn't available yet; the club will follow up by email with how to pay.
+          </p>
+        {/if}
+        {#if form && 'error' in form && form.error}
+          <p class="mt-xs mb-0 text-step--1 text-error">{form.error}</p>
+        {/if}
       {/if}
     </div>
   {/if}
@@ -137,18 +153,34 @@ on-screen, per this task's own instruction. -->
       {#if form && 'error' in form && form.error}
         <p class="mt-xs mb-0 rounded-field border border-error bg-error/10 px-s py-xs text-step--1 text-error">{form.error}</p>
       {/if}
+      {#if form && 'assetPayStubbed' in form && form.assetPayStubbed}
+        <p class="mt-xs mb-0 text-step--1 text-base-content">
+          Online payment isn't available yet; the club will follow up by email with how to pay.
+        </p>
+      {/if}
 
       {#each data.assignments as assignment (assignment.id)}
         <div class="mt-xs flex flex-wrap items-center justify-between gap-xs border-t border-card-border pt-xs text-step--1">
           <span class="text-base-content">
             {assignment.assetTypeName}{#if assignment.description} — {assignment.description}{/if}
-            {#if assignment.paymentStanding === 'outstanding'}<span class="text-warning"> · payment outstanding</span>{/if}
+            {#if assignment.paymentStanding === 'outstanding'}
+              <span class="text-warning"> · payment outstanding{#if assignment.feeCents} · {formatDollars(assignment.feeCents / 100)}{/if}</span>
+            {/if}
           </span>
-          <form method="POST" action="?/releaseAsset">
-            <input type="hidden" name="csrf" value={data.csrf} />
-            <input type="hidden" name="assignmentId" value={assignment.id} />
-            <button type="submit" class="btn btn-ghost btn-xs">Release</button>
-          </form>
+          <div class="flex items-center gap-xs">
+            {#if assignment.paymentStanding === 'outstanding'}
+              <form method="POST" action="?/payAssetFee">
+                <input type="hidden" name="csrf" value={data.csrf} />
+                <input type="hidden" name="assignmentId" value={assignment.id} />
+                <button type="submit" class="btn btn-primary btn-xs">Pay</button>
+              </form>
+            {/if}
+            <form method="POST" action="?/releaseAsset">
+              <input type="hidden" name="csrf" value={data.csrf} />
+              <input type="hidden" name="assignmentId" value={assignment.id} />
+              <button type="submit" class="btn btn-ghost btn-xs">Release</button>
+            </form>
+          </div>
         </div>
       {/each}
 

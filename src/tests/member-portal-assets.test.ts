@@ -6,6 +6,7 @@ import {
   cancelAssetRequest,
   createAssetRequest,
   denyAssetRequest,
+  getPayableAssignmentFee,
   getPriorHoldingSummary,
   listHouseholdAssignments,
   listHouseholdRequests,
@@ -20,14 +21,28 @@ describe('listHouseholdAssignments', () => {
     const { db } = fakeD1({
       allResults: {
         'FROM asset_assignments aa': [
-          { id: 'aa-1', asset_type: 'mooring', asset_type_name: 'Mooring', description: 'Buoy M-14', payment_id: 'pay-1', paid_at: '2026-01-01 00:00:00' },
-          { id: 'aa-2', asset_type: 'rv-parking', asset_type_name: 'RV Parking', description: null, payment_id: 'pay-2', paid_at: null },
-          { id: 'aa-3', asset_type: 'boat-parking', asset_type_name: 'Boat Parking', description: null, payment_id: null, paid_at: null },
+          { id: 'aa-1', asset_type: 'mooring', asset_type_name: 'Mooring', description: 'Buoy M-14', payment_id: 'pay-1', paid_at: '2026-01-01 00:00:00', fee_amount: 300 },
+          { id: 'aa-2', asset_type: 'rv-parking', asset_type_name: 'RV Parking', description: null, payment_id: 'pay-2', paid_at: null, fee_amount: 150 },
+          { id: 'aa-3', asset_type: 'boat-parking', asset_type_name: 'Boat Parking', description: null, payment_id: null, paid_at: null, fee_amount: null },
         ],
       },
     });
     const rows = await listHouseholdAssignments(db, 'hh-1', 2026);
     expect(rows.map((r) => r.paymentStanding)).toEqual(['paid', 'outstanding', 'not-billed']);
+  });
+
+  it('carries the outstanding fee in cents only for an outstanding assignment', async () => {
+    const { db } = fakeD1({
+      allResults: {
+        'FROM asset_assignments aa': [
+          { id: 'aa-1', asset_type: 'mooring', asset_type_name: 'Mooring', description: null, payment_id: 'pay-1', paid_at: '2026-01-01 00:00:00', fee_amount: 300 },
+          { id: 'aa-2', asset_type: 'rv-parking', asset_type_name: 'RV Parking', description: null, payment_id: 'pay-2', paid_at: null, fee_amount: 150 },
+          { id: 'aa-3', asset_type: 'boat-parking', asset_type_name: 'Boat Parking', description: null, payment_id: null, paid_at: null, fee_amount: null },
+        ],
+      },
+    });
+    const rows = await listHouseholdAssignments(db, 'hh-1', 2026);
+    expect(rows.map((r) => r.feeCents)).toEqual([null, 15000, null]);
   });
 });
 
@@ -228,12 +243,27 @@ describe('payForApprovedRequest (the honest payment stub)', () => {
       },
     });
     const result = await payForApprovedRequest(db, 'req-1', 'hh-1');
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({ ok: true, assignmentId: expect.any(String) });
     expect(calls.some((c) => c.sql.startsWith('INSERT INTO asset_assignments'))).toBe(true);
     const paymentInsert = calls.find((c) => c.sql.startsWith('INSERT INTO asset_payments'));
     expect(paymentInsert?.args).toEqual([expect.any(String), expect.any(String), expect.any(Number), 300]);
     expect(paymentInsert?.sql).not.toContain('paid_at');
     expect(calls.some((c) => c.sql.includes("SET status = 'assigned'"))).toBe(true);
+  });
+});
+
+describe('getPayableAssignmentFee', () => {
+  it('refuses when the assignment carries no outstanding row for the season (already paid, not the household\'s own, or never billed)', async () => {
+    const { db } = fakeD1({ firstResults: { 'FROM asset_assignments aa': null } });
+    await expect(getPayableAssignmentFee(db, 'aa-1', 'hh-1', 2026)).resolves.toEqual({ error: expect.stringContaining('No outstanding fee') });
+  });
+
+  it('answers the outstanding fee in cents, converted from the stored dollar amount', async () => {
+    const { db, calls } = fakeD1({
+      firstResults: { 'FROM asset_assignments aa': { asset_type_name: 'Mooring', amount: 150 } },
+    });
+    await expect(getPayableAssignmentFee(db, 'aa-1', 'hh-1', 2026)).resolves.toEqual({ amountCents: 15000, assetTypeName: 'Mooring' });
+    expect(calls[0].args).toEqual(['aa-1', 'hh-1', 2026]);
   });
 });
 

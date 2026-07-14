@@ -8,6 +8,7 @@
 // household-agnostic store never needed.
 import type { D1Database } from '@cloudflare/workers-types';
 import { assignAsset, addToWaitlist, listAssetTypes, releaseAssignment, type AssetTypeRow } from '$admin-club/lib/assets-store';
+import { getCurrentSeason } from '$admin-club/lib/club-settings';
 
 /** A user-facing refusal, matching every other portal module's `{ error }` shape. */
 export interface AssetActionError {
@@ -22,6 +23,10 @@ export interface HouseholdAssignmentRow {
   assetTypeName: string;
   description: string | null;
   paymentStanding: 'not-billed' | 'outstanding' | 'paid';
+  /** The outstanding fee, in cents, when `paymentStanding === 'outstanding'`; `null` otherwise.
+   *  This task's own portal pay door (`getPayableAssignmentFee`) re-verifies this amount against
+   *  the database before ever building a Checkout Session, so this field is display-only. */
+  feeCents: number | null;
 }
 
 /** One of the household's own waitlist queue positions, with the queue's honest length (design
@@ -55,7 +60,7 @@ export interface HouseholdRequestRow {
 export async function listHouseholdAssignments(db: D1Database, householdId: string, currentSeason: number): Promise<HouseholdAssignmentRow[]> {
   const { results } = await db
     .prepare(
-      `SELECT aa.id, aa.asset_type, at.name AS asset_type_name, aa.description, ap.id AS payment_id, ap.paid_at
+      `SELECT aa.id, aa.asset_type, at.name AS asset_type_name, aa.description, ap.id AS payment_id, ap.paid_at, ap.amount AS fee_amount
        FROM asset_assignments aa
        JOIN asset_types at ON at.id = aa.asset_type
        JOIN memberships m ON m.id = aa.membership_id
@@ -64,14 +69,26 @@ export async function listHouseholdAssignments(db: D1Database, householdId: stri
        ORDER BY at.sort_order`,
     )
     .bind(householdId, currentSeason)
-    .all<{ id: string; asset_type: string; asset_type_name: string; description: string | null; payment_id: string | null; paid_at: string | null }>();
-  return results.map((r) => ({
-    id: r.id,
-    assetType: r.asset_type,
-    assetTypeName: r.asset_type_name,
-    description: r.description,
-    paymentStanding: !r.payment_id ? 'not-billed' : r.paid_at ? 'paid' : 'outstanding',
-  }));
+    .all<{
+      id: string;
+      asset_type: string;
+      asset_type_name: string;
+      description: string | null;
+      payment_id: string | null;
+      paid_at: string | null;
+      fee_amount: number | null;
+    }>();
+  return results.map((r) => {
+    const paymentStanding: HouseholdAssignmentRow['paymentStanding'] = !r.payment_id ? 'not-billed' : r.paid_at ? 'paid' : 'outstanding';
+    return {
+      id: r.id,
+      assetType: r.asset_type,
+      assetTypeName: r.asset_type_name,
+      description: r.description,
+      paymentStanding,
+      feeCents: paymentStanding === 'outstanding' ? Math.round((r.fee_amount ?? 0) * 100) : null,
+    };
+  });
 }
 
 /** The household's own waitlist queue positions, across every member, with each queue's honest
@@ -348,17 +365,18 @@ export async function denyAssetRequest(db: D1Database, requestId: string, reason
 }
 
 /**
- * The member's own "Pay for your mooring — $N" stub action (this task's own instruction: payment
- * is out of scope today; a real Stripe key is pending; the button records intent, wired for the
- * real Checkout later). Transitions `'approved_awaiting_payment' -> 'assigned'`, creates the real
- * `asset_assignments` row via `assignAsset` (the same admin write path), and records an
- * OUTSTANDING `asset_payments` row (the fee amount, `paid_at` left null) rather than pretending
- * money moved: a treasurer's existing `recordPayment` action (`assets-store.ts`, already shipped)
- * completes it for real once payment actually arrives, whether by the future Checkout integration
- * or a mailed check today. Refuses a request that is not the household's own, or not in the
- * `'approved_awaiting_payment'` state.
+ * Resolve an approved retention request into a real, active `asset_assignments` row plus an
+ * OUTSTANDING `asset_payments` row for the current season (the fee snapshotted at billing, `paid_at`
+ * left null): the prerequisite the portal's own asset-fee checkout door needs, since
+ * `createCheckout({ kind: 'asset-fee' })` addresses an `asset_assignments.id`, which does not exist
+ * until a pending request resolves (`payments.ts`'s own header on this deferred call site). The
+ * caller (`?/payRequest`) hands the returned `assignmentId` straight to
+ * {@link getPayableAssignmentFee} and a Checkout Session; the season here matches
+ * `listHouseholdAssignments`'s and the webhook's own `getCurrentSeason` reads, not a raw calendar
+ * year, so every reader of this row agrees on which season it belongs to. Refuses a request that is
+ * not the household's own, or not in the `'approved_awaiting_payment'` state.
  */
-export async function payForApprovedRequest(db: D1Database, requestId: string, householdId: string): Promise<{ ok: true } | AssetActionError> {
+export async function payForApprovedRequest(db: D1Database, requestId: string, householdId: string): Promise<{ ok: true; assignmentId: string } | AssetActionError> {
   const request = await db
     .prepare("SELECT asset_type, household_id FROM asset_requests WHERE id = ?1 AND household_id = ?2 AND status = 'approved_awaiting_payment'")
     .bind(requestId, householdId)
@@ -373,7 +391,7 @@ export async function payForApprovedRequest(db: D1Database, requestId: string, h
 
   const type = await db.prepare('SELECT fee FROM asset_types WHERE id = ?1').bind(request.asset_type).first<{ fee: number }>();
   const assignmentId = await assignAsset(db, { assetType: request.asset_type, membershipId: membership.id, description: null });
-  const currentSeason = new Date().getUTCFullYear();
+  const currentSeason = await getCurrentSeason(db);
   await db
     .prepare('INSERT INTO asset_payments (id, assignment_id, season, amount) VALUES (?1, ?2, ?3, ?4)')
     .bind(crypto.randomUUID(), assignmentId, currentSeason, type?.fee ?? 0)
@@ -382,5 +400,37 @@ export async function payForApprovedRequest(db: D1Database, requestId: string, h
     .prepare("UPDATE asset_requests SET status = 'assigned', assignment_id = ?1, resolved_at = datetime('now') WHERE id = ?2")
     .bind(assignmentId, requestId)
     .run();
-  return { ok: true };
+  return { ok: true, assignmentId };
+}
+
+/** The fee due on an outstanding `asset_payments` row, plus the asset type's own display name:
+ *  {@link payAssetFeeCheckout}'s (route layer) one read before it ever builds a Checkout Session,
+ *  the real amount server-side rather than trusting whatever `listHouseholdAssignments` last
+ *  rendered to the browser. */
+export interface PayableAssignmentFee {
+  amountCents: number;
+  assetTypeName: string;
+}
+
+/**
+ * The portal's own asset-fee checkout door (this task's own scope): refuses an assignment that is
+ * not the household's own, not active, or carries no outstanding `asset_payments` row for
+ * `currentSeason` (already paid, or never billed) — "asset pay door only on approved+unpaid
+ * assignments". Reuses the already-recorded `asset_payments.amount` (the fee snapshotted at
+ * billing) rather than re-reading `asset_types.fee`, which may have changed since.
+ */
+export async function getPayableAssignmentFee(db: D1Database, assignmentId: string, householdId: string, currentSeason: number): Promise<PayableAssignmentFee | AssetActionError> {
+  const row = await db
+    .prepare(
+      `SELECT at.name AS asset_type_name, ap.amount
+       FROM asset_assignments aa
+       JOIN asset_types at ON at.id = aa.asset_type
+       JOIN memberships m ON m.id = aa.membership_id
+       JOIN asset_payments ap ON ap.assignment_id = aa.id AND ap.season = ?3
+       WHERE aa.id = ?1 AND m.household_id = ?2 AND aa.status = 'active' AND ap.paid_at IS NULL`,
+    )
+    .bind(assignmentId, householdId, currentSeason)
+    .first<{ asset_type_name: string; amount: number }>();
+  if (!row) return { error: 'No outstanding fee to pay for this asset.' };
+  return { amountCents: Math.round(row.amount * 100), assetTypeName: row.asset_type_name };
 }
