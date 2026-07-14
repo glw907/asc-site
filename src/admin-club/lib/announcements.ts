@@ -12,7 +12,7 @@
 // foreign key (the same reasoning `events`/`classes` never reference a git-owned concept).
 import type { D1Database } from '@cloudflare/workers-types';
 import { deriveExcerpt } from '@glw907/cairn-cms/delivery/data';
-import { renewalExpiryFrom } from '$member-auth/lib/standing';
+import { resolveSegment } from './segments';
 import { sendClubEmail, type EmailBindingEnv } from './club-email';
 import {
   ANNOUNCE_CHANNELS,
@@ -168,49 +168,15 @@ export function dedupeEmails(emails: readonly string[]): string[] {
   return [...byKey.values()];
 }
 
-interface CurrentHouseholdGroundingRow {
-  household_id: string;
-  paid_at: string;
-}
-
 /**
- * Every non-archived member's email in a household with `'current'` standing (a household's
- * most recently paid, non-refunded `memberships` row's `paid_at` plus one year has not yet
- * passed): `member-auth/lib/standing.ts`'s own {@link renewalExpiryFrom} is the one boundary
- * function, reused rather than re-derived, so this reads "current" exactly the way
- * `getHouseholdStanding` does. Two set-based queries -- the grounding row per household, then
- * the eligible members -- never a per-household round trip. A member with no email on file (a
- * covered child) is silently skipped, never sent to.
+ * Every non-archived member's email in a household with `'current'` or `'grace'` standing:
+ * a thin call through {@link resolveSegment}'s own `'current'` segment, so Announce and the
+ * Compose screen's segment picker (`segments.ts`) can never disagree about who counts as a
+ * current member. `resolveSegment` already deduplicates case-insensitively.
  */
 export async function currentMemberEmails(db: D1Database): Promise<string[]> {
-  const { results: grounding } = await db
-    .prepare(
-      `SELECT h.id AS household_id, gm.paid_at
-       FROM households h
-       JOIN memberships gm ON gm.id = (
-         SELECT id FROM memberships mm
-         WHERE mm.household_id = h.id AND mm.paid_at IS NOT NULL AND mm.refunded_at IS NULL
-         ORDER BY mm.paid_at DESC LIMIT 1
-       )`,
-    )
-    .all<CurrentHouseholdGroundingRow>();
-
-  const now = new Date();
-  const currentHouseholdIds = grounding
-    .filter((row) => now <= renewalExpiryFrom(row.paid_at))
-    .map((row) => row.household_id);
-  if (currentHouseholdIds.length === 0) return [];
-
-  const placeholders = currentHouseholdIds.map((_, index) => `?${index + 1}`).join(', ');
-  const { results: memberRows } = await db
-    .prepare(
-      `SELECT email FROM members
-       WHERE archived_at IS NULL AND email IS NOT NULL AND household_id IN (${placeholders})`,
-    )
-    .bind(...currentHouseholdIds)
-    .all<{ email: string }>();
-
-  return dedupeEmails(memberRows.map((row) => row.email));
+  const { recipients } = await resolveSegment(db, 'current');
+  return recipients.map((recipient) => recipient.email);
 }
 
 /** The Cloudflare Email Sending API's own combined to/cc/bcc cap per call (50); `sendAnnouncementEmails`
