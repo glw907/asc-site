@@ -69,9 +69,9 @@ If you're joining for the boats, the racing, or the community rather than a begi
 
 ### New Members
 
-Email `board@aksailingclub.org` to apply. The board typically reviews new applications within 2-3
-business days, then you'll get a welcome message with your class credit, Discord invite, and
-account link.
+1. **Apply and pay.** Your membership is active immediately.
+2. **Check your email** for your welcome message with your class credit, Discord invite, and account link.
+3. **The board reviews** new applications in the background (typically 2-3 business days). You won't hear anything unless there's an issue.
 
 ### Returning Members
 
@@ -84,7 +84,7 @@ Already a member? Renewing is straightforward: log in to your account and comple
 ### Apply Now
 
 :::callout[Ready to Join?]{tone="note"}
-Email `board@aksailingclub.org` to apply. We'll get you started right away.
+Online signup is coming to this page. Until then, [apply and pay on our current membership page](https://aksailingclub.org/join/); your membership is active as soon as you do.
 :::
 
 ## About the Club

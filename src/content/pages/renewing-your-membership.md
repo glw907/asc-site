@@ -5,7 +5,7 @@ title: "Renewing Your Membership"
 If you're past due, your benefits are on hold but your account stays open. Seasonal storage (moorings, RV, boat parking, rack) renews separately, so contact the Harbormaster for moorings or the Site Committee Chair for everything else through our [contact form](/contact/).
 
 :::callout[Renew Your Membership]{tone="note"}
-Email `board@aksailingclub.org` to renew, or ask in Discord.
+[Log in to your account](https://aksailingclub.org/members/renewing-your-membership/) and complete payment. No approval needed.
 :::
 
 ## Questions
