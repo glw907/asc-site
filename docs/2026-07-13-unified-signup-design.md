@@ -121,9 +121,11 @@ matching the published promise ("new individual memberships include one class cr
 
 The public class form gains a standing check at submit: the email resolves to a member
 and household, and `current` or `grace` standing proceeds through today's exact path
-(enroll or waitlist, credit-or-pay step after). No match, or `lapsed`, answers with the
-pivot: an invitation into `/join/apply` (or welcome-back renewal) with the class and
-the entered fields carried across, phrased as an invitation to join. With JavaScript
+(enroll or waitlist, credit-or-pay step after). No match answers with the pivot: an
+invitation into `/join/apply` with the class and the entered fields carried across,
+phrased as an invitation to join. A known member whose household has `lapsed` gets the
+renewal handoff instead (the magic-link send described under welcome-back, 2026-07-14
+amendment), since joining fresh would duplicate their household. With JavaScript
 available, an email-blur check pivots before the person fills the rest.
 
 The check trusts the claimed email, the same trust level as today's anonymous form. It
@@ -139,12 +141,19 @@ membership row for the next unclaimed season (at or after `current_season`) and 
 it to a `dues` checkout; `reconcileDues` flips it and the standing card updates. The
 existing reminder emails deep-link here, so the 4-touch cadence goes live unchanged.
 
-**From the public join door (unauthenticated).** An email match on an existing
-household turns the flow into welcome-back renewal: pay dues for that household,
-optionally register its members for classes (a combined `join`-kind session with no
-credit grant), optionally add new household members. Paying someone's dues is safe;
-composition changes are audited as public joins, and destructive edits (removing or
-altering existing members) stay portal-only.
+**From the public join door.** An email match on a household that has paid before
+answers with a magic-link handoff, not an inline renewal: the door sends the member's
+portal sign-in link (the enumeration-safe `requestMemberLink` seam) pointed at the
+renew card, and tells the visitor to check their email. Renewal stays one email away
+from either door, and the portal owns every household-scoped read and write.
+
+*Amended at the 2026-07-14 review round, superseding the brainstorm's unauthenticated
+welcome-back form.* The security lens showed the original shape let an anonymous
+visitor who knew a member's email write into that household before any payment (add
+members, enroll real members, consume class capacity) and read back the full roster,
+including minors' names. Payment alone was safe; the writes and the disclosure were
+not. An email match on a household that has never paid (an abandoned first join) still
+resumes as a same-transaction retry, since that household has no history to protect.
 
 ## Asset fees
 
