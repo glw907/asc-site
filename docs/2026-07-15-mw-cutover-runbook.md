@@ -68,12 +68,17 @@ step that measures what a member sees. Reference the shape of `docs/verification
    five-viewport matrix (`FAMILY_WIDTHS` in `e2e/site-visual.spec.ts`). Known caveat: CI's local
    R2 replica is empty, so real photos render as broken-image glyphs in CI. The suite catches a
    layout regression, not a photo regression. This is why step 4 exists.
-3. **Permalink crawl.** Re-crawl the live sitemap. Fetch every `<loc>` in
-   `https://aksailingclub.org/sitemap.xml` (73 URLs at the last pass) plus the delivery routes
-   (`/feed.xml`, `/feed.json`, `/robots.txt`, `/healthz`, `/sitemap.xml`), following redirects,
-   and check each for a final `200` or the sanctioned `404` (the two `notifications`-concept
-   bulletin URLs). The original crawl script was not committed; write a fresh loop. Verify: every
-   URL resolves as `docs/verification-findings.md` records, with no unsanctioned gap.
+3. **Permalink crawl.** The URL list comes from the legacy apex; the target under test is
+   the new build. Fetch every `<loc>` in `https://aksailingclub.org/sitemap.xml` (73 URLs at
+   the last pass), then request each path against `https://dev.aksailingclub.org`, plus the
+   delivery routes (`/feed.xml`, `/feed.json`, `/robots.txt`, `/healthz`, `/sitemap.xml`),
+   following redirects, and check each for a final `200` or the sanctioned `404` (the two
+   `notifications`-concept bulletin URLs, observable only on the new build). Pre-flip the
+   apex still serves the legacy site, so crawling the apex against itself proves nothing
+   about this build; this form matches how `docs/verification-findings.md` ran the original
+   crawl (the live URL list against the new build). The original crawl script was not
+   committed; write a fresh loop. Verify: every URL resolves as
+   `docs/verification-findings.md` records, with no unsanctioned gap.
 4. **Real render read on dev.** Render `dev.aksailingclub.org` against the real R2 bucket (real
    photos, not the CI broken-image glyph). Read the home page, education, `/events/`, and a post.
    Verify: photos load, the Season band shows the C7-gold taxonomy, no broken layout.
@@ -149,8 +154,12 @@ site requires Geoff's explicit before/after approval.
 
 ## 5. The flip
 
-Preferred mechanism: Workers custom domains, matching how `dev` and `staging` already bind.
-Cloudflare converts the placeholder DNS records automatically when a custom domain is created.
+Preferred mechanism: Workers route reassignment. It matches how the apex is served today,
+touches no DNS record, and rolls back exactly (repoint the routes). The custom-domain form
+(how `dev` and `staging` bind) was considered and demoted: Cloudflare refuses a custom domain
+on a hostname with an existing DNS record, so it would require deleting the proxied `www`
+CNAME and apex `A` record first, and deleting the custom domain at rollback removes the
+record it created, leaving the apex unresolvable. See the alternative note after section 6.
 
 1. **Deploy the current `asc-site` build.** Confirm the Worker running is the reviewed build.
    ```sh
@@ -158,11 +167,17 @@ Cloudflare converts the placeholder DNS records automatically when a custom doma
    npx wrangler deploy
    ```
    Verify: the deploy reports a version id; note it for the rollback record.
-2. **Create the two custom domains.** Add `aksailingclub.org` and `www.aksailingclub.org` as
-   Workers custom domains on the `asc-site` Worker (dashboard: Workers & Pages, `asc-site`,
-   Custom Domains; or the API `PUT /accounts/{account}/workers/domains` with the hostname and
-   `service = asc-site`). Claim only these two exact hostnames. Never claim a wildcard route.
-   Verify: both domains show `active` in the Worker's Custom Domains list.
+2. **Reassign the two routes.** Repoint `aksailingclub.org/*` and `www.aksailingclub.org/*`
+   from the `aksailingclub-org` Worker to `asc-site`, via the dashboard (the zone's Workers
+   Routes screen) or the zone routes API. Add the same two patterns to this repo's
+   `wrangler.toml` as a `routes` block in the same change so future deploys keep the claim.
+   Claim only these two exact patterns. Never claim a wildcard route. The DNS records do not
+   change. Verify: the zone's route list shows both patterns bound to `asc-site`.
+
+   Soak-window caveat: the legacy repo's committed `wrangler.toml` still claims these
+   patterns, so a push to its `master` during the soak will fail its deploy on the route
+   conflict. That failure is expected and harmless. Do not remove the legacy config's route
+   claims until the retirement tail; rollback depends on them.
 3. **Apex serves the new site.**
    ```sh
    curl -sS -o /dev/null -w '%{http_code}\n' https://aksailingclub.org/
@@ -200,12 +215,14 @@ this posture is correct.
 The legacy Worker `aksailingclub-org` stays deployed and warm throughout. Rollback returns the
 two hostnames to it and takes effect at the edge within seconds.
 
-1. **Delete the two custom domains** `aksailingclub.org` and `www.aksailingclub.org` from the
-   `asc-site` Worker (dashboard Custom Domains, or the API delete). This frees the hostnames.
-2. **Reclaim the routes on the legacy Worker.** In `~/Projects/aksailingclub-legacy`, the
-   committed `wrangler.toml` already declares `aksailingclub.org/*` and `www.aksailingclub.org/*`,
-   and its `deploy.yml` deploys on push to `master`. Redeploy it (`npx wrangler deploy` from that
-   repo, or push to trigger the workflow) so it reclaims the route patterns.
+1. **Repoint the two route patterns back** to `aksailingclub-org` via the dashboard or the
+   zone routes API, the exact reverse of step 5.2. The legacy Worker is still deployed and
+   warm, so this alone restores the Hugo site. No DNS changes.
+2. **Alternative reclaim.** If the dashboard and API are unavailable, redeploy the legacy
+   repo (`npx wrangler deploy` from `~/Projects/aksailingclub-legacy`, or push to `master` to
+   trigger its `deploy.yml`): its committed `wrangler.toml` re-asserts both patterns. First
+   remove the two patterns from this repo's `wrangler.toml` and the zone, or the claim will
+   conflict.
 3. Verify: `curl -sS https://aksailingclub.org/ | grep -o '<title>[^<]*</title>'` shows the Hugo
    title again, and `curl -o /dev/null -w '%{http_code}\n' https://aksailingclub.org/` is `200`.
 
@@ -213,11 +230,13 @@ If the cron was re-enabled (section 7) before a rollback becomes necessary, disa
 first (re-comment the trigger and redeploy `asc-site`) so a rolled-back, pre-production Worker
 cannot email members.
 
-**Route-form alternative.** Instead of custom domains, the flip can be done as Workers route
-reassignment: repoint the `aksailingclub.org/*` and `www.aksailingclub.org/*` routes from
-`aksailingclub-org` to `asc-site`, leaving the DNS records as they are. Rollback is repointing
-the two routes back. Prefer the custom-domain form for consistency with `dev` and `staging`;
-the route form is the fallback if custom-domain creation conflicts with the existing routes.
+**Custom-domain alternative (not preferred).** The flip can instead use Workers custom
+domains, the `dev`/`staging` pattern, but only with its prerequisites met explicitly: delete
+the existing proxied `www` CNAME and apex `A` record first (Cloudflare refuses a custom
+domain over an existing record), and accept that rollback must then also recreate a proxied
+apex record before the legacy route can serve again (deleting a custom domain removes the
+record it created; `www` alone would recover via the wildcard CNAME, the apex would not).
+Under this form, section 9.4 is moot. Use it only if route reassignment is unavailable.
 
 ## 7. Re-enable the reminder cron
 
@@ -280,9 +299,11 @@ each deliberately.
    the club's GCP project for any still-running or still-billing instance (GCP creds exist via
    `GOOGLE_APPLICATION_CREDENTIALS`; treat this as Geoff's step). Decommission any instance found.
    Verify: no billable compute remains in the project.
-4. **Remove the placeholder apex A record.** Once the custom domains own the apex, the proxied
-   `A` record (`35.215.115.137`) is a stale placeholder. Remove it. Verify: the apex still serves
-   `200` from `asc-site` after removal (the custom domain, not the `A` record, is the serving path).
+4. **Normalize the apex placeholder record.** Under the route form the proxied apex record
+   stays load-bearing (a Workers route serves only over a proxied DNS record), so do not
+   remove it. To stop the GCE-era IP lingering, optionally replace `A 35.215.115.137` with
+   the family-standard `AAAA 100::` placeholder (the `dev`/`staging` pattern), keeping it
+   proxied. Verify: the apex still serves `200` from `asc-site` after the swap.
 5. **Archive the legacy repo.** After the soak and once rollback is no longer wanted, archive
    `glw907/aksailingclub-legacy` on GitHub. Verify: the repo shows as archived. Do this last; it
    is the final removal of the warm rollback path.

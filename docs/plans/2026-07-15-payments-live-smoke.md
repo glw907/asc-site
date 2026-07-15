@@ -36,11 +36,15 @@ Turnstile, the Workers rate-limiting binding, vitest, Playwright.
 - Modify: `src/theme/class-fee-checkout-form.ts` and the class-fee pay form component;
   `src/theme/class-signup.remote.ts` (`requestRenewLink`) and the renew-link form component;
   `src/routes/(site)/classes/offer/[token]/+page.server.ts` and `+page.svelte`;
-  `src/routes/(site)/my-account/confirm/+page.server.ts` and `+page.svelte`.
+  `src/routes/(site)/my-account/confirm/+page.server.ts` and `+page.svelte`;
+  `src/routes/(site)/my-account/+page.server.ts` (`requestLink`, the signed-out sign-in
+  action) and its sign-in form component.
 - Test: extend the schema/handler tests for each (the `*-form.test.ts` pattern).
 
-**Outcome:** each of `payClassFee`, `requestRenewLink`, the offer `claim`/`decline` actions,
-and `confirm`/`resend` verifies a `cf-turnstile-response` token via `verifyTurnstile` and
+**Outcome:** each of `payClassFee`, `requestRenewLink`, `requestLink` (the `/my-account`
+signed-out sign-in action, a magic-link sender the first sweep missed), the offer
+`claim`/`decline` actions, and `confirm`/`resend` verifies a `cf-turnstile-response` token
+via `verifyTurnstile` and
 renders the Turnstile widget on its form, matching the four already-gated forms. The offer and
 confirm gates carry the friction note from the spec in a code comment; the ruling stands unless
 Geoff overrides in review.
@@ -78,9 +82,10 @@ email. A coarse zone-level WAF rate-limiting rule is documented as the front net
 Cloudflare, recorded in the task report, not code). Over-limit requests fail closed with a
 clear message. Limit values are set conservatively and recorded in a code comment or the report.
 
-**Constraint:** if the beta binding is unavailable at execution time, stop and report; the
-fallback (D1 counters scoped to money and enumeration paths) is a separate follow-up, not an
-in-task pivot.
+**Constraint:** declare the GA `[[ratelimits]]` block (Wrangler 4.36.0 or later), never the
+legacy `unsafe.bindings` form; `period` supports only 10 or 60 seconds, which bounds the cap
+design. If a needed cap cannot be expressed in those periods, the D1-counter fallback is a
+separate follow-up, not an in-task pivot.
 
 **Acceptance:** the helper test covers under-limit pass and over-limit reject for a
 representative key. `npm run check`/`test`/`build` green. The binding is declared in
@@ -142,8 +147,8 @@ triages and dispatches fixes before the smoke.
    before/after on the four changed public forms per the member-facing rule.
 4. **Sandbox dry-smoke** (spec section 3), against the currently bound sandbox keys: $1 donation
    with a Stripe test card, confirm webhook → reconcile → the first-ever `processed_stripe_sessions`
-   row → ledger with the invariant held → receipt email → refund through `admin/club/money`.
-   This must pass fully before any live-key swap.
+   row → ledger with the invariant held → receipt email → refund through the household desk
+   (`admin/club/members/[id]` `?/refund`). This must pass fully before any live-key swap.
 5. **Geoff's go, product choice, dev-Access posture, and marking mechanism confirmed** (spec
    section 6).
    5a. If Geoff picked the marker column: apply the scratch-proven migration to the live

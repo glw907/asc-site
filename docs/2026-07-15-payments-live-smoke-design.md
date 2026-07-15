@@ -23,8 +23,9 @@ real payment travels the whole path:
 - reconciled into `transactions` + `transaction_lines` with the ledger invariant held
   (`src/admin-club/lib/stripe-reconcile.ts`, write seam `src/admin-club/lib/ledger.ts`),
 - receipt email sent through the cairn `EMAIL` binding,
-- refunded through the admin refund path (`admin/club/money` `?/refund` →
-  `src/admin-club/lib/refunds.ts`), which is part of the proof, not a cleanup step.
+- refunded through the admin refund path (the household desk, `admin/club/members/[id]`
+  `?/refund` → `src/admin-club/lib/refunds.ts`; the Money & Renewals screen links each
+  refundable row to its desk), which is part of the proof, not a cleanup step.
 
 The real ledger rows and the confirmation email stay. They are marked as the smoke in the
 audit trail (section 4). The smoke also exercises the hardened endpoints: the donation form
@@ -51,6 +52,12 @@ Gaps to close, endpoint by endpoint:
 - **`requestRenewLink`** (`class-signup.remote.ts`). Sends a magic-link email; already
   enumeration-safe (uniform response). Add the gate and the widget on the renew-link request
   form. Turnstile blunts automated mailing of the send path.
+- **`requestLink`** (`(site)/my-account/+page.server.ts`, the signed-out sign-in form's
+  action). Public, CSRF double-submit only, and it sends a magic-link email via
+  `requestMemberLink` on every valid submit, the same send-path abuse class as `resend` and
+  `requestRenewLink`. Add the gate and the widget on the `/my-account` sign-in form. Found by
+  the adversarial claims check after the first sweep missed it (it sits beside the
+  `portalAction`-wrapped authenticated actions in the same file).
 - **Offer `claim` / `decline`** (`(site)/classes/offer/[token]/+page.server.ts`). Form actions,
   token-gated, no CSRF token today; `claim` sends an email. The token already limits who can
   reach these actions, so the marginal abuse surface is small; the friction of a challenge on a
@@ -65,14 +72,19 @@ Gaps to close, endpoint by endpoint:
 Where a form action lacks a CSRF token today (the offer actions), Turnstile plus the origin
 check is the replacement; do not add a second CSRF scheme in this pass.
 
+The one public POST deliberately excepted from the ruling is `/api/stripe/webhook`: Stripe
+signature verification (400 on a bad signature) is the correct control for a machine
+endpoint, and the zone-level WAF net (section 2b) fronts it.
+
 ### 2b. Rate limits
 
 No rate limiting exists today: no binding, no counters, no throttle. The ruling makes the
 mechanism the spec author's call, with a tradeoff record.
 
 **Decision: the Workers rate-limiting binding as the per-key throttle, with a coarse
-zone-level WAF rule layered in front.** The binding (`unsafe.bindings` type `ratelimit`,
-declared in `wrangler.toml`, one namespace per limit class) runs inside the worker where the
+zone-level WAF rule layered in front.** The binding (the GA `[[ratelimits]]` block in
+`wrangler.toml`, one namespace per limit class; Wrangler 4.36.0 or later; `period` supports
+only 10 or 60 seconds) runs inside the worker where the
 request already carries the discriminating key: the caller email, the endpoint, the payment
 kind, the session or editor identity. It keys per email and per endpoint, which is what the
 money forms and the enumeration probes need and what a per-IP-only scheme cannot express. It
@@ -80,14 +92,14 @@ adds no database round trip on the hot path and no new D1 table. In front of it,
 zone-level WAF rate-limiting rule gives a free per-IP flood cap that never reaches the worker
 and also fronts the webhook path.
 
-Tradeoff record: the Workers binding is a beta namespace, and that risk is accepted. The
-alternative, D1-backed counters, adds a database round trip to every gated request and its own
-migration for a per-key audit the `audit_log` already provides on money actions; the gain does
-not pay for the hot-path latency. Zone WAF alone cannot key on email or endpoint, so it cannot
-carry the enumeration or per-form limits on its own; it earns its place only as the coarse
-front net. If the beta binding is withdrawn or proves unreliable at execution time, the
-fallback is D1 counters scoped to the money and enumeration paths only, recorded as a
-follow-up rather than blocking the smoke.
+Tradeoff record: the binding went GA in September 2025, so declare the stable `[[ratelimits]]`
+block; the legacy `unsafe.bindings` form is only a compatibility path. The alternative,
+D1-backed counters, adds a database round trip to every gated request and its own migration
+for a per-key audit the `audit_log` already provides on money actions; the gain does not pay
+for the hot-path latency. Zone WAF alone cannot key on email or endpoint, so it cannot carry
+the enumeration or per-form limits on its own; it earns its place only as the coarse front
+net. D1 counters remain the fallback design if the binding's fixed 10-or-60-second periods
+prove too coarse for a specific cap, recorded as a follow-up rather than blocking the smoke.
 
 Coverage the design must carry:
 
@@ -122,8 +134,9 @@ Stripe test card against the bound sandbox keys, on dev:
 3. Confirm one `transactions` row plus its `transaction_lines`, invariant held, and one new
    `processed_stripe_sessions` row (the first ever).
 4. Confirm the receipt email sent (controlled payer address).
-5. Refund through `admin/club/money` `?/refund`; confirm the refund transaction, the
-   `refunds_transaction_id` self-FK, and the audit-sink entry.
+5. Refund through the household desk (`admin/club/members/[id]` `?/refund`; the Money &
+   Renewals screen links each refundable row to its desk); confirm the refund transaction,
+   the `refunds_transaction_id` self-FK, and the audit-sink entry.
 
 The dry-smoke must pass fully before the live-key swap. A failure here halts the initiative at
 zero real cost.
@@ -148,7 +161,8 @@ webhook → reconcile → ledger → refund path. See section 6 for the alternat
 
 **Verify**, in order: checkout completes; the live webhook delivers and verifies; one
 `transactions` row plus lines with the invariant held; the receipt email sent to the controlled
-payer address; the refund executed through `admin/club/money` `?/refund`. The refund is
+payer address; the refund executed through the household desk (`admin/club/members/[id]`
+`?/refund`). The refund is
 API-eligible because the smoke minted a `cs_`/`pi_` processor ref this site owns
 (`apiEligible`), and the idempotency key (`buildRefundIdempotencyKey`, SHA-256 over chargeId +
 refundedSoFar + sorted lines) is deterministic, so a retry is safe.
