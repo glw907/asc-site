@@ -102,6 +102,11 @@ email stay, marked as the smoke in the audit trail. Turnstile goes on EVERY publ
 unauthenticated POST endpoint (money forms and all); authenticated member/admin forms
 rely on session plus rate limits instead. Rate-limit mechanism is the spec author's
 technical call. Spec authorship is cleared to run unattended (overnight-eligible).
+AUTHORED 2026-07-15 (the overnight run): docs/2026-07-15-payments-live-smoke-design.md
+(spec, incl. the sandbox dry-smoke stage and abort criteria) +
+docs/plans/2026-07-15-payments-live-smoke.md (plan). Three decision points held for Geoff:
+smoke product ($1 donation default vs $100 domain-row alternative), dev-Access posture
+(dev verified PUBLIC today, contra CLAUDE.md), memo vs marker-column smoke marking.
 
 ### Go-live: apex cutover & MW retirement `mw-cutover`
 The program's final act: a fresh MW delta re-import (members keep joining/renewing on
@@ -125,7 +130,12 @@ the apex flips with a low DNS TTL, the legacy origin stays warm for instant roll
 and no member announcement is made (the site simply works). MW cancels and GCE retires
 only after two clean weeks that include one full weekly cron cycle and at least one
 real member join or renewal. Runbook authorship is cleared to run unattended
-(overnight-eligible).
+(overnight-eligible). AUTHORED 2026-07-15 (the overnight run):
+docs/2026-07-15-mw-cutover-runbook.md. Premise correction from the research: the apex is
+served by the legacy aksailingclub-org WORKER via routes (no GCE serving path; the GCE IP in
+the apex A record is a proxied placeholder), so the flip is a custom-domain/route
+reassignment, edge-instant both ways — the low-TTL ruling's intent (instant rollback) is
+satisfied by the mechanism, stated in the doc.
 
 ### Design propagation & continuing rounds `design-propagation`
 Keep the design rounds moving on the ratified Home/Education system (Geoff,
