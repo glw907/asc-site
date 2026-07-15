@@ -91,6 +91,10 @@ first question at the admin-roles brainstorm.
 ### Payments hardening & live smoke `payments-live-smoke`
 The deliberate live-Stripe smoke that has been queued since pass 2.1, plus Turnstile
 and rate limiting on the new public money forms (a named cutover blocker).
+Fable-window ruling (Geoff, 2026-07-14): spec and plan authored in-window (what the
+smoke proves, expected outcomes, abort criteria, the Turnstile/rate-limit design);
+execution runs post-window under an Opus conductor — the live smoke needs Geoff's go
+regardless.
 
 ### Go-live: apex cutover & MW retirement `mw-cutover`
 The program's final act: a fresh MW delta re-import (members keep joining/renewing on
@@ -101,6 +105,10 @@ disabled 2026-07-14 because a pre-production worker must not email members; requ
 reminder-blast guard, landed at `membership-admin`), the fresh-context verification
 pass, Geoff's before/after, the apex DNS cutover, the soak, then the MW subscription
 cancel and GCE retirement.
+Fable-window ruling (Geoff, 2026-07-14): the runbook (delta-import verification, the
+verification pass's scope, the DNS sequence, rollback posture, the cron re-enable gate)
+is authored in-window; the cutover itself runs on Geoff's calendar post-window,
+Opus-conducted against that runbook.
 
 ### Class management `class-management`
 The in-season operations tooling for classes, on top of the pass-2.1 admin (events,
@@ -112,6 +120,9 @@ lands the cairn roles seam. Key tooling for the site (Geoff, 2026-07-13) but not
 cutover blocker — the 2026 season already runs on the existing admin. Outside the
 mw-* program; can start any time after `membership-admin`. The class-roster email
 segment rides `segment-email`; the annual transition is `season-rollover`'s own scope.
+Fable-window ruling (Geoff, 2026-07-14): spec-only in-window (brainstorm after
+`admin-roles` lands, since instructor self-serve rosters ride the declared role);
+execution post-window, Opus-conducted.
 
 ### Season rollover `season-rollover`
 The annual transition designed as ONE operation — Geoff's 2026-07-13 ruling that
@@ -133,6 +144,9 @@ class registration state — the same inventory, though this site mints new per-
 class rows and keeps history where ops mutates in place. Ordered beside
 `class-management` after `membership-admin`; the two can land as one pass if the
 design says so. First real exercise: the 2026→2027 transition.
+Fable-window ruling (Geoff, 2026-07-14): the one-operation design and its sitewide
+inventory are authored in-window (the part where a weak plan compounds); execution
+waits for the off-season, Opus-conducted.
 
 ### QuickBooks Online integration `qbo-integration`
 Sync the club's money events to QuickBooks Online: `qbo_ref` population, entity

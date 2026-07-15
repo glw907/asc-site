@@ -19,7 +19,15 @@ CairnAdminShell untouched; plus bootstrapOwner, per-role `home`, migration 0001_
 cairn-doctor role checks). The collapse surface, verified this session: club_roles
 (migration 0001_substrate), src/admin-club/lib/club-roles.ts (incl. the atomic last-owner
 guard), club-action.ts's role gate, the /admin/club layout guard, the Settings
-grant/revoke actions, and filterClubNav. ROADMAP's admin-roles entry updated to match.**
+grant/revoke actions, and filterClubNav. ROADMAP's admin-roles entry updated to match.
+THE FABLE-WINDOW SPEC QUEUE (Geoff, 2026-07-14, same session): while the Fable window
+holds (~07-19, verify before relying), bank the judgment layer of the remaining
+program as SPEC-ONLY initiatives — Fable authors the brainstorm/spec/plan in-window,
+Opus conducts execution post-window. Queued in order after initiative 5 (+ the new
+admin-nav-reorg entry, which rides it): payments-live-smoke spec, the mw-cutover
+runbook, the season-rollover one-operation design, the class-management spec (after
+admin-roles lands its instructor role). Each ruling is recorded on its ROADMAP entry;
+admin-roles + admin-nav-reorg execute fully in-window (auth- and taste-critical).**
 
 **PRIOR: INITIATIVE 4 (segment-email) IS COMPLETE, MERGED TO MAIN (98257fe), MIGRATION LIVE,
 AND ON DEV (2026-07-14, the program's fourth session). Spec
