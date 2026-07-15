@@ -1,6 +1,15 @@
 # asc-site status
 
-**INITIATIVE 3 (membership-admin) IS COMPLETE, MERGED TO MAIN (22c10b0), AND ON DEV
+**INITIATIVE 4 (segment-email) IS IN FLIGHT (2026-07-14, the program's fourth session):
+spec `docs/2026-07-14-segment-email-design.md` (Geoff-approved in-session; announce
+untouched, four segments, count-confirm + test-send gate, `email_blasts` audit table)
++ plan `docs/plans/2026-07-14-segment-email.md` (3 serial implementer tasks + the
+conductor settle), executing as a workflow on branch `feat/segment-email` per Geoff's
+"continue to release with a workflow". If this session died mid-flight: the branch
+holds the committed progress; resume = read spec + plan, check which plan tasks'
+commits exist, continue from the settle checklist at the plan's foot.**
+
+**PRIOR: INITIATIVE 3 (membership-admin) IS COMPLETE, MERGED TO MAIN (22c10b0), AND ON DEV
 (2026-07-14, the program's third session). Spec `docs/2026-07-14-membership-admin-design.md`
 + plan `docs/plans/2026-07-14-membership-admin.md`, both implemented. What landed: the
 household-grouped Members screen (member-first search with matched-chip highlight,

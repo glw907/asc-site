@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   announceChannelOptions,
   buildAnnouncementEmailContent,
@@ -104,11 +104,14 @@ function daysAgo(days: number): string {
 }
 
 describe('currentMemberEmails', () => {
+  // A thin call through resolveSegment('current') (segments.ts): these pin the same behavior
+  // through the shared segment resolver, so the SQL text matches that module's own queries, not
+  // the pre-refactor inline ones.
   it('includes a non-archived member with an email in a current household', async () => {
     const { db } = fakeD1({
       allResults: {
-        'FROM households h': [{ household_id: 'hh-larsen', paid_at: daysAgo(10) }],
-        'FROM members': [{ email: 'erik.larsen@example.com' }],
+        'FROM households h': [{ household_id: 'hh-larsen', paid_at: daysAgo(10), primary_member_id: null }],
+        'FROM members WHERE archived_at': [{ id: 'mem-erik', name: 'Erik Larsen', email: 'erik.larsen@example.com', household_id: 'hh-larsen' }],
       },
     });
     await expect(currentMemberEmails(db)).resolves.toContain('erik.larsen@example.com');
@@ -116,22 +119,22 @@ describe('currentMemberEmails', () => {
 
   it('excludes a lapsed household entirely: the members query never runs', async () => {
     const { db, calls } = fakeD1({
-      allResults: { 'FROM households h': [{ household_id: 'hh-whitfield', paid_at: daysAgo(400) }] },
+      allResults: { 'FROM households h': [{ household_id: 'hh-whitfield', paid_at: daysAgo(400), primary_member_id: null }] },
     });
     const emails = await currentMemberEmails(db);
     expect(emails).toEqual([]);
-    expect(calls.some((c) => c.sql.startsWith('SELECT email FROM members'))).toBe(false);
+    expect(calls.some((c) => c.sql.startsWith('SELECT id, name, email, household_id FROM members'))).toBe(false);
   });
 
   it('scopes the member query to archived_at IS NULL, so an archived member is excluded by construction', async () => {
     const { db, calls } = fakeD1({
       allResults: {
-        'FROM households h': [{ household_id: 'hh-petrov', paid_at: daysAgo(10) }],
-        'FROM members': [{ email: 'dimitri.petrov@example.com' }],
+        'FROM households h': [{ household_id: 'hh-petrov', paid_at: daysAgo(10), primary_member_id: null }],
+        'FROM members WHERE archived_at': [{ id: 'mem-dimitri', name: 'Dimitri Petrov', email: 'dimitri.petrov@example.com', household_id: 'hh-petrov' }],
       },
     });
     await currentMemberEmails(db);
-    const memberCall = calls.find((c) => c.sql.startsWith('SELECT email FROM members'));
+    const memberCall = calls.find((c) => c.sql.startsWith('SELECT id, name, email, household_id FROM members'));
     expect(memberCall?.sql).toContain('archived_at IS NULL');
   });
 
@@ -139,14 +142,53 @@ describe('currentMemberEmails', () => {
     const { db } = fakeD1({
       allResults: {
         'FROM households h': [
-          { household_id: 'hh-a', paid_at: daysAgo(10) },
-          { household_id: 'hh-b', paid_at: daysAgo(5) },
+          { household_id: 'hh-a', paid_at: daysAgo(10), primary_member_id: null },
+          { household_id: 'hh-b', paid_at: daysAgo(5), primary_member_id: null },
         ],
-        'FROM members': [{ email: 'shared@example.com' }, { email: 'shared@example.com' }],
+        'FROM members WHERE archived_at': [
+          { id: 'mem-a', name: 'Member A', email: 'shared@example.com', household_id: 'hh-a' },
+          { id: 'mem-b', name: 'Member B', email: 'shared@example.com', household_id: 'hh-b' },
+        ],
       },
     });
     const emails = await currentMemberEmails(db);
     expect(new Set(emails).size).toBe(emails.length);
+  });
+
+  // The grace-window widening is intentional (the conductor's ruling: "current" means "current or
+  // grace", matching resolveSegment('current')'s own definition), pinned at its exact boundary
+  // with a fixed clock -- mirrors segments.test.ts's own convention for the identical boundary.
+  describe('the current/grace boundary', () => {
+    const NOW = new Date('2027-06-15T12:00:00Z');
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW);
+    });
+    afterEach(() => vi.useRealTimers());
+
+    function paidAtDaysAgo(days: number): string {
+      return new Date(NOW.getTime() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+    }
+
+    it('includes a household past its one-year renewal boundary but still inside the default 30-day grace window', async () => {
+      const { db } = fakeD1({
+        allResults: {
+          'FROM households h': [{ household_id: 'hh-grace', paid_at: paidAtDaysAgo(365 + 20), primary_member_id: null }],
+          'FROM members WHERE archived_at': [{ id: 'mem-grace', name: 'Grace Member', email: 'grace@example.com', household_id: 'hh-grace' }],
+        },
+      });
+      await expect(currentMemberEmails(db)).resolves.toEqual(['grace@example.com']);
+    });
+
+    it('excludes a household past the grace window entirely', async () => {
+      const { db, calls } = fakeD1({
+        allResults: { 'FROM households h': [{ household_id: 'hh-lapsed', paid_at: paidAtDaysAgo(365 + 40), primary_member_id: null }] },
+      });
+      const emails = await currentMemberEmails(db);
+      expect(emails).toEqual([]);
+      expect(calls.some((c) => c.sql.startsWith('SELECT id, name, email, household_id FROM members'))).toBe(false);
+    });
   });
 });
 

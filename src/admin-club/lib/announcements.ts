@@ -12,7 +12,8 @@
 // foreign key (the same reasoning `events`/`classes` never reference a git-owned concept).
 import type { D1Database } from '@cloudflare/workers-types';
 import { deriveExcerpt } from '@glw907/cairn-cms/delivery/data';
-import { renewalExpiryFrom } from '$member-auth/lib/standing';
+import { resolveSegment } from './segments';
+import { chunkRecipients, RECIPIENT_CHUNK_SIZE } from './bulk-email';
 import { sendClubEmail, type EmailBindingEnv } from './club-email';
 import {
   ANNOUNCE_CHANNELS,
@@ -168,65 +169,21 @@ export function dedupeEmails(emails: readonly string[]): string[] {
   return [...byKey.values()];
 }
 
-interface CurrentHouseholdGroundingRow {
-  household_id: string;
-  paid_at: string;
-}
-
 /**
- * Every non-archived member's email in a household with `'current'` standing (a household's
- * most recently paid, non-refunded `memberships` row's `paid_at` plus one year has not yet
- * passed): `member-auth/lib/standing.ts`'s own {@link renewalExpiryFrom} is the one boundary
- * function, reused rather than re-derived, so this reads "current" exactly the way
- * `getHouseholdStanding` does. Two set-based queries -- the grounding row per household, then
- * the eligible members -- never a per-household round trip. A member with no email on file (a
- * covered child) is silently skipped, never sent to.
+ * Every non-archived member's email in a household with `'current'` or `'grace'` standing:
+ * a thin call through {@link resolveSegment}'s own `'current'` segment, so Announce and the
+ * Compose screen's segment picker (`segments.ts`) can never disagree about who counts as a
+ * current member. `resolveSegment` already deduplicates case-insensitively.
  */
 export async function currentMemberEmails(db: D1Database): Promise<string[]> {
-  const { results: grounding } = await db
-    .prepare(
-      `SELECT h.id AS household_id, gm.paid_at
-       FROM households h
-       JOIN memberships gm ON gm.id = (
-         SELECT id FROM memberships mm
-         WHERE mm.household_id = h.id AND mm.paid_at IS NOT NULL AND mm.refunded_at IS NULL
-         ORDER BY mm.paid_at DESC LIMIT 1
-       )`,
-    )
-    .all<CurrentHouseholdGroundingRow>();
-
-  const now = new Date();
-  const currentHouseholdIds = grounding
-    .filter((row) => now <= renewalExpiryFrom(row.paid_at))
-    .map((row) => row.household_id);
-  if (currentHouseholdIds.length === 0) return [];
-
-  const placeholders = currentHouseholdIds.map((_, index) => `?${index + 1}`).join(', ');
-  const { results: memberRows } = await db
-    .prepare(
-      `SELECT email FROM members
-       WHERE archived_at IS NULL AND email IS NOT NULL AND household_id IN (${placeholders})`,
-    )
-    .bind(...currentHouseholdIds)
-    .all<{ email: string }>();
-
-  return dedupeEmails(memberRows.map((row) => row.email));
+  const { recipients } = await resolveSegment(db, 'current');
+  return recipients.map((recipient) => recipient.email);
 }
 
-/** The Cloudflare Email Sending API's own combined to/cc/bcc cap per call (50); `sendAnnouncementEmails`
- *  sends one recipient per call (see that function's own header on why), so this bounds how many
- *  concurrent `EMAIL.send()` subrequests a single announce submit fires at once, not any one
- *  call's own recipient count. */
-export const RECIPIENT_CHUNK_SIZE = 50;
-
-/** Split `items` into consecutive groups of at most `size`, preserving order. A pure utility with
- *  no D1 or network dependency, so the chunking behavior itself is directly testable. */
-export function chunkRecipients<T>(items: readonly T[], size = RECIPIENT_CHUNK_SIZE): T[][] {
-  if (size <= 0) throw new Error('chunkRecipients: size must be positive');
-  const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
-  return chunks;
-}
+/** The chunked-send loop this function used to own directly now lives in `bulk-email.ts` (the
+ *  Compose screen's own segment blasts share it); re-exported here so a caller (and this module's
+ *  own existing tests) that imports either from `announcements.ts` keeps working unchanged. */
+export { chunkRecipients, RECIPIENT_CHUNK_SIZE } from './bulk-email';
 
 /**
  * The announcement email's own subject/body, the sibling render to `discord.ts`'s
@@ -251,14 +208,13 @@ export interface SendAnnouncementEmailsResult {
 }
 
 /**
- * Email `args.recipients` the same composed subject/body (`buildAnnouncementEmailContent`),
- * chunked at {@link RECIPIENT_CHUNK_SIZE} recipients per batch, each batch's sends run
- * concurrently (`Promise.all`) and batches run one after another. Every recipient gets the
- * identical rendered content (`sendClubEmail`'s `raw` path, not a stored template: an
- * announcement's content is one-off and per-post, the case `SendClubEmailArgs.raw` exists for),
- * one `sendClubEmail` call each, so a failed send for one recipient never blocks the rest (that
- * function's own never-throws contract). `segment` tags each `email_log` row with the post id, so
- * a send's history is traceable back to the announcement that caused it.
+ * Email `args.recipients` the same composed subject/body (`buildAnnouncementEmailContent`), one
+ * `sendClubEmail` call per recipient (`raw` path, not a stored template: an announcement's content
+ * is one-off and per-post, the case `SendClubEmailArgs.raw` exists for), chunked through
+ * `bulk-email.ts`'s own shared {@link chunkRecipients} loop (the Compose screen's segment blasts
+ * share the identical chunking behavior). A failed send for one recipient never blocks the rest
+ * (`sendClubEmail`'s own never-throws contract). `segment` tags each `email_log` row with the post
+ * id, so a send's history is traceable back to the announcement that caused it.
  */
 export async function sendAnnouncementEmails(
   db: D1Database,
