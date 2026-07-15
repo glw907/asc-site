@@ -180,8 +180,15 @@ Fable-window ruling (Geoff, 2026-07-14): spec-only in-window (brainstorm after
 execution post-window, Opus-conducted.
 Ruling at the settle-in-advance round (Geoff, 2026-07-14): this one ESPECIALLY needs
 interactive brainstorming — NOT overnight-eligible. The brainstorm runs live with
-Geoff (scope cut, check-in UX against the MW bar, instructor surface and the declared
-role's `home`), now unblocked since admin-roles landed the instructor role.
+Geoff (check-in UX against the MW bar, screen shapes, the instructor `home`), now
+unblocked since admin-roles landed the instructor role. Frame rulings already settled
+(Geoff, same round): v1 scope is ALL FOUR capabilities (attendance/check-in, roster
+exports, instructor self-serve rosters, class-fee refunds); instructors get CHECK-IN
+WRITES on their own rosters (no other writes); refunds are club-admin-issuable, full
+or partial, every one an audit row, and MUST FOLLOW THE ASC REFUND POLICY (Geoff,
+2026-07-14) — the spec reads the club's actual policy from the site/governance content
+and encodes it, never invents refund rules; timing is 2027 READINESS, no season
+pressure.
 
 ### Season rollover `season-rollover`
 The annual transition designed as ONE operation — Geoff's 2026-07-13 ruling that
