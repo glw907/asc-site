@@ -82,5 +82,11 @@ INSERT INTO classes (id, season, name, slug, track, capacity, fee, visible)
   VALUES ('e2e-offer-class', 2026, 'E2E Offer Fixture Class', 'e2e-offer-fixture-class', 'adult-teen', 4, 0, 0);
 INSERT INTO class_waitlist (id, class_id, applicant_name, applicant_email, position)
   VALUES ('e2e-offer-waitlist', 'e2e-offer-class', 'E2E Offer Applicant', 'e2e-offer-applicant@example.com', 1);
+-- A FIXED far-future expiry, not datetime('now', '+1 day'): the offer page renders this value
+-- through `formatExpiry` with `timeStyle: 'short'`, so a relative-to-seed-time expiry shifts the
+-- rendered clock time on every run and flakes the `class offer` visual baseline. A fixed
+-- timestamp keeps the offer unexpired (well past every 2026 season run) and renders the same
+-- pixels every run. Update the year alongside the season fixtures if the suite is ever rebased
+-- past it.
 INSERT INTO class_offers (token, waitlist_id, class_id, offered_by, expires_at)
-  VALUES ('083c4172444fdb72a01dd607d989e50d3306543b3cc7f1a21997f8c166f0003a', 'e2e-offer-waitlist', 'e2e-offer-class', 'e2e-fixture', datetime('now', '+1 day'));
+  VALUES ('083c4172444fdb72a01dd607d989e50d3306543b3cc7f1a21997f8c166f0003a', 'e2e-offer-waitlist', 'e2e-offer-class', 'e2e-fixture', '2027-06-01 12:00:00');
