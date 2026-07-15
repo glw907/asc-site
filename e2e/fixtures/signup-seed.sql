@@ -13,10 +13,31 @@
 -- this suite runs against does, and `wrangler d1 execute --file`'s own batching does not honor a
 -- `PRAGMA foreign_keys = OFF` across the rest of the file's statements. Nulling the household
 -- side of the cycle first breaks it without disabling any constraint.
+-- The clear covers the full FK closure onto members/memberships/households (not just the
+-- rows the join specs write): a warm workstation replica can hold enrollments, sessions, or
+-- ledger lines from local admin work (a render read, a manual signup test), and any one of
+-- them blocks the member deletes below under the local replica's FK enforcement. Children
+-- delete before their parents throughout.
 UPDATE households SET primary_member_id = NULL;
+DELETE FROM class_reminders_sent;
 DELETE FROM credit_redemptions;
-DELETE FROM credit_grants;
+DELETE FROM transaction_lines;
+DELETE FROM transactions;
+DELETE FROM class_offers;
+DELETE FROM class_waitlist;
+DELETE FROM asset_requests;
+DELETE FROM class_enrollments;
+DELETE FROM class_instructors;
+DELETE FROM asset_waitlist;
+DELETE FROM asset_assignments;
+DELETE FROM member_tokens;
+DELETE FROM member_sessions;
+DELETE FROM email_log;
 DELETE FROM waiver_acceptances;
+DELETE FROM credit_grants;
+DELETE FROM signup_review_resolutions;
+DELETE FROM processed_stripe_sessions;
+DELETE FROM renewal_reminders_sent;
 DELETE FROM memberships;
 DELETE FROM members;
 DELETE FROM households;
