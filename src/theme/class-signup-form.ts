@@ -164,18 +164,43 @@ export async function handleClassSignup(
   return result;
 }
 
+/** The renew pivot's own "email me a sign-in link" button's schema (2026-07-15 Turnstile
+ *  hardening pass): pulled out of `class-signup.remote.ts` alongside the other schemas in this
+ *  file so it stays testable (a `.remote.ts` file may only export remote functions). */
+export const requestClassRenewLinkSchema = v.object({
+  email: v.pipe(v.string(), v.trim(), v.email()),
+  // Injected by the Turnstile widget, not a rendered field.
+  'cf-turnstile-response': v.optional(v.string(), ''),
+});
+
+export type RequestClassRenewLinkSubmission = v.InferOutput<typeof requestClassRenewLinkSchema>;
+
 /** The renew pivot's own "email me a sign-in link" button (`docs/2026-07-13-unified-signup-
  *  design.md`'s "The class door gate", 2026-07-14 amendment): the same enumeration-safe
- *  `requestMemberLink` wiring the join door's own renewal handoff uses. Always answers `{ sent:
- *  true }`, whether or not `email` resolves to a member (that safety property, and the reason,
- *  live on `requestMemberLink` itself) or `EMAIL` is bound at all (a missing binding degrades
- *  silently, matching `handleClassSignup`'s own optional-`EMAIL` convention above). */
-export async function handleRequestClassRenewLink(email: string, env: unknown, origin: string): Promise<{ sent: true }> {
+ *  `requestMemberLink` wiring the join door's own renewal handoff uses. Turnstile-gated
+ *  (2026-07-15 hardening pass), degrading gracefully when no secret is configured, matching
+ *  {@link handleClassSignup}. Always answers `{ sent: true }`, whether or not `email` resolves to
+ *  a member (that safety property, and the reason, live on `requestMemberLink` itself) or `EMAIL`
+ *  is bound at all (a missing binding degrades silently, matching `handleClassSignup`'s own
+ *  optional-`EMAIL` convention above). */
+export async function handleRequestClassRenewLink(
+  input: RequestClassRenewLinkSubmission,
+  env: unknown,
+  clientAddress: string,
+  origin: string,
+): Promise<{ sent: true }> {
   const platformEnv = env as ClassSignupEnv | undefined;
+
+  const secret = platformEnv?.TURNSTILE_SECRET_KEY;
+  const token = input['cf-turnstile-response'];
+  if (secret && !(await verifyTurnstile(token, clientAddress, secret))) {
+    invalid('Spam check failed. Please try again.');
+  }
+
   const db = platformEnv?.CLUB_DB;
   if (db && platformEnv?.EMAIL) {
     const emailBinding = platformEnv.EMAIL;
-    await requestMemberLink(db, email, (message) => emailBinding.send(message), {
+    await requestMemberLink(db, input.email, (message) => emailBinding.send(message), {
       origin,
       siteName: siteConfig.siteName,
       from: FROM_ADDRESS,

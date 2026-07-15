@@ -10,10 +10,13 @@ import { invalid } from '@sveltejs/kit';
 import type { D1Database } from '@cloudflare/workers-types';
 import { getClass } from '$admin-club/lib/classes-store';
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv, type CreateCheckoutResult } from '$admin-club/lib/payments';
+import { verifyTurnstile } from './turnstile';
 
 export const classFeeCheckoutSchema = v.object({
   enrollmentId: v.pipe(v.string(), v.trim(), v.nonEmpty()),
   classId: v.pipe(v.string(), v.trim(), v.nonEmpty()),
+  // Injected by the Turnstile widget, not a rendered field.
+  'cf-turnstile-response': v.optional(v.string(), ''),
 });
 
 export type ClassFeeCheckoutSubmission = v.InferOutput<typeof classFeeCheckoutSchema>;
@@ -23,19 +26,33 @@ export type ClassFeeCheckoutSubmission = v.InferOutput<typeof classFeeCheckoutSc
  *  caller (or a test) never has to satisfy the engine's full `CairnPlatformBindings` shape. */
 interface ClassFeeCheckoutEnv extends CreateCheckoutEnv {
   CLUB_DB?: D1Database;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 /**
- * Create a Stripe Checkout Session for one class enrollment's own fee: refuses (via `invalid`,
- * matching every other public form in this family) an unknown class, a free class (nothing to
- * pay), or an `enrollmentId` that does not belong to `classId`. Degrades to
- * {@link CreateCheckoutResult}'s `{ stub: true }` shape when `STRIPE_SECRET_KEY` is not bound
- * (`payments.ts`'s own `createCheckout`), which the signup page reads to keep showing its existing
- * "online payment is coming" text rather than a broken button; a configured key that still fails
- * to create a session surfaces as `invalid` (`CheckoutUnavailableError`'s own message).
+ * Create a Stripe Checkout Session for one class enrollment's own fee: Turnstile-gated
+ * (degrading gracefully when no secret is configured, matching every other public form in this
+ * family), then refuses (via `invalid`) an unknown class, a free class (nothing to pay), or an
+ * `enrollmentId` that does not belong to `classId`. Degrades to {@link CreateCheckoutResult}'s
+ * `{ stub: true }` shape when `STRIPE_SECRET_KEY` is not bound (`payments.ts`'s own
+ * `createCheckout`), which the signup page reads to keep showing its existing "online payment is
+ * coming" text rather than a broken button; a configured key that still fails to create a session
+ * surfaces as `invalid` (`CheckoutUnavailableError`'s own message).
  */
-export async function handleClassFeeCheckout(input: ClassFeeCheckoutSubmission, env: unknown, origin: string): Promise<CreateCheckoutResult> {
+export async function handleClassFeeCheckout(
+  input: ClassFeeCheckoutSubmission,
+  env: unknown,
+  clientAddress: string,
+  origin: string,
+): Promise<CreateCheckoutResult> {
   const platformEnv = env as ClassFeeCheckoutEnv | undefined;
+
+  const secret = platformEnv?.TURNSTILE_SECRET_KEY;
+  const token = input['cf-turnstile-response'];
+  if (secret && !(await verifyTurnstile(token, clientAddress, secret))) {
+    invalid('Spam check failed. Please try again.');
+  }
+
   const db = platformEnv?.CLUB_DB;
   if (!db) invalid('Payment is not available right now. You can email board@aksailingclub.org instead.');
 

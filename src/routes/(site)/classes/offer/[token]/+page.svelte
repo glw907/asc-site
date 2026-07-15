@@ -6,6 +6,7 @@ back to the class's own signup page. -->
 <script lang="ts">
   import type { PageData, ActionData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
+  import { TURNSTILE_SITE_KEY } from '$theme/turnstile';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -69,12 +70,16 @@ back to the class's own signup page. -->
     </p>
   {/if}
 
-  <div class="mt-l flex flex-wrap gap-s">
-    <form method="POST" action="?/claim">
+  <div class="mt-l flex flex-wrap items-start gap-l">
+    <form method="POST" action="?/claim" class="flex flex-col items-start gap-s">
+      <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
       <button type="submit" class="btn btn-primary">Claim my spot</button>
     </form>
-    <form method="POST" action="?/decline">
+    <form method="POST" action="?/decline" class="flex flex-col items-start gap-s">
+      <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
       <button type="submit" class="btn btn-ghost">Pass this time</button>
     </form>
   </div>
+
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 {/if}

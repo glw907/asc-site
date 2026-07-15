@@ -129,13 +129,16 @@ pivot before the visitor fills out the rest of the form. -->
             {issue.message}
           </p>
         {/each}
-        <form {...payClassFee} class="mt-s">
+        <form {...payClassFee} class="mt-s flex flex-col items-start gap-s">
           <input type="hidden" name="enrollmentId" value={joinClass.result.enrollmentId} />
           <input type="hidden" name="classId" value={data.cls.id} />
+          <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
           <button type="submit" class="btn btn-primary btn-sm" disabled={!!payClassFee.pending}>
             {payClassFee.pending ? 'Redirecting…' : `Pay $${data.cls.fee} now`}
           </button>
         </form>
+
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
       {/if}
     {:else}
       <!-- The free-clinic journey (Geoff, 2026-07-07): the signup IS the roster, so the
@@ -165,12 +168,15 @@ pivot before the visitor fills out the rest of the form. -->
     {#if requestRenewLink.result?.sent}
       <p class="mt-xs mb-0 text-step--1 text-base-content">Check your inbox. The link expires in 15 minutes.</p>
     {:else}
-      <form {...requestRenewLink} class="mt-s">
+      <form {...requestRenewLink} class="mt-s flex flex-col items-start gap-s">
         <input type="hidden" name="email" value={pivot.email} />
+        <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
         <button type="submit" class="btn btn-primary btn-sm" disabled={!!requestRenewLink.pending}>
           {requestRenewLink.pending ? 'Sending…' : 'Email me a sign-in link'}
         </button>
       </form>
+
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     {/if}
   </div>
 {:else if pivot}

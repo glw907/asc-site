@@ -4,7 +4,13 @@
 // export remote functions), so this file is just the thin wiring.
 import * as v from 'valibot';
 import { form, query, getRequestEvent } from '$app/server';
-import { classSignupSchema, handleClassSignup, handleRequestClassRenewLink, resolveClassEligibility } from './class-signup-form';
+import {
+  classSignupSchema,
+  handleClassSignup,
+  requestClassRenewLinkSchema,
+  handleRequestClassRenewLink,
+  resolveClassEligibility,
+} from './class-signup-form';
 
 export const joinClass = form(classSignupSchema, async (input) => {
   const { platform, getClientAddress } = getRequestEvent();
@@ -25,7 +31,7 @@ export const checkClassEligibility = query(v.pipe(v.string(), v.trim()), async (
 
 /** The renew pivot's own "email me a sign-in link" button (2026-07-14 amendment): wires
  *  `handleRequestClassRenewLink` to the live request's platform env and origin. */
-export const requestRenewLink = form(v.object({ email: v.pipe(v.string(), v.trim(), v.email()) }), async (input) => {
-  const { platform, url } = getRequestEvent();
-  return handleRequestClassRenewLink(input.email, platform?.env, url.origin);
+export const requestRenewLink = form(requestClassRenewLinkSchema, async (input) => {
+  const { platform, getClientAddress, url } = getRequestEvent();
+  return handleRequestClassRenewLink(input, platform?.env, getClientAddress(), url.origin);
 });

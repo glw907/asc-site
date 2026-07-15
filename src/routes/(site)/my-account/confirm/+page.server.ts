@@ -10,6 +10,7 @@ import { confirmMemberToken, requestMemberLink, issueMemberCsrfToken, validateMe
 import { memberSessionCookieName } from '$member-auth/lib/crypto';
 import { resolveMemberDb } from '$member-auth/lib/db';
 import { siteConfig } from '$theme/cairn.config';
+import { verifyTurnstile } from '$theme/turnstile';
 
 export const prerender = false;
 
@@ -28,6 +29,10 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
+  // The friction tradeoff (spec `2026-07-15-payments-live-smoke-design.md` section 2a): a member
+  // reaches this button by clicking their own magic-link email, so a Turnstile challenge here
+  // adds friction to the confirm step itself. The ruling stands (Turnstile on every public
+  // unauthenticated POST) unless Geoff overrides in review.
   confirm: async (event) => {
     if (!(await validateMemberCsrfToken(event))) return { ok: false as const, prefillEmail: null };
 
@@ -37,6 +42,12 @@ export const actions: Actions = {
     const form = await event.request.formData();
     const token = String(form.get('token') ?? '');
     if (!token) return { ok: false as const, prefillEmail: null };
+
+    const secret = event.platform?.env.TURNSTILE_SECRET_KEY;
+    const turnstileToken = String(form.get('cf-turnstile-response') ?? '');
+    if (secret && !(await verifyTurnstile(turnstileToken, event.getClientAddress(), secret))) {
+      return { ok: false as const, prefillEmail: null };
+    }
 
     const result = await confirmMemberToken(db, token);
     if (!result.ok) return { ok: false as const, prefillEmail: result.prefillEmail };
@@ -52,6 +63,9 @@ export const actions: Actions = {
     redirect(303, '/my-account');
   },
 
+  // `resend` is the higher-value Turnstile target of the two (spec section 2a): it sends a
+  // fresh magic-link email on every valid submit, the same send-path abuse class as
+  // `requestRenewLink`/`requestLink`.
   resend: async (event) => {
     const db = resolveMemberDb(event.platform?.env);
     const emailBinding = event.platform?.env.EMAIL;
@@ -61,6 +75,13 @@ export const actions: Actions = {
 
     const form = await event.request.formData();
     const email = String(form.get('email') ?? '');
+
+    const secret = event.platform?.env.TURNSTILE_SECRET_KEY;
+    const turnstileToken = String(form.get('cf-turnstile-response') ?? '');
+    if (secret && !(await verifyTurnstile(turnstileToken, event.getClientAddress(), secret))) {
+      return { ok: false as const, prefillEmail: email, resent: false as const };
+    }
+
     await requestMemberLink(db, email, (message) => emailBinding.send(message), {
       origin: event.url.origin,
       siteName: siteConfig.siteName,

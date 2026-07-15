@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isValidationError } from '@sveltejs/kit';
 import * as v from 'valibot';
-import { classSignupSchema, handleClassSignup, handleRequestClassRenewLink } from '$theme/class-signup-form';
+import {
+  classSignupSchema,
+  handleClassSignup,
+  handleRequestClassRenewLink,
+  type RequestClassRenewLinkSubmission,
+} from '$theme/class-signup-form';
 import { fakeD1 } from './_fake-d1';
 
 /** `isValidationError`'s own declared type narrows to `ActionFailure` (the shared public shape),
@@ -306,12 +311,19 @@ describe('handleRequestClassRenewLink (2026-07-14 amendment)', () => {
     email: 'jamie@example.com',
     archived_at: null,
   };
+  const ORIGIN = 'https://dev.aksailingclub.org';
+  const IP = '203.0.113.5';
+  const RENEW_INPUT: RequestClassRenewLinkSubmission = { email: 'jamie@example.com', 'cf-turnstile-response': '' };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
   it('sends the member their own sign-in link when CLUB_DB and EMAIL are both bound', async () => {
     const { db } = fakeD1({ firstResults: { 'FROM members WHERE lower(email)': ACTIVE_MEMBER } });
     const send = vi.fn().mockResolvedValue(undefined);
 
-    const result = await handleRequestClassRenewLink('jamie@example.com', { CLUB_DB: db, EMAIL: { send } }, 'https://dev.aksailingclub.org');
+    const result = await handleRequestClassRenewLink(RENEW_INPUT, { CLUB_DB: db, EMAIL: { send } }, IP, ORIGIN);
 
     expect(result).toEqual({ sent: true });
     expect(send).toHaveBeenCalledTimes(1);
@@ -321,14 +333,58 @@ describe('handleRequestClassRenewLink (2026-07-14 amendment)', () => {
   it('still answers sent, sending nothing, when EMAIL is not bound', async () => {
     const { db } = fakeD1({ firstResults: { 'FROM members WHERE lower(email)': ACTIVE_MEMBER } });
 
-    const result = await handleRequestClassRenewLink('jamie@example.com', { CLUB_DB: db }, 'https://dev.aksailingclub.org');
+    const result = await handleRequestClassRenewLink(RENEW_INPUT, { CLUB_DB: db }, IP, ORIGIN);
 
     expect(result).toEqual({ sent: true });
   });
 
   it('still answers sent when CLUB_DB is not bound', async () => {
-    const result = await handleRequestClassRenewLink('jamie@example.com', undefined, 'https://dev.aksailingclub.org');
+    const result = await handleRequestClassRenewLink(RENEW_INPUT, undefined, IP, ORIGIN);
 
     expect(result).toEqual({ sent: true });
+  });
+});
+
+describe('handleRequestClassRenewLink (the Turnstile gate)', () => {
+  const ORIGIN = 'https://dev.aksailingclub.org';
+  const IP = '203.0.113.5';
+  const RENEW_INPUT: RequestClassRenewLinkSubmission = { email: 'jamie@example.com', 'cf-turnstile-response': '' };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('rejects a missing token when a secret is configured', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ success: false }) }));
+    await expect(
+      handleRequestClassRenewLink(RENEW_INPUT, { TURNSTILE_SECRET_KEY: 'secret' }, IP, ORIGIN),
+    ).rejects.toSatisfy(
+      (err: unknown) => isValidationError(err) && issueMessages(err).includes('Spam check failed. Please try again.'),
+    );
+  });
+
+  it('rejects an invalid token when a secret is configured', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ success: false }) }));
+    const input = { ...RENEW_INPUT, 'cf-turnstile-response': 'a-bad-token' };
+    await expect(
+      handleRequestClassRenewLink(input, { TURNSTILE_SECRET_KEY: 'secret' }, IP, ORIGIN),
+    ).rejects.toSatisfy(
+      (err: unknown) => isValidationError(err) && issueMessages(err).includes('Spam check failed. Please try again.'),
+    );
+  });
+
+  it('proceeds when a secret is configured and siteverify reports success', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ success: true }) }));
+    const input = { ...RENEW_INPUT, 'cf-turnstile-response': 'a-good-token' };
+    const result = await handleRequestClassRenewLink(input, { TURNSTILE_SECRET_KEY: 'secret' }, IP, ORIGIN);
+    expect(result).toEqual({ sent: true });
+  });
+
+  it('degrades to open (no siteverify call) when no secret is configured', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const result = await handleRequestClassRenewLink(RENEW_INPUT, undefined, IP, ORIGIN);
+    expect(result).toEqual({ sent: true });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

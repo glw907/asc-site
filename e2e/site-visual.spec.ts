@@ -185,6 +185,76 @@ for (const width of FAMILY_WIDTHS) {
   });
 }
 
+// The Turnstile hardening pass (plan Task 1, 2026-07-15): one representative screenshot per
+// newly-gated public page, proving the added widget renders without breaking layout. A single
+// light-mode capture each, not the full five-viewport family bar (that bar is the acceptance gate
+// for a design pass; this is a narrower correctness check that the widget addition itself is the
+// only visible diff). The Turnstile challenge script is blocked for the same non-determinism
+// reason `join apply — light` blocks it above.
+test('my-account — signed out (Turnstile hardening pass)', async ({ page }) => {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/my-account');
+  await expect(page.getByRole('heading', { level: 1, name: 'Member sign-in' })).toBeVisible();
+  await expect(page).toHaveScreenshot('my-account-signed-out-light.png', { fullPage: true });
+});
+
+test('my-account confirm — sign-in button (Turnstile hardening pass)', async ({ page }) => {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/my-account/confirm?token=any-token-value');
+  await expect(page.getByRole('heading', { level: 1, name: 'Sign in to Alaska Sailing Club' })).toBeVisible();
+  await expect(page).toHaveScreenshot('my-account-confirm-light.png', { fullPage: true });
+});
+
+// The class waitlist offer page: e2e/fixtures/signup-seed.sql seeds one pending offer whose
+// plaintext token is 'fixture-offer-token' (the hashed value stored is the only form the schema
+// carries; see that fixture's own header for why the hash is hard-coded there).
+test('class offer — claim/decline (Turnstile hardening pass)', async ({ page }) => {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/classes/offer/fixture-offer-token');
+  await expect(page.getByRole('button', { name: 'Claim my spot' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pass this time' })).toBeVisible();
+  await expect(page).toHaveScreenshot('class-offer-light.png', { fullPage: true });
+});
+
+// The class-signup page's post-enrollment panel: payClassFee's own widget only ever renders after
+// a real enroll (never on a bare GET), so this test signs up the fixture's own 'current'-standing
+// member (e2e-current-member@example.com, signup-seed.sql) to reach it. STRIPE_SECRET_KEY and
+// TURNSTILE_SECRET_KEY are both unbound locally (join-and-class-door.spec.ts's own header), so
+// the joinClass submission itself degrades open, same as every other local e2e submission here.
+test('class signup — enrolled, pay class fee (Turnstile hardening pass)', async ({ page }) => {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/classes/test-intro-class/signup');
+  await page.getByRole('group', { name: 'Full name' }).getByRole('textbox').fill('E2E Current Member');
+  await page.getByRole('group', { name: 'Email address' }).getByRole('textbox').fill('e2e-current-member@example.com');
+  await page.getByRole('checkbox', { name: /I have read and accept the liability release/ }).check();
+  await page.getByRole('button', { name: 'Sign up' }).click();
+  await expect(page.getByText("You're signed up for Test Intro Class.")).toBeVisible();
+  await expect(page.getByRole('button', { name: /Pay \$150 now/ })).toBeVisible();
+  await expect(page).toHaveScreenshot('class-signup-enrolled-light.png', { fullPage: true });
+});
+
+// The class-door standing gate's own renew pivot: requestRenewLink's widget, the signup page's
+// second new Turnstile gate. Reached the same way join-and-class-door.spec.ts's own class-door
+// pivot test reaches its pivot -- an email-blur probe, ahead of any submit -- against the
+// fixture's own 'lapsed'-standing member (e2e-lapsed-member@example.com, signup-seed.sql: a
+// household with no paid membership row at all).
+test('class signup — lapsed pivot, renew sign-in link (Turnstile hardening pass)', async ({ page }) => {
+  await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/classes/test-intro-class/signup');
+  await page.getByRole('group', { name: 'Full name' }).getByRole('textbox').fill('E2E Lapsed Member');
+  const emailField = page.getByRole('group', { name: 'Email address' }).getByRole('textbox');
+  await emailField.fill('e2e-lapsed-member@example.com');
+  await emailField.blur();
+  await expect(page.getByText('Renew to sign up for Test Intro Class.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Email me a sign-in link' })).toBeVisible();
+  await expect(page).toHaveScreenshot('class-signup-renew-light.png', { fullPage: true });
+});
+
 // /events/[id].ics: the per-event add-to-calendar endpoint, exactly one VEVENT.
 test('event detail .ics — real feed', async ({ page }) => {
   const res = await page.request.get('/events/test-regatta.ics');

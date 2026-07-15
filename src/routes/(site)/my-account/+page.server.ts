@@ -33,6 +33,7 @@ import { mintOrReuseRenewalMembership } from '$member-portal/lib/renewal';
 import { portalAction, type PortalActionContext, type PortalActionEvent } from '$member-portal/lib/portal-action';
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv } from '$admin-club/lib/payments';
 import { siteConfig } from '$theme/cairn.config';
+import { verifyTurnstile } from '$theme/turnstile';
 
 export const prerender = false;
 
@@ -133,6 +134,16 @@ export const actions: Actions = {
     const form = await event.request.formData();
     const email = String(form.get('email') ?? '').trim();
     if (!email) return fail(400, { error: 'Please enter your email address.' });
+
+    // Turnstile-gated (2026-07-15 hardening pass, matching the family's own
+    // `if (secret && !verify) fail/invalid` pattern): the signed-out sign-in form sends a
+    // magic-link email on every valid submit, the same send-path abuse class as `resend`/
+    // `requestRenewLink`.
+    const secret = event.platform?.env.TURNSTILE_SECRET_KEY;
+    const token = String(form.get('cf-turnstile-response') ?? '');
+    if (secret && !(await verifyTurnstile(token, event.getClientAddress(), secret))) {
+      return fail(400, { error: 'Spam check failed. Please try again.' });
+    }
 
     const db = resolveMemberDb(event.platform?.env);
     if (!db) return fail(503, { error: "This isn't available right now. Please try again shortly." });

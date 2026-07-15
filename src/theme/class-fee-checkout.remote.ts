@@ -5,6 +5,6 @@ import { form, getRequestEvent } from '$app/server';
 import { classFeeCheckoutSchema, handleClassFeeCheckout } from './class-fee-checkout-form';
 
 export const payClassFee = form(classFeeCheckoutSchema, async (input) => {
-  const { platform, url } = getRequestEvent();
-  return handleClassFeeCheckout(input, platform?.env, url.origin);
+  const { platform, getClientAddress, url } = getRequestEvent();
+  return handleClassFeeCheckout(input, platform?.env, getClientAddress(), url.origin);
 });

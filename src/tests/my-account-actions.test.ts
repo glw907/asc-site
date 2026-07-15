@@ -38,6 +38,70 @@ async function catchThrown(value: unknown): Promise<unknown> {
   }
 }
 
+/** `?/requestLink`'s own event shape: no member session, so a bare CSRF cookie is enough, and
+ *  (2026-07-15 hardening pass) `getClientAddress` and an optional Turnstile secret for the gate.
+ *  `request.formData()` must work directly (not just via `.clone()`), matching the action's own
+ *  read order: `validateMemberCsrfToken` clones first, then the action reads the original body. */
+function requestLinkEvent(form: Record<string, string>, db: unknown, opts: { emailBinding?: { send: ReturnType<typeof vi.fn> }; turnstileSecret?: string } = {}) {
+  const fd = new FormData();
+  fd.append('csrf', 'token');
+  for (const [key, value] of Object.entries(form)) fd.append(key, value);
+  const cookies: Record<string, string> = { 'asc-member-csrf': 'token' };
+  return {
+    url: new URL('http://localhost/my-account'),
+    request: { formData: async () => fd, clone: () => ({ formData: async () => fd }) } as unknown as Request,
+    cookies: { get: (name: string) => cookies[name], set: () => {} },
+    getClientAddress: () => '203.0.113.5',
+    platform: {
+      env: {
+        CLUB_DB: db,
+        ...(opts.emailBinding ? { EMAIL: opts.emailBinding } : {}),
+        ...(opts.turnstileSecret ? { TURNSTILE_SECRET_KEY: opts.turnstileSecret } : {}),
+      },
+    },
+  };
+}
+
+describe('?/requestLink (the Turnstile gate, 2026-07-15 hardening pass)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('rejects a missing token when a secret is configured', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ success: false }) }));
+    const result = await actions.requestLink(requestLinkEvent({ email: 'jamie@example.com' }, undefined, { turnstileSecret: 'secret' }) as never);
+    expect(result).toEqual(expect.objectContaining({ status: 400 }));
+  });
+
+  it('rejects an invalid token when a secret is configured', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ success: false }) }));
+    const result = await actions.requestLink(
+      requestLinkEvent({ email: 'jamie@example.com', 'cf-turnstile-response': 'a-bad-token' }, undefined, { turnstileSecret: 'secret' }) as never,
+    );
+    expect(result).toEqual(expect.objectContaining({ status: 400 }));
+  });
+
+  it('proceeds when a secret is configured and siteverify reports success', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ json: () => Promise.resolve({ success: true }) }));
+    const { db } = fakeD1({ firstResults: { 'FROM members WHERE lower(email)': null } });
+    const send = vi.fn().mockResolvedValue(undefined);
+    const result = await actions.requestLink(
+      requestLinkEvent({ email: 'jamie@example.com', 'cf-turnstile-response': 'a-good-token' }, db, { emailBinding: { send }, turnstileSecret: 'secret' }) as never,
+    );
+    expect(result).toEqual({ sent: true });
+  });
+
+  it('degrades to open (no siteverify call) when no secret is configured', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const { db } = fakeD1({ firstResults: { 'FROM members WHERE lower(email)': null } });
+    const send = vi.fn().mockResolvedValue(undefined);
+    const result = await actions.requestLink(requestLinkEvent({ email: 'jamie@example.com' }, db, { emailBinding: { send } }) as never);
+    expect(result).toEqual({ sent: true });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
 describe('?/renew', () => {
   afterEach(() => {
     vi.unstubAllGlobals();

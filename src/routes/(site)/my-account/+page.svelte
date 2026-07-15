@@ -10,6 +10,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
   import { untrack } from 'svelte';
   import type { ActionData, PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
+  import { TURNSTILE_SITE_KEY } from '$theme/turnstile';
   import { MEMBERSHIP_TIER_LABEL, type MembershipTier } from '$member-auth/lib/standing';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -61,8 +62,12 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
         <legend class="fieldset-legend">Email address</legend>
         <input class="input w-full" type="email" name="email" autocomplete="email" required />
       </fieldset>
+      <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
       <button type="submit" class="btn btn-primary self-start">Email me a sign-in link</button>
     </form>
+
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
     <p class="mt-l max-w-measure-wide text-step--1 text-muted">
       Wrong or old email on file? <a href="/contact" class="text-primary">Contact us</a> and we'll fix
       it.
