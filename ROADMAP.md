@@ -114,6 +114,25 @@ payments-live-smoke, Geoff's walkthrough) clears with budget left, it runs
 Fable-conducted; otherwise it falls to the post-window default, Opus-conducted against
 the runbook. The soak needs no Fable either way.
 
+### Design propagation & continuing rounds `design-propagation`
+Apply the ratified Home/Education design work to the rest of the site and keep the
+design rounds moving (Geoff, 2026-07-14). The template pass already gave the six
+primary pages their promise heroes and the shared type spine; what remains: the
+`.page-cta` closing-panel rollout to the five Questions-style pages (queued behind
+ratification since round 5), the posts/bulletins composition spec (the phased half of
+the template-system spec, never written), the interior/secondary pages (guides,
+governance, news index and tag pages) brought up to the editorial-pacing, image-standard,
+and TOC standards, and the polish backlog (docs/2026-07-07-polish-backlog.md) triaged
+into the rounds. Method: the design-refinement live-round loop with Geoff's optical
+read as the gate; decisions.md rules stand, never re-litigated. Outside the mw-*
+program — runs interleaved with it on Geoff's review availability.
+Fable-window ruling (Geoff, 2026-07-14): FABLE-PRIORITY IN-WINDOW. Geoff finds Fable
+much stronger in the design realm, and unlike the mechanical initiatives this edge
+cannot be banked as a spec — the taste lives in the conducting (probe authorship,
+render reads, the arrangement calls), not in a plan a cheaper conductor executes. So
+design rounds rank beside admin-roles/admin-nav-reorg for in-window Fable time, ahead
+of the spec-only queue when his review availability lines up.
+
 ### Class management `class-management`
 The in-season operations tooling for classes, on top of the pass-2.1 admin (events,
 classes, waitlists, offers, and settings already run on live D1): attendance and
