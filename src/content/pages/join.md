@@ -88,10 +88,10 @@ If you're joining for the boats, the racing, or the community rather than a begi
 Your membership is active immediately.
 :::
 :::step[Check your email]
-for your welcome message with your class credit, Discord invite, and account link.
+Your welcome message has your class credit, Discord invite, and account link.
 :::
-:::step[The board reviews]
-new applications in the background (typically 2-3 business days). You won't hear anything unless there's an issue.
+:::step[Board review]
+The board reviews new applications in the background (typically 2-3 business days). You won't hear anything unless there's an issue.
 :::
 ::::
 
