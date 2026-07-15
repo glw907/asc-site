@@ -6,10 +6,19 @@
 // stores never blur). Built directly on `validateMemberCsrfToken`/`getMemberSession`
 // (`$member-auth/lib/auth.ts`), never a second copy of either's own token logic.
 import { fail } from '@sveltejs/kit';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { getMemberSession, type MemberRow } from '$member-auth/lib/auth';
 import { memberCsrfCookieName, memberSessionCookieName } from '$member-auth/lib/crypto';
 import { resolveMemberDb } from '$member-auth/lib/db';
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
+
+/** The narrow, explained bridge this module uses to read the site's own `RATE_LIMIT_MEMBER`
+ *  binding off a platform env, matching `$admin-club/lib/club-db.ts`'s own `resolveClubDb`
+ *  precedent: `PortalActionEvent.platform.env` is typed `unknown` (a member session is not the
+ *  engine's own event shape), so a site-only binding is never expressible without a cast. */
+function resolveMemberRateLimit(env: unknown): RateLimit | undefined {
+  return (env as { RATE_LIMIT_MEMBER?: RateLimit } | undefined)?.RATE_LIMIT_MEMBER;
+}
 
 /** The minimal event shape `portalAction` reads: enough to verify CSRF, resolve the session
  *  cookie, and read the form once, mirroring the engine's own narrow-event trick
@@ -69,6 +78,14 @@ export function portalAction<T>(handler: (args: { event: PortalActionEvent; form
     const sessionId = event.cookies.get(cookieName);
     const member = sessionId ? await getMemberSession(db, sessionId) : null;
     if (!member) return fail(401, { error: 'Please sign in again.' });
+
+    // Coverage table item 2 (docs/2026-07-15-payments-live-smoke-design.md section 2b): every
+    // authenticated member POST, keyed per member session id (not per member: a member signed in
+    // on two devices gets two independent budgets, matching the session-scoped nature of the
+    // check). Runs after the session resolves, since the session id is the key.
+    if (!(await checkRateLimit(resolveMemberRateLimit(event.platform?.env), `session:${sessionId}`))) {
+      return fail(429, { error: RATE_LIMIT_MESSAGE });
+    }
 
     const household = await db
       .prepare('SELECT primary_member_id FROM households WHERE id = ?1')

@@ -9,10 +9,19 @@
 // `CairnRolesRegister`) instead of a `club_roles` query, since cairn 0.86.0's roles seam is now
 // the only role system this site carries.
 import { fail } from '@sveltejs/kit';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { adminAction } from '@glw907/cairn-cms/sveltekit';
 import type { AdminActionContext, AdminActionEvent } from '@glw907/cairn-cms/sveltekit';
 import { CLUB_ROLES, resolveClubDb } from './club-db';
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
+
+/** The narrow, explained bridge this module uses to read the site's own `RATE_LIMIT_ADMIN`
+ *  binding off a platform env, matching `resolveClubDb`'s own precedent one field below: the
+ *  engine types `AdminActionEvent.platform.env` by its own narrow `AuthEnv`, so a site-only
+ *  binding is never expressible on it without a cast. */
+function resolveAdminRateLimit(env: unknown): RateLimit | undefined {
+  return (env as { RATE_LIMIT_ADMIN?: RateLimit } | undefined)?.RATE_LIMIT_ADMIN;
+}
 
 /** What a `clubAdminAction` handler receives: the engine's own verified `editor`/`audit`, plus
  *  the resolved `CLUB_DB` handle, already checked by the wrapper so no handler re-resolves it.
@@ -60,6 +69,14 @@ export function clubAdminAction<T>(
   const deniedMessage = opts.deniedMessage ?? (opts.ownerOnly ? 'Only a club owner can do this.' : 'A club role is required.');
 
   return adminAction(async ({ event, form, ctx }) => {
+    // Coverage table item 3 (docs/2026-07-15-payments-live-smoke-design.md section 2b): every
+    // admin POST, keyed per editor email. `adminAction` has already verified `ctx.editor` by the
+    // time this callback runs, so the key is available before any other work.
+    if (!(await checkRateLimit(resolveAdminRateLimit(event.platform?.env), `editor:${ctx.editor.email}`))) {
+      ctx.audit({ action: opts.action, entity: opts.entity, detail: 'rejected: rate limited' });
+      return fail(429, { error: RATE_LIMIT_MESSAGE });
+    }
+
     const db = resolveClubDb(event.platform?.env);
     if (!db) {
       ctx.audit({ action: opts.action, entity: opts.entity, detail: 'rejected: CLUB_DB not bound' });

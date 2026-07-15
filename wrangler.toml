@@ -87,3 +87,50 @@ bucket_name = "asc-site-media"
 # cutover (plan Task 5) repoints the dev.aksailingclub.org Workers custom domain to this Worker;
 # production stays untouched. Dev overrides via PUBLIC_ORIGIN in .dev.vars.
 PUBLIC_ORIGIN = "https://dev.aksailingclub.org"
+
+# Payments-live-smoke Task 3 (docs/2026-07-15-payments-live-smoke-design.md section 2b): the GA
+# Workers rate-limiting binding, one namespace per limit class, `src/theme/rate-limit.ts` the
+# shared wrapper every call site reads through. `period` only supports 10 or 60 seconds; every
+# cap below is expressed against 60. `namespace_id` is an arbitrary string unique within this
+# Worker (not a pre-provisioned resource, unlike a D1 database id). Absent locally and in
+# vitest, which is the intended degrade-to-open case (see rate-limit.ts's own header). Values
+# are conservative first passes; they tune post-smoke.
+
+# The tightest cap: public checkout-creating forms (payClassFee, createDonationCheckout,
+# applyJoin's fresh-join checkout). 5 requests per key per 60s.
+[[ratelimits]]
+name = "RATE_LIMIT_MONEY"
+namespace_id = "10061"
+simple = { limit = 5, period = 60 }
+
+# The rest of the public unauthenticated POST surface: joinClass, sendMessage, requestRenewLink,
+# requestLink (the /my-account signed-out sign-in send), the offer claim/decline actions, and
+# confirm/resend. 15 requests per key per 60s.
+[[ratelimits]]
+name = "RATE_LIMIT_PUBLIC_POST"
+namespace_id = "10062"
+simple = { limit = 15, period = 60 }
+
+# Authenticated member POSTs (portalAction: CSRF plus a live member session), keyed per member
+# session id. A signed-in member legitimately clicks several buttons in a visit, so this is more
+# generous than the public caps. 30 requests per key per 60s.
+[[ratelimits]]
+name = "RATE_LIMIT_MEMBER"
+namespace_id = "10063"
+simple = { limit = 30, period = 60 }
+
+# Admin POSTs (clubAdminAction: the engine's auth guard plus the club-role gate), keyed per
+# editor email. Board volunteers run legitimate bulk operations (a class roster edit, a batch of
+# signups), so this stays the most generous authenticated cap. 60 requests per key per 60s.
+[[ratelimits]]
+name = "RATE_LIMIT_ADMIN"
+namespace_id = "10064"
+simple = { limit = 60, period = 60 }
+
+# Public enumeration-capable GET probes (checkKnownEmail, checkClassEligibility), keyed per IP
+# and per probed email, to blunt a scripted sweep of the member roster without blocking the
+# normal one-check-per-blur a real visitor's form triggers. 20 requests per key per 60s.
+[[ratelimits]]
+name = "RATE_LIMIT_ENUMERATION"
+namespace_id = "10065"
+simple = { limit = 20, period = 60 }

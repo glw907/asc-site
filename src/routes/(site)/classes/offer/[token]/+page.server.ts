@@ -3,9 +3,11 @@
 // viewing the page before deciding never itself resolves anything; the real claim or decline goes
 // through the `claim`/`decline` actions below, which do mutate (and lazily expire a stale row).
 import { error, fail } from '@sveltejs/kit';
+import type { RateLimit } from '@cloudflare/workers-types';
 import type { Actions, PageServerLoad } from './$types';
 import { claimOffer, declineOffer, previewOffer, toSqliteDatetime } from '$admin-club/lib/offers';
 import { verifyTurnstile } from '$theme/turnstile';
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
 
 export const prerender = false;
 
@@ -26,8 +28,18 @@ function isCrossOrigin(request: Request, url: URL): boolean {
  *  reaches this page from their own offer email, so a Turnstile challenge on `claim`/`decline`
  *  adds friction to an already token-gated action. The ruling stands (Turnstile everywhere on a
  *  public unauthenticated POST) unless Geoff overrides in review. */
-async function verifiedOrTurnstileFailure(request: Request, url: URL, env: { TURNSTILE_SECRET_KEY?: string } | undefined, getClientAddress: () => string): Promise<string | null> {
+async function verifiedOrTurnstileFailure(
+  request: Request,
+  url: URL,
+  env: { TURNSTILE_SECRET_KEY?: string; RATE_LIMIT_PUBLIC_POST?: RateLimit } | undefined,
+  getClientAddress: () => string,
+): Promise<string | null> {
   if (isCrossOrigin(request, url)) return 'Please try again.';
+
+  // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b): claim/
+  // decline carry no email field (the offer token is the only identity), so this keys on IP
+  // alone.
+  if (!(await checkRateLimit(env?.RATE_LIMIT_PUBLIC_POST, `ip:${getClientAddress()}`))) return RATE_LIMIT_MESSAGE;
 
   const secret = env?.TURNSTILE_SECRET_KEY;
   if (!secret) return null;

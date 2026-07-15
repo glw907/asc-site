@@ -34,6 +34,7 @@ import { portalAction, type PortalActionContext, type PortalActionEvent } from '
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv } from '$admin-club/lib/payments';
 import { siteConfig } from '$theme/cairn.config';
 import { verifyTurnstile } from '$theme/turnstile';
+import { checkRateLimitKeys, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
 
 export const prerender = false;
 
@@ -134,6 +135,12 @@ export const actions: Actions = {
     const form = await event.request.formData();
     const email = String(form.get('email') ?? '').trim();
     if (!email) return fail(400, { error: 'Please enter your email address.' });
+
+    // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b): every
+    // public POST, keyed per IP and per email. This action sends a magic-link email on every
+    // valid submit, the same send-path abuse class as `resend`/`requestRenewLink`.
+    const rateLimitAllowed = await checkRateLimitKeys(event.platform?.env.RATE_LIMIT_PUBLIC_POST, [`ip:${event.getClientAddress()}`, `email:${email.toLowerCase()}`]);
+    if (!rateLimitAllowed) return fail(429, { error: RATE_LIMIT_MESSAGE });
 
     // Turnstile-gated (2026-07-15 hardening pass, matching the family's own
     // `if (secret && !verify) fail/invalid` pattern): the signed-out sign-in form sends a

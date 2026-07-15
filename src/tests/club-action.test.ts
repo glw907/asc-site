@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isActionFailure } from '@sveltejs/kit';
+import type { RateLimit } from '@cloudflare/workers-types';
 import type { Editor } from '@glw907/cairn-cms';
 import type { AdminActionAuditRecord, AdminActionEvent } from '@glw907/cairn-cms/sveltekit';
 import { clubAdminAction } from '$admin-club/lib/club-action';
@@ -16,7 +17,7 @@ const CSRF_TOKEN = 'test-csrf-token';
  *  established). */
 function postEvent(
   editor: Editor,
-  opts: { db?: unknown; auditSink?: (record: AdminActionAuditRecord) => void } = {},
+  opts: { db?: unknown; auditSink?: (record: AdminActionAuditRecord) => void; rateLimit?: RateLimit } = {},
 ): AdminActionEvent {
   const formData = new FormData();
   formData.set('csrf', CSRF_TOKEN);
@@ -30,7 +31,7 @@ function postEvent(
       set: () => undefined,
       delete: () => undefined,
     },
-    platform: { env: { CLUB_DB: opts.db } },
+    platform: { env: { CLUB_DB: opts.db, RATE_LIMIT_ADMIN: opts.rateLimit } },
     locals: { editor, auditSink: opts.auditSink },
   } as unknown as AdminActionEvent;
 }
@@ -90,6 +91,31 @@ describe('clubAdminAction', () => {
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
     expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('fails 429 and never runs the handler when RATE_LIMIT_ADMIN is present and over its limit, keyed per editor', async () => {
+    const handler = vi.fn();
+    const sink = vi.fn();
+    const rateLimit = { limit: vi.fn(async () => ({ success: false })) } as unknown as RateLimit;
+    const action = clubAdminAction(handler, { action: 'do', entity: 'widget' });
+    const result = await action(postEvent(clubAdmin, { db: {}, auditSink: sink, rateLimit }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(429);
+    expect(handler).not.toHaveBeenCalled();
+    expect(rateLimit.limit).toHaveBeenCalledWith({ key: `editor:${clubAdmin.email}` });
+    expect(sink).toHaveBeenCalledWith(expect.objectContaining({ detail: 'rejected: rate limited' }));
+  });
+
+  it('lets the handler run when RATE_LIMIT_ADMIN is present and under its limit', async () => {
+    const handler = vi.fn(async ({ ctx }) => {
+      ctx.audit({ action: 'do', entity: 'widget' });
+      return { ok: true };
+    });
+    const rateLimit = { limit: vi.fn(async () => ({ success: true })) } as unknown as RateLimit;
+    const action = clubAdminAction(handler, { action: 'do', entity: 'widget' });
+    const result = await action(postEvent(clubAdmin, { db: {}, rateLimit }));
+    expect(result).toEqual({ ok: true });
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 
   it('ownerOnly lets an owner through, and hands the handler the resolved db', async () => {

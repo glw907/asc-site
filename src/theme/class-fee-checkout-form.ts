@@ -7,10 +7,11 @@
 // mismatched pair refuses rather than silently charging for the wrong class.
 import * as v from 'valibot';
 import { invalid } from '@sveltejs/kit';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { getClass } from '$admin-club/lib/classes-store';
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv, type CreateCheckoutResult } from '$admin-club/lib/payments';
 import { verifyTurnstile } from './turnstile';
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from './rate-limit';
 
 export const classFeeCheckoutSchema = v.object({
   enrollmentId: v.pipe(v.string(), v.trim(), v.nonEmpty()),
@@ -27,6 +28,7 @@ export type ClassFeeCheckoutSubmission = v.InferOutput<typeof classFeeCheckoutSc
 interface ClassFeeCheckoutEnv extends CreateCheckoutEnv {
   CLUB_DB?: D1Database;
   TURNSTILE_SECRET_KEY?: string;
+  RATE_LIMIT_MONEY?: RateLimit;
 }
 
 /**
@@ -46,6 +48,13 @@ export async function handleClassFeeCheckout(
   origin: string,
 ): Promise<CreateCheckoutResult> {
   const platformEnv = env as ClassFeeCheckoutEnv | undefined;
+
+  // Coverage table item 1, the money-path tightest cap (docs/2026-07-15-payments-live-smoke-
+  // design.md section 2b): the submission carries no email field (an enrollment id and a class
+  // id only), so this keys on IP alone.
+  if (!(await checkRateLimit(platformEnv?.RATE_LIMIT_MONEY, `ip:${clientAddress}`))) {
+    invalid(RATE_LIMIT_MESSAGE);
+  }
 
   const secret = platformEnv?.TURNSTILE_SECRET_KEY;
   const token = input['cf-turnstile-response'];

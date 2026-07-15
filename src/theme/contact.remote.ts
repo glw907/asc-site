@@ -10,6 +10,7 @@ import { invalid } from '@sveltejs/kit';
 import { form, getRequestEvent } from '$app/server';
 import { CONTACT_CATEGORIES, buildContactEmail } from '$theme/contact-routing';
 import { verifyTurnstile } from '$theme/turnstile';
+import { checkRateLimitKeys, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
 
 const FROM_ADDRESS = 'noreply@aksailingclub.org';
 
@@ -28,6 +29,12 @@ const contactSchema = v.object({
 
 export const sendMessage = form(contactSchema, async (input) => {
   const { platform, getClientAddress } = getRequestEvent();
+
+  // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b): every
+  // public POST, keyed per IP and per email.
+  const ip = getClientAddress();
+  const allowed = await checkRateLimitKeys(platform?.env?.RATE_LIMIT_PUBLIC_POST, [`ip:${ip}`, `email:${input.email.toLowerCase()}`]);
+  if (!allowed) invalid(RATE_LIMIT_MESSAGE);
 
   const secret = platform?.env?.TURNSTILE_SECRET_KEY;
   const token = input['cf-turnstile-response'];

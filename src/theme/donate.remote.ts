@@ -14,6 +14,7 @@ import { invalid } from '@sveltejs/kit';
 import { form, getRequestEvent } from '$app/server';
 import { donationAmountError } from '$theme/donate-pricing';
 import { verifyTurnstile } from '$theme/turnstile';
+import { checkRateLimit, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
 import { createCheckout, CheckoutUnavailableError } from '$admin-club/lib/payments';
 
 const donateSchema = v.object({
@@ -27,6 +28,12 @@ const donateSchema = v.object({
 
 export const createDonationCheckout = form(donateSchema, async ({ amount, note, 'cf-turnstile-response': token }) => {
   const { platform, getClientAddress, url } = getRequestEvent();
+
+  // Coverage table item 1, the money-path tightest cap (docs/2026-07-15-payments-live-smoke-
+  // design.md section 2b): the donation form carries no email field, so this keys on IP alone.
+  if (!(await checkRateLimit(platform?.env?.RATE_LIMIT_MONEY, `ip:${getClientAddress()}`))) {
+    invalid(RATE_LIMIT_MESSAGE);
+  }
 
   const amountCents = Math.round(Number(amount) * 100);
   const amountError = donationAmountError(amountCents);

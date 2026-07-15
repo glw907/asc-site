@@ -11,6 +11,7 @@ import { memberSessionCookieName } from '$member-auth/lib/crypto';
 import { resolveMemberDb } from '$member-auth/lib/db';
 import { siteConfig } from '$theme/cairn.config';
 import { verifyTurnstile } from '$theme/turnstile';
+import { checkRateLimit, checkRateLimitKeys } from '$theme/rate-limit';
 
 export const prerender = false;
 
@@ -42,6 +43,12 @@ export const actions: Actions = {
     const form = await event.request.formData();
     const token = String(form.get('token') ?? '');
     if (!token) return { ok: false as const, prefillEmail: null };
+
+    // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b): the
+    // confirm action carries no email field (the magic-link token only), so this keys on IP
+    // alone.
+    const rateLimitAllowed = await checkRateLimit(event.platform?.env.RATE_LIMIT_PUBLIC_POST, `ip:${event.getClientAddress()}`);
+    if (!rateLimitAllowed) return { ok: false as const, prefillEmail: null };
 
     const secret = event.platform?.env.TURNSTILE_SECRET_KEY;
     const turnstileToken = String(form.get('cf-turnstile-response') ?? '');
@@ -75,6 +82,12 @@ export const actions: Actions = {
 
     const form = await event.request.formData();
     const email = String(form.get('email') ?? '');
+
+    // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b):
+    // `resend` is the higher-value target of the confirm page's two actions (it sends a fresh
+    // magic-link email on every valid submit), so this keys on both IP and the submitted email.
+    const rateLimitAllowed = await checkRateLimitKeys(event.platform?.env.RATE_LIMIT_PUBLIC_POST, [`ip:${event.getClientAddress()}`, `email:${email.toLowerCase()}`]);
+    if (!rateLimitAllowed) return { ok: false as const, prefillEmail: email, resent: false as const };
 
     const secret = event.platform?.env.TURNSTILE_SECRET_KEY;
     const turnstileToken = String(form.get('cf-turnstile-response') ?? '');

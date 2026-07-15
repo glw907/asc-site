@@ -21,7 +21,7 @@
 // history to protect.
 import * as v from 'valibot';
 import { invalid } from '@sveltejs/kit';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { validateJoinInput } from '$member-signup/lib/validate.js';
 import { computeJoinPricing } from '$member-signup/lib/pricing.js';
 import { buildJoinStatements } from '$member-signup/lib/statements.js';
@@ -37,6 +37,7 @@ import type { EmailBindingEnv } from '$admin-club/lib/club-email';
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv, type CreateCheckoutResult } from '$admin-club/lib/payments';
 import { siteConfig } from '$theme/cairn.config';
 import { verifyTurnstile } from './turnstile';
+import { checkRateLimitKeys, RATE_LIMIT_MESSAGE } from './rate-limit';
 
 /** The site's established from-address, matching `/my-account`'s own `+page.server.ts` copy of
  *  the same constant (kept as this module's own copy for the same reason that file gives: the
@@ -95,6 +96,7 @@ interface JoinApplyEnv extends CreateCheckoutEnv {
   CLUB_DB?: D1Database;
   TURNSTILE_SECRET_KEY?: string;
   EMAIL?: EmailBindingEnv['EMAIL'];
+  RATE_LIMIT_MONEY?: RateLimit;
 }
 
 function toJoinInput(input: JoinApplySubmission): JoinInput {
@@ -271,6 +273,12 @@ async function loadPickedClassFacts(db: D1Database, classIds: string[]): Promise
  */
 export async function handleJoinApply(input: JoinApplySubmission, env: unknown, clientAddress: string, origin: string): Promise<JoinApplyResult> {
   const platformEnv = env as JoinApplyEnv | undefined;
+
+  // Coverage table item 1, the money-path tightest cap (docs/2026-07-15-payments-live-smoke-
+  // design.md section 2b): the join door creates a real checkout on a fresh join, so it keys
+  // per IP and per the submitted purchaser email.
+  const rateLimitAllowed = await checkRateLimitKeys(platformEnv?.RATE_LIMIT_MONEY, [`ip:${clientAddress}`, `email:${input.purchaserEmail.toLowerCase()}`]);
+  if (!rateLimitAllowed) invalid(RATE_LIMIT_MESSAGE);
 
   const secret = platformEnv?.TURNSTILE_SECRET_KEY;
   const token = input['cf-turnstile-response'];

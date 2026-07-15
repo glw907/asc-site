@@ -1,5 +1,5 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
-import type { ExecutionContext, D1Database } from '@cloudflare/workers-types';
+import type { ExecutionContext, D1Database, RateLimit } from '@cloudflare/workers-types';
 // The binding-shaped types ship from the /sveltekit subpath, so the Platform block intersects
 // them rather than restating every engine binding by hand. CairnMediaBindings adds
 // MEDIA_BUCKET, present because this site turns media on.
@@ -61,6 +61,16 @@ declare global {
           TURNSTILE_SECRET_KEY?: string;
           STRIPE_SECRET_KEY?: string;
           STRIPE_WEBHOOK_SECRET?: string;
+          // The payments-live-smoke hardening pass's rate-limit namespaces (wrangler.toml's
+          // `[[ratelimits]]` block, `src/theme/rate-limit.ts` the shared wrapper); each optional
+          // for the same reason TURNSTILE_SECRET_KEY is: an unprovisioned environment (local dev,
+          // vitest) degrades to open rather than requiring every caller to satisfy a binding this
+          // environment has not always provisioned.
+          RATE_LIMIT_MONEY?: RateLimit;
+          RATE_LIMIT_PUBLIC_POST?: RateLimit;
+          RATE_LIMIT_MEMBER?: RateLimit;
+          RATE_LIMIT_ADMIN?: RateLimit;
+          RATE_LIMIT_ENUMERATION?: RateLimit;
           DISCORD_WEBHOOK_ASSETS?: string;
           DISCORD_WEBHOOK_CLASSES?: string;
           DISCORD_WEBHOOK_LEADERSHIP?: string;

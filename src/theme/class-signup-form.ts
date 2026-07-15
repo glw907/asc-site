@@ -7,7 +7,7 @@
 // `contact.remote.ts`'s own handler stays untested at this layer.
 import * as v from 'valibot';
 import { invalid } from '@sveltejs/kit';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { signUpForClass, type SignUpForClassInput, type SignUpResult } from '$admin-club/lib/enrollments';
 import type { EmailBindingEnv } from '$admin-club/lib/club-email';
 import { getWaiverTextVersion } from '$admin-club/lib/club-settings';
@@ -16,6 +16,7 @@ import { getMemberStanding } from '$member-auth/lib/standing';
 import { requestMemberLink } from '$member-auth/lib/auth';
 import { siteConfig } from '$theme/cairn.config';
 import { verifyTurnstile } from './turnstile';
+import { checkRateLimitKeys, RATE_LIMIT_MESSAGE } from './rate-limit';
 
 /** The site's established from-address, matching `join-apply-form.ts`'s own copy of the same
  *  constant (kept as this module's own copy for the same reason that file gives). */
@@ -105,6 +106,7 @@ interface ClassSignupEnv {
   TURNSTILE_SECRET_KEY?: string;
   EMAIL?: EmailBindingEnv['EMAIL'];
   DISCORD_WEBHOOK_CLASSES?: string;
+  RATE_LIMIT_PUBLIC_POST?: RateLimit;
 }
 
 /** Sign up for a class from the public form's own submission: Turnstile-gated (degrading
@@ -119,6 +121,12 @@ export async function handleClassSignup(
   clientAddress: string,
 ): Promise<ClassSignupOutcome> {
   const platformEnv = env as ClassSignupEnv | undefined;
+
+  // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b): every
+  // public POST, keyed per IP and per email.
+  const rateLimitAllowed = await checkRateLimitKeys(platformEnv?.RATE_LIMIT_PUBLIC_POST, [`ip:${clientAddress}`, `email:${input.email.toLowerCase()}`]);
+  if (!rateLimitAllowed) invalid(RATE_LIMIT_MESSAGE);
+
   const secret = platformEnv?.TURNSTILE_SECRET_KEY;
   const token = input['cf-turnstile-response'];
   if (secret && !(await verifyTurnstile(token, clientAddress, secret))) {
@@ -190,6 +198,11 @@ export async function handleRequestClassRenewLink(
   origin: string,
 ): Promise<{ sent: true }> {
   const platformEnv = env as ClassSignupEnv | undefined;
+
+  // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b): every
+  // public POST, keyed per IP and per email. Blunts scripted mailing of the send path.
+  const rateLimitAllowed = await checkRateLimitKeys(platformEnv?.RATE_LIMIT_PUBLIC_POST, [`ip:${clientAddress}`, `email:${input.email.toLowerCase()}`]);
+  if (!rateLimitAllowed) invalid(RATE_LIMIT_MESSAGE);
 
   const secret = platformEnv?.TURNSTILE_SECRET_KEY;
   const token = input['cf-turnstile-response'];
