@@ -256,6 +256,18 @@ describe('executeRefund', () => {
     expect(calls).toHaveLength(0);
   });
 
+  it('carries an optional memo onto the refund transaction row (the live-smoke marking), leaving it null by default', async () => {
+    const { db: dbWithMemo, calls: callsWithMemo } = fakeD1();
+    await executeRefund(dbWithMemo, {}, joinCharge({ apiEligible: false, source: 'check' }), [{ lineId: 'line-dues', amountCents: 25000 }], 'live-smoke 2026-07-16');
+    const txnInsertWithMemo = callsWithMemo.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsertWithMemo?.args[11]).toBe('live-smoke 2026-07-16');
+
+    const { db: dbNoMemo, calls: callsNoMemo } = fakeD1();
+    await executeRefund(dbNoMemo, {}, joinCharge({ apiEligible: false, source: 'check' }), [{ lineId: 'line-dues', amountCents: 25000 }]);
+    const txnInsertNoMemo = callsNoMemo.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsertNoMemo?.args[11]).toBeNull();
+  });
+
   it('answers ok: false, writing nothing, when the plan itself is invalid', async () => {
     const { db, calls } = fakeD1();
     const result = await executeRefund(db, {}, joinCharge({ refundable: false }), [{ lineId: 'line-dues', amountCents: 25000 }]);

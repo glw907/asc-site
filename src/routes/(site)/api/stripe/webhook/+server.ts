@@ -90,7 +90,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     // statements, so there is nothing for this route to check first (`stripe-reconcile.ts`'s own
     // header on both).
     try {
-      const outcome = await reconcileCheckoutSession(db, platform.env, meta.kind, meta.refId, session);
+      const outcome = await reconcileCheckoutSession(db, platform.env, meta.kind, meta.refId, session, meta.memo);
       if (!outcome.ok) {
         console.error(`api/stripe/webhook: reconciliation refused for session ${session.id} (${meta.kind}/${meta.refId}): ${outcome.reason}`);
       }
@@ -113,7 +113,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
       return json({ received: true, duplicate: true });
     }
 
-    const outcome = await reconcileCheckoutSession(db, platform.env, meta.kind, meta.refId, session);
+    const outcome = await reconcileCheckoutSession(db, platform.env, meta.kind, meta.refId, session, meta.memo);
     if (!outcome.ok) {
       console.error(`api/stripe/webhook: reconciliation refused for session ${session.id} (${meta.kind}/${meta.refId}): ${outcome.reason}`);
     }

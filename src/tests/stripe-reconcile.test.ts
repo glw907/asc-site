@@ -19,8 +19,28 @@ const RECEIPT_TEMPLATE_ROW = {
 describe('parseSessionMetadata', () => {
   it('accepts a valid dues/class-fee/asset-fee/donation/join metadata pair', () => {
     for (const kind of ['dues', 'class-fee', 'asset-fee', 'donation', 'join'] as const) {
-      expect(parseSessionMetadata({ ...SESSION, metadata: { kind, refId: 'row-1' } })).toEqual({ kind, refId: 'row-1' });
+      expect(parseSessionMetadata({ ...SESSION, metadata: { kind, refId: 'row-1' } })).toEqual({ kind, refId: 'row-1', memo: null });
     }
+  });
+
+  it('reads an ordinary session with no metadata.memo as memo: null (unchanged behavior)', () => {
+    expect(parseSessionMetadata(SESSION)).toEqual({ kind: 'dues', refId: 'mem-1', memo: null });
+  });
+
+  it('trims and carries a metadata.memo when the session carries one (the live-smoke marking)', () => {
+    expect(parseSessionMetadata({ ...SESSION, metadata: { kind: 'dues', refId: 'mem-1', memo: '  live-smoke 2026-07-16  ' } })).toEqual({
+      kind: 'dues',
+      refId: 'mem-1',
+      memo: 'live-smoke 2026-07-16',
+    });
+  });
+
+  it('reads a blank metadata.memo as memo: null', () => {
+    expect(parseSessionMetadata({ ...SESSION, metadata: { kind: 'dues', refId: 'mem-1', memo: '   ' } })).toEqual({
+      kind: 'dues',
+      refId: 'mem-1',
+      memo: null,
+    });
   });
 
   it('rejects missing metadata', () => {
@@ -286,6 +306,18 @@ describe('reconcileCheckoutSession: donation', () => {
 
     const audit = calls.find((c) => c.sql.startsWith('INSERT INTO audit_log'));
     expect(audit?.args).toEqual(['system:stripe-webhook', 'payment.reconcile', 'transaction', 'txn-fixed-1', expect.stringContaining('kind=donation')]);
+  });
+
+  it('carries an optional memo onto the transaction row (the live-smoke marking), leaving it null by default', async () => {
+    const { db: dbWithMemo, calls: callsWithMemo } = fakeD1({ firstResults: { 'FROM processed_stripe_sessions WHERE session_id': null } });
+    await reconcileCheckoutSession(dbWithMemo, {}, 'donation', 'txn-fixed-1', DONATION_SESSION, 'live-smoke 2026-07-16');
+    const txnInsertWithMemo = callsWithMemo.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsertWithMemo?.args[11]).toBe('live-smoke 2026-07-16');
+
+    const { db: dbNoMemo, calls: callsNoMemo } = fakeD1({ firstResults: { 'FROM processed_stripe_sessions WHERE session_id': null } });
+    await reconcileCheckoutSession(dbNoMemo, {}, 'donation', 'txn-fixed-1', DONATION_SESSION);
+    const txnInsertNoMemo = callsNoMemo.find((c) => c.sql.startsWith('INSERT INTO transactions'));
+    expect(txnInsertNoMemo?.args[11]).toBeNull();
   });
 
   it('records no payer snapshot when the session carries no customer_details', async () => {

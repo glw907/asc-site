@@ -58,10 +58,14 @@ export interface StripeCheckoutSession {
 
 /** `session.metadata.kind`/`session.metadata.refId`, validated: `null` for a session with no
  *  metadata, an unrecognized `kind`, or an empty `refId` (a malformed or foreign event the route
- *  answers 400 for, never a database write). */
+ *  answers 400 for, never a database write). `memo` is optional and unvalidated: `null` when the
+ *  session carries no `metadata.memo` (every ordinary checkout, unchanged behavior), or the
+ *  trimmed string when it does (the live-smoke marking, `payments.ts`'s own `metadata`
+ *  pass-through carries it onto the session). */
 export interface ParsedSessionMetadata {
   kind: PaymentKind;
   refId: string;
+  memo: string | null;
 }
 
 function isPaymentKind(value: unknown): value is PaymentKind {
@@ -75,7 +79,9 @@ export function parseSessionMetadata(session: StripeCheckoutSession): ParsedSess
   const kind = session.metadata?.kind;
   const refId = session.metadata?.refId;
   if (!isPaymentKind(kind) || typeof refId !== 'string' || refId.trim().length === 0) return null;
-  return { kind, refId };
+  const rawMemo = session.metadata?.memo;
+  const memo = typeof rawMemo === 'string' && rawMemo.trim().length > 0 ? rawMemo.trim() : null;
+  return { kind, refId, memo };
 }
 
 /** Claim a session id for reconciliation: `true` when this call is the first to see this
@@ -183,7 +189,7 @@ interface MemberContactRow {
  *  when one is on file with an address; a household with no primary member, or one with no email,
  *  still reconciles the payment, just with no receipt sent (the same "resolves to null, not an
  *  error" shape `offers.ts`'s `resolveWaitlistContact` already establishes). */
-async function reconcileDues(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
+async function reconcileDues(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession, memo: string | null): Promise<ReconcileOutcome> {
   const membership = await db
     .prepare('SELECT id, household_id, tier, season, paid_at FROM memberships WHERE id = ?1')
     .bind(refId)
@@ -204,7 +210,7 @@ async function reconcileDues(db: D1Database, env: EmailBindingEnv, refId: string
   const itemDisplayName = `${TIER_LABEL[membership.tier]} Membership -- ${membership.season} season`;
   await recordTransaction(
     db,
-    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: membership.household_id },
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: membership.household_id, memo },
     [{ item: 'dues', description: itemDisplayName, amountCents: amountTotalCents, membershipId: refId }],
   );
 
@@ -244,7 +250,7 @@ interface EnrollmentReconcileRow {
  *  a fee with a membership credit instead of a card) is a separate, mutually exclusive route to
  *  the SAME `fee_paid` flag that never goes through Stripe at all, so there is nothing here for a
  *  Stripe-confirmed payment to trigger beyond its own row. */
-async function reconcileClassFee(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
+async function reconcileClassFee(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession, memo: string | null): Promise<ReconcileOutcome> {
   const enrollment = await db
     .prepare(
       `SELECT c.id AS class_id, c.name AS class_name, m.name AS member_name, m.email AS member_email, m.household_id AS household_id
@@ -271,7 +277,7 @@ async function reconcileClassFee(db: D1Database, env: EmailBindingEnv, refId: st
   const itemDisplayName = `${enrollment.class_name} class fee`;
   await recordTransaction(
     db,
-    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: enrollment.household_id },
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: enrollment.household_id, memo },
     [{ item: 'class-fee', description: itemDisplayName, amountCents: amountTotalCents, enrollmentId: refId }],
   );
 
@@ -306,7 +312,7 @@ interface AssignmentReconcileRow {
  *  `assets-store.ts`'s `assignAsset` always creates a row already `'active'`, so a Stripe-collected
  *  fee only ever confirms an existing active assignment's payment, never activates one from some
  *  other state. */
-async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
+async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: string, session: StripeCheckoutSession, memo: string | null): Promise<ReconcileOutcome> {
   const assignment = await db
     .prepare(
       `SELECT at.name AS asset_type_name, h.id AS household_id, h.name AS household_name, pm.name AS primary_member_name, pm.email AS primary_member_email
@@ -343,7 +349,7 @@ async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: st
   const itemDisplayName = `${assignment.asset_type_name} fee -- ${season} season`;
   await recordTransaction(
     db,
-    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: assignment.household_id },
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: assignment.household_id, memo },
     [{ item: 'asset-fee', description: itemDisplayName, amountCents: amountTotalCents, assignmentId: refId }],
   );
 
@@ -382,7 +388,7 @@ async function reconcileAssetFee(db: D1Database, env: EmailBindingEnv, refId: st
  *  that reaches here still carries a `refId` this reconciler can act on. No receipt email
  *  (`docs/2026-07-13-money-ledger-design.md`'s "Live write path": donations get none in this
  *  initiative). */
-async function reconcileDonation(db: D1Database, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
+async function reconcileDonation(db: D1Database, refId: string, session: StripeCheckoutSession, memo: string | null): Promise<ReconcileOutcome> {
   const claimed = await db
     .prepare('SELECT session_id FROM processed_stripe_sessions WHERE session_id = ?1')
     .bind(session.id)
@@ -403,6 +409,7 @@ async function reconcileDonation(db: D1Database, refId: string, session: StripeC
       processorRef: session.id,
       payerName: session.customer_details?.name ?? null,
       payerEmail: session.customer_details?.email ?? null,
+      memo,
     },
     [{ item: 'donation', description: 'Donation to the Alaska Sailing Club', amountCents: amountTotalCents }],
   );
@@ -513,7 +520,7 @@ function parseCentsList(value: string | undefined): number[] {
  *  propagates (the route answers 500 so Stripe retries; the retry then finds the membership
  *  already paid and no-ops via the read-first check).
  */
-async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: string, session: StripeCheckoutSession): Promise<ReconcileOutcome> {
+async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: string, session: StripeCheckoutSession, memo: string | null): Promise<ReconcileOutcome> {
   const membership = await db
     .prepare('SELECT id, household_id, tier, season, paid_at FROM memberships WHERE id = ?1')
     .bind(refId)
@@ -574,7 +581,7 @@ async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: strin
   const itemDisplayName = `${TIER_LABEL[membership.tier]} Membership -- ${membership.season} season`;
   const { statements: ledgerStatements } = buildTransactionStatements(
     db,
-    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: membership.household_id },
+    { kind: 'charge', source: 'stripe', occurredAt: toSqliteDatetime(new Date()), amountTotalCents, processorRef: session.id, householdId: membership.household_id, memo },
     [
       { item: 'dues', description: itemDisplayName, amountCents: duesCents, membershipId: refId },
       ...paidLines.map((line) => ({ item: 'class-fee' as const, description: line.description, amountCents: line.amountCents, enrollmentId: line.enrollmentId })),
@@ -637,6 +644,12 @@ async function reconcileJoin(db: D1Database, env: ReconcileJoinEnv, refId: strin
  * part of its own `db.batch()` (`reconcileDonation`'s and `reconcileJoin`'s own headers), and a
  * rejected promise from either is meant to propagate so the route can answer 500 and let Stripe
  * retry.
+ *
+ * `memo` is the live-smoke marking convention (`docs/2026-07-15-payments-live-smoke-design.md`
+ * section 4): `null` on every ordinary checkout, or `parseSessionMetadata`'s own `metadata.memo`
+ * read when the smoke's own checkout carried one. Every writer folds it straight onto the
+ * `transactions` row it writes (`ledger.ts`'s own `memo` column, migration `0021_money_ledger`);
+ * no schema change and no behavior change when it is `null`.
  */
 export async function reconcileCheckoutSession(
   db: D1Database,
@@ -644,17 +657,18 @@ export async function reconcileCheckoutSession(
   kind: PaymentKind,
   refId: string,
   session: StripeCheckoutSession,
+  memo: string | null = null,
 ): Promise<ReconcileOutcome> {
   switch (kind) {
     case 'dues':
-      return reconcileDues(db, env, refId, session);
+      return reconcileDues(db, env, refId, session, memo);
     case 'class-fee':
-      return reconcileClassFee(db, env, refId, session);
+      return reconcileClassFee(db, env, refId, session, memo);
     case 'asset-fee':
-      return reconcileAssetFee(db, env, refId, session);
+      return reconcileAssetFee(db, env, refId, session, memo);
     case 'donation':
-      return reconcileDonation(db, refId, session);
+      return reconcileDonation(db, refId, session, memo);
     case 'join':
-      return reconcileJoin(db, env, refId, session);
+      return reconcileJoin(db, env, refId, session, memo);
   }
 }

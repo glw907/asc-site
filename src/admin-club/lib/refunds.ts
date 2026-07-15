@@ -167,12 +167,19 @@ export type ExecuteRefundResult = { ok: true; transactionId: string } | { ok: fa
  * same inputs on a retry (a double-click, or a retry after this call's own later `db.batch()`
  * failed) reproduce the identical key, so Stripe answers with the SAME refund object rather than
  * creating a second one (that function's own header states the self-healing property this buys).
+ *
+ * `memo` is the live-smoke marking convention (`docs/2026-07-15-payments-live-smoke-design.md`
+ * section 4), optional and `null` by default: folded straight onto the refund transaction's own
+ * `memo` column (`ledger.ts`'s own column, migration `0021_money_ledger`) when given, so the
+ * smoke's refund row carries the same marking as its charge. Omitted, this is byte-identical to
+ * before `memo` existed.
  */
 export async function executeRefund(
   db: D1Database,
   env: CreateCheckoutEnv,
   charge: TimelineTransaction,
   selection: RefundLineSelection[],
+  memo: string | null = null,
 ): Promise<ExecuteRefundResult> {
   let plan: RefundPlan;
   try {
@@ -181,7 +188,7 @@ export async function executeRefund(
     return { ok: false, error: err instanceof Error ? err.message : 'Could not build the refund.' };
   }
 
-  let header = plan.header;
+  let header = memo ? { ...plan.header, memo } : plan.header;
   if (plan.mode === 'api') {
     if (!charge.processorRef) return { ok: false, error: 'This charge carries no processor reference to refund.' };
     const refundedSoFarCents = charge.lines.reduce((total, line) => total + line.refundedCents, 0);
