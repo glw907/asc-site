@@ -132,6 +132,10 @@ cannot be banked as a spec — the taste lives in the conducting (probe authorsh
 render reads, the arrangement calls), not in a plan a cheaper conductor executes. So
 design rounds rank beside admin-roles/admin-nav-reorg for in-window Fable time, ahead
 of the spec-only queue when his review availability lines up.
+Standing authorization (Geoff, 2026-07-14): pages may be moved onto the ratified
+template structure opportunistically, whenever it makes sense in a session, no
+per-page ask — the one-check rule and Geoff's before/after at the deploy gate still
+apply to what ships. The `.page-cta` device stays behind its own ratification.
 
 ### Class management `class-management`
 The in-season operations tooling for classes, on top of the pass-2.1 admin (events,
