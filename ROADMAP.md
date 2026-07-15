@@ -115,17 +115,20 @@ Fable-conducted; otherwise it falls to the post-window default, Opus-conducted a
 the runbook. The soak needs no Fable either way.
 
 ### Design propagation & continuing rounds `design-propagation`
-Apply the ratified Home/Education design work to the rest of the site and keep the
-design rounds moving (Geoff, 2026-07-14). The template pass already gave the six
-primary pages their promise heroes and the shared type spine; what remains: the
-`.page-cta` closing-panel rollout to the five Questions-style pages (queued behind
-ratification since round 5), the posts/bulletins composition spec (the phased half of
-the template-system spec, never written), the interior/secondary pages (guides,
-governance, news index and tag pages) brought up to the editorial-pacing, image-standard,
-and TOC standards, and the polish backlog (docs/2026-07-07-polish-backlog.md) triaged
-into the rounds. Method: the design-refinement live-round loop with Geoff's optical
-read as the gate; decisions.md rules stand, never re-litigated. Outside the mw-*
-program — runs interleaved with it on Geoff's review availability.
+Keep the design rounds moving on the ratified Home/Education system (Geoff,
+2026-07-14). The 2026-07-14 inventory confirmed the TEMPLATE MIGRATION IS DONE: all
+six primary pages carry promise heroes, every secondary content page renders through
+the tier system's catch-all (plain hero + TOC standard), and the routes that bypass it
+are deliberate machinery (forms, portal, posts/tags; /events/ mirrors the promise hero
+locally — consolidate to a shared component on a third consumer). What remains is a
+punch list, not a migration: the `.page-cta` closing-panel ratification and rollout to
+its five queued pages (join, members, visiting-the-club, renewing-your-membership,
+new-member-guide; education already renders it), the posts/bulletins composition spec
+(the phased half of the template-system spec, never written), and the polish backlog
+(docs/2026-07-07-polish-backlog.md) triaged into live rounds. Method: the
+design-refinement live-round loop with Geoff's optical read as the gate; decisions.md
+rules stand, never re-litigated. Outside the mw-* program — runs interleaved with it
+on Geoff's review availability.
 Fable-window ruling (Geoff, 2026-07-14): FABLE-PRIORITY IN-WINDOW. Geoff finds Fable
 much stronger in the design realm, and unlike the mechanical initiatives this edge
 cannot be banked as a spec — the taste lives in the conducting (probe authorship,
