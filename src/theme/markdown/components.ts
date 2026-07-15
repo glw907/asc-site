@@ -119,6 +119,13 @@ function hasClass(node: ElementContent, cls: string): boolean {
   return isElement(node) && Array.isArray(node.properties?.className) && node.properties.className.includes(cls);
 }
 
+// The container/child nesting mechanic shared by cards, facts, related, steps, and page-cta: a
+// container keeps only the children its child component built, each identified by the marker class
+// that child's build() stamps, so stray prose between the nested blocks never reaches the grid.
+function nestedChildren(children: ElementContent[], markerClass: string): ElementContent[] {
+  return children.filter((c) => hasClass(c, markerClass));
+}
+
 function buildCard(ctx: ComponentContext): Element {
   const icon = strAttr(ctx, 'icon');
   const href = strAttr(ctx, 'href');
@@ -163,7 +170,7 @@ const cards = defineComponent({
   description: 'A row of side-by-side cards (nested :::card blocks).',
   use: 'List a handful of related destinations or features together.',
   insertTemplate: '::::cards\n:::card[Title]{icon="compass" href="/page/"}\nShort description.\n:::\n::::',
-  build: (ctx) => h('div', { className: ['asc-cards'] }, ctx.slot('body').filter((c) => hasClass(c, 'asc-card'))),
+  build: (ctx) => h('div', { className: ['asc-cards'] }, nestedChildren(ctx.slot('body'), 'asc-card')),
   slots: [{ name: 'body', label: 'Cards', kind: 'markdown' }],
   group: 'Page structure',
   icon: 'grid-nine',
@@ -207,7 +214,7 @@ const facts = defineComponent({
   description: 'A label/value list of key facts (cost, eligibility, and similar), rendered as a definition list.',
   use: 'Summarize a handful of at-a-glance facts about the surrounding topic.',
   insertTemplate: '::::facts\n:::fact[Label]\nValue.\n:::\n::::',
-  build: (ctx) => h('dl', { className: ['asc-facts'] }, ctx.slot('body').filter((c) => hasClass(c, 'asc-fact'))),
+  build: (ctx) => h('dl', { className: ['asc-facts'] }, nestedChildren(ctx.slot('body'), 'asc-fact')),
   slots: [{ name: 'body', label: 'Facts', kind: 'markdown' }],
   group: 'Page structure',
   icon: 'list-checks',
@@ -257,7 +264,7 @@ const related = defineComponent({
   build: (ctx) =>
     h('div', { className: ['asc-related'] }, [
       h('p', { className: ['asc-related-eyebrow'] }, ['Related']),
-      ...ctx.slot('body').filter((c) => hasClass(c, 'asc-related-item')),
+      ...nestedChildren(ctx.slot('body'), 'asc-related-item'),
     ]),
   slots: [{ name: 'body', label: 'Items', kind: 'markdown' }],
   group: 'Page structure',
@@ -303,7 +310,7 @@ const ctaAction = defineComponent({
 
 function buildPageCta(ctx: ComponentContext): Element {
   const bodyChildren = ctx.slot('body');
-  const actionEls = bodyChildren.filter((c) => hasClass(c, 'cta-link'));
+  const actionEls = nestedChildren(bodyChildren, 'cta-link');
   const proseChildren = bodyChildren.filter((c) => !hasClass(c, 'cta-link'));
   const kids: ElementContent[] = [h('p', { className: ['page-cta-lead'] }, ctx.slot('title'))];
   if (proseChildren.length) kids.push(h('div', { className: ['page-cta-body'] }, proseChildren));
@@ -455,7 +462,7 @@ const steps = defineComponent({
   description: 'A numbered sequence of steps, rendered as an ordered list with CSS-counted numbers.',
   use: 'Walk the reader through an ordered procedure.',
   insertTemplate: '::::steps\n:::step[Title]\nBody copy.\n:::\n::::',
-  build: (ctx) => h('ol', { className: ['asc-steps'] }, ctx.slot('body').filter((c) => hasClass(c, 'asc-step'))),
+  build: (ctx) => h('ol', { className: ['asc-steps'] }, nestedChildren(ctx.slot('body'), 'asc-step')),
   slots: [{ name: 'body', label: 'Steps', kind: 'markdown' }],
   group: 'Page structure',
   icon: 'list-checks',

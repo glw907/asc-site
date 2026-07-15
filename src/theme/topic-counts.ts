@@ -10,10 +10,10 @@ export interface TopicCount {
   count: number;
 }
 
-/** The Browse-by-Topic grid's own topic list: every curated topic that has at least one live
- *  post, in the same order the vocabulary declares them. A topic with zero posts still counts
- *  toward the site's "topics" stat (the full curated vocabulary), it just never earns a
- *  clickable grid card that would dead-end a visitor. */
+/** Every curated topic that has at least one live post, in the order the vocabulary declares
+ *  them. Both the Browse-by-Topic grid and the posts index's "topics" stat read this narrower
+ *  list: a zero-post topic is still a real curated topic, but a clickable card for it would
+ *  dead-end a visitor, and a stat counting it would sit above a grid that omits it. */
 export function browsableTopics(topics: TopicCount[]): TopicCount[] {
   return topics.filter((topic) => topic.count > 0);
 }
