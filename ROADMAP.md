@@ -137,9 +137,10 @@ five queued pages (join, members, visiting-the-club, renewing-your-membership,
 new-member-guide; education already renders it), the posts/bulletins composition spec
 (the phased half of the template-system spec, never written), and the polish backlog
 (docs/2026-07-07-polish-backlog.md) triaged into the groups. decisions.md rules stand,
-never re-litigated. Outside the mw-* program — paced by Geoff's review availability.
-The ledger: docs/design-benchmark/page-confirmations.md (home + education already
-confirmed, Geoff 2026-07-14).
+never re-litigated. Outside the mw-* program — runs as its own SERIES OF DESIGN
+SESSIONS (Geoff, 2026-07-14), roughly one group per session, never folded into a build
+session. The ledger: docs/design-benchmark/page-confirmations.md (home + education
+already confirmed, Geoff 2026-07-14).
 Fable-window ruling (Geoff, 2026-07-14): FABLE-PRIORITY IN-WINDOW. Geoff finds Fable
 much stronger in the design realm, and unlike the mechanical initiatives this edge
 cannot be banked as a spec — the taste lives in the conducting (probe authorship,
