@@ -268,3 +268,9 @@ never paraphrase.
 - Deliberately out of scope: site-wide content consolidation (later content pass), education
   pacing (existing backlog item), any EVENTS_DB write or migration, the hero/TOC families
   (already standardized), dark-mode audit beyond spot-checks (backlog).
+- Fragments (Geoff, 2026-07-15): the next cairn release adds a "fragments" concept for content
+  that logically exists in multiple locations. The follow-up content-consolidation pass should
+  single-source the duplicated facts this review found (mooring cost on Moorings + Join, the
+  club address on Contact/Visiting/Home, the New Member Guide's restatements of Join/
+  Education/Moorings material) as fragments — typically a fragment carrying a `:::facts`
+  block. This pass deliberately leaves those duplicates in place, formatted consistently.
