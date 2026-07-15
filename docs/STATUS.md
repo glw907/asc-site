@@ -8,6 +8,42 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
+**OVERNIGHT AUTHORING RUN COMPLETE (2026-07-15, the ruled Fable-altitude session: Opus
+agents researched, drafted, and adversarially verified; Fable briefed, reviewed line-level,
+triaged). FOUR COMMITS, DELIBERATELY UNPUSHED (push=dev-deploy and the run was ruled
+no-deploys; push them at next session start): 5abff25 the payments-live-smoke spec
+(docs/2026-07-15-payments-live-smoke-design.md) + plan
+(docs/plans/2026-07-15-payments-live-smoke.md) + the mw-cutover runbook
+(docs/2026-07-15-mw-cutover-runbook.md) + ROADMAP pointers; 4fc774e the polish backlog
+triaged into the six design groups (docs/design-benchmark/polish-triage.md); 7598470 the
+admin e2e login helper (e2e/helpers/admin-session.ts + admin-login.spec.ts, full gate +
+28-spec e2e green, recipe per the corrected session-mint facts); f920d2f the claims-check
+corrections. THE ADVERSARIAL VERIFY ROUND PAID (enabled by Geoff's non-Fable-credits note;
+all findings confirmed against source before editing): (1) the cutover flip is ROUTE
+reassignment, not custom domains — a custom domain refuses the existing proxied records
+and its rollback strands the apex recordless; runbook rewritten, routes primary; (2) the
+pre-flip permalink crawl was legacy-against-legacy false green — now the legacy URL list
+against the dev build; (3) requestLink (/my-account signed-out sign-in) is a FIFTH ungated
+public magic-link sender both researcher and drafter missed — added to spec+plan per the
+every-public-POST ruling; (4) refunds live on the household desk
+(admin/club/members/[id] ?/refund), not the money screen — all references fixed; (5) the
+Workers ratelimit binding went GA 2025-09 — the plan declares [[ratelimits]], not
+unsafe.bindings. FINDINGS FOR GEOFF'S MORNING: (a) dev.aksailingclub.org is NOT behind
+Access (verified live: 200 tokenless; project CLAUDE.md's Access section is STALE — left
+unedited pending the ruling; the asc-cloudflare-access memory is updated) — decision held
+in spec §6: re-protect dev (webhook then needs a bypass app; estate precedent "ASC Ops
+Schema API") vs accept-public until cutover; until the hardening lands the ungated
+magic-link/money endpoints face the open internet against real member data; (b) THREE
+Turnstile widgets cover the site — code + the ASC secret registry agree on
+0x4AAAAAACaRcPmackdot0hZ; two orphans routed to the infra tidy (polish-triage.md); (c) the
+smoke will be the FIRST-EVER webhook-reconcile execution (processed_stripe_sessions=0
+live) — the spec adds a sandbox dry-smoke before any live-key swap; (d) held decisions:
+smoke product ($1 donation default vs $100 domain-unwind alternative), memo vs
+marker-column smoke marking. QUEUED (unchanged): Geoff's five-stop dev walkthrough; the
+07-15 apology-send verification. NEXT: push the four commits, then the walkthrough;
+payments-hardening execution runs post-window under an Opus conductor per the spec's
+constraints, live charge only on Geoff's go.**
+
 **INITIATIVE 5 (admin-roles + admin-nav-reorg) EXECUTED, CLOSED, AND LIVE ON DEV
 (2026-07-15 early, the session that watched 0.86.0 land and ran the whole pass on
 Geoff's "full implementation and publish with a workflow" ruling). Bump ^0.84.4 →
@@ -69,19 +105,3 @@ docs/STATUS.md first. No deploys, no live D1 writes, no design rounds. Riders if
 budget allows: the admin e2e login helper (use the corrected session recipe) and the
 polish-backlog triage into design groups."**
 
-**SESSION 5 CLOSED PRE-BRAINSTORM (2026-07-14 night, deliberate clear on Geoff's call —
-the session ran long and noisy: the cairn double-execution below, the calendar fix, the
-docs archival). NEXT SESSION = INITIATIVE 5 EXECUTION, fresh context, launch in THIS
-repo. Resume prompt: "Start initiative 5 (admin-roles + admin-nav-reorg): verify cairn
-0.86.0 is on the registry (npm view @glw907/cairn-cms version — Geoff's other session
-was cutting it at close), bump ^0.84.4 → ^0.86.0, then brainstorm the club_roles
-collapse + sidebar arrangement. Read docs/STATUS.md, ROADMAP's admin-roles +
-admin-nav-reorg entries, docs/2026-07-13-cairn-editor-roles-consumer-brief.md, and
-cairn's docs/guides/organize-your-admin-nav.md + docs/reference/core.md#roles first."
-The collapse surface and seam facts are in the entry below; the ledgered rulings from
-this session (Fable-window spec queue, design-session series + page-confirmation ledger,
-opportunistic template migration, mw-cutover in-window-if-budget) are on ROADMAP entries.
-Session riders landed: the calendar season-filter fix (live on dev, verified), STATUS
-archived to docs/status-archive.md with the trim rule in the preamble, the global
-CLAUDE.md compressed ~25%, the one-executor-per-worktree rule globalized. Geoff's dev
-walkthrough (four screens) and the 07-15 apology-send verification remain queued.**

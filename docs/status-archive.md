@@ -4,6 +4,23 @@
 > STATUS.md's preamble). History only: nothing here is a live instruction, and entries
 > reflect what was true when written. The live rolling status is docs/STATUS.md.
 
+**SESSION 5 CLOSED PRE-BRAINSTORM (2026-07-14 night, deliberate clear on Geoff's call —
+the session ran long and noisy: the cairn double-execution below, the calendar fix, the
+docs archival). NEXT SESSION = INITIATIVE 5 EXECUTION, fresh context, launch in THIS
+repo. Resume prompt: "Start initiative 5 (admin-roles + admin-nav-reorg): verify cairn
+0.86.0 is on the registry (npm view @glw907/cairn-cms version — Geoff's other session
+was cutting it at close), bump ^0.84.4 → ^0.86.0, then brainstorm the club_roles
+collapse + sidebar arrangement. Read docs/STATUS.md, ROADMAP's admin-roles +
+admin-nav-reorg entries, docs/2026-07-13-cairn-editor-roles-consumer-brief.md, and
+cairn's docs/guides/organize-your-admin-nav.md + docs/reference/core.md#roles first."
+The collapse surface and seam facts are in the entry below; the ledgered rulings from
+this session (Fable-window spec queue, design-session series + page-confirmation ledger,
+opportunistic template migration, mw-cutover in-window-if-budget) are on ROADMAP entries.
+Session riders landed: the calendar season-filter fix (live on dev, verified), STATUS
+archived to docs/status-archive.md with the trim rule in the preamble, the global
+CLAUDE.md compressed ~25%, the one-executor-per-worktree rule globalized. Geoff's dev
+walkthrough (four screens) and the 07-15 apology-send verification remain queued.**
+
 **PRIOR: INITIATIVE 5 (admin-roles) OPENS ON CAIRN SEQUENCING (2026-07-14, Geoff's calls at
 the session-5 open). The conflict found at open: cairn's STATUS (committed 16:33) ratified
 an admin NAV-LAYOUT pass shipping as 0.86.0 with explicit sequencing — "the ASC session
