@@ -7,9 +7,8 @@ import { actions } from '../routes/admin/club/signups/+page.server';
 import { fakeD1 } from './_fake-d1';
 
 const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'owner', capability: 'owner' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 /** The double-submit pair `adminAction` checks: a `__Host-`-prefixed cookie (issued over https,
@@ -21,12 +20,12 @@ const CSRF_TOKEN = 'test-csrf-token';
  *  so this stays correct if the route's generated types ever change. */
 type SignupsActionEvent = Parameters<typeof actions.approve>[0];
 
-/** A `CLUB_DB` fixture that grants any club role and resolves a real membership id: every
- *  existing test below reaches its own handler through `clubAdminAction`'s role gate first, then
- *  the route's own membership-existence check, before touching `signup_review_resolutions`. */
+/** A `CLUB_DB` fixture resolving a real membership id: every existing test below reaches its own
+ *  handler through `clubAdminAction`'s role gate (checked off `postEvent`'s own editor, not this
+ *  db) and the route's own membership-existence check, before touching
+ *  `signup_review_resolutions`. */
 function clubDb(membershipExists = true) {
   return fakeD1({
-    allResults: { 'FROM club_roles': [{ role: 'club-admin' }] },
     firstResults: { 'FROM memberships WHERE id': membershipExists ? { id: 'ms-oyelaran-2026' } : null },
   });
 }
@@ -89,14 +88,14 @@ describe('signups actions: club role guard', () => {
   // role could still approve or deny a signup, since this was the one Club write left on the
   // engine's bare `adminAction`.
   it('rejects approve for a signed-in editor with no club role', async () => {
-    const db = fakeD1({ allResults: { 'FROM club_roles': [] } }).db;
+    const db = fakeD1().db;
     const result = await actions.approve(postEvent(noRole, { id: 'ms-oyelaran-2026' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
   });
 
   it('rejects deny for a signed-in editor with no club role', async () => {
-    const db = fakeD1({ allResults: { 'FROM club_roles': [] } }).db;
+    const db = fakeD1().db;
     const result = await actions.deny(postEvent(noRole, { id: 'ms-oyelaran-2026', reason: 'x' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);

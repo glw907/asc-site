@@ -9,10 +9,11 @@
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { requireSession } from '@glw907/cairn-cms/sveltekit';
+import { CLUB_ROLES } from '$admin-club/lib/club-db';
 
 export const load: LayoutServerLoad = async (event) => {
   const editor = requireSession(event);
-  if (editor.role !== 'owner' && editor.role !== 'club-admin') {
+  if (!CLUB_ROLES.includes(editor.role)) {
     error(403, 'Your account has no club role. Ask a club owner to grant one.');
   }
   return {};

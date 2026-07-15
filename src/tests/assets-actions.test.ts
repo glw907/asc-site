@@ -10,9 +10,8 @@ import { actions } from '../routes/admin/club/assets/+page.server';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -44,22 +43,20 @@ function postEvent(
   } as unknown as ActionEvent;
 }
 
-const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
-
 describe('assets actions: assign', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await actions.assign(postEvent(noRole, { assetType: 'mooring', membershipId: 'ms-1' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
   });
 
   it('fails 400 when the household is missing, auditing the rejected attempt', async () => {
-    const { db } = fakeD1(asAdmin);
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.assign(postEvent(admin, { assetType: 'mooring', membershipId: '' }, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -68,7 +65,7 @@ describe('assets actions: assign', () => {
   });
 
   it('inserts the assignment and audits its id', async () => {
-    const { db, calls } = fakeD1(asAdmin);
+    const { db, calls } = fakeD1();
     const sink = vi.fn();
     const result = await actions.assign(
       postEvent(admin, { assetType: 'mooring', membershipId: 'ms-1', description: 'Buoy M-14' }, { db, auditSink: sink }),
@@ -88,7 +85,7 @@ describe('assets actions: release', () => {
   });
 
   it('fails 404 when the assignment does not exist', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM asset_assignments WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM asset_assignments WHERE id': null } });
     const result = await actions.release(postEvent(admin, { assignmentId: 'a-1' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
@@ -96,7 +93,6 @@ describe('assets actions: release', () => {
 
   it('updates status to released and audits the id', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: { 'FROM asset_assignments WHERE id': { id: 'a-1', status: 'active', asset_type: 'mooring' } },
     });
     const sink = vi.fn();
@@ -114,7 +110,6 @@ describe('assets actions: recordPayment', () => {
 
   it('fails 400 on an invalid method', async () => {
     const { db } = fakeD1({
-      ...asAdmin,
       firstResults: { 'FROM asset_assignments WHERE id': { id: 'a-1', status: 'active', asset_type: 'mooring' } },
     });
     const result = await actions.recordPayment(postEvent(admin, { assignmentId: 'a-1', amount: '300', method: 'venmo' }, { db }));
@@ -123,7 +118,7 @@ describe('assets actions: recordPayment', () => {
   });
 
   it('fails 404 when the assignment does not exist', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM asset_assignments WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM asset_assignments WHERE id': null } });
     const result = await actions.recordPayment(postEvent(admin, { assignmentId: 'a-1', amount: '300', method: 'check' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
@@ -131,7 +126,6 @@ describe('assets actions: recordPayment', () => {
 
   it('records an offline check payment and audits the method', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'FROM asset_assignments WHERE id': { id: 'a-1', status: 'active', asset_type: 'mooring' },
         "'current_season'": { value: '2026' },
@@ -160,14 +154,14 @@ describe('assets actions: waitlist', () => {
   });
 
   it('waitlistAdd refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await actions.waitlistAdd(postEvent(noRole, { assetType: 'mooring', memberId: 'mem-1' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
   });
 
   it('waitlistAdd inserts a row at the end of the type-specific queue', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM asset_waitlist WHERE asset_type': { max_position: 1 } } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM asset_waitlist WHERE asset_type': { max_position: 1 } } });
     const sink = vi.fn();
     const result = await actions.waitlistAdd(postEvent(admin, { assetType: 'mooring', memberId: 'mem-1' }, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });
@@ -177,7 +171,7 @@ describe('assets actions: waitlist', () => {
   });
 
   it('waitlistRemove deletes the one row and audits it', async () => {
-    const { db, calls } = fakeD1(asAdmin);
+    const { db, calls } = fakeD1();
     const sink = vi.fn();
     const result = await actions.waitlistRemove(postEvent(admin, { waitlistId: 'w-1' }, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });
@@ -188,14 +182,14 @@ describe('assets actions: waitlist', () => {
   });
 
   it('waitlistMoveToEnd fails 404 for an unknown entry', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM asset_waitlist WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM asset_waitlist WHERE id': null } });
     const result = await actions.waitlistMoveToEnd(postEvent(admin, { waitlistId: 'w-1' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
   });
 
   it('waitlistMoveToEnd re-tails the entry within its own asset type and audits it', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM asset_waitlist WHERE id': { id: 'w-1', asset_type: 'mooring' } } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM asset_waitlist WHERE id': { id: 'w-1', asset_type: 'mooring' } } });
     const sink = vi.fn();
     const result = await actions.waitlistMoveToEnd(postEvent(admin, { waitlistId: 'w-1' }, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });

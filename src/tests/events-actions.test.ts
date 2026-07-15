@@ -8,9 +8,8 @@ import { actions as detailActions } from '../routes/admin/club/events/[id]/+page
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -68,7 +67,7 @@ describe('events actions: club-role gate', () => {
   });
 
   it('create refuses an editor with no club role (403), auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await newActions.create(postEvent(noRole, VALID_FIELDS, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -79,7 +78,7 @@ describe('events actions: club-role gate', () => {
   });
 
   it('a club admin (not owner) suffices for create: events are the routine domain', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [{ role: 'club-admin' }] }, firstResults: { 'FROM events WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM events WHERE id': null } });
     const sink = vi.fn();
     const caught = await catchThrown(newActions.create(postEvent(admin, VALID_FIELDS, { db, auditSink: sink })));
     expect(isRedirect(caught)).toBe(true);
@@ -94,10 +93,8 @@ describe('events actions: create', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
-
   it('fails 400 on a missing title, auditing the rejected attempt', async () => {
-    const { db } = fakeD1(asAdmin);
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await newActions.create(
       postEvent(admin, { ...VALID_FIELDS, title: '' }, { db, auditSink: sink }),
@@ -109,7 +106,6 @@ describe('events actions: create', () => {
 
   it('fails 400 when the slug is already taken', async () => {
     const { db } = fakeD1({
-      ...asAdmin,
       firstResults: { 'FROM events WHERE id': { ...VALID_FIELDS, id: 'board-meeting-2026-08' } },
     });
     const result = await newActions.create(postEvent(admin, VALID_FIELDS, { db }));
@@ -118,7 +114,7 @@ describe('events actions: create', () => {
   });
 
   it('creates the row, redirects to the detail screen, and audits the id', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM events WHERE id': null } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM events WHERE id': null } });
     const sink = vi.fn();
     const caught = await catchThrown(newActions.create(postEvent(admin, VALID_FIELDS, { db, auditSink: sink })));
     expect(isRedirect(caught)).toBe(true);
@@ -138,18 +134,17 @@ describe('events actions: update', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
   const existingRow = { ...VALID_FIELDS, id: 'board-meeting-2026-08', visible: 1 };
 
   it('fails 404 when the event does not exist', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM events WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM events WHERE id': null } });
     const result = await detailActions.update(postEvent(admin, VALID_FIELDS, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
   });
 
   it('fails 400 on an invalid category, auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM events WHERE id': existingRow } });
+    const { db } = fakeD1({ firstResults: { 'FROM events WHERE id': existingRow } });
     const sink = vi.fn();
     const result = await detailActions.update(
       postEvent(admin, { ...VALID_FIELDS, category: 'not-a-category' }, { db, auditSink: sink }),
@@ -162,7 +157,7 @@ describe('events actions: update', () => {
   });
 
   it('updates the row and audits the id', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM events WHERE id': existingRow } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM events WHERE id': existingRow } });
     const sink = vi.fn();
     const result = await detailActions.update(postEvent(admin, VALID_FIELDS, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });
@@ -181,25 +176,24 @@ describe('events actions: delete', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
   const existingRow = { ...VALID_FIELDS, id: 'board-meeting-2026-08', visible: 1 };
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await detailActions.delete(postEvent(noRole, {}, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
   });
 
   it('fails 404 when the event does not exist', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM events WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM events WHERE id': null } });
     const result = await detailActions.delete(postEvent(admin, {}, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
   });
 
   it('deletes the row, redirects to the list, and audits the id', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM events WHERE id': existingRow } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM events WHERE id': existingRow } });
     const sink = vi.fn();
     const caught = await catchThrown(detailActions.delete(postEvent(admin, {}, { db, auditSink: sink })));
     expect(isRedirect(caught)).toBe(true);

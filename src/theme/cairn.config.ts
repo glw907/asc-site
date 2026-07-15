@@ -5,6 +5,7 @@
 import { defineAdapter, defineConcept, defineRoles, fieldset, fields, githubApp, createRenderer, parseSiteConfig } from '@glw907/cairn-cms';
 import { normalizeAssets, makeMediaResolver, readCommittedManifest } from '@glw907/cairn-cms/media';
 import type { NavLayout } from '@glw907/cairn-cms/sveltekit';
+import { CLUB_ROLES } from '$admin-club/lib/club-db';
 import { ascRegistry } from './markdown/components.js';
 import { ICON_PATHS } from './markdown/icons.js';
 import ContactForm from './components/ContactForm.svelte';
@@ -43,7 +44,7 @@ export const { renderMarkdown } = createRenderer(ascRegistry);
 export const navLayout: NavLayout = [
   {
     label: 'Club',
-    roles: ['owner', 'club-admin'],
+    roles: CLUB_ROLES,
     children: [
       // portal-capstone: the section's own landing, the needs-attention strip's front door
       // (pending signup reviews, pending asset requests, offers nearing expiry). First in the
@@ -62,7 +63,7 @@ export const navLayout: NavLayout = [
   },
   {
     label: 'Outreach',
-    roles: ['owner', 'club-admin'],
+    roles: CLUB_ROLES,
     children: [
       { label: 'Email', icon: 'inbox', href: '/admin/club/email' },
       // The Announce screen (a published post's own "notify the club" step): recently published
@@ -75,7 +76,7 @@ export const navLayout: NavLayout = [
   },
   {
     label: 'Boats & Gear',
-    roles: ['owner', 'club-admin'],
+    roles: CLUB_ROLES,
     children: [
       { label: 'Assets', icon: 'package', href: '/admin/club/assets' },
       // portal-capstone: the asset-request review inbox (the signup queue's own pattern).
@@ -99,7 +100,7 @@ export const navLayout: NavLayout = [
       // `capability` server-side.
       // "Club settings", not "Settings": cairn's own Settings screen already carries that name,
       // and two identical labels in one nav read as a defect (Geoff, 2026-07-07 admin review).
-      { label: 'Club settings', icon: 'wrench', href: '/admin/club/settings', roles: ['owner', 'club-admin'] },
+      { label: 'Club settings', icon: 'wrench', href: '/admin/club/settings', roles: CLUB_ROLES },
       { screen: 'settings', label: 'Site settings' },
       { screen: 'editors' },
       { screen: 'help' },

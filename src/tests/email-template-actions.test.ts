@@ -6,9 +6,8 @@ import { actions } from '../routes/admin/club/email/[id]/+page.server';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -53,15 +52,13 @@ function postEvent(
   } as unknown as SaveActionEvent;
 }
 
-const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
-
 describe('email template actions: role gate', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
   it('save refuses an editor with no club role (403), auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.save(postEvent(noRole, { subject: 'x', body: 'y' }, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -73,7 +70,6 @@ describe('email template actions: role gate', () => {
 
   it('a club admin (not owner) suffices to save: routine content', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'id, subject, reply_to, body, updated_at, updated_by FROM email_templates': STORED_ROW,
       },
@@ -96,7 +92,7 @@ describe('email template actions: save', () => {
   });
 
   it('fails 400 on a missing subject or body, auditing the rejected attempt', async () => {
-    const { db } = fakeD1(asAdmin);
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.save(postEvent(admin, { subject: '', body: 'y' }, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -106,7 +102,6 @@ describe('email template actions: save', () => {
 
   it('saves cleanly and warns (not blocks) on an unknown variable token', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'id, subject, reply_to, body, updated_at, updated_by FROM email_templates': STORED_ROW,
       },
@@ -129,7 +124,7 @@ describe('email template actions: reset', () => {
   });
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await actions.reset(postEvent(noRole, {}, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
@@ -139,7 +134,6 @@ describe('email template actions: reset', () => {
     let readCount = 0;
     const restoredRow = { ...STORED_ROW, updated_by: admin.email };
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'id, subject, reply_to, body, updated_at, updated_by FROM email_templates': () => (readCount++ === 0 ? STORED_ROW : restoredRow),
         'default_subject, default_body FROM email_templates': DEFAULTS_ROW,
@@ -159,7 +153,6 @@ describe('email template actions: reset', () => {
 
   it('fails 400 and audits the rejection when no default is recorded', async () => {
     const { db } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'id, subject, reply_to, body, updated_at, updated_by FROM email_templates': STORED_ROW,
         'default_subject, default_body FROM email_templates': { default_subject: '', default_body: '' },

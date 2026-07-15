@@ -13,9 +13,8 @@ import type { SegmentOption } from '$admin-club/lib/segments';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -56,7 +55,6 @@ function postEvent(
 // recipient to find (the review/send tests below).
 const asAdmin = {
   allResults: {
-    'FROM club_roles': [{ role: 'club-admin' }],
     'FROM households h': [{ household_id: 'hh-larsen', paid_at: new Date().toISOString().slice(0, 10), primary_member_id: null }],
     'FROM members WHERE archived_at': [
       { id: 'mem-erik', name: 'Erik Larsen', email: 'erik.larsen@example.com', household_id: 'hh-larsen' },
@@ -103,7 +101,7 @@ describe('/admin/club/email/compose review action', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('refuses an editor with no club role (403), auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.review(
       postEvent(noRole, { segmentKey: 'current', subject: 'S', body: 'B' }, { db, auditSink: sink }),
@@ -165,7 +163,7 @@ describe('/admin/club/email/compose test action', () => {
   });
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await actions.test(postEvent(noRole, { subject: 'S', body: 'B' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
@@ -207,7 +205,7 @@ describe('/admin/club/email/compose send action', () => {
   });
 
   it('refuses an editor with no club role (403), auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.send(
       postEvent(noRole, { segmentKey: 'current', subject: 'S', body: 'B', confirm: 'on' }, { db, auditSink: sink }),

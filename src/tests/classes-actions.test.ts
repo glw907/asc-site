@@ -8,9 +8,8 @@ import { actions as detailActions } from '../routes/admin/club/classes/[id]/+pag
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -69,7 +68,7 @@ describe('classes actions: club-role gate', () => {
   });
 
   it('create refuses an editor with no club role (403), auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await newActions.create(postEvent(noRole, VALID_FIELDS, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -81,7 +80,6 @@ describe('classes actions: club-role gate', () => {
 
   it('a club admin (not owner) suffices for create: classes are the routine domain', async () => {
     const { db } = fakeD1({
-      allResults: { 'FROM club_roles': [{ role: 'club-admin' }] },
       firstResults: { 'FROM classes WHERE id': null, "'current_season'": { value: '2026' } },
     });
     const sink = vi.fn();
@@ -98,10 +96,8 @@ describe('classes actions: create', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
-
   it('fails 400 on a missing name, auditing the rejected attempt', async () => {
-    const { db } = fakeD1(asAdmin);
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await newActions.create(
       postEvent(admin, { ...VALID_FIELDS, name: '' }, { db, auditSink: sink }),
@@ -113,7 +109,6 @@ describe('classes actions: create', () => {
 
   it('fails 400 when the slug is already taken', async () => {
     const { db } = fakeD1({
-      ...asAdmin,
       firstResults: { 'FROM classes WHERE id': { id: 'fleet-tune-up-weekend' } },
     });
     const result = await newActions.create(postEvent(admin, VALID_FIELDS, { db }));
@@ -123,7 +118,6 @@ describe('classes actions: create', () => {
 
   it('creates the row (in the current season), redirects, and audits the id', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: { 'FROM classes WHERE id': null, "'current_season'": { value: '2026' } },
     });
     const sink = vi.fn();
@@ -146,18 +140,17 @@ describe('classes actions: update', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
   const existingRow = { ...VALID_FIELDS, id: 'fleet-tune-up-weekend', capacity: 12, fee: 100, visible: 1 };
 
   it('fails 404 when the class does not exist', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM classes WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': null } });
     const result = await detailActions.update(postEvent(admin, VALID_FIELDS, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
   });
 
   it('fails 400 on an invalid track, auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM classes WHERE id': existingRow } });
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': existingRow } });
     const sink = vi.fn();
     const result = await detailActions.update(
       postEvent(admin, { ...VALID_FIELDS, track: 'not-a-track' }, { db, auditSink: sink }),
@@ -170,7 +163,7 @@ describe('classes actions: update', () => {
   });
 
   it('updates the row and audits the id', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM classes WHERE id': existingRow } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM classes WHERE id': existingRow } });
     const sink = vi.fn();
     const result = await detailActions.update(postEvent(admin, VALID_FIELDS, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });
@@ -189,25 +182,24 @@ describe('classes actions: delete', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
   const existingRow = { ...VALID_FIELDS, id: 'fleet-tune-up-weekend', visible: 1 };
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await detailActions.delete(postEvent(noRole, {}, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
   });
 
   it('fails 404 when the class does not exist', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM classes WHERE id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM classes WHERE id': null } });
     const result = await detailActions.delete(postEvent(admin, {}, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(404);
   });
 
   it('deletes the row, redirects to the list, and audits the id', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM classes WHERE id': existingRow } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM classes WHERE id': existingRow } });
     const sink = vi.fn();
     const caught = await catchThrown(detailActions.delete(postEvent(admin, {}, { db, auditSink: sink })));
     expect(isRedirect(caught)).toBe(true);
@@ -227,12 +219,9 @@ describe('classes actions: instructor assignment', () => {
     vi.restoreAllMocks();
   });
 
-  const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
-
   it('assignInstructor resolves the real member id, then inserts only the assignment row, ' +
     'and audits it', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: { 'FROM members WHERE email': { id: 'mem-1', household_id: 'hh-1' } },
     });
     const sink = vi.fn();
@@ -241,8 +230,7 @@ describe('classes actions: instructor assignment', () => {
     );
     expect(result).toEqual({ ok: true });
     // ensureMember's own lookup, then the one class_instructors insert (the fixture's
-    // already-known member means ensureMember writes nothing of its own; clubAdminAction's role
-    // gate no longer queries club_roles, initiative 5 Task 2).
+    // already-known member means ensureMember writes nothing of its own).
     expect(calls).toHaveLength(2);
     const insert = calls.find((c) => c.sql.startsWith('INSERT INTO class_instructors'));
     expect(insert?.args).toEqual(['fleet-tune-up-weekend', 'mem-1', 'Coach']);
@@ -256,7 +244,7 @@ describe('classes actions: instructor assignment', () => {
   });
 
   it('fails 400 when the email is missing, auditing the rejected attempt', async () => {
-    const { db } = fakeD1(asAdmin);
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await detailActions.assignInstructor(postEvent(admin, { email: '' }, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -265,7 +253,7 @@ describe('classes actions: instructor assignment', () => {
   });
 
   it('unassignInstructor deletes only the one assignment row and audits it', async () => {
-    const { db, calls } = fakeD1(asAdmin);
+    const { db, calls } = fakeD1();
     const sink = vi.fn();
     const result = await detailActions.unassignInstructor(
       postEvent(admin, { email: 'coach@example.com' }, { db, auditSink: sink }),
@@ -288,7 +276,7 @@ describe('classes actions: instructor assignment', () => {
   });
 
   it('refuses an editor with no club role (403), never touching class_instructors', async () => {
-    const { db, calls } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db, calls } = fakeD1();
     const result = await detailActions.assignInstructor(postEvent(noRole, { email: 'coach@example.com' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);

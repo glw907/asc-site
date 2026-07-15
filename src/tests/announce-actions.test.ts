@@ -13,9 +13,8 @@ import { posts, ORIGIN } from '$chassis/content';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -84,7 +83,6 @@ describe('/admin/club/announce list load', () => {
   it('lists the recent posts and marks a prior announcement', async () => {
     const { db } = fakeD1({
       allResults: {
-        'FROM club_roles': [{ role: 'club-admin' }],
         'FROM announcements': [
           {
             id: 'ann-1',
@@ -193,14 +191,13 @@ describe('/admin/club/announce/[id] send action', () => {
   // grounding-and-members query pair has a real recipient to find (the emailAll tests below).
   const asAdmin = {
     allResults: {
-      'FROM club_roles': [{ role: 'club-admin' }],
       'FROM households h': [{ household_id: 'hh-larsen', paid_at: new Date().toISOString().slice(0, 10) }],
       'FROM members': [{ email: 'erik.larsen@example.com' }],
     },
   };
 
   it('refuses an editor with no club role (403), auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.send(
       postEvent(noRole, REAL_POST.id, { message: 'A summary.' }, { db, auditSink: sink }),

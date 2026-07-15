@@ -12,7 +12,7 @@ import { fail } from '@sveltejs/kit';
 import type { D1Database } from '@cloudflare/workers-types';
 import { adminAction } from '@glw907/cairn-cms/sveltekit';
 import type { AdminActionContext, AdminActionEvent } from '@glw907/cairn-cms/sveltekit';
-import { resolveClubDb } from './club-db';
+import { CLUB_ROLES, resolveClubDb } from './club-db';
 
 /** What a `clubAdminAction` handler receives: the engine's own verified `editor`/`audit`, plus
  *  the resolved `CLUB_DB` handle, already checked by the wrapper so no handler re-resolves it.
@@ -65,7 +65,7 @@ export function clubAdminAction<T>(
       ctx.audit({ action: opts.action, entity: opts.entity, detail: 'rejected: CLUB_DB not bound' });
       return fail(500, { error: 'CLUB_DB is not bound.' });
     }
-    const hasClubRole = ctx.editor.role === 'owner' || ctx.editor.role === 'club-admin';
+    const hasClubRole = CLUB_ROLES.includes(ctx.editor.role);
     const satisfiesOwnerOnly = !opts.ownerOnly || ctx.editor.capability === 'owner';
     if (!hasClubRole || !satisfiesOwnerOnly) {
       ctx.audit({

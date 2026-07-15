@@ -11,9 +11,8 @@ import { actions } from '../routes/admin/club/classes/[id]/+page.server';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' is the site's own declared no-club-access role (initiative 5 Task 2):
-// clubAdminAction's gate now reads `editor.role` directly instead of a `club_roles` row, so a
-// fixture meant to fail that gate must carry a role outside {'owner', 'club-admin'}.
+// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// (initiative 5 Task 2), not a `club_roles` row.
 const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
@@ -46,8 +45,6 @@ function postEvent(
   } as unknown as DetailActionEvent;
 }
 
-const asAdmin = { allResults: { 'FROM club_roles': [{ role: 'club-admin' }] } };
-
 const CLASS_ROW = {
   id: 'fleet-tune-up-weekend',
   season: 2026,
@@ -72,7 +69,7 @@ describe('classes actions: offer', () => {
   });
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await actions.offer(postEvent(noRole, { waitlistId: 'wait-1' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
@@ -80,7 +77,6 @@ describe('classes actions: offer', () => {
 
   it('fails 400 when the class has no free capacity, auditing the rejected attempt', async () => {
     const { db } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'FROM classes WHERE id': CLASS_ROW,
         'FROM class_enrollments WHERE class_id': { n: 10 },
@@ -98,7 +94,6 @@ describe('classes actions: offer', () => {
 
   it('mints a token, returning it once, and audits the waitlist entry', async () => {
     const { db, calls } = fakeD1({
-      ...asAdmin,
       firstResults: {
         'FROM classes WHERE id': CLASS_ROW,
         'FROM class_enrollments WHERE class_id': { n: 9 },
@@ -124,7 +119,7 @@ describe('classes actions: offer', () => {
   });
 
   it('fails 400 when the waitlist entry is missing', async () => {
-    const { db } = fakeD1(asAdmin);
+    const { db } = fakeD1();
     const sink = vi.fn();
     const result = await actions.offer(postEvent(admin, {}, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
@@ -139,14 +134,14 @@ describe('classes actions: cancelOffer', () => {
   });
 
   it('refuses an editor with no club role (403)', async () => {
-    const { db } = fakeD1({ allResults: { 'FROM club_roles': [] } });
+    const { db } = fakeD1();
     const result = await actions.cancelOffer(postEvent(noRole, { waitlistId: 'wait-1' }, { db }));
     expect(isActionFailure(result)).toBe(true);
     expect((result as { status: number }).status).toBe(403);
   });
 
   it('cancels the active offer and audits cancel-offer', async () => {
-    const { db, calls } = fakeD1({ ...asAdmin, firstResults: { 'FROM class_offers WHERE waitlist_id': { token: 'the-hash' } } });
+    const { db, calls } = fakeD1({ firstResults: { 'FROM class_offers WHERE waitlist_id': { token: 'the-hash' } } });
     const sink = vi.fn();
     const result = await actions.cancelOffer(postEvent(admin, { waitlistId: 'wait-1' }, { db, auditSink: sink }));
     expect(result).toEqual({ ok: true });
@@ -160,7 +155,7 @@ describe('classes actions: cancelOffer', () => {
   });
 
   it('fails 400 when there is no active offer to cancel, auditing the rejected attempt', async () => {
-    const { db } = fakeD1({ ...asAdmin, firstResults: { 'FROM class_offers WHERE waitlist_id': null } });
+    const { db } = fakeD1({ firstResults: { 'FROM class_offers WHERE waitlist_id': null } });
     const sink = vi.fn();
     const result = await actions.cancelOffer(postEvent(admin, { waitlistId: 'wait-1' }, { db, auditSink: sink }));
     expect(isActionFailure(result)).toBe(true);
