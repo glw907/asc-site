@@ -240,3 +240,81 @@ at Stripe leaves the ledger untouched and is safe to retry.
 No production-apex cutover (that is the mw-cutover runbook, on Geoff's separate go). No changes
 to the refund business rules or the ASC refund policy. No new CSRF scheme. No member-facing
 copy changes beyond the Turnstile widgets. No live charge without Geoff's go.
+
+## Appendix A: the Stripe key-swap procedure
+
+One procedure, two callers. The live smoke (section 4) swaps `dev.aksailingclub.org` to live keys
+temporarily and reverts. The apex cutover (`docs/2026-07-15-mw-cutover-runbook.md`, its "Payments
+live posture" note) swaps production to live keys permanently. Both share the facts and the swap
+steps below; only the target origin and the revert differ, called out where they diverge. The
+runbook defers to this appendix and does not restate it.
+
+### A.0 Facts this procedure rests on
+
+- **The ASC secret store holds the canonical live values.** `sk_live_...` and the production
+  webhook signing secret (endpoint `we_1T4XXvDPHhqrZDUbds5xyeaZ`) live in
+  `aksailingclub-legacy/secrets/values.age`, documented in that store's `registry.md`. Decrypt
+  with `age -d -i "$AGE_KEY_FILE" secrets/values.age`; the Stripe dashboard is the mint origin
+  (`registry.md` records the exact dashboard path per key). No secret value is ever committed to
+  this repo or written to a loose file, with the one machine-local exception in A.4.
+- **Worker secrets are write-only.** `npx wrangler secret put NAME` sets a value on the `asc-site`
+  Worker; nothing reads one back. A revert therefore re-sources the sandbox values, it does not
+  restore a captured live-to-sandbox read. Capture what you will need for the revert *before* you
+  swap (A.4).
+- **Live and sandbox are separate Stripe worlds.** Each mode has its own keys, its own webhook
+  endpoints, and its own per-endpoint signing secret. The sandbox endpoint already registered at
+  `/api/stripe/webhook` and any live-mode endpoint you register are different objects with
+  different `whsec_` secrets. Swapping the key without swapping the matching webhook secret
+  produces a signature-verification failure (400), not a silent wrong-mode charge.
+- **The dev Worker currently runs sandbox keys**, a deliberate pre-cutover posture that diverges
+  from the store's live values. `registry.md`'s "never run live charges from dev" note is the
+  standing default; the live smoke is the single Geoff-authorized exception to it, on his card,
+  on his go. The sandbox dry-smoke (section 3) is what confirms the current sandbox posture before
+  any swap: a Stripe test card that reconciles proves the bound keys are sandbox. Run it first.
+
+### A.1 Register the live-mode webhook endpoint
+
+In the Stripe dashboard, **live mode** (not test mode): Developers, then Webhooks, then Add
+endpoint. URL `https://<origin>/api/stripe/webhook` (`dev.aksailingclub.org` for the smoke, the
+production apex for the cutover). Subscribe it to `checkout.session.completed`. Reveal its signing
+secret; this `whsec_...` is the value `STRIPE_WEBHOOK_SECRET` takes in A.2, and it is distinct
+from both the sandbox endpoint's secret and any other live endpoint's. Use the full `whsec_...`
+string as UTF-8 bytes; do not strip the prefix or base64-decode it (`registry.md`'s standing
+caveat on this secret).
+
+For the cutover, the production live endpoint (`we_1T4XXvDPHhqrZDUbds5xyeaZ`) already exists in the
+store's records; confirm its URL is the production origin rather than registering a second one.
+
+### A.2 Swap to live
+
+- **Smoke (temporary, dev):** first complete A.4 so the revert is ready. Then set both secrets on
+  the `asc-site` Worker directly, the deliberate temporary override:
+  `npx wrangler secret put STRIPE_SECRET_KEY` with the store's `sk_live_...`, and
+  `npx wrangler secret put STRIPE_WEBHOOK_SECRET` with the A.1 dev endpoint's `whsec_...`. Pipe the
+  value in rather than pasting it into a prompt that lands in shell history. This override is not
+  synced to the store and is undone in A.4.
+- **Cutover (permanent, production):** the store already holds the live `sk_live_...` and the
+  production endpoint's `whsec_...`, so this is the store-driven path, not a manual `secret put`:
+  `scripts/secrets/sync.sh` pushes them to the routed target, and `scripts/secrets/sync.sh --verify`
+  confirms the Worker matches the registry. No temporary override and no revert.
+
+### A.3 Verify the swap
+
+Stripe's dashboard delivery log for the target endpoint shows `2xx` on the first live event (the
+smoke's own charge, or the first real production checkout). A `4xx` there is the signature
+mismatch of A.0: the key and the webhook secret are from different modes or different endpoints.
+
+### A.4 Revert to sandbox (smoke only; the cutover is never reverted)
+
+Before the A.2 swap, capture the sandbox values you will restore, because the Worker cannot hand
+them back: the sandbox secret key (`sk_test_...`, Stripe dashboard in test mode, Developers, API
+keys) and the sandbox `/api/stripe/webhook` endpoint's signing secret (test-mode Webhooks, that
+endpoint, Reveal). Hold them machine-local only, under `~/.local/asc-data/` (the same
+never-committed home the member-data plaintext exports use), never in the repo and never in the
+store.
+
+After the smoke and its refund complete, restore both with `npx wrangler secret put` from that
+capture, so the dev Worker sits on sandbox again. Pre-cutover dev must not carry live keys. The
+A.1 dev live-mode endpoint may stay registered and disabled (harmless) or be deleted; record which
+in the runbook's revert log. Confirm the revert the same cheap way the dry-smoke confirmed the
+starting posture: a sandbox test-card charge reconciles, and no live key remains bound.
