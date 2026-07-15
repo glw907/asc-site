@@ -30,8 +30,15 @@
 -- Deleting existing rows, not dropping the table, is what lets a developer re-run the suite
 -- against an already-migrated local D1 without a schema mismatch; CI always starts from the
 -- gitignored .wrangler/state fresh, so the delete is a no-op there.
+--
+-- class_reminders_sent (migration 0012) and credit_redemptions (migration 0005) both carry
+-- `enrollment_id REFERENCES class_enrollments(id)`, so on a warm workstation replica (local D1
+-- enforces FKs; the real edge database does not) they must clear before class_enrollments or the
+-- second consecutive run of this file fails with FOREIGN KEY constraint failed.
 DELETE FROM class_offers;
 DELETE FROM class_waitlist;
+DELETE FROM class_reminders_sent;
+DELETE FROM credit_redemptions;
 DELETE FROM class_enrollments;
 DELETE FROM classes;
 DELETE FROM events;

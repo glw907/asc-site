@@ -19,10 +19,13 @@ export default defineConfig({
   // wrangler dev serves the real build with local bindings so the Season/events/join/class-door
   // templates render their full, real shape.
   webServer: {
-    command: 'node e2e/fixtures/bootstrap-club-db.mjs && npm run build && npx wrangler dev --port 4173 --local',
-    port: 4173,
+    // Port 4179, not the family-conventional 4173: a squatting `vite preview --port 4173` from an
+    // unrelated concurrent session has silently served this suite the WRONG SITE before
+    // (reuseExistingServer masks the mismatch). A dedicated port removes that collision.
+    command: 'node e2e/fixtures/bootstrap-club-db.mjs && npm run build && npx wrangler dev --port 4179 --local',
+    port: 4179,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
-  use: { baseURL: 'http://localhost:4173' },
+  use: { baseURL: 'http://localhost:4179' },
 });
