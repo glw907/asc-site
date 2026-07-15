@@ -398,4 +398,62 @@
       transform: none;
     }
   }
+
+  /* ─── Table: a wrapped, context-tuned table with an optional caption/legend (2026-07-15) ── */
+  /* `:::table` wraps a markdown table in a `<figure>` so the surrounding caption and legend read
+     as one object with it. The table itself, the `.table-scroll` region around it, the header
+     rule, the zebra, and the row hairlines are chassis prose.css's own generic table rules (that
+     file's own comment explains the wrapper); this block only overrides what a table's context
+     asks for (the header rule's color, tabular figures, and the per-variant density) and adds the
+     figure's own caption/legend chrome, all scoped under `.asc-table` so a plain, unwrapped
+     markdown table elsewhere on the site keeps the chassis default untouched. */
+  .prose .asc-table {
+    --flow-space: var(--spacing-m);
+    margin: 0;
+  }
+  .prose .asc-table figcaption {
+    margin: 0 0 var(--spacing-2xs);
+    font-size: var(--text-step--1);
+    font-weight: 600;
+    text-align: left;
+    color: var(--color-base-content);
+  }
+  .prose .asc-table figcaption > * {
+    margin: 0;
+  }
+  .prose .asc-table th,
+  .prose .asc-table td {
+    font-variant-numeric: tabular-nums;
+  }
+  /* The one color override every variant shares: the club's own navy in place of the chassis
+     default's neutral base-300 rule, so the header reads as this site's table, not a generic one. */
+  .prose .asc-table thead th {
+    border-bottom: 2px solid var(--color-primary);
+  }
+  /* `results` (a results grid, a dense scoreboard) stays at the chassis default type size
+     (`--text-step--1`) but tightens cell padding, since a dense grid must scan; `fees` and `gear`
+     (a short fee schedule, a short gear list) bump back up to body size, comfortable at their
+     shorter row count. */
+  .prose .asc-table-results table {
+    font-size: var(--text-step--1);
+  }
+  .prose .asc-table-results th,
+  .prose .asc-table-results td {
+    padding: 0.35rem 0.5rem;
+  }
+  .prose .asc-table-fees table,
+  .prose .asc-table-gear table {
+    font-size: var(--text-step-0);
+  }
+  .prose .asc-table-legend {
+    margin-top: var(--spacing-3xs);
+    font-size: var(--text-step--2);
+    color: var(--color-muted);
+  }
+  .prose .asc-table-legend > * {
+    margin: 0;
+  }
+  .prose .asc-table-legend > * + * {
+    margin-top: var(--spacing-3xs);
+  }
 }

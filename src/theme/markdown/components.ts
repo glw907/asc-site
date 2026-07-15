@@ -440,6 +440,59 @@ const steps = defineComponent({
   icon: 'list-checks',
 });
 
+// ─── Table: a wrapped markdown table with a variant and an optional legend (site-declared) ──
+// A `:::table` wraps a standard markdown table for the design spec's per-context styling: a
+// required `variant` attribute (results/fees/gear) sets density and type scale in
+// asc-components.css, an optional inline `caption` slot names the table above it, and an
+// optional markdown `legend` slot documents any codes or abbreviations the table uses, attached
+// tight under it. `caption` and `legend` are declared slots other than `title`/`body`, so the
+// engine's own directive stamp (remark-directives.ts) marks a nested `:::caption`/`:::legend`
+// container whose name matches the slot name, the same first-class grammar `serializeComponent`
+// itself generates for any non-title/body slot; no child component definition is needed the way
+// `fact`/`ref`/`step` need one, because a slot only needs a matching nested directive name; it is
+// registered nowhere else. The body slot holds nothing but the markdown table itself; the
+// engine's own rehypeTableScroll (createRenderer's default rehype step, see cairn-cms's
+// pipeline.js) wraps every `<table>` anywhere in the fully built tree in `.table-scroll` after
+// every component build() has run, so this build() never constructs that wrapper itself, it only
+// places the table where it belongs relative to the caption and legend.
+function buildTable(ctx: ComponentContext): Element {
+  const variant = strAttr(ctx, 'variant') ?? 'results';
+  const caption = ctx.slot('caption');
+  const legend = ctx.slot('legend');
+  const kids: ElementContent[] = [];
+  if (caption.length) kids.push(h('figcaption', {}, caption));
+  kids.push(...ctx.slot('body'));
+  if (legend.length) kids.push(h('div', { className: ['asc-table-legend'] }, legend));
+  return h('figure', { className: ['asc-table', `asc-table-${variant}`] }, kids);
+}
+
+const table = defineComponent({
+  name: 'table',
+  label: 'Table',
+  description: 'A markdown table wrapped for its context (results, fees, or gear), with an optional caption and legend.',
+  use: 'Present tabular data (a results grid, a fee schedule, a gear list) at the right density for its context.',
+  insertTemplate:
+    '::::table{variant="results"}\n:::caption\nTable caption.\n:::\n\n| Column | Column |\n| --- | --- |\n| Value | Value |\n\n:::legend\nAbbreviation, meaning.\n:::\n::::',
+  build: buildTable,
+  attributes: {
+    variant: fields.select({ label: 'Variant', required: true, options: ['results', 'fees', 'gear'] }),
+  },
+  slots: [
+    { name: 'caption', label: 'Caption (optional)', kind: 'inline' },
+    { name: 'body', label: 'Table', kind: 'markdown', required: true },
+    { name: 'legend', label: 'Legend (optional)', kind: 'markdown' },
+  ],
+  group: 'Page structure',
+  icon: 'list-checks',
+  preview: {
+    attributes: { variant: 'fees' },
+    slots: {
+      caption: 'Membership dues',
+      body: '| Tier | Price |\n| --- | --- |\n| Individual | $50 |',
+    },
+  },
+});
+
 export const ascRegistry = defineRegistry({
   components: [
     callout,
@@ -454,6 +507,7 @@ export const ascRegistry = defineRegistry({
     ctaAction,
     steps,
     step,
+    table,
     contactForm,
     donateForm,
     classSchedule,
