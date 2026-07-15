@@ -8,6 +8,49 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
+**SHARED-COMPONENTS PASS BUILT AND PUSHED (2026-07-15 day, Fable-conducted design review +
+same-session execution on Geoff's "proceed on all fronts"). The review read the dev site
+(15 full-page captures, 4 read by the conductor, 11 by an Opus observation agent) against a
+component inventory and found one dominant defect: structured facts wearing bold-label prose,
+plus ad hoc cross-references and bespoke page closers on every page. THE SHIPPED VOCABULARY
+(all in src/theme/markdown/components.ts + asc-components.css, registry-native, tokens only):
+`:::facts` (semantic dl label/value rows, no card chrome), `:::related` (rule + eyebrow
+cross-reference lines) and `:::page-cta` (the one sitewide closer; a primary action spends the
+fireweed budget through .asc-cta-btn — conductor fix 28d5b7c after the chassis .cta-primary
+rendered navy), `:::steps` (CSS-counter number rail, role=list/listitem for WebKit),
+`::::table{variant="results|fees|gear"}` (figure + caption/legend slots, aria-labelledby/
+describedby wiring, tabular numerals; legends finally attach to the recap posts' scoring keys),
+unified category/availability chips (home's C7 dot/star vocabulary on Events + ClassSchedule +
+event detail; availability is a separate neutral outline chip), and a `requirement` callout
+tone. BUGS KILLED: join's literal ::membership-pricing text (ROOT CAUSE IS CAIRN'S OWN:
+the engine's insertTemplate for zero-slot inline use is invalid single-line directive syntax,
+and hydrate:true islands can never sit mid-sentence — div wrapper; DX harvest), post deck
+duplication (every post description is a Hugo auto-summary prefix; descriptions are now
+meta-only for posts), the "News — 0 posts" dead card (grid AND stat now count browsable
+topics), events mid-word truncation. SIX EXEMPLAR PAGES retrofitted (moorings, visiting,
+join, NMG closing sections, education closer, northern-lights recap); the full site-wide
+consolidation is deliberately a later content pass. FRAGMENTS POLICY (Geoff, 2026-07-15):
+the next cairn release adds a "fragments" concept; until it lands we duplicate freely,
+converge duplicated wording gently toward fragment-ready canonical forms, and log everything
+in docs/fragment-candidates.md (9 entries seeded with canonical wordings). GATE AT CLOSE:
+check 0/0 (854 files), 1259 unit tests, build green, e2e 33/33 twice (baselines regenerated
+once for chips/closer/truncation: events x5 viewports, class detail, event detail, education).
+Conductor render reads: all six retrofit pages + events + posts at 390/1440, dark-mode spot
+checks, zoomed crops for the step rail and education's restored fireweed closer. REVIEW GATE:
+svelte-reviewer and daisyui-a11y both no-blockers; the fix round (558b72f) landed the two a11y
+warnings (WebKit list-role strip, table caption/legend association), the arrow-in-accessible-
+name and chip-edge suggestions, the dead topics payload, and blessed multi-table grouping in
+the table doc. Plan: docs/plans/2026-07-15-shared-components.md (T0 also fixed the e2e
+warm-replica FK gap and moved Playwright to dedicated port 4179 — both infra follow-ups from
+the payments entry, now DONE). FOR GEOFF: before/after review of the six retrofit pages +
+events on dev when convenient (the smoke's own gate list below is untouched and still first);
+the "before" captures are archived in this session's scratchpad. BUDGET: ~1.75M subagent
+tokens across 13 dispatches (7 implementers, 1 simplifier, 2 reviewers, 1 fix round, 2
+review-phase observers); ZERO questions asked of Geoff mid-pass (4 unprompted steers received:
+skill routing, Fable economy, fragments x2). NEXT CANDIDATES: the content-consolidation pass
+once cairn fragments ship; the event-detail page's remaining older styling; NMG full
+de-carding; education pacing (existing backlog).**
+
 **PAYMENTS HARDENING EXECUTED AND RELEASED TO DEV (2026-07-15 overnight; pushed on Geoff's
 explicit "make the accounting updates, then release"). Ran the hardening half of
 docs/plans/2026-07-15-payments-live-smoke.md (Tasks 1-6 + conductor steps 1-2) per the go,
