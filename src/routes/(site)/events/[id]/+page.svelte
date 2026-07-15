@@ -3,7 +3,11 @@ The events-redesign pass: one event or class's own inviting, anchorable home. A 
 the type-glyph placeholder when the row has none), a facts slab (date, time, location, category,
 registration status, a class's fee), the full description, the action zone (a register link, a
 class's own signup route, or an honest "opens later" state), a per-event add-to-calendar link, and
-quiet prev/next along the season. -->
+quiet prev/next along the season. The category and registration-status facts (2026-07-15 shared-
+components pass, conductor addendum) render the same `.asc-category-chip`/`.asc-availability-chip`
+vocabulary SpineRow.svelte's season spine already unified on, so a category chip's colored dot (or
+gold star for a class/clinic) and a registration status's quiet outline chip read identically on
+both event surfaces. -->
 <script lang="ts">
   import type { PageData } from './$types';
   import { CairnHead } from '@glw907/cairn-cms/delivery/head';
@@ -12,6 +16,8 @@ quiet prev/next along the season. -->
 
   let { data }: { data: PageData } = $props();
 
+  // The media placeholder's own background tint (no photo on this event/class); unrelated to the
+  // category/registration chips below, which read `dotKind`/`registrationStatusLabel` directly.
   const typeClass = $derived(data.event.dot ? 'type-accent' : data.event.muted ? 'type-muted' : 'type-plain');
 
   // A registration-status label only ever marks a class or clinic (toEventCard's own rule), so its
@@ -55,12 +61,21 @@ quiet prev/next along the season. -->
     {/if}
     <div class="event-fact">
       <dt>Category</dt>
-      <dd><span class="event-chip {typeClass}">{data.event.typeLabel}</span></dd>
+      <dd>
+        <span class="asc-category-chip">
+          {#if data.event.dotKind === 'class'}
+            <span class="asc-category-mark asc-category-mark--star" aria-hidden="true">★</span>
+          {:else if data.event.dotKind}
+            <span class="asc-category-mark asc-category-mark--{data.event.dotKind}" aria-hidden="true"></span>
+          {/if}
+          <span class="asc-category-label">{data.event.typeLabel}</span>
+        </span>
+      </dd>
     </div>
     {#if data.event.registrationStatusLabel}
       <div class="event-fact">
         <dt>Registration</dt>
-        <dd><span class="event-chip reg-chip--{data.event.registrationStatusKind}">{data.event.registrationStatusLabel}</span></dd>
+        <dd><span class="asc-availability-chip">{data.event.registrationStatusLabel}</span></dd>
       </div>
     {/if}
     {#if data.event.fee !== undefined}
@@ -183,48 +198,10 @@ quiet prev/next along the season. -->
     font-weight: 600;
   }
 
-  .event-chip {
-    display: inline-block;
-    padding: 0.125rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-  .event-chip.type-accent {
-    background: color-mix(in oklab, var(--color-secondary) 18%, transparent);
-    color: color-mix(in oklab, var(--color-secondary) 55%, var(--color-base-content));
-  }
-  .event-chip.type-plain {
-    background: transparent;
-    border: 1px solid var(--color-card-border);
-    color: var(--color-base-content);
-  }
-  .event-chip.type-muted {
-    background: var(--color-base-200);
-    color: var(--color-muted);
-  }
-  .reg-chip--success {
-    background: color-mix(in oklab, var(--color-success) 14%, transparent);
-    color: var(--cairn-success-ink);
-  }
-  .reg-chip--info {
-    background: color-mix(in oklab, var(--color-info) 14%, transparent);
-    color: var(--cairn-info-ink);
-  }
-  .reg-chip--warning {
-    background: color-mix(in oklab, var(--color-warning) 18%, transparent);
-    color: var(--cairn-warning-ink);
-  }
-  .reg-chip--error {
-    background: color-mix(in oklab, var(--color-error) 14%, transparent);
-    color: var(--cairn-error-ink);
-  }
-  .reg-chip--muted {
-    background: var(--color-base-200);
-    color: var(--color-muted);
-  }
+  /* Category and availability chip look now come from the shared `.asc-category-chip`/
+     `.asc-availability-chip` classes (asc-components.css), the same vocabulary SpineRow.svelte's
+     season spine and ClassSchedule.svelte's status cell already use (2026-07-15 shared-
+     components pass, conductor addendum). No local chip rules needed here any more. */
 
   .event-detail-lede {
     margin: var(--spacing-m) 0 0;

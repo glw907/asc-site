@@ -70,7 +70,7 @@
 <section class="mt-m">
   <h2 class="m-0 font-display text-step-2 font-semibold text-base-content">Browse by Topic</h2>
   <ul class="topic-grid mt-s grid grid-cols-1 gap-s sm:grid-cols-2 lg:grid-cols-3">
-    {#each data.topics as topic (topic.value)}
+    {#each data.browseTopics as topic (topic.value)}
       <li>
         <a
           href={`/tags/${topic.value}/`}

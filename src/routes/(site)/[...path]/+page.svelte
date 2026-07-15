@@ -19,7 +19,13 @@
   const isGovernanceSubpage = $derived(
     data.entry.concept === 'pages' && GOVERNANCE_SUBPAGE_SLUGS.has(data.entry.slug),
   );
-  const subtitle = $derived(data.entry.frontmatter.description as string | undefined);
+  // B3 (2026-07-15 shared-components pass): a post's `description` frontmatter is a meta-only SEO
+  // summary (CairnHead's own <meta name="description">, via `data.seo`), not a second visible
+  // subtitle. Every migrated post's description is a truncated prefix of its own opening
+  // paragraph (a Hugo auto-summary artifact confirmed across the whole corpus), so showing it
+  // here duplicated the post's own lede. Pages keep the subtitle (manifest item 10, governance
+  // subpages), where the description is an authored, distinct line.
+  const subtitle = $derived(!isPost ? (data.entry.frontmatter.description as string | undefined) : undefined);
   // The pages concept's own title-adjacent hero (Strand 3 of the presentation round, adapted from
   // the old education page's photo-beside-the-title device): a page's hero sits next to its own
   // title, not stacked full-width above it the way a post's hero (`.hero` below) already does.

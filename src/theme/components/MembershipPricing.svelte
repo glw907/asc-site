@@ -1,11 +1,15 @@
 <!-- @component
-Inline, settings-driven membership pricing (Task 3, the unified-signup design's own "a settings
-change can never strand the prose again" rule): reads the live tier price through
-`getTierPriceText` (membership-pricing.remote.ts) and renders it as plain inline text, so a
-sentence like "Individual membership is :::membership-pricing{tier="individual"}::: a year" never
-carries a hand-typed dollar figure. Mounted as a `membership-pricing` island (markdown/
-components.ts): with no JavaScript, the static build() fallback (a link to the join page) shows
-instead. -->
+Settings-driven membership pricing (Task 3, the unified-signup design's own "a settings change
+can never strand the prose again" rule): reads the live tier price through `getTierPriceText`
+(membership-pricing.remote.ts) and renders it as plain text, so a line like:
+
+    :::membership-pricing{tier="individual"}
+    :::
+
+never carries a hand-typed dollar figure. The directive must sit on its own line (components.ts's
+own comment explains why it can never embed mid-sentence). Mounted as a `membership-pricing`
+island (markdown/components.ts): with no JavaScript, the static build() fallback (a link to the
+join page) shows instead. -->
 <script lang="ts">
   import { getTierPriceText } from '$theme/membership-pricing.remote';
 

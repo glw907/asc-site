@@ -61,8 +61,19 @@ const callout = defineComponent({
     // a "not built yet" placeholder notice, so a page with real content around it doesn't read as
     // broken. The note/tip/warning tones are all right for a callout competing with plain prose;
     // an interim notice is not competing for the reader's attention, it is apologizing for a gap.
-    tone: fields.select({ label: 'Tone', required: true, options: ['note', 'tip', 'warning', 'interim'] }),
-    icon: fields.icon({ label: 'Icon' }),
+    // 'requirement' (2026-07-15 shared-components pass): marks a prerequisite the reader must
+    // already satisfy (an Active Participating Member status, a qualification checkout) before
+    // the surrounding content applies. Quieter than warning (no caution ink; this is not a
+    // hazard), firmer than note (a full border, not just a tinted ground). Its own CSS lives
+    // theme-side in asc-components.css, not chassis prose.css, since it is an ASC-specific tone.
+    // `icon="anchor"` reads well here (a prerequisite as a thing to hold fast to) but is a
+    // suggestion for the author, never a hardcoded default.
+    tone: fields.select({
+      label: 'Tone',
+      required: true,
+      options: ['note', 'tip', 'warning', 'interim', 'requirement'],
+    }),
+    icon: fields.icon({ label: 'Icon', help: 'For the "requirement" tone, "anchor" reads well.' }),
   },
   slots: [
     { name: 'title', label: 'Title', kind: 'inline', required: true },
@@ -372,18 +383,23 @@ const classSchedule = defineComponent({
   icon: 'graduation-cap',
 });
 
-// ─── Membership pricing: an inline, settings-driven dollar figure (Task 3) ──
+// ─── Membership pricing: a settings-driven dollar figure (Task 3) ──────────
 // Same island shape as class-schedule above: build() emits only the no-JavaScript fallback (a
 // link to the live join door, since no dollar figure is safe to hard-code here), and
 // MembershipPricing.svelte replaces it with the live settings price once mounted
-// (membership-pricing.remote.ts). Renders inline (an anchor, not a block element) so it drops
-// into a sentence the same way the migrated `.cta-list` links do.
+// (membership-pricing.remote.ts). build() itself returns an anchor (inline markup, not a div or
+// section), but the directive vocabulary is container-only (remark-directives.ts restores any
+// text/leaf directive to literal text) and `hydrate: true` always wraps the build in a `<div>`
+// island boundary (rehype-dispatch.ts's islandBoundary). So this component can only ever be
+// authored as its OWN line (`:::membership-pricing{tier="..."}` fenced on its own, never after
+// other text on the same line), not embedded mid-sentence (B1, 2026-07-15 shared-components
+// pass: join.md tried exactly that and the directive rendered as literal text).
 const membershipPricing = defineComponent({
   name: 'membership-pricing',
   label: 'Membership price',
-  description: "One membership tier's live settings price, inline in a sentence.",
+  description: "One membership tier's live settings price, on its own line.",
   use: 'Replace a hand-typed dollar figure with the real, settings-driven tier price.',
-  insertTemplate: ':::membership-pricing{tier="individual"}:::',
+  insertTemplate: ':::membership-pricing{tier="individual"}\n:::',
   hydrate: true,
   build: (ctx) => {
     const tier = strAttr(ctx, 'tier') ?? 'individual';

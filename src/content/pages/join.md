@@ -35,9 +35,15 @@ Full seasonal access to club grounds, including the clubhouse, sauna, campfire, 
 ## What It Costs
 
 **Annual Membership Dues:**
-- Individual: :::membership-pricing{tier="individual"}:::
-- Family: :::membership-pricing{tier="family"}:::
-- Young adult (under 26): :::membership-pricing{tier="young-adult"}:::
+- **Individual:**
+  :::membership-pricing{tier="individual"}
+  :::
+- **Family:**
+  :::membership-pricing{tier="family"}
+  :::
+- **Young adult (under 26):**
+  :::membership-pricing{tier="young-adult"}
+  :::
 
 **Additional Fees:**
 - Trailer row storage: $100/season
