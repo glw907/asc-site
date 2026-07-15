@@ -107,6 +107,14 @@ AUTHORED 2026-07-15 (the overnight run): docs/2026-07-15-payments-live-smoke-des
 docs/plans/2026-07-15-payments-live-smoke.md (plan). Three decision points held for Geoff:
 smoke product ($1 donation default vs $100 domain-row alternative), dev-Access posture
 (dev verified PUBLIC today, contra CLAUDE.md), memo vs marker-column smoke marking.
+HARDENING HALF EXECUTED 2026-07-15 overnight (Opus-conducted, plan Tasks 1-6 + conductor
+steps 1-2): Turnstile on all five remaining public POSTs, the [[ratelimits]] layer, the
+optional smoke memo, and the key-swap appendix — 7 commits (56500fb..fd61fcf) gate-green
+(check 0/0, test 1216, e2e 33/33) and DELIBERATELY UNPUSHED (push=dev deploy). Review gate
+caught a live-prod Turnstile-render blocker on the signup money form (fixed) plus an a11y
+and a fixture-determinism defect. STILL OPEN on Geoff's go: push (=deploy), before/after,
+the sandbox dry-smoke (first-ever webhook reconcile), then the live charge + refund + revert;
+the three decision points above remain his. Full accounting: docs/STATUS.md top entry.
 
 ### Go-live: apex cutover & MW retirement `mw-cutover`
 The program's final act: a fresh MW delta re-import (members keep joining/renewing on
