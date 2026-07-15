@@ -73,6 +73,21 @@ collapse `club_roles` onto the seam (retiring the table, the Settings grant/revo
 and the site-side last-owner guard), and keep member-scale auth separate per Geoff's
 ruling. The contract: `docs/2026-07-13-cairn-editor-roles-consumer-brief.md`.
 
+### Admin nav reorganization `admin-nav-reorg`
+Arrange this site's whole admin sidebar for its real people — board owner, club-admin
+volunteers, instructors — on cairn 0.86.0's `navLayout` seam (engine and club screens
+mixed, relabeled, role-gated sections, fallback semantics), replacing the provenance
+shape (engine core + an 11-item Club section appended). Research-grounded by mandate
+(Geoff, 2026-07-14): the brainstorm starts from cairn's nav-organization research and
+the shipped "Organize your admin nav" guide (whose principles and worked example are
+already ASC-shaped — Club first, role-gated; Content second; a trailing Site group with
+Settings relabeled to resolve the duplicate-Settings collision), then grounds the
+arrangement in an inventory of what each ASC role actually does across the admin
+screens, with Geoff's walkthrough as the acceptance gate. Rides the same ^0.86.0 bump
+as `admin-roles` and needs its declared vocabulary for the role-gated sections; whether
+it executes as a phase of that initiative or as its own pass immediately after is the
+first question at the admin-roles brainstorm.
+
 ### Payments hardening & live smoke `payments-live-smoke`
 The deliberate live-Stripe smoke that has been queued since pass 2.1, plus Turnstile
 and rate limiting on the new public money forms (a named cutover blocker).
