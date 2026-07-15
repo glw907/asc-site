@@ -21,10 +21,11 @@ describe('/posts load: browseTopics filters out empty topics', () => {
     }
   });
 
-  it('keeps the full curated vocabulary in topics (and its count in stats.topicCount), even a zero-post entry', async () => {
+  it('keeps the full curated vocabulary in topics, but counts only browsable topics in stats.topicCount', async () => {
     const data = await runLoad();
     expect(data.topics.some((topic: TopicCount) => topic.count === 0)).toBe(true);
-    expect(data.stats.topicCount).toBe(data.topics.length);
+    expect(data.stats.topicCount).toBe(data.browseTopics.length);
+    expect(data.stats.topicCount).toBeLessThan(data.topics.length);
   });
 
   it('drops exactly the zero-count topics between topics and browseTopics', async () => {

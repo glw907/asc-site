@@ -26,12 +26,12 @@ describe(':::page-cta closer', () => {
     expect(html).toContain('Email us');
   });
 
-  it('renders a primary action when kind="primary" is given', async () => {
+  it('renders a primary action in the fireweed budget class when kind="primary" is given', async () => {
     const md = ['::::page-cta[Ready to join?]', ':::cta-action[Apply now]{href="/join/" kind="primary"}', ':::', '::::'].join(
       '\n',
     );
     const html = await renderMarkdown(md);
-    expect(html).toContain('class="cta-link cta-primary"');
+    expect(html).toContain('class="cta-link asc-cta-btn"');
     expect(html).not.toContain('cta-secondary');
   });
 

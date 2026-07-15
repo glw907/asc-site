@@ -24,13 +24,13 @@ export const load: PageServerLoad = () => {
   const years = [...byYear.keys()].filter((y) => y !== 'Undated').sort();
   const yearRange = years.length === 0 ? undefined : years.length === 1 ? years[0] : `${years[0]}–${years[years.length - 1]}`;
 
-  // The stats bar's "topics" count reads the site's curated vocabulary (site.config.yaml) in
-  // full, not the raw tag set on posts: a post's tags are validated against this same vocabulary
-  // at commit time (spec: tag management), so every real tag value already has a matching entry
-  // here. The Browse grid (B4, 2026-07-15 shared-components pass) reads the narrower
-  // `browseTopics` instead: a vocabulary value with zero current posts is still a real, curated
-  // topic (the stat above keeps counting it), but promoting it as a clickable grid card is a
-  // dead end for a visitor, so the grid never shows one until it has at least one post.
+  // Topic values come from the site's curated vocabulary (site.config.yaml); a post's tags are
+  // validated against it at commit time (spec: tag management), so every real tag value already
+  // has a matching entry here. Both the Browse grid and the stats bar's "topics" count read the
+  // narrower `browseTopics` (B4, 2026-07-15 shared-components pass): a vocabulary value with zero
+  // current posts is still a real, curated topic, but a clickable card for it is a dead end, and
+  // a stat that says 5 above a grid showing 4 reads as a defect, so both surfaces count only
+  // topics with at least one post.
   const tagCounts = new Map(posts.allTags().map((t) => [t.tag, t.count]));
   const topics: TopicCount[] = extractVocabulary(siteConfig).map((entry) => ({
     value: entry.value,
@@ -38,11 +38,12 @@ export const load: PageServerLoad = () => {
     count: tagCounts.get(entry.value) ?? 0,
   }));
 
+  const browseTopics = browsableTopics(topics);
   return {
     years: [...byYear.entries()].sort((a, b) => b[0].localeCompare(a[0])),
-    stats: { postCount: all.length, topicCount: topics.length, yearRange },
+    stats: { postCount: all.length, topicCount: browseTopics.length, yearRange },
     topics,
-    browseTopics: browsableTopics(topics),
+    browseTopics,
     seo: buildSeoMeta({
       title: 'News',
       description: `Every news post, race recap, and update from ${siteConfig.siteName}.`,

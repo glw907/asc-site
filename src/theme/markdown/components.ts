@@ -270,13 +270,18 @@ const related = defineComponent({
 // line (the engine's `[Label]` bracket grammar, labeled "Lead" for the form), a markdown `body`
 // slot for the reassurance copy, and any number of nested `:::cta-action` buttons filtered out of
 // that same `body` slot by the `cta-link` marker class its build() renders (the actions row's own
-// wrapper, never a slot of its own, matching `cards`/`card`'s one-slot nesting). `cta-action`
-// reuses the chassis's own `.cta-link`/`.cta-primary`/`.cta-secondary` prose classes rather than
-// inventing new button chrome.
+// wrapper, never a slot of its own, matching `cards`/`card`'s one-slot nesting). A secondary
+// action reuses the chassis's own `.cta-link`/`.cta-secondary` prose classes. A primary action
+// carries `.asc-cta-btn` instead of the chassis `.cta-primary`: the club-grounds fireweed budget
+// ("the single pop, at most twice a page") is spent only through that class, and a page-cta's one
+// allowed primary action is exactly such a spend. `.cta-link` stays on both kinds because it is
+// the marker class buildPageCta() filters on; asc-components.css loads after prose.css in the
+// same layer, so `.asc-cta-btn`'s dress wins the collision.
 function buildCtaAction(ctx: ComponentContext): Element {
   const href = strAttr(ctx, 'href') ?? '#';
   const kind = strAttr(ctx, 'kind') ?? 'secondary';
-  return h('a', { className: ['cta-link', `cta-${kind}`], href }, ctx.slot('title'));
+  const dress = kind === 'primary' ? 'asc-cta-btn' : 'cta-secondary';
+  return h('a', { className: ['cta-link', dress], href }, ctx.slot('title'));
 }
 
 const ctaAction = defineComponent({
