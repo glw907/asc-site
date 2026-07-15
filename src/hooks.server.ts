@@ -13,6 +13,7 @@ import type { Handle } from '@sveltejs/kit';
 import { createAuthGuard } from '@glw907/cairn-cms/sveltekit';
 import { resolveClubDb } from '$admin-club/lib/club-db';
 import { createClubAuditSink } from '$admin-club/lib/audit-sink';
+import { roles } from '$theme/cairn.config.js';
 
 // The root `_headers` file covers static assets only: on Cloudflare, Worker-rendered (SSR)
 // responses never pass through it, so the same four headers are set here for every rendered
@@ -38,4 +39,7 @@ const wireClubAuditSink: Handle = ({ event, resolve }) => {
   return resolve(event);
 };
 
-export const handle = sequence(securityHeaders, wireClubAuditSink, createAuthGuard());
+// `{ roles }` wires the site's own vocabulary (owner/club-admin/instructor) into the guard;
+// omitting it silently falls back to cairn's DEFAULT_ROLES, resolving every session (including
+// a real club-admin) to 'none' capability and losing every engine content screen.
+export const handle = sequence(securityHeaders, wireClubAuditSink, createAuthGuard({ roles }));

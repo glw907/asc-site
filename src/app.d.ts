@@ -37,8 +37,8 @@ declare global {
       // D1, read (never written) for the Season section and /events. See
       // src/theme/season-data.ts's header comment. CLUB_DB is pass 2.1's own domain store (the
       // asc-club side of the two-database strategy; migrations/asc-club/), read AND written by
-      // the Club section's own screens and its club-role authorization layer
-      // (src/admin-club/lib/club-roles.ts). TURNSTILE_SECRET_KEY, STRIPE_SECRET_KEY, and
+      // the Club section's own screens (resolved everywhere via src/admin-club/lib/club-db.ts's
+      // resolveClubDb). TURNSTILE_SECRET_KEY, STRIPE_SECRET_KEY, and
       // STRIPE_WEBHOOK_SECRET are site-owned Worker secrets (contact.remote.ts,
       // donate.remote.ts, payments.ts, the api/stripe/webhook route), set with `wrangler secret
       // put`, never committed; each is optional here so the site keeps degrading gracefully

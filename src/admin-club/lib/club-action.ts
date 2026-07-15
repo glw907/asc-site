@@ -1,9 +1,9 @@
 // The Club section's own action wrapper (pass 2.1 Task 6, rider 1): every `/admin/club/**`
 // write needs the club-role precondition, not just the section's layout guard, because
 // SvelteKit dispatches a matched form action directly and never re-runs an ancestor layout's
-// `load` first (traced in club-roles.ts's `hasAnyClubRole` comment). Tasks 4/5 each hand-rolled
-// the same three lines (resolve `CLUB_DB`, check the role, `fail` cleanly) at the top of every
-// action; this is the one place that check lives now, so a new screen cannot forget it.
+// `load` first. Tasks 4/5 each hand-rolled the same three lines (resolve `CLUB_DB`, check the
+// role, `fail` cleanly) at the top of every action; this is the one place that check lives now,
+// so a new screen cannot forget it.
 // Initiative 5 Task 2: the role check reads the engine's own verified session
 // (`ctx.editor.role`/`ctx.editor.capability`, typed to the site's declared vocabulary via
 // `CairnRolesRegister`) instead of a `club_roles` query, since cairn 0.86.0's roles seam is now

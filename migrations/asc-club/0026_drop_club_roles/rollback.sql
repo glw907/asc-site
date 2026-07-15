@@ -1,6 +1,11 @@
 -- Undoes 0026_drop_club_roles/forward.sql: recreates `club_roles` exactly as
 -- 0001_substrate/forward.sql declared it, and restores its single live row.
 --
+-- This is a schema-safety net for an aborted migration, not a revert of the authorization
+-- feature: after the collapse, no code anywhere reads `club_roles` (the gate reads
+-- `locals.editor.role` off cairn's own typed session), so running this does not restore any
+-- runtime behavior, only the table and its one known row.
+--
 -- Safe only before the engine's own role gate has recorded a grant `club_roles` never saw (a
 -- club-admin or instructor added through ManageEditors after this migration applies): this
 -- rollback restores the table's schema and its one known row, not any grant made through the

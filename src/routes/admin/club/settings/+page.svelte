@@ -50,7 +50,7 @@ forward-only check collapse into the one comparison).
     }
   });
 
-  const subtitle = $derived(data.error ?? 'Club roles, the waitlist offer window, tier prices, and the season.');
+  const subtitle = $derived(data.error ?? 'The waitlist offer window, tier prices, and the season.');
 </script>
 
 <OfficeList eyebrow="Club" title="Settings" {subtitle}>

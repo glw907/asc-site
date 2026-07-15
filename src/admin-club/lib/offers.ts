@@ -346,9 +346,9 @@ export async function previewOffer(db: D1Database, token: string): Promise<Offer
  * runs every statement regardless of an earlier one's own effect, so a batched conditional UPDATE
  * gives no way to detect "this call lost the race" before the enrollment INSERT already ran too.
  * Two concurrent claims of the same token can't both see `changes === 1` (D1 serializes writes to
- * one SQLite file, the same reasoning `club-roles.ts`'s last-owner guard documents for an
- * identical shape); whichever loses sees `changes === 0` and refuses cleanly instead of double-
- * enrolling.
+ * one SQLite file, the same reasoning the engine's own editor store documents for
+ * `removeOwnerIfNotLast`'s last-owner guard, an identical shape); whichever loses sees
+ * `changes === 0` and refuses cleanly instead of double-enrolling.
  *
  * A successful claim also sends the class-reminder set's own `welcome` touch (best-effort, after
  * the batch has committed, `notify` optional -- `class-welcome.ts`'s own header), the same as

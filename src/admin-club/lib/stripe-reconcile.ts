@@ -10,10 +10,11 @@
 // Each per-kind reconciler also carries its own natural-state guard on the write itself (`WHERE
 // paid_at IS NULL`, `WHERE fee_paid = 0`, the asset-payment upsert's own `WHERE ... paid_at IS
 // NULL`): belt-and-suspenders alongside the session-claim gate, the same "changes === 1 or it's a
-// no-op" compare-and-set shape `offers.ts`'s `claimOffer` and `club-roles.ts`'s last-owner guard
-// already use for an identical race. Neither guard alone would be wrong; carrying both costs one
-// extra `WHERE` clause and closes a second, independent path to a double-reconcile (a stray direct
-// write elsewhere marking the same row paid between the claim and this write).
+// no-op" compare-and-set shape `offers.ts`'s `claimOffer` and the engine's own editor store's
+// `removeOwnerIfNotLast` already use for an identical race. Neither guard alone would be wrong;
+// carrying both costs one extra `WHERE` clause and closes a second, independent path to a
+// double-reconcile (a stray direct write elsewhere marking the same row paid between the claim
+// and this write).
 //
 // A reconciler never throws for an ordinary refusal (an unknown `refId`, an already-paid row): it
 // answers `ReconcileOutcome`, the same never-throw convention `offers.ts` and `enrollments.ts`
