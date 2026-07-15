@@ -40,6 +40,14 @@ gate; nothing here trusts a count this component computed on its own.
 
   const preview = $derived(renderTemplateWithVariables(subject, body, PREVIEW_SAMPLE_VARS));
 
+  /** The review step's own "N recipient(s)" phrase, pluralized in one place for the four spots that
+   *  render it (the step subtitle, the send button, and the confirm dialog's heading and button).
+   *  Empty off the review step; only ever rendered inside the `step === 'review' && review` block. */
+  const recipientCountLabel = $derived.by(() => {
+    const resolved = review;
+    return resolved ? `${resolved.recipientCount} recipient${resolved.recipientCount === 1 ? '' : 's'}` : '';
+  });
+
   /** The compose step's own page-top banner: any `fail()` this route's actions return with no
    *  `kind` and no `stage: 'review'` tag (the `review` action's own field-validation failures,
    *  the only kind-less failure that can happen while still on the compose step). */
@@ -231,7 +239,7 @@ gate; nothing here trusts a count this component computed on its own.
     </form>
   </OfficeList>
 {:else if step === 'review' && review}
-  <OfficeList eyebrow="Club" title="Review" subtitle="{review.segmentLabel}: {review.recipientCount} recipient{review.recipientCount === 1 ? '' : 's'}.">
+  <OfficeList eyebrow="Club" title="Review" subtitle="{review.segmentLabel}: {recipientCountLabel}.">
     <p
       class="text-sm font-medium {testStatus ? (testStatus.ok ? 'border-b border-[var(--cairn-card-border)] px-6 py-3 text-success' : 'border-b border-[var(--cairn-card-border)] px-6 py-3 text-error') : ''}"
       role="status"
@@ -273,7 +281,7 @@ gate; nothing here trusts a count this component computed on its own.
           <button type="submit" class="btn btn-sm">Send test to me</button>
         </form>
         <button type="button" class="btn btn-primary btn-sm" onclick={() => sendDialog?.showModal()}>
-          Send to {review.recipientCount} recipient{review.recipientCount === 1 ? '' : 's'}
+          Send to {recipientCountLabel}
         </button>
       </div>
     </div>
@@ -281,7 +289,7 @@ gate; nothing here trusts a count this component computed on its own.
 
   <dialog bind:this={sendDialog} class="modal">
     <div class="modal-box">
-      <h2 class="text-lg font-bold">Send to {review.recipientCount} recipient{review.recipientCount === 1 ? '' : 's'}?</h2>
+      <h2 class="text-lg font-bold">Send to {recipientCountLabel}?</h2>
       <p class="py-2 text-sm text-muted">{review.segmentLabel}. This cannot be undone.</p>
       <form method="post" action="?/send" use:enhance={onSendSubmit()}>
         <CsrfField />
@@ -293,7 +301,7 @@ gate; nothing here trusts a count this component computed on its own.
           <!-- svelte-ignore a11y_autofocus -->
           <button type="button" class="btn" autofocus onclick={() => sendDialog?.close()}>Cancel</button>
           <button type="submit" class="btn btn-primary">
-            Send to {review.recipientCount} recipient{review.recipientCount === 1 ? '' : 's'}
+            Send to {recipientCountLabel}
           </button>
         </div>
       </form>
