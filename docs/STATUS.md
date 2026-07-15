@@ -40,9 +40,20 @@ smoke will be the FIRST-EVER webhook-reconcile execution (processed_stripe_sessi
 live) — the spec adds a sandbox dry-smoke before any live-key swap; (d) held decisions:
 smoke product ($1 donation default vs $100 domain-unwind alternative), memo vs
 marker-column smoke marking. QUEUED (unchanged): Geoff's five-stop dev walkthrough; the
-07-15 apology-send verification. NEXT: push the four commits, then the walkthrough;
-payments-hardening execution runs post-window under an Opus conductor per the spec's
-constraints, live charge only on Geoff's go.**
+07-15 apology-send verification. HARDENING GO GRANTED (Geoff, 2026-07-15 at this close,
+before bed): the payments-hardening half (plan Tasks 1-6 + conductor steps 1-2) runs
+OVERNIGHT in a fresh OPUS-conducted session — code-only, local gates, NO deploys, no
+live keys, the smoke untouched; the RESUME PROMPT: "Execute the hardening half of
+docs/plans/2026-07-15-payments-live-smoke.md (Tasks 1-6 plus conductor steps 1-2 only),
+per the overnight go in docs/STATUS.md's top entry. Read STATUS and the plan first, spec
+docs/2026-07-15-payments-live-smoke-design.md beside it. Sequence: Tasks 1→3→4
+sequentially via site-implementer (they share files; review each diff + full gate
+between dispatches), Task 2 read-only in parallel, Task 5 is a design-doc appendix, then
+the Task 6 review fan-out (prose reports, direct dispatch), fix triage, code-simplifier,
+re-gate, STATUS close. Do NOT deploy, do NOT push (push=dev-deploy; five commits are
+already waiting unpushed — leave them), no live D1 writes, no Stripe keys. Task 4 is the
+memo path only (marker column is Geoff's held decision). Stop after consolidation; the
+dry-smoke, deploy, and Geoff's before/after run on his morning go."**
 
 **INITIATIVE 5 (admin-roles + admin-nav-reorg) EXECUTED, CLOSED, AND LIVE ON DEV
 (2026-07-15 early, the session that watched 0.86.0 land and ran the whole pass on
