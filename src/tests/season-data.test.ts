@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { buildSeasonMonths, routeIdOf, splitSeasonColumns } from '$theme/season-data';
+import { buildSeasonMonths, loadSeasonMonths, routeIdOf, splitSeasonColumns } from '$theme/season-data';
 import type { SeasonMonth } from '$theme/season-data';
+import { fakeD1 } from './_fake-d1';
 
 const CURRENT_YEAR = 2026;
 
@@ -221,5 +222,45 @@ describe('splitSeasonColumns', () => {
     const [left, right] = splitSeasonColumns(months);
     expect(left.length).toBeGreaterThan(0);
     expect(right.length).toBeGreaterThan(0);
+  });
+});
+
+describe('loadSeasonMonths', () => {
+  // A class row minted across three seasons under the same name (the MembershipWorks import's
+  // own shape: a template class re-minted every rollover), keyed to the season the fake classes
+  // query is bound with.
+  const CLASS_ROWS_BY_SEASON: Record<number, { id: string; title: string; slug: string; event_type: string; start_date: string; end_date: string; date_history: null }[]> = {
+    2024: [{ id: 'class-2024', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2024-06-12', end_date: '2024-06-14', date_history: null }],
+    2025: [{ id: 'class-2025', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2025-06-12', end_date: '2025-06-14', date_history: null }],
+    2026: [{ id: 'class-2026', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2026-06-12', end_date: '2026-06-14', date_history: null }],
+  };
+  const EVENT_ROWS = [{ id: 'bnac', title: 'BNAC', slug: 'bnac', event_type: 'racing', start_date: '2026-05-24', end_date: '2026-05-24', date_history: null }];
+
+  it('filters historical class instances out, keeping only the current season row', async () => {
+    const { db } = fakeD1({
+      firstResults: { "FROM settings WHERE key = 'current_season'": { value: '2026' } },
+      allResults: {
+        'FROM events WHERE': EVENT_ROWS,
+        'FROM classes WHERE': (args) => CLASS_ROWS_BY_SEASON[args[0] as number] ?? [],
+      },
+    });
+    const months = await loadSeasonMonths(db, 2026);
+    const names = months.flatMap((m) => m.events).map((e) => e.name);
+    expect(names.filter((n) => n === 'Adult Intro')).toHaveLength(1);
+    const june = months.find((m) => m.label === 'June');
+    expect(june?.events.map((e) => e.routeId)).toEqual(['class-2026']);
+  });
+
+  it('returns no class rows (but still renders events) when current_season is unset', async () => {
+    const { db } = fakeD1({
+      allResults: {
+        'FROM events WHERE': EVENT_ROWS,
+        'FROM classes WHERE': (args) => CLASS_ROWS_BY_SEASON[args[0] as number] ?? [],
+      },
+    });
+    const months = await loadSeasonMonths(db, 2026);
+    const names = months.flatMap((m) => m.events).map((e) => e.name);
+    expect(names).not.toContain('Adult Intro');
+    expect(names).toContain('BNAC');
   });
 });

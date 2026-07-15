@@ -109,9 +109,16 @@ const OFF_SEASON_LABEL = 'Off-season';
 const EVENTS_QUERY = `SELECT id, title, slug, category AS event_type, start_date, end_date, NULL AS date_history
                        FROM events WHERE visible = 1`;
 /** The classes table's SELECT, tagged with the synthesized `'class'` category (see the header
- *  comment on why `classes` carries no category column of its own). */
+ *  comment on why `classes` carries no category column of its own). `season = ?1` is the fix for
+ *  a real display bug: the MembershipWorks import mints a `classes` row per season, so an
+ *  unfiltered read leaked 2024/2025 instances of the same class into the current calendar as
+ *  duplicate, wrong-dated entries. `events` carries no `season` column and needs no such filter. */
 const CLASSES_QUERY = `SELECT id, name AS title, slug, 'class' AS event_type, start_date, end_date, NULL AS date_history
-                        FROM classes WHERE visible = 1`;
+                        FROM classes WHERE visible = 1 AND season = ?1`;
+/** The current season, read from `settings` the same way `class-schedule.remote.ts`'s
+ *  `getClassSchedule` already does. A bound parameter (not a correlated subquery) keeps the
+ *  season lookup and the classes read as two separate, independently testable steps. */
+const CURRENT_SEASON_QUERY = `SELECT value FROM settings WHERE key = 'current_season'`;
 
 /** The best available date for ordering an event with no current-year `start_date`: its most
  *  recent `date_history` entry, or null when the row carries no date at all (a genuinely TBD
@@ -270,12 +277,16 @@ export function splitSeasonColumns(months: SeasonMonth[]): [SeasonMonth[], Seaso
 /** Read the live events and classes tables and group them into the Season shape. On any D1
  *  failure (a binding hiccup, a query error) this degrades to an empty season rather than
  *  throwing, the same safe failure this theme already uses for a missing photo (`home-images.ts`):
- *  a quiet, honest gap reads better than a broken page. */
+ *  a quiet, honest gap reads better than a broken page. The classes arm reads no rows at all when
+ *  `current_season` is missing from `settings`, rather than falling back to every season (the same
+ *  safe-failure posture `class-schedule.remote.ts`'s empty schedule already uses). */
 export async function loadSeasonMonths(db: D1Database, currentYear = new Date().getFullYear()): Promise<SeasonMonth[]> {
   try {
+    const seasonRow = await db.prepare(CURRENT_SEASON_QUERY).first<{ value: string }>();
+    const season = seasonRow ? Number(seasonRow.value) : null;
     const [events, classes] = await Promise.all([
       db.prepare(EVENTS_QUERY).all<EventRow>(),
-      db.prepare(CLASSES_QUERY).all<EventRow>(),
+      season === null ? Promise.resolve({ results: [] as EventRow[] }) : db.prepare(CLASSES_QUERY).bind(season).all<EventRow>(),
     ]);
     return buildSeasonMonths([...(events.results ?? []), ...(classes.results ?? [])], currentYear);
   } catch (err) {

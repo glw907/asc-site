@@ -71,7 +71,10 @@ const EVENTS_QUERY = `SELECT id, title, slug, category AS event_type, start_date
  *  `0003_class_images`, a rider closing the regression this pass first shipped with a literal
  *  `NULL` here): the five imported classes' own photography, already in the media library via
  *  `$theme/event-images.ts`'s `EVENT_IMAGE_TOKENS`, renders again. `classes` carries no
- *  `start_time`/`end_time` column of its own, so both select as a literal `NULL`. */
+ *  `start_time`/`end_time` column of its own, so both select as a literal `NULL`. `season = ?1` is
+ *  the fix for a real display bug: the MembershipWorks import mints a `classes` row per season, so
+ *  an unfiltered read leaked 2024/2025 instances of the same class into the listing as duplicate,
+ *  wrong-dated entries; `events` carries no `season` column and needs no such filter. */
 const CLASSES_QUERY = `SELECT id, name AS title, slug, 'class' AS event_type, start_date,
                                NULL AS start_time, end_date, NULL AS end_time,
                                NULL AS date_history, location, NULL AS short_description,
@@ -90,15 +93,26 @@ const CLASSES_QUERY = `SELECT id, name AS title, slug, 'class' AS event_type, st
                                  ELSE 'open'
                                END AS registration_status,
                                fee
-                        FROM classes WHERE visible = 1`;
+                        FROM classes WHERE visible = 1 AND season = ?1`;
+/** The current season, read from `settings` the same way `class-schedule.remote.ts`'s
+ *  `getClassSchedule` and `season-data.ts`'s `loadSeasonMonths` already do. A bound parameter (not
+ *  a correlated subquery) keeps the season lookup and the classes read as two separate,
+ *  independently testable steps. */
+const CURRENT_SEASON_QUERY = `SELECT value FROM settings WHERE key = 'current_season'`;
 
 /** Read every visible event and class row, full detail. Degrades to an empty list on any D1
- *  failure, the same safe failure `season-data.ts`'s `loadSeasonMonths` uses. */
+ *  failure, the same safe failure `season-data.ts`'s `loadSeasonMonths` uses. The classes arm reads
+ *  no rows at all when `current_season` is missing from `settings`, rather than falling back to
+ *  every season. */
 export async function readEventRows(db: D1Database): Promise<EventDetailRow[]> {
   try {
+    const seasonRow = await db.prepare(CURRENT_SEASON_QUERY).first<{ value: string }>();
+    const season = seasonRow ? Number(seasonRow.value) : null;
     const [events, classes] = await Promise.all([
       db.prepare(EVENTS_QUERY).all<EventDetailRow>(),
-      db.prepare(CLASSES_QUERY).all<EventDetailRow>(),
+      season === null
+        ? Promise.resolve({ results: [] as EventDetailRow[] })
+        : db.prepare(CLASSES_QUERY).bind(season).all<EventDetailRow>(),
     ]);
     return [...(events.results ?? []), ...(classes.results ?? [])];
   } catch (err) {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { buildEventOrder, buildEventsPage, toEventCard, type EventDetailRow } from '$theme/events-data';
+import { buildEventOrder, buildEventsPage, readEventRows, toEventCard, type EventDetailRow } from '$theme/events-data';
 import type { MediaRef } from '@glw907/cairn-cms/media';
+import { fakeD1 } from './_fake-d1';
 
 const CURRENT_YEAR = 2026;
 
@@ -262,6 +263,44 @@ describe('toEventCard', () => {
     );
     expect(card.title).toBe('BNAC');
     expect(card.routeId).toBe('bnac');
+  });
+});
+
+describe('readEventRows', () => {
+  // A class row minted across three seasons under the same name (the MembershipWorks import's own
+  // shape: a template class re-minted every rollover), keyed to the season the fake classes query
+  // is bound with.
+  const CLASS_ROWS_BY_SEASON: Record<number, EventDetailRow[]> = {
+    2024: [row({ id: 'class-2024', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2024-06-12' })],
+    2025: [row({ id: 'class-2025', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2025-06-12' })],
+    2026: [row({ id: 'class-2026', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2026-06-12' })],
+  };
+  const EVENT_ROWS = [row({ id: 'bnac', title: 'BNAC', slug: 'bnac', event_type: 'racing', start_date: '2026-05-24' })];
+
+  it('filters historical class instances out, keeping only the current season row', async () => {
+    const { db } = fakeD1({
+      firstResults: { "FROM settings WHERE key = 'current_season'": { value: '2026' } },
+      allResults: {
+        'FROM events WHERE': EVENT_ROWS,
+        'FROM classes WHERE': (args) => CLASS_ROWS_BY_SEASON[args[0] as number] ?? [],
+      },
+    });
+    const rows = await readEventRows(db);
+    const adultIntro = rows.filter((r) => r.title === 'Adult Intro');
+    expect(adultIntro).toHaveLength(1);
+    expect(adultIntro[0].id).toBe('class-2026');
+  });
+
+  it('returns no class rows (but still returns events) when current_season is unset', async () => {
+    const { db } = fakeD1({
+      allResults: {
+        'FROM events WHERE': EVENT_ROWS,
+        'FROM classes WHERE': (args) => CLASS_ROWS_BY_SEASON[args[0] as number] ?? [],
+      },
+    });
+    const rows = await readEventRows(db);
+    expect(rows.some((r) => r.event_type === 'class')).toBe(false);
+    expect(rows.some((r) => r.title === 'BNAC')).toBe(true);
   });
 });
 

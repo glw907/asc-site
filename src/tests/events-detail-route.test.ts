@@ -41,6 +41,7 @@ const HIDDEN_EVENT_ROW = { ...EVENT_ROW, id: 'hidden-uuid', slug: 'hidden-event'
 
 function dbWith(eventRows: unknown[], classRows: unknown[] = []) {
   return fakeD1({
+    firstResults: { "FROM settings WHERE key = 'current_season'": { value: '2026' } },
     allResults: {
       'FROM events WHERE visible': eventRows,
       'FROM classes WHERE visible': classRows,
