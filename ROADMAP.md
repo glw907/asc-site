@@ -107,8 +107,12 @@ pass, Geoff's before/after, the apex DNS cutover, the soak, then the MW subscrip
 cancel and GCE retirement.
 Fable-window ruling (Geoff, 2026-07-14): the runbook (delta-import verification, the
 verification pass's scope, the DNS sequence, rollback posture, the cron re-enable gate)
-is authored in-window; the cutover itself runs on Geoff's calendar post-window,
-Opus-conducted against that runbook.
+is authored in-window. Geoff WANTS the cutover itself in-window too, token budget
+permitting — the cutover is token-light next to a build pass (the verification pass is
+its main spend), so if the chain ahead of it (admin-roles + nav-reorg,
+payments-live-smoke, Geoff's walkthrough) clears with budget left, it runs
+Fable-conducted; otherwise it falls to the post-window default, Opus-conducted against
+the runbook. The soak needs no Fable either way.
 
 ### Class management `class-management`
 The in-season operations tooling for classes, on top of the pass-2.1 admin (events,
