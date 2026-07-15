@@ -1,0 +1,11 @@
+-- asc-club migration 0026: drop `club_roles`, the site's parallel role table
+-- (docs/2026-07-14-admin-roles-navlayout-design.md's phase-1 collapse).
+--
+-- `club_roles` (0001_substrate) gated `/admin/club/*` before this initiative; the gate now
+-- reads `locals.editor.role` off cairn's own typed session (the engine's role vocabulary,
+-- declared via `defineRoles` in `src/theme/cairn.config.ts`), so this table has no remaining
+-- reader or writer anywhere in the app. Its single live row (`geoff-login@907.life`, `owner`,
+-- granted by `system` at `2026-07-07 08:29:01`) is subsumed by that same address's `owner` row
+-- in cairn's own `editor` table (AUTH_DB) -- a separate, additive migration (cairn's own
+-- `migrations/0001_roles.sql`, applied to `cairn-asc-auth`, not this database).
+DROP TABLE club_roles;
