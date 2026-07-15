@@ -397,6 +397,49 @@ const membershipPricing = defineComponent({
   preview: { attributes: { tier: 'individual' } },
 });
 
+// ─── Steps / step: a numbered sequence, no card chrome (site-declared) ──────
+// A `:::steps` sequence walks the reader through an ordered procedure (before you sail, at the
+// dock, when you're done; how to apply): a left number rail whose numerals come from a CSS
+// counter in asc-components.css, never authored content, so reordering or inserting a step never
+// risks a stale number. Same nesting mechanic as `facts`/`fact` and `related`/`ref`: the
+// container filters its slot's children by class, and `step` is hidden from the standalone
+// insert menu. The title renders as a `span` (not a heading) because a step is one item in a
+// list, not a section of its own.
+function buildStep(ctx: ComponentContext): Element {
+  return h('li', { className: ['asc-step'] }, [
+    h('span', { className: ['asc-step-title'] }, ctx.slot('title')),
+    h('div', { className: ['asc-step-body'] }, ctx.slot('body')),
+  ]);
+}
+
+const step = defineComponent({
+  name: 'step',
+  label: 'Step',
+  description: 'One step in a :::steps numbered sequence.',
+  use: 'One entry inside a :::steps list (used nested).',
+  insertTemplate: ':::step[Title]\nBody copy.\n:::',
+  build: buildStep,
+  slots: [
+    { name: 'title', label: 'Title', kind: 'inline', required: true },
+    { name: 'body', label: 'Body', kind: 'markdown' },
+  ],
+  group: 'Page structure',
+  icon: 'list-checks',
+  hidden: true,
+});
+
+const steps = defineComponent({
+  name: 'steps',
+  label: 'Steps',
+  description: 'A numbered sequence of steps, rendered as an ordered list with CSS-counted numbers.',
+  use: 'Walk the reader through an ordered procedure.',
+  insertTemplate: '::::steps\n:::step[Title]\nBody copy.\n:::\n::::',
+  build: (ctx) => h('ol', { className: ['asc-steps'] }, ctx.slot('body').filter((c) => hasClass(c, 'asc-step'))),
+  slots: [{ name: 'body', label: 'Steps', kind: 'markdown' }],
+  group: 'Page structure',
+  icon: 'list-checks',
+});
+
 export const ascRegistry = defineRegistry({
   components: [
     callout,
@@ -409,6 +452,8 @@ export const ascRegistry = defineRegistry({
     ref,
     pageCta,
     ctaAction,
+    steps,
+    step,
     contactForm,
     donateForm,
     classSchedule,

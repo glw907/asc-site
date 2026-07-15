@@ -242,6 +242,82 @@
     color: var(--color-muted);
   }
 
+  /* ─── Steps: a numbered sequence, no card chrome (2026-07-15) ──────────── */
+  /* Walks the reader through an ordered procedure (before you sail, at the dock, how to apply):
+     a left number rail whose numerals are a CSS counter on the `<ol>`, never authored content, so
+     reordering or inserting a step never risks a stale number. `::before` draws the circle,
+     `::after` draws the hairline connector down to the next circle; `:last-child` drops the
+     connector after the final step per the design spec. No gold, no fireweed, no card chrome. */
+  .prose .asc-steps {
+    --flow-space: var(--spacing-m);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: asc-step;
+  }
+  .prose .asc-step {
+    counter-increment: asc-step;
+    position: relative;
+    padding-left: calc(1.75rem + var(--spacing-s));
+    padding-bottom: var(--spacing-m);
+  }
+  .prose .asc-step:last-child {
+    padding-bottom: 0;
+  }
+  .prose .asc-step::before {
+    content: counter(asc-step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--color-primary);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-primary);
+    font-size: var(--text-step--1);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .prose .asc-step::after {
+    content: '';
+    position: absolute;
+    left: calc(0.875rem - 0.5px);
+    top: 1.75rem;
+    bottom: 0;
+    width: 1px;
+    background: var(--color-card-border);
+  }
+  .prose .asc-step:last-child::after {
+    display: none;
+  }
+  .prose .asc-step-title {
+    display: block;
+    font-weight: 600;
+    font-size: var(--text-step-0);
+    color: var(--color-base-content);
+  }
+  .prose .asc-step-body {
+    margin-top: var(--spacing-3xs);
+    font-size: var(--text-step-0);
+    color: var(--color-base-content);
+  }
+  .prose .asc-step-body > * {
+    margin: 0;
+  }
+  .prose .asc-step-body > * + * {
+    margin-top: var(--spacing-2xs);
+  }
+  /* Mobile keeps the same rail, only a tighter gap between steps. */
+  @media (max-width: 40rem) {
+    .prose .asc-step {
+      padding-bottom: var(--spacing-s);
+    }
+  }
+
   /* ─── Action button: the fireweed "act now" verb, in content (2026-07-13) ─ */
   /* Home's own `.cta-btn` recipe, made reachable from page markdown. The color story's accent
      budget ("the single pop, at most twice a page") is spent ONLY through this class, on a page's
