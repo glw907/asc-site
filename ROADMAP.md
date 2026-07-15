@@ -11,7 +11,7 @@ lifecycle is the centerpiece, and everything else hangs off those two.
 
 ## Active
 
-### The money ledger `money-ledger`
+### The money ledger `money-ledger` — DONE 2026-07-13
 The QBO-shaped `transactions` table: one row per money event (charge, refund, void,
 comp, donation) with date, amounts, processor ref, fee, line items, and a future
 `qbo_ref`. Reworks the existing dues/class-fee/asset-fee reconcilers and the donate
@@ -21,7 +21,7 @@ off it. First in the program because every later initiative writes money events.
 (Split out of `qbo-integration` per Geoff's 2026-07-13 ruling that the ledger is
 designed at the payments pass, not bolted on mid-flow.)
 
-### Unified signup & membership lifecycle `unified-signup`
+### Unified signup & membership lifecycle `unified-signup` — DONE 2026-07-14
 One flow and language across both doors: public join (household + members + tier
 pricing from settings + waiver + Stripe dues checkout), join-plus-class in one pass,
 a live Renew path from the portal and reminder emails, lapse/standing semantics, and
@@ -50,10 +50,24 @@ and the site-side last-owner guard) once the cairn release ships. Member-scale a
 stays this site's own system, per Geoff's separation ruling. The consumer requirements,
 vocabulary mapping, and fork answers: `docs/2026-07-13-cairn-editor-roles-consumer-brief.md`.
 
-### Segment email `segment-email`
-Announce stays; add segment targeting (current, lapsed, class roster, instructors)
-and a compose-without-a-post path, on the existing email-templates/log substrate.
-Scope ruled by Geoff 2026-07-13: segments, not a campaign product.
+### Segment email `segment-email` — DONE 2026-07-14
+Shipped (merge 98257fe; spec docs/2026-07-14-segment-email-design.md). The Compose
+screen at /admin/club/email/compose: segment targeting (current incl. grace, lapsed,
+class roster, instructors), compose-without-a-post with the count-confirm + test-send
+gate, and the email_blasts audit history (migration 0025, live). Original scope, for
+the record: announce stays; add segment targeting and a compose-without-a-post path,
+on the existing email-templates/log substrate. Scope ruled by Geoff 2026-07-13:
+segments, not a campaign product.
+
+### Custom admin roles `admin-roles`
+The staff-roles collapse onto cairn's editor-roles seam, ruled the NEXT initiative by
+Geoff 2026-07-14 now that cairn 0.85.0 ships the seam (one identity, site-declared
+role vocabulary; ASC is the named first consumer). The work: bump the dependency
+^0.84.4 → ^0.85.0 (a 0.x caret excludes 0.85.0), declare owner/club-admin/instructor
+in site config mapped to engine capability levels, collapse `club_roles` onto the seam
+(retiring the table, the Settings grant/revoke UI, and the site-side last-owner
+guard), and keep member-scale auth separate per Geoff's ruling. The contract:
+`docs/2026-07-13-cairn-editor-roles-consumer-brief.md`.
 
 ### Payments hardening & live smoke `payments-live-smoke`
 The deliberate live-Stripe smoke that has been queued since pass 2.1, plus Turnstile

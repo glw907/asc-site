@@ -1,13 +1,49 @@
 # asc-site status
 
-**INITIATIVE 4 (segment-email) IS IN FLIGHT (2026-07-14, the program's fourth session):
-spec `docs/2026-07-14-segment-email-design.md` (Geoff-approved in-session; announce
-untouched, four segments, count-confirm + test-send gate, `email_blasts` audit table)
-+ plan `docs/plans/2026-07-14-segment-email.md` (3 serial implementer tasks + the
-conductor settle), executing as a workflow on branch `feat/segment-email` per Geoff's
-"continue to release with a workflow". If this session died mid-flight: the branch
-holds the committed progress; resume = read spec + plan, check which plan tasks'
-commits exist, continue from the settle checklist at the plan's foot.**
+**INITIATIVE 4 (segment-email) IS COMPLETE, MERGED TO MAIN (98257fe), MIGRATION LIVE,
+AND ON DEV (2026-07-14, the program's fourth session). Spec
+`docs/2026-07-14-segment-email-design.md` + plan `docs/plans/2026-07-14-segment-email.md`,
+both implemented. What landed: `/admin/club/email/compose` (landing = `email_blasts`
+history; compose = segment picker + subject + markdown body + the 3-variable palette +
+sample preview through the real render path; review = server-resolved count + roster
+sample + rendered email + send-test-to-me + the count-acknowledging confirm dialog),
+`segments.ts` (current INCL. GRACE / lapsed excl. never-paid / class:<id> guardian-aware
+/ instructors current-season; announce's currentMemberEmails is now a thin
+resolveSegment('current') caller — FLAG FOR GEOFF'S WALKTHROUGH: announce's audience
+deliberately WIDENED to include grace households, the current-includes-grace ruling
+applied consistently), `bulk-email.ts` (shared 50-chunk loop; blast row PRE-INSERTED
+then counts updated, so the audit row survives a late D1 failure; `blast:<id>`
+email_log tagging; test sends log `blast-test`, no row), and migration 0025
+(email_blasts; scratch-proven, applied LIVE, verified). Build: 3-task Sonnet workflow +
+3 Opus lenses — NOTE: structured-output schemas MISFIRED for review agents (the
+security lens died on the retry cap, the svelte lens returned degenerate placeholder
+junk); both re-ran as plain-text direct dispatches and worked. Lesson recorded: review
+lenses return prose, not schemas. One conductor-triaged fix round (9 items; the two
+that mattered: the update()-reset draft wipe BLOCKER that made the screen unable to
+send at all, and the D1 100-bound-param cap in the household IN() that would have
+broken current-segment AND announce at the live 148-household scale) + simplifier (one
+consolidation). Conductor render read on the synthetic seed: PASS across 8 captures at
+1440+390 including a REAL local end-to-end send (blast row 6/6/0, tagged log rows);
+the review-390 "mid-page header" was the Playwright fullPage sticky artifact, verified
+clean at real scroll. Rider: the e2e signup fixture now clears the FULL member FK
+closure (the render read's enrollment rows exposed the latent bootstrap break). Gate
+at close: check 0/0 (840 files), 1178 tests, build green, e2e 27/27. Deployed to dev
+manually (version b49a515b), smoked (home 200, compose 303-to-login). Budgets: ~1.41M
+subagent tokens + the Fable main loop; 3 question rounds to Geoff pre-execution, 0
+corrections. Known debt: the admin e2e login helper is still owed — this session's
+minted-session recipe is the seed (apply migrations/0000_auth.sql locally, INSERT an
+AUTH_DB editor + session row, cookie `cairn_session=<session id>`; raw id, no hash);
+Turnstile/rate-limit ride payments-live-smoke; deploys stay manual (Actions billing).
+NEXT SESSION (fresh context, per the ruling): INITIATIVE 5, CUSTOM ADMIN ROLES —
+Geoff's 2026-07-14 ruling made it the next move now that cairn 0.85.0 is on the
+registry with the editor-roles seam. Read
+docs/2026-07-13-cairn-editor-roles-consumer-brief.md + ROADMAP's admin-roles entry,
+then brainstorm; the first mechanical act is the dependency bump ^0.84.4 → ^0.85.0 (a
+0.x caret EXCLUDES 0.85.0, it will not drift in). Also queued: Geoff's dev walkthrough
+is now FOUR screens (Members, household desk, Money & Renewals, Compose — flag the
+announce grace widening), and tomorrow's apology-send verification (07-15 09:21
+in-session verifier; if that session died, check the JSONL log beside
+~/.local/asc-data/send-apology-2026-07-15.mjs and re-run --send if needed).**
 
 **PRIOR: INITIATIVE 3 (membership-admin) IS COMPLETE, MERGED TO MAIN (22c10b0), AND ON DEV
 (2026-07-14, the program's third session). Spec `docs/2026-07-14-membership-admin-design.md`
