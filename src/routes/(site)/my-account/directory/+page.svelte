@@ -50,7 +50,7 @@ same weight as the name, not the lighter `text-muted` metadata tone the househol
   </p>
 {:else}
   <div class="mt-l max-w-measure-wide">
-    <label for="directory-search" class="fieldset-legend">Search by name</label>
+    <label for="directory-search" class="fieldset-legend portal-field-label">Search by name</label>
     <input
       id="directory-search"
       type="search"
@@ -99,14 +99,3 @@ same weight as the name, not the lighter `text-muted` metadata tone the househol
     </ul>
   {/if}
 {/if}
-
-<style>
-  .fieldset-legend {
-    font-family: var(--font-display);
-    font-size: var(--text-step--1);
-    font-weight: 700;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--color-muted);
-  }
-</style>

@@ -6,6 +6,7 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
   import type { ActionData, PageData } from './$types';
   import { siteConfig } from '$theme/cairn.config';
   import { CLASS_TRACK_LABEL } from '$admin-club/lib/classes-store';
+  import { formatMemberDate } from '$member-auth/lib/format';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
@@ -25,7 +26,10 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
 {/if}
 
 {#if data.myClasses.length > 0}
-  <section class="mt-l max-w-measure-wide">
+  <!-- mt-s, not the sitewide mt-l: this is the h1's first section on a page with no intro
+       paragraph to bridge the gap (unlike household/directory, whose own intro paragraph sits at
+       mt-s), so the un-bridged h1-to-first-section rhythm matches theirs instead of reading loose. -->
+  <section class="mt-s max-w-measure-wide">
     <h2 class="m-0 text-step-1 font-semibold text-base-content">My classes</h2>
     <ul class="mt-xs flex flex-col gap-xs">
       {#each data.myClasses as row (row.enrollmentId)}
@@ -35,17 +39,17 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
             <form method="POST" action="?/withdraw">
               <input type="hidden" name="csrf" value={data.csrf} />
               <input type="hidden" name="enrollmentId" value={row.enrollmentId} />
-              <button type="submit" class="btn btn-ghost btn-xs">Withdraw</button>
+              <button type="submit" class="btn btn-xs portal-quiet-action">Withdraw</button>
             </form>
           </div>
-          {#if row.startDate}<p class="mt-2xs mb-0 text-muted">{row.startDate}{row.location ? ` · ${row.location}` : ''}</p>{/if}
+          {#if row.startDate}<p class="mt-2xs mb-0 text-muted">{formatMemberDate(row.startDate)}{row.location ? ` · ${row.location}` : ''}</p>{/if}
           {#if row.creditRedeemed}<p class="mt-2xs mb-0 text-muted">Paid with a class credit</p>{/if}
         </li>
       {/each}
     </ul>
   </section>
 {:else}
-  <section class="mt-l max-w-measure-wide">
+  <section class="mt-s max-w-measure-wide">
     <h2 class="m-0 text-step-1 font-semibold text-base-content">My classes</h2>
     <p class="mt-xs mb-0 text-step--1 text-muted">No classes on your account yet.</p>
   </section>
@@ -69,14 +73,14 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
               <form method="POST" action="?/passOffer">
                 <input type="hidden" name="csrf" value={data.csrf} />
                 <input type="hidden" name="waitlistId" value={row.waitlistId} />
-                <button type="submit" class="btn btn-ghost btn-xs">Pass this time</button>
+                <button type="submit" class="btn btn-xs portal-quiet-action">Pass this time</button>
               </form>
             </div>
           {:else}
             <form method="POST" action="?/leaveWaitlist" class="mt-xs">
               <input type="hidden" name="csrf" value={data.csrf} />
               <input type="hidden" name="waitlistId" value={row.waitlistId} />
-              <button type="submit" class="btn btn-ghost btn-xs">Leave waitlist</button>
+              <button type="submit" class="btn btn-xs portal-quiet-action">Leave waitlist</button>
             </form>
           {/if}
         </li>
@@ -97,7 +101,7 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
       <li class="rounded-box border border-card-border bg-base-100 p-s text-step--1">
         <p class="m-0 font-semibold text-base-content">{cls.name}</p>
         <p class="mt-2xs mb-0 text-muted">
-          {CLASS_TRACK_LABEL[cls.track]}{cls.startDate ? ` · ${cls.startDate}` : ''}
+          {CLASS_TRACK_LABEL[cls.track]}{cls.startDate ? ` · ${formatMemberDate(cls.startDate)}` : ''}
           {cls.fee > 0 ? ` · $${cls.fee}` : ' · free'}
           {cls.open ? '' : ' · full'}
         </p>
@@ -109,7 +113,7 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
             <input type="hidden" name="csrf" value={data.csrf} />
             <input type="hidden" name="classId" value={cls.id} />
             <fieldset class="fieldset m-0">
-              <legend class="fieldset-legend">Who's taking it?</legend>
+              <legend class="fieldset-legend portal-field-label">Who's taking it?</legend>
               <select name="memberId" class="select select-sm">
                 {#each cls.enrollees as enrollee (enrollee.memberId)}
                   <option value={enrollee.memberId} disabled={!enrollee.eligible}>
@@ -127,14 +131,3 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
     {/each}
   </ul>
 </section>
-
-<style>
-  .fieldset-legend {
-    font-family: var(--font-display);
-    font-size: var(--text-step--2);
-    font-weight: 700;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--color-muted);
-  }
-</style>

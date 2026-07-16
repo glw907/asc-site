@@ -729,4 +729,27 @@
     width: 1.1em;
     height: 1.1em;
   }
+
+  /* ─── Member portal (round 3, 2026-07-16) ───────────────────────────────────────────────── */
+  /* Every /my-account/* screen previously duplicated its own scoped `.fieldset-legend` override
+     to apply the round-2 field-label register (decisions.md's two-level ruling); four of the five
+     screens still carried the OLD uppercase-eyebrow copy, unnoticed because nothing forced them
+     to agree. One shared class, applied alongside DaisyUI's own `fieldset-legend` component
+     class, so a future portal screen opts in by adding a class rather than pasting CSS. */
+  .portal-field-label {
+    font-size: var(--text-step--1);
+    font-weight: 600;
+    color: var(--color-base-content);
+  }
+
+  /* The quiet-action button tier (originated 2026-07-15 on my-account's own Sign-out button,
+     hoisted here round 3 so every portal row action shares it instead of each page re-declaring
+     the same rule): plain, unmodified `.btn` chrome (a real border and fill) plus muted ink, a
+     step up from `.btn-ghost`'s chromeless rest state, which reads as inert text rather than a
+     button. Used for a row's non-destructive but consequential action (Release, Update listing,
+     Remove, Withdraw, Cancel request, Leave waitlist, Pass this time, Sign out); the destructive
+     confirm tier (`.btn-error`, household's "Yes, leave the club") stays separate and unchanged. */
+  .portal-quiet-action {
+    color: var(--color-muted);
+  }
 }

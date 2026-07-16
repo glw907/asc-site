@@ -12,6 +12,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
   import { siteConfig } from '$theme/cairn.config';
   import { TURNSTILE_SITE_KEY } from '$theme/turnstile';
   import { MEMBERSHIP_TIER_LABEL, type MembershipTier } from '$member-auth/lib/standing';
+  import { formatMemberDate } from '$member-auth/lib/format';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -59,7 +60,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
     <form method="POST" action="?/requestLink" class="signin-form mt-l flex flex-col gap-m">
       <input type="hidden" name="csrf" value={data.csrf} />
       <fieldset class="fieldset">
-        <legend class="fieldset-legend">Email address</legend>
+        <legend class="fieldset-legend portal-field-label">Email address</legend>
         <input class="input w-full" type="email" name="email" autocomplete="email" required />
       </fieldset>
       <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
@@ -100,7 +101,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
         <form method="POST" action="?/renew" class="mt-s flex flex-wrap items-end gap-xs">
           <input type="hidden" name="csrf" value={data.csrf} />
           <fieldset class="fieldset">
-            <legend class="fieldset-legend">Tier</legend>
+            <legend class="fieldset-legend portal-field-label">Tier</legend>
             <select class="select select-sm" name="tier" bind:value={renewTier}>
               {#each MEMBERSHIP_TIERS as tier (tier)}
                 <option value={tier}>{MEMBERSHIP_TIER_LABEL[tier]} — {formatDollars(data.tierPrices?.[tier] ?? 0)}</option>
@@ -170,12 +171,13 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
         <div class="mt-xs flex flex-wrap items-center justify-between gap-xs border-t border-card-border pt-xs text-step--1">
           <span class="text-base-content">
             {assignment.assetTypeName}{#if assignment.description} — {assignment.description}{/if}
-            {#if assignment.paymentStanding === 'outstanding'}
-              <span class="text-warning"> · payment outstanding{#if assignment.feeCents} · {formatDollars(assignment.feeCents / 100)}{/if}</span>
-            {/if}
           </span>
           <div class="flex items-center gap-xs">
             {#if assignment.paymentStanding === 'outstanding'}
+              <span class="asc-availability-chip">Payment due</span>
+              {#if assignment.feeCents}
+                <span class="tabular-nums text-muted">{formatDollars(assignment.feeCents / 100)}</span>
+              {/if}
               <form method="POST" action="?/payAssetFee">
                 <input type="hidden" name="csrf" value={data.csrf} />
                 <input type="hidden" name="assignmentId" value={assignment.id} />
@@ -185,34 +187,44 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
             <form method="POST" action="?/releaseAsset">
               <input type="hidden" name="csrf" value={data.csrf} />
               <input type="hidden" name="assignmentId" value={assignment.id} />
-              <button type="submit" class="btn btn-ghost btn-xs">Release</button>
+              <button type="submit" class="btn btn-xs portal-quiet-action">Release</button>
             </form>
           </div>
         </div>
       {/each}
 
       {#each data.waitlistEntries as entry (entry.id)}
-        <p class="mt-xs border-t border-card-border pt-xs text-step--1 text-base-content">
-          {entry.assetTypeName}: waitlist position {entry.position} of {entry.queueLength}
-        </p>
+        <div class="mt-xs flex flex-wrap items-center justify-between gap-xs border-t border-card-border pt-xs text-step--1">
+          <span class="text-base-content">{entry.assetTypeName}</span>
+          <div class="flex items-center gap-xs">
+            <span class="asc-availability-chip">Waitlist</span>
+            <span class="text-muted">Position {entry.position} of {entry.queueLength}</span>
+          </div>
+        </div>
       {/each}
 
       {#each data.requests.filter((r) => r.status === 'pending' || r.status === 'approved_awaiting_payment') as request (request.id)}
         <div class="mt-xs flex flex-wrap items-center justify-between gap-xs border-t border-card-border pt-xs text-step--1">
+          <span class="text-base-content">{request.assetTypeName}</span>
           {#if request.status === 'approved_awaiting_payment'}
-            <span class="text-base-content">Approved: {request.assetTypeName} — {formatDollars(request.fee)}</span>
-            <form method="POST" action="?/payRequest">
-              <input type="hidden" name="csrf" value={data.csrf} />
-              <input type="hidden" name="requestId" value={request.id} />
-              <button type="submit" class="btn btn-primary btn-xs">Pay</button>
-            </form>
+            <div class="flex items-center gap-xs">
+              <span class="asc-availability-chip">Approved</span>
+              <span class="tabular-nums text-muted">{formatDollars(request.fee)}</span>
+              <form method="POST" action="?/payRequest">
+                <input type="hidden" name="csrf" value={data.csrf} />
+                <input type="hidden" name="requestId" value={request.id} />
+                <button type="submit" class="btn btn-primary btn-xs">Pay</button>
+              </form>
+            </div>
           {:else}
-            <span class="text-muted">{request.assetTypeName} request pending review</span>
-            <form method="POST" action="?/cancelRequest">
-              <input type="hidden" name="csrf" value={data.csrf} />
-              <input type="hidden" name="requestId" value={request.id} />
-              <button type="submit" class="btn btn-ghost btn-xs">Cancel request</button>
-            </form>
+            <div class="flex items-center gap-xs">
+              <span class="asc-availability-chip">Pending review</span>
+              <form method="POST" action="?/cancelRequest">
+                <input type="hidden" name="csrf" value={data.csrf} />
+                <input type="hidden" name="requestId" value={request.id} />
+                <button type="submit" class="btn btn-xs portal-quiet-action">Cancel request</button>
+              </form>
+            </div>
           {/if}
         </div>
       {/each}
@@ -225,7 +237,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
         <form method="POST" action="?/requestAsset" class="mt-xs flex flex-wrap items-end gap-xs border-t border-card-border pt-xs">
           <input type="hidden" name="csrf" value={data.csrf} />
           <fieldset class="fieldset">
-            <legend class="fieldset-legend">Request an asset</legend>
+            <legend class="fieldset-legend portal-field-label">Request an asset</legend>
             <select class="select select-sm" name="assetType" required>
               {#each data.assetTypes as type (type.id)}
                 <option value={type.id}>{type.name}</option>
@@ -233,7 +245,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
             </select>
           </fieldset>
           <fieldset class="fieldset grow">
-            <legend class="fieldset-legend">Note (optional)</legend>
+            <legend class="fieldset-legend portal-field-label">Note (optional)</legend>
             <input class="input input-sm w-full" type="text" name="note" placeholder="A word about why" />
           </fieldset>
           <button type="submit" class="btn btn-primary btn-sm">Request</button>
@@ -248,7 +260,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
       <ul class="mt-xs flex flex-col gap-2xs text-step--1 text-base-content">
         {#each data.receipts as receipt (receipt.id)}
           <li class="flex flex-wrap justify-between gap-xs">
-            <span>{receipt.date.slice(0, 10)} · {receipt.what}</span>
+            <span>{formatMemberDate(receipt.date)} · {receipt.what}</span>
             <span class="tabular-nums">{formatDollars(receipt.amount)}</span>
           </li>
         {/each}
@@ -256,7 +268,10 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
     </div>
   {/if}
 
-  <p class="mt-l max-w-measure-wide text-step--1">
+  <!-- A step tighter than the sitewide `mt-l`: this row and Receipts above are both flat
+       (secondary) blocks, unlike the carded standing/household/assets objects above them, so the
+       gap between two flat siblings reads deliberately closer than the gap a card imposes. -->
+  <p class="mt-m max-w-measure-wide text-step--1">
     <a href="/my-account/classes" class="text-primary underline-offset-2 hover:underline">Classes</a>
     <span class="text-muted"> · </span>
     <a href="/my-account/directory" class="text-primary underline-offset-2 hover:underline">Member directory</a>
@@ -282,24 +297,5 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
      stack) brings all three controls' right edges into line. */
   .signin-form {
     max-width: 300px;
-  }
-
-  /* Every legend in this form is a field-level label (this page declares no separate group
-     legend), so round 2's field-label register applies to all of them: sentence case, dark ink,
-     no tracking or uppercase (Geoff, 2026-07-16: "the labels and form title look too similar,"
-     overruling the earlier one-idiom eyebrow ruling — docs/design-benchmark/decisions.md). */
-  .fieldset-legend {
-    font-size: var(--text-step--1);
-    font-weight: 600;
-    color: var(--color-base-content);
-  }
-
-  /* Portal quiet-action tier (2026-07-15 invisible-polish fix): the profile page's own "Update"
-     button already establishes plain unmodified `.btn` (real border/fill chrome, no color modifier)
-     as this portal's quiet-but-real-button convention, a step up from `.btn-ghost`'s chromeless rest
-     state, which read as plain text rather than a clickable control. Muted ink keeps it visually
-     quieter than the primary/error tiers used elsewhere on this page. */
-  .portal-quiet-action {
-    color: var(--color-muted);
   }
 </style>

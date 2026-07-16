@@ -41,7 +41,7 @@ primary sets any household member's), and the lean leave-the-club action (design
           <form method="POST" action="?/removeMember">
             <input type="hidden" name="csrf" value={data.csrf} />
             <input type="hidden" name="memberId" value={member.id} />
-            <button type="submit" class="btn btn-ghost btn-xs">Remove</button>
+            <button type="submit" class="btn btn-xs portal-quiet-action">Remove</button>
           </form>
         {/if}
       </div>
@@ -53,7 +53,7 @@ primary sets any household member's), and the lean leave-the-club action (design
           <option value="partial" selected={member.directoryVisibility === 'partial'}>Partial</option>
           <option value="hidden" selected={member.directoryVisibility === 'hidden'}>Hidden</option>
         </select>
-        <button type="submit" class="btn btn-ghost btn-xs">Update listing</button>
+        <button type="submit" class="btn btn-xs portal-quiet-action">Update listing</button>
       </form>
     </li>
   {/each}
@@ -64,15 +64,15 @@ primary sets any household member's), and the lean leave-the-club action (design
   <form method="POST" action="?/addMember" class="mt-xs flex flex-col gap-s">
     <input type="hidden" name="csrf" value={data.csrf} />
     <fieldset class="fieldset">
-      <legend class="fieldset-legend">Name</legend>
+      <legend class="fieldset-legend portal-field-label">Name</legend>
       <input class="input w-full" type="text" name="name" required />
     </fieldset>
     <fieldset class="fieldset">
-      <legend class="fieldset-legend">Email (optional)</legend>
+      <legend class="fieldset-legend portal-field-label">Email (optional)</legend>
       <input class="input w-full" type="email" name="email" />
     </fieldset>
     <fieldset class="fieldset">
-      <legend class="fieldset-legend">Birthdate (optional)</legend>
+      <legend class="fieldset-legend portal-field-label">Birthdate (optional)</legend>
       <input class="input w-full" type="date" name="birthdate" />
     </fieldset>
     <button type="submit" class="btn btn-primary self-start">Add member</button>
@@ -97,23 +97,3 @@ primary sets any household member's), and the lean leave-the-club action (design
     </div>
   {/if}
 </section>
-
-<style>
-  .fieldset-legend {
-    font-family: var(--font-display);
-    font-size: var(--text-step--1);
-    font-weight: 700;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--color-muted);
-  }
-
-  /* Portal quiet-action tier (2026-07-15 invisible-polish fix): matches my-account/+page.svelte's
-     own `.portal-quiet-action` (plain unmodified `.btn`, the profile page's own "Update" button
-     convention, plus muted ink), a step up from `.btn-ghost`'s chromeless rest state. This button
-     opens the confirm step; it must not read as destructive itself, that weight belongs only to the
-     "Yes, leave the club" `.btn-error` confirm below. */
-  .portal-quiet-action {
-    color: var(--color-muted);
-  }
-</style>

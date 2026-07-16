@@ -42,16 +42,16 @@ own "3. Profile"). -->
 <form method="POST" action="?/updateProfile" class="mt-l flex max-w-measure-wide flex-col gap-m">
   <input type="hidden" name="csrf" value={data.csrf} />
   <fieldset class="fieldset">
-    <legend class="fieldset-legend">Email address</legend>
+    <legend class="fieldset-legend portal-field-label">Email address</legend>
     <input class="input w-full" type="email" name="email" autocomplete="email" value={data.profile.email} />
   </fieldset>
   <fieldset class="fieldset">
-    <legend class="fieldset-legend">Phone number</legend>
+    <legend class="fieldset-legend portal-field-label">Phone number</legend>
     <input class="input w-full" type="tel" name="phone" autocomplete="tel" placeholder="+19075551234" value={data.profile.phone} />
     <p class="mt-2xs mb-0 text-step--2 text-muted">With a country code, like +19075551234.</p>
   </fieldset>
   <fieldset class="fieldset">
-    <legend class="fieldset-legend">Birthdate</legend>
+    <legend class="fieldset-legend portal-field-label">Birthdate</legend>
     <input class="input w-full" type="date" name="birthdate" value={data.profile.birthdate} />
     <p class="mt-2xs mb-0 text-step--2 text-muted">Used for class age groups and the young-adult rate; never shown to other members.</p>
   </fieldset>
@@ -72,14 +72,3 @@ own "3. Profile"). -->
     <button type="submit" class="btn btn-sm">Update</button>
   </form>
 </section>
-
-<style>
-  .fieldset-legend {
-    font-family: var(--font-display);
-    font-size: var(--text-step--1);
-    font-weight: 700;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
-    color: var(--color-muted);
-  }
-</style>

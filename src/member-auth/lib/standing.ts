@@ -23,6 +23,7 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import { getRenewalGraceDays } from '$admin-club/lib/club-settings';
 import { toSqliteDatetime } from './crypto';
+import { formatMemberDate, parseMemberDate } from './format';
 
 // REFUND-AWARE (migration 0023, docs/plans/2026-07-14-membership-admin.md Task 2): every
 // membership lookup in this module carries AND refunded_at IS NULL, so a refunded row reads as
@@ -106,25 +107,6 @@ export interface HouseholdStanding {
   paidAt: string | null;
 }
 
-const LONG_DATE = new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' });
-
-/** Format a Date as a long civil date ("July 7, 2027"), reading it as UTC: every date this module
- *  computes derives from a `toSqliteDatetime`-shaped UTC string, so the display must read the
- *  same civil date back, never a locally-shifted one. */
-function formatCivilDate(date: Date): string {
-  return LONG_DATE.format(date);
-}
-
-/** Parse a stored `paid_at` value into a `Date`, accepting either a bare civil date
- *  ("YYYY-MM-DD") or this schema's own full SQLite-datetime shape ("YYYY-MM-DD HH:MM:SS"),
- *  reading both as UTC (mirrors the offer claim page's own `formatExpiry` parsing convention:
- *  `sqliteDatetime.replace(' ', 'T') + 'Z'`). `paid_at` has shipped no write path yet as of this
- *  migration, so its exact shape is not yet fixed by any real writer; this accepts either. */
-function parseStoredDate(value: string): Date {
-  const iso = value.length <= 10 ? `${value}T00:00:00Z` : `${value.replace(' ', 'T')}Z`;
-  return new Date(iso);
-}
-
 /** `date`, one calendar year later (same month and day; JS `Date`'s own rollover handles a Feb 29
  *  boundary, not specially guarded here since no membership pricing or policy hinges on that
  *  single day). */
@@ -150,7 +132,7 @@ interface StandingWindow {
  *  so the boundary math lives in exactly one place. */
 async function standingWindowFor(db: D1Database, paidAt: string, now: Date): Promise<StandingWindow> {
   const graceDays = await getRenewalGraceDays(db);
-  const expiry = plusOneYear(parseStoredDate(paidAt));
+  const expiry = plusOneYear(parseMemberDate(paidAt));
   const graceEnd = plusDays(expiry, graceDays);
   const status: 'current' | 'grace' | 'lapsed' = now <= expiry ? 'current' : now <= graceEnd ? 'grace' : 'lapsed';
   return { status, expiry, graceEnd };
@@ -196,7 +178,7 @@ export async function getHouseholdStanding(db: D1Database, householdId: string):
  * for.
  */
 export function renewalExpiryFrom(paidAt: string): Date {
-  return plusOneYear(parseStoredDate(paidAt));
+  return plusOneYear(parseMemberDate(paidAt));
 }
 
 /**
@@ -241,10 +223,10 @@ export async function getMemberStanding(db: D1Database, memberId: string): Promi
   const { status, expiry, graceEnd } = await standingWindowFor(db, standing.paidAt, new Date());
   const statusLine =
     status === 'current'
-      ? `Current through ${formatCivilDate(expiry)}`
+      ? `Current through ${formatMemberDate(expiry)}`
       : status === 'grace'
-        ? `Your membership lapsed ${formatCivilDate(expiry)} · renew by ${formatCivilDate(graceEnd)} to avoid a gap`
-        : `Your membership lapsed ${formatCivilDate(expiry)}`;
+        ? `Your membership lapsed ${formatMemberDate(expiry)} · renew by ${formatMemberDate(graceEnd)} to avoid a gap`
+        : `Your membership lapsed ${formatMemberDate(expiry)}`;
 
   return {
     memberId: member.id,
