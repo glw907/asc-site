@@ -4,6 +4,80 @@
 > STATUS.md's preamble). History only: nothing here is a live instruction, and entries
 > reflect what was true when written. The live rolling status is docs/STATUS.md.
 
+**SHARED-COMPONENTS PASS BUILT AND PUSHED (2026-07-15 day, Fable-conducted design review +
+same-session execution on Geoff's "proceed on all fronts"). The review read the dev site
+(15 full-page captures, 4 read by the conductor, 11 by an Opus observation agent) against a
+component inventory and found one dominant defect: structured facts wearing bold-label prose,
+plus ad hoc cross-references and bespoke page closers on every page. THE SHIPPED VOCABULARY
+(all in src/theme/markdown/components.ts + asc-components.css, registry-native, tokens only):
+`:::facts` (semantic dl label/value rows, no card chrome), `:::related` (rule + eyebrow
+cross-reference lines) and `:::page-cta` (the one sitewide closer; a primary action spends the
+fireweed budget through .asc-cta-btn — conductor fix 28d5b7c after the chassis .cta-primary
+rendered navy), `:::steps` (CSS-counter number rail, role=list/listitem for WebKit),
+`::::table{variant="results|fees|gear"}` (figure + caption/legend slots, aria-labelledby/
+describedby wiring, tabular numerals; legends finally attach to the recap posts' scoring keys),
+unified category/availability chips (home's C7 dot/star vocabulary on Events + ClassSchedule +
+event detail; availability is a separate neutral outline chip), and a `requirement` callout
+tone. BUGS KILLED: join's literal ::membership-pricing text (ROOT CAUSE IS CAIRN'S OWN:
+the engine's insertTemplate for zero-slot inline use is invalid single-line directive syntax,
+and hydrate:true islands can never sit mid-sentence — div wrapper; DX harvest), post deck
+duplication (every post description is a Hugo auto-summary prefix; descriptions are now
+meta-only for posts), the "News — 0 posts" dead card (grid AND stat now count browsable
+topics), events mid-word truncation. SIX EXEMPLAR PAGES retrofitted (moorings, visiting,
+join, NMG closing sections, education closer, northern-lights recap); the full site-wide
+consolidation is deliberately a later content pass. FRAGMENTS POLICY (Geoff, 2026-07-15):
+the next cairn release adds a "fragments" concept; until it lands we duplicate freely,
+converge duplicated wording gently toward fragment-ready canonical forms, and log everything
+in docs/fragment-candidates.md (9 entries seeded with canonical wordings). GATE AT CLOSE:
+check 0/0 (854 files), 1259 unit tests, build green, e2e 33/33 twice (baselines regenerated
+once for chips/closer/truncation: events x5 viewports, class detail, event detail, education).
+Conductor render reads: all six retrofit pages + events + posts at 390/1440, dark-mode spot
+checks, zoomed crops for the step rail and education's restored fireweed closer. REVIEW GATE:
+svelte-reviewer and daisyui-a11y both no-blockers; the fix round (558b72f) landed the two a11y
+warnings (WebKit list-role strip, table caption/legend association), the arrow-in-accessible-
+name and chip-edge suggestions, the dead topics payload, and blessed multi-table grouping in
+the table doc. Plan: docs/plans/2026-07-15-shared-components.md (T0 also fixed the e2e
+warm-replica FK gap and moved Playwright to dedicated port 4179 — both infra follow-ups from
+the payments entry, now DONE). FOR GEOFF: before/after review of the six retrofit pages +
+events on dev when convenient (the smoke's own gate list below is untouched and still first);
+the "before" captures are archived in this session's scratchpad. BUDGET: ~1.75M subagent
+tokens across 13 dispatches (7 implementers, 1 simplifier, 2 reviewers, 1 fix round, 2
+review-phase observers); ZERO questions asked of Geoff mid-pass (4 unprompted steers received:
+skill routing, Fable economy, fragments x2). NEXT CANDIDATES: the content-consolidation pass
+once cairn fragments ship; the event-detail page's remaining older styling; NMG full
+de-carding; education pacing (existing backlog). POST-RELEASE FIX (a7c5cae, Geoff-caught on
+dev): the pass's :not(.cta-link) specificity bump made the unlayered prose-link rule beat
+every TOC variant's matched-weight override — doubled underline on the rail. Root-cause fix,
+not a weight bump: TOC furniture stamps `not-prose-links` and the site.css rule excludes that
+subtree (contract over arms race; the loose `not-prose` marker was NOT reused — it wraps real
+prose links). Side effect, deliberate: the mobile boxed .toc's links drop their underline,
+joining every other TOC variant's quiet idiom. e2e re-ran 33/33, no baseline churn (the rail
+sits outside the education test's frame — noting the pixel suite has NO viewport that shows
+the TOC rail, which is how the regression escaped it; candidate rider for a future pass).**
+
+**OVERNIGHT AUTHORING RUN COMPLETE (2026-07-15, the predecessor to the hardening run above: Opus
+agents researched, drafted, and adversarially verified; Fable briefed, reviewed line-level,
+triaged). Authored the payments-live-smoke spec (docs/2026-07-15-payments-live-smoke-design.md) +
+plan (docs/plans/2026-07-15-payments-live-smoke.md) + the mw-cutover runbook
+(docs/2026-07-15-mw-cutover-runbook.md), the polish-backlog triage
+(docs/design-benchmark/polish-triage.md), and the admin e2e login helper
+(e2e/helpers/admin-session.ts + admin-login.spec.ts). Commits 5abff25 / 4fc774e / 7598470 /
+f920d2f, DELIBERATELY UNPUSHED (push=dev-deploy; part of the same unpushed stack as the hardening
+commits above — push them all together on the morning go). THE ADVERSARIAL VERIFY ROUND PAID (all
+findings confirmed against source before editing): (1) the cutover flip is ROUTE reassignment, not
+custom domains — a custom domain refuses the existing proxied records and its rollback strands the
+apex recordless; runbook rewritten, routes primary; (2) the pre-flip permalink crawl was
+legacy-against-legacy false green — now the legacy URL list against the dev build; (3) requestLink
+(/my-account signed-out sign-in) is a FIFTH ungated public magic-link sender both researcher and
+drafter missed — added to spec+plan (and gated by the hardening run above); (4) refunds live on the
+household desk (admin/club/members/[id] ?/refund), not the money screen — all references fixed; (5)
+the Workers ratelimit binding went GA 2025-09 — the plan declares [[ratelimits]], not
+unsafe.bindings. STANDING FINDINGS still true: dev.aksailingclub.org is NOT behind Access (verified
+live 200 tokenless; project CLAUDE.md's Access section is STALE, left unedited pending Geoff's §6
+ruling; the asc-cloudflare-access memory is updated); the webhook-reconcile path has never fired
+(the smoke is its first execution); three Turnstile widgets cover the site (0x4AAAAAACaRcPmackdot0hZ),
+two orphans routed to the infra tidy (polish-triage.md).**
+
 **INITIATIVE 5 (admin-roles + admin-nav-reorg) EXECUTED, CLOSED, AND LIVE ON DEV
 (2026-07-15 early, the session that watched 0.86.0 land and ran the whole pass on
 Geoff's "full implementation and publish with a workflow" ruling). Bump ^0.84.4 →
