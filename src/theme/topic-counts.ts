@@ -10,10 +10,11 @@ export interface TopicCount {
   count: number;
 }
 
-/** Every curated topic that has at least one live post, in the order the vocabulary declares
- *  them. Both the Browse-by-Topic grid and the posts index's "topics" stat read this narrower
- *  list: a zero-post topic is still a real curated topic, but a clickable card for it would
- *  dead-end a visitor, and a stat counting it would sit above a grid that omits it. */
+/** Every curated topic that has at least one live post, busiest first (basic-polish batch 2b,
+ *  2026-07-16: the grid reads as a ranked "what's active here" list, not the vocabulary's
+ *  declaration order). Both the Browse-by-Topic grid and the posts index's "topics" stat read
+ *  this narrower list: a zero-post topic is still a real curated topic, but a clickable card
+ *  for it would dead-end a visitor, and a stat counting it would sit above a grid that omits it. */
 export function browsableTopics(topics: TopicCount[]): TopicCount[] {
-  return topics.filter((topic) => topic.count > 0);
+  return topics.filter((topic) => topic.count > 0).sort((a, b) => b.count - a.count);
 }

@@ -21,11 +21,14 @@
 <h1 class="mt-2xs mb-0 font-display text-step-5 font-semibold leading-tight tracking-tight text-base-content">
   {data.topic.label}
 </h1>
+<!-- The index's own stat-line vocabulary (basic-polish batch 2b, 2026-07-16): a post-count line
+     under the h1, in the same eyebrow-weight styling as /posts's stats bar counts. -->
+<p class="mt-2xs text-step--1 text-muted">{data.posts.length} {data.posts.length === 1 ? 'post' : 'posts'}</p>
 
 {#if data.posts.length > 0}
   <ul class="mt-m flex flex-col gap-xs">
     {#each data.posts as post (post.id)}
-      <li class="flex flex-wrap items-baseline gap-xs">
+      <li class="flex flex-col gap-3xs sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-xs">
         <a href={post.permalink} class="font-semibold text-primary">{post.title}</a>
         {#if post.date}<time datetime={post.date} class="text-step--1 text-muted">{formatDate(post.date)}</time>{/if}
       </li>

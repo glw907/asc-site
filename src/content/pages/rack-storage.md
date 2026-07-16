@@ -14,7 +14,11 @@ Racks are for kayaks, paddleboards, canoes, and small sailboats. Stored items mu
 
 Use the [Issues & Support form](/issues-and-support/?category=storage#report-an-issue) and select **Small boat rack**. You can also ask in `#site` on Discord.
 
-**Cost:** $50/season
+::::facts
+:::fact[Cost]
+$50/season
+:::
+::::
 
 ## Rules
 
@@ -23,4 +27,7 @@ Use the [Issues & Support form](/issues-and-support/?category=storage#report-an-
 - The ASC is not a secure facility: all stored items are kept at the owner's risk
 - All items must be removed at the end of the season
 
-[All seasonal storage options →](/seasonal-storage/)
+::::related
+:::ref[All seasonal storage options]{href="/seasonal-storage/"}
+:::
+::::

@@ -10,7 +10,9 @@ For eligibility requirements and how to apply for each option, see [Seasonal Sto
 
 ## Moorings
 
-**Status: Waitlist.** Multi-year wait is typical.
+:::availability[Waitlist]
+Multi-year wait is typical.
+:::
 
 Moorings are the most in-demand resource at the club. Most members wait two or more seasons before a space opens. Get involved early: race, volunteer, attend work parties. You'll get priority consideration when spots open up.
 
@@ -18,7 +20,9 @@ Moorings are the most in-demand resource at the club. Most members wait two or m
 
 ## Long-Term RV Parking
 
-**Status: Waitlist.** Multi-year wait is typical.
+:::availability[Waitlist]
+Multi-year wait is typical.
+:::
 
 Spaces on Trailer Row fill up nearly every year. Waitlists commonly run multiple seasons. Spaces renew annually, so spots do open periodically, but demand stays high.
 
@@ -26,7 +30,8 @@ Spaces on Trailer Row fill up nearly every year. Waitlists commonly run multiple
 
 ## Trailered Boat Parking
 
-**Status: Contact to check availability.**
+:::availability[Contact to check availability]
+:::
 
 Availability varies season to season. Contact the Site Committee Chair to find out whether spaces are open or whether you'd be joining a waitlist.
 
@@ -34,7 +39,8 @@ Availability varies season to season. Contact the Site Committee Chair to find o
 
 ## Rack Storage
 
-**Status: Generally available.**
+:::availability[Generally available]
+:::
 
 Rack storage is the most accessible of our four storage options. Spaces are usually available without a long wait.
 

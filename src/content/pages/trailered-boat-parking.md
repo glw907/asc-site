@@ -14,7 +14,11 @@ Spaces are for actively used boats: at minimum, your boat should sail at least t
 
 Use the [Issues & Support form](/issues-and-support/?category=storage#report-an-issue) and select **Trailered boat parking**. You can also ask in `#site` on Discord.
 
-**Cost:** $100/season
+::::facts
+:::fact[Cost]
+$100/season
+:::
+::::
 
 ## Rules
 

@@ -26,6 +26,7 @@ Scoring uses the **Low Point System** (1 point for 1st, 2 for 2nd, etc.).
 
 #### Fleet Summary
 
+::::table{variant="results"}
 **BCN Fleet**
 
 <table><thead><tr><th>Pos</th><th>Helm</th><th>Crew</th><th>Class</th><th>R1</th><th>R2</th><th>Total</th><th>Nett</th></tr></thead><tbody><tr><td>1</td><td>Steve R.</td><td>Will M.</td><td>BCN</td><td>1.00</td><td>1.00</td><td>2.00</td><td>2.00</td></tr><tr><td>2</td><td>Dave J.</td><td>Elayne H.</td><td>BCN</td><td>2.00</td><td>2.00</td><td>4.00</td><td>4.00</td></tr><tr><td>3</td><td>Brie B.</td><td>Oliver W.</td><td>BCN</td><td>3.00</td><td>4.00</td><td>7.00</td><td>7.00</td></tr><tr><td>4</td><td>Patrick F.</td><td>Tad</td><td>BCN</td><td>5.00</td><td>3.00</td><td>8.00</td><td>8.00</td></tr><tr><td>5</td><td>Geoff W.</td><td>Hannah W.</td><td>BCN</td><td>4.00</td><td>5.00</td><td>9.00</td><td>9.00</td></tr></tbody></table>
@@ -34,8 +35,15 @@ Scoring uses the **Low Point System** (1 point for 1st, 2 for 2nd, etc.).
 
 <table><thead><tr><th>Pos</th><th>Helm</th><th>Crew</th><th>Class</th><th>R1</th><th>R2</th><th>Total</th><th>Nett</th></tr></thead><tbody><tr><td>1</td><td>Cathy W.</td><td></td><td>LASE</td><td>1.00</td><td>1.00</td><td>2.00</td><td>2.00</td></tr><tr><td>2</td><td>Adrian C.</td><td></td><td>LAS4.7</td><td>3.00</td><td>2.00</td><td>5.00</td><td>5.00</td></tr><tr><td>3</td><td>Jon F.</td><td>Gabe F.</td><td>H17P</td><td>2.00</td><td>5.00 DNC</td><td>7.00</td><td>7.00</td></tr><tr><td>4</td><td>TL S.</td><td></td><td>VNT24</td><td>5.00 DNC</td><td>5.00 DNC</td><td>10.00</td><td>10.00</td></tr></tbody></table>
 
+:::legend
+**Scoring Codes:**
+*DNC* = Did Not Come to Starting Area
+:::
+::::
+
 ### Race Detail
 
+::::table{variant="results"}
 **R1 – BCN Fleet – 8/30/25**
 
 <table><thead><tr><th>Rank</th><th>Class</th><th>Sail</th><th>Helm</th><th>Crew</th><th>USPN</th><th>Elapsed</th><th>Corrected</th><th>BCE</th><th>Pts</th></tr></thead><tbody><tr><td>1</td><td>BCN</td><td>5245</td><td>Steve R.</td><td>Will M.</td><td>87</td><td>19:13</td><td>0:22:05</td><td>0:00:00</td><td>1.00</td></tr><tr><td>2</td><td>BCN</td><td>5263</td><td>Dave J.</td><td>Elayne H.</td><td>87</td><td>20:28</td><td>0:23:31</td><td>0:01:15</td><td>2.00</td></tr><tr><td>3</td><td>BCN</td><td>5260</td><td>Brie B.</td><td>Oliver W.</td><td>87</td><td>21:02</td><td>0:24:11</td><td>0:01:49</td><td>3.00</td></tr><tr><td>4</td><td>BCN</td><td>5262</td><td>Geoff W.</td><td>Hannah W.</td><td>87</td><td>22:06</td><td>0:25:24</td><td>0:02:53</td><td>4.00</td></tr><tr><td>5</td><td>BCN</td><td>5104</td><td>Patrick F.</td><td>Tad</td><td>87</td><td>22:49</td><td>0:26:14</td><td>0:03:36</td><td>5.00</td></tr></tbody></table>
@@ -52,6 +60,12 @@ Scoring uses the **Low Point System** (1 point for 1st, 2 for 2nd, etc.).
 
 <table><thead><tr><th>Rank</th><th>Class</th><th>Sail</th><th>Helm</th><th>Crew</th><th>USPN</th><th>Elapsed</th><th>Corrected</th><th>BCE</th><th>Pts</th></tr></thead><tbody><tr><td>1</td><td>LASE</td><td>21272</td><td>Cathy W.</td><td></td><td>91.1</td><td>31:01</td><td>0:34:03</td><td>0:00:00</td><td>1.00</td></tr><tr><td>2</td><td>LAS4.7</td><td>4</td><td>Adrian C.</td><td></td><td>95.5</td><td>41:37</td><td>0:43:35</td><td>0:09:06</td><td>2.00</td></tr></tbody></table>
 
+:::legend
+**Race Detail Columns:**
+*USPN* = US Sailing Portsmouth Number (handicap rating) | *BCE* = Corrected Time expressed as Boat-on-Boat (minutes:seconds behind leader) | *Pts* = Points awarded
+:::
+::::
+
 *With gratitude to Principal Race Officer **Brie Busey** and the Race Committee (**Joyce Cryan**, **Christopher Cryan**, **Camile Oliver**, and **Paul Willing**) for running the Governor's Cup Regatta.*
 
 ### 2025 ASC Fireweed Ladies Race – Results
@@ -61,12 +75,15 @@ Scoring uses the **Low Point System** (1 point for 1st, 2 for 2nd, etc.).
 
 #### Fleet Summary
 
+::::table{variant="results"}
 **PN Fleet**
 
 <table><thead><tr><th>Pos</th><th>Helm</th><th>Crew</th><th>Class</th><th>R1</th><th>R2</th><th>R3</th><th>R4</th><th>Total</th><th>Nett</th></tr></thead><tbody><tr><td>1</td><td>Emily R.</td><td>Steve R.</td><td>BCN</td><td>5.00</td><td>1.00</td><td>1.00</td><td>1.00</td><td>8.00</td><td>8.00</td></tr><tr><td>2</td><td>Olivia C.</td><td>Brie B.</td><td>BCN</td><td>1.00</td><td>5.00</td><td>2.00</td><td>5.00</td><td>13.00</td><td>13.00</td></tr><tr><td>3</td><td>Adriana R.</td><td>Gabe B.</td><td>BCN</td><td>4.00</td><td>3.00</td><td>3.00</td><td>3.00</td><td>13.00</td><td>13.00</td></tr><tr><td>4</td><td>Cathy W.</td><td>Nancy B.</td><td>BCN</td><td>2.00</td><td>4.00</td><td>6.00</td><td>2.00</td><td>14.00</td><td>14.00</td></tr><tr><td>5</td><td>Charlotte M.</td><td>Benjamin S.</td><td>BCN</td><td>6.00</td><td>2.00</td><td>4.00</td><td>4.00</td><td>16.00</td><td>16.00</td></tr><tr><td>6</td><td>Saria C.</td><td>Darren B.</td><td>BCN</td><td>3.00</td><td>7.00</td><td>7.00</td><td>7.00</td><td>24.00</td><td>24.00</td></tr><tr><td>7</td><td>Kara N.</td><td>Eric C.</td><td>BCN</td><td>7.00</td><td>6.00</td><td>8.00</td><td>6.00</td><td>27.00</td><td>27.00</td></tr><tr><td>8</td><td>Hannah W.</td><td>Prainie Y.</td><td>BCN</td><td>8.00</td><td>8.00</td><td>5.00</td><td>8.00</td><td>29.00</td><td>29.00</td></tr></tbody></table>
+::::
 
 #### Race Detail
 
+::::table{variant="results"}
 **R1 – PN Fleet – 8/9/25**
 
 <table><thead><tr><th>Rank</th><th>Class</th><th>Sail</th><th>Helm</th><th>Crew</th><th>USPN</th><th>Elapsed</th><th>Corrected</th><th>BCE</th><th>Pts</th></tr></thead><tbody><tr><td>1</td><td>BCN</td><td>5260</td><td>Olivia C.</td><td>Brie B.</td><td>87</td><td>25:13</td><td>0:28:59</td><td>0:00:00</td><td>1.00</td></tr><tr><td>2</td><td>BCN</td><td>5281a</td><td>Cathy W.</td><td>Nancy B.</td><td>87</td><td>25:37</td><td>0:29:27</td><td>0:00:24</td><td>2.00</td></tr><tr><td>3</td><td>BCN</td><td>5281b</td><td>Saria C.</td><td>Darren B.</td><td>87</td><td>25:43</td><td>0:29:34</td><td>0:00:30</td><td>3.00</td></tr><tr><td>4</td><td>BCN</td><td>5267</td><td>Adriana R.</td><td>Gabe B.</td><td>87</td><td>25:44</td><td>0:29:35</td><td>0:00:31</td><td>4.00</td></tr><tr><td>5</td><td>BCN</td><td>5245</td><td>Emily R.</td><td>Steve R.</td><td>87</td><td>26:10</td><td>0:30:05</td><td>0:00:57</td><td>5.00</td></tr><tr><td>6</td><td>BCN</td><td>5001</td><td>Charlotte M.</td><td>Benjamin S.</td><td>87</td><td>26:31</td><td>0:30:29</td><td>0:01:18</td><td>6.00</td></tr><tr><td>7</td><td>BCN</td><td>966</td><td>Kara N.</td><td>Eric C.</td><td>87</td><td>26:32</td><td>0:30:30</td><td>0:01:19</td><td>7.00</td></tr><tr><td>8</td><td>BCN</td><td>5262</td><td>Hannah W.</td><td>Prainie Y.</td><td>87</td><td>26:42</td><td>0:30:41</td><td>0:01:29</td><td>8.00</td></tr></tbody></table>
@@ -82,5 +99,11 @@ Scoring uses the **Low Point System** (1 point for 1st, 2 for 2nd, etc.).
 **R4 – PN Fleet – 8/9/25**
 
 <table><thead><tr><th>Rank</th><th>Class</th><th>Sail</th><th>Helm</th><th>Crew</th><th>USPN</th><th>Elapsed</th><th>Corrected</th><th>BCE</th><th>Pts</th></tr></thead><tbody><tr><td>1</td><td>BCN</td><td>5245</td><td>Emily R.</td><td>Steve R.</td><td>87</td><td>11:16</td><td>0:12:57</td><td>0:00:00</td><td>1.00</td></tr><tr><td>2</td><td>BCN</td><td>5281a</td><td>Cathy W.</td><td>Nancy B.</td><td>87</td><td>11:55</td><td>0:13:42</td><td>0:00:39</td><td>2.00</td></tr><tr><td>3</td><td>BCN</td><td>5267</td><td>Adriana R.</td><td>Gabe B.</td><td>87</td><td>12:13</td><td>0:14:03</td><td>0:00:57</td><td>3.00</td></tr><tr><td>4</td><td>BCN</td><td>5001</td><td>Charlotte M.</td><td>Benjamin S.</td><td>87</td><td>12:27</td><td>0:14:19</td><td>0:01:11</td><td>4.00</td></tr><tr><td>5</td><td>BCN</td><td>5260</td><td>Olivia C.</td><td>Brie B.</td><td>87</td><td>12:33</td><td>0:14:26</td><td>0:01:17</td><td>5.00</td></tr><tr><td>6</td><td>BCN</td><td>966</td><td>Kara N.</td><td>Eric C.</td><td>87</td><td>12:35</td><td>0:14:28</td><td>0:01:19</td><td>6.00</td></tr><tr><td>7</td><td>BCN</td><td>5281b</td><td>Saria C.</td><td>Darren B.</td><td>87</td><td>12:37</td><td>0:14:30</td><td>0:01:21</td><td>7.00</td></tr><tr><td>8</td><td>BCN</td><td>5262</td><td>Hannah W.</td><td>Prainie Y.</td><td>87</td><td>13:54</td><td>0:15:59</td><td>0:02:38</td><td>8.00</td></tr></tbody></table>
+
+:::legend
+**Race Detail Columns:**
+*USPN* = US Sailing Portsmouth Number (handicap rating) | *BCE* = Corrected Time expressed as Boat-on-Boat (minutes:seconds behind leader) | *Pts* = Points awarded
+:::
+::::
 
 *With gratitude to Principal Race Officer **Brie Busey** and the Race Committee (**Tom Harrison**, **Joyce Cryan**, **Paul Willing**, **Jake Black**, **Aksel Christensen**, and **Geoff Wrigh**t) for running the Fireweed.*

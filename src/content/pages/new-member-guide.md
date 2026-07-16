@@ -54,11 +54,23 @@ The ASC sits on beautiful lakeside property in Big Lake, about an hour north of 
 
 ### What's on site
 
-- **Clubhouse:** Grill, microwave, coffee maker, hot water heater, shared fridge (day use only; volunteers empty each weekend), and a wood-fired sauna
-- **Restrooms:** Porta-potty service during the summer season; outhouse year-round
-- **Electricity:** Available at the camping area
-- **Fire pit:** An established fire pit by the waterfront (ground fires are not permitted anywhere else)
-- **Lakewater sink:** For dishes and hand washing (not for drinking)
+::::facts
+:::fact[Clubhouse]
+Grill, microwave, coffee maker, hot water heater, shared fridge (day use only; volunteers empty each weekend), and a wood-fired sauna
+:::
+:::fact[Restrooms]
+Porta-potty service during the summer season; outhouse year-round
+:::
+:::fact[Electricity]
+Available at the camping area
+:::
+:::fact[Fire pit]
+An established fire pit by the waterfront (ground fires are not permitted anywhere else)
+:::
+:::fact[Lakewater sink]
+For dishes and hand washing (not for drinking)
+:::
+::::
 
 Three Bears grocery store and Lakeside Laundromat (with hot showers) are about ten minutes away.
 
@@ -138,11 +150,23 @@ Even 20 minutes of work makes a difference. Members who actively contribute thro
 
 When you joined the ASC, you created an account in our membership system. You'll use this account throughout your time as a member for several important tasks:
 
-- **Update your contact information:** keep your profile current
-- **Register for events and classes:** sign up for regattas, courses, and social events
-- **Manage your directory listing:** control how you appear to other members
-- **Renew your membership:** handle annual renewals and payments
-- **Pay for additional services:** trailer row storage, moorings, seasonal RV parking
+::::facts
+:::fact[Update your contact information]
+Keep your profile current
+:::
+:::fact[Register for events and classes]
+Sign up for regattas, courses, and social events
+:::
+:::fact[Manage your directory listing]
+Control how you appear to other members
+:::
+:::fact[Renew your membership]
+Handle annual renewals and payments
+:::
+:::fact[Pay for additional services]
+Trailer row storage, moorings, seasonal RV parking
+:::
+::::
 
 ::::cards
 :::card[Access your account]{icon="user-circle" href="/my-account/"}
@@ -181,12 +205,20 @@ Join a committee, support club projects, or learn about board service.
 :::
 ::::
 
-::::page-cta[Need Help?]
+## Need Help?
+
 Every member was new once, and we're happy to help you find your way. Here's where to go depending on what you need:
 
-- **Sailing questions:** Ask in `#education` on Discord. Instructors and experienced members are happy to help.
-- **Something broken at the club:** Report boat, dock, or site issues. You can also post directly in Discord.
+::::facts
+:::fact[Sailing questions]
+Ask in `#education` on Discord. Instructors and experienced members are happy to help.
+:::
+:::fact[Something broken at the club]
+Report boat, dock, or site issues. You can also post directly in Discord.
+:::
+::::
 
+::::page-cta[Still stuck?]
 :::cta-action[Contact us]{href="/contact/" kind="secondary"}
 :::
 ::::

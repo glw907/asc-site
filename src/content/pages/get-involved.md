@@ -10,31 +10,73 @@ Each committee is chaired by a member and open to any member in good standing. M
 
 ### Program Committee
 
-**Chaired by Christopher Cryan.** The Program Committee plans the sailing season: class dates, race schedules, and regattas. If you join, you might help develop course content, instruct beginner or intermediate classes, score races, or organize race awards. You don't need a teaching background; experienced sailors who want to give back make great instructors, and the committee will help you get there.
+::::facts
+:::fact[Chair]
+Christopher Cryan
+:::
+::::
+
+The Program Committee plans the sailing season: class dates, race schedules, and regattas. If you join, you might help develop course content, instruct beginner or intermediate classes, score races, or organize race awards. You don't need a teaching background; experienced sailors who want to give back make great instructors, and the committee will help you get there.
 
 ### Membership Committee
 
-**Chaired by Jonathan Ramirez, with Emily Ramirez as co-chair.** The Membership Committee reviews applications, supports new member orientation, and plans the club's social calendar: regatta potlucks, Summer Sailstice, the annual membership meeting, and other gatherings. If you like welcoming people and helping new members find their footing, this is the committee for you. It's also a natural landing spot early in your membership, since the work is accessible regardless of sailing experience.
+::::facts
+:::fact[Chair]
+Jonathan Ramirez, with Emily Ramirez as co-chair
+:::
+::::
+
+The Membership Committee reviews applications, supports new member orientation, and plans the club's social calendar: regatta potlucks, Summer Sailstice, the annual membership meeting, and other gatherings. If you like welcoming people and helping new members find their footing, this is the committee for you. It's also a natural landing spot early in your membership, since the work is accessible regardless of sailing experience.
 
 ### Site Committee
 
-**Chaired by Geoff Wright.** The Site Committee plans and executes property improvements, coordinates work parties, and maintains club grounds and facilities. Day-to-day, that means building projects, mowing, repairs, and the big spring and fall work parties that keep the site in shape. If you find satisfaction in building and improving things, you'll leave a visible mark on a place members have used for decades.
+::::facts
+:::fact[Chair]
+Geoff Wright
+:::
+::::
+
+The Site Committee plans and executes property improvements, coordinates work parties, and maintains club grounds and facilities. Day-to-day, that means building projects, mowing, repairs, and the big spring and fall work parties that keep the site in shape. If you find satisfaction in building and improving things, you'll leave a visible mark on a place members have used for decades.
 
 ### Harbor Committee
 
-**Chaired by TL Stanbro.** The Harbor Committee builds and installs the dock sections each spring, removes them each fall, maintains the hoist, and develops harbor policy. Carpentry is the core skill. If you know your way around a drill and a circular saw, you have a lot to contribute. The work is hands-on, the timeline is seasonal, and what you build members depend on every time they launch a boat.
+::::facts
+:::fact[Chair]
+TL Stanbro
+:::
+::::
+
+The Harbor Committee builds and installs the dock sections each spring, removes them each fall, maintains the hoist, and develops harbor policy. Carpentry is the core skill. If you know your way around a drill and a circular saw, you have a lot to contribute. The work is hands-on, the timeline is seasonal, and what you build members depend on every time they launch a boat.
 
 ### Fleet Committee
 
-**Chaired by Steve Ryan.** The Fleet Committee keeps the club boats seaworthy: managing maintenance schedules, overseeing repairs, and running the qualification process. You don't need to arrive with skills; many members have learned fiberglass work, rigging, and basic boat mechanics through fleet projects. There's always something to fix, sand, or rig, and you'll come away knowing these boats better than almost anyone.
+::::facts
+:::fact[Chair]
+Steve Ryan
+:::
+::::
+
+The Fleet Committee keeps the club boats seaworthy: managing maintenance schedules, overseeing repairs, and running the qualification process. You don't need to arrive with skills; many members have learned fiberglass work, rigging, and basic boat mechanics through fleet projects. There's always something to fix, sand, or rig, and you'll come away knowing these boats better than almost anyone.
 
 ### Finance Committee
 
-**Chaired by Matt Flickinger, Treasurer.** The Finance Committee reviews budgets, supports financial reporting, and ensures the club's long-term financial health. The committee works in QuickBooks Online; a financial background is helpful but not required to participate. What matters is an interest in understanding how a small nonprofit manages its money and a willingness to ask questions when the numbers don't add up.
+::::facts
+:::fact[Chair]
+Matt Flickinger, Treasurer
+:::
+::::
+
+The Finance Committee reviews budgets, supports financial reporting, and ensures the club's long-term financial health. The committee works in QuickBooks Online; a financial background is helpful but not required to participate. What matters is an interest in understanding how a small nonprofit manages its money and a willingness to ask questions when the numbers don't add up.
 
 ### Board Development Committee
 
-**Chaired by Geoff Wright.** The Board Development Committee supports board health and continuity: periodically reviewing the bylaws, overseeing board training, and managing the annual director election. Nonprofit governance experience is valuable here. For members considering board service in the future, the BDC is a natural stepping stone: it gives you a clear picture of how the board operates before you're on it.
+::::facts
+:::fact[Chair]
+Geoff Wright
+:::
+::::
+
+The Board Development Committee supports board health and continuity: periodically reviewing the bylaws, overseeing board training, and managing the annual director election. Nonprofit governance experience is valuable here. For members considering board service in the future, the BDC is a natural stepping stone: it gives you a clear picture of how the board operates before you're on it.
 
 ## How Projects Happen
 

@@ -25,15 +25,16 @@ Our fleet is available to all qualified members at no extra charge. We have Lido
 - **Lidos and the Catalina** may be left at the dock during the day with boats properly secured and sails down.
 - **No boats overnight at the dock.** Lidos and the Catalina must be hauled out and put away at the end of the day, even if you plan to use them again the next morning.
 
-## At the Dock
+## Docking and Put-Away
 
-Whenever a boat is at the dock, secure it with a bow line, a stern line, and a spring line. Attach a fender where the boat might touch the dock. If you're unsure how, ask any experienced member.
+::::steps
+:::step[At the dock]
+Secure boats with a bow line, a stern line, and a spring line. Attach a fender where the boat might touch the dock. If you're unsure how, ask any experienced member.
 
 If you're leaving a Laser unattended, even briefly, release the clew and outhaul fully so the sail flies free of the boom. This prevents wind gusts from damaging the boat.
-
-## When You're Done
-
-Never leave a club boat at the dock overnight. When you're finished sailing:
+:::
+:::step[When you're done]
+Never leave a club boat at the dock overnight.
 
 - Haul the boat out and put it away in its designated spot
 - Stow sails in the sail shed
@@ -41,6 +42,8 @@ Never leave a club boat at the dock overnight. When you're finished sailing:
 - Check that all equipment is accounted for
 
 If anything is missing or damaged, report it in `#fleet` on Discord or through [Issues & Support](/issues-and-support/?category=boats#report-an-issue).
+:::
+::::
 
 ## Ensign 22
 
@@ -49,3 +52,17 @@ Getting checked out on the Ensign (our club keelboat) is more involved than a di
 ## Pontoon Boat and RIB
 
 The pontoon boat and instructional RIB are essential safety tools. We like to have as many qualified operators as possible. Contact the Harbormaster or Education Vice Commodore to get certified. They'll cover motor and pump operation, safety equipment, docking technique, and, for the RIB, hoist and lifting harness use.
+
+::::related
+:::ref[New Member Guide]{href="/new-member-guide/"}
+Club culture, first-visit basics, and how things work at the ASC.
+:::
+::::
+
+::::page-cta[Questions?]
+- Sailing questions → [#education on Discord](/discord-server/)
+- Something broken or missing → [Issues & Support](/issues-and-support/)
+
+:::cta-action[Contact us]{href="/contact/" kind="secondary"}
+:::
+::::

@@ -8,14 +8,16 @@ Long-term parking is a seasonal commitment subject to Active Participating Membe
 
 ## Eligibility
 
+:::callout[Eligibility requirements]{tone="requirement"}
 To hold a long-term space, you must:
 
-1. Be an **Active Participating Member** (as defined in ASC Rule XXIII)
-2. Have dues paid in full by the specified seasonal deadline
-3. Be in compliance with all ASC bylaws and rules
-4. Have signed the Trailer Row Use Guidelines for the current season
-5. Have your security deposit paid in full (new occupants must pay within 30 days of being offered a space; ask through [Issues & Support](/issues-and-support/?category=storage#report-an-issue) for the current amount)
-6. Agree to follow all Matanuska-Susitna Borough land use permit conditions
+- Be an **Active Participating Member** (as defined in ASC Rule XXIII)
+- Have dues paid in full by the specified seasonal deadline
+- Be in compliance with all ASC bylaws and rules
+- Have signed the Trailer Row Use Guidelines for the current season
+- Have your security deposit paid in full (new occupants must pay within 30 days of being offered a space; ask through [Issues & Support](/issues-and-support/?category=storage#report-an-issue) for the current amount)
+- Agree to follow all Matanuska-Susitna Borough land use permit conditions
+:::
 
 The seasonal fee for a long-term space is $100 (see the full [membership fee schedule](/join/#what-it-costs)).
 

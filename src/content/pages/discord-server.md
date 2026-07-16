@@ -8,10 +8,20 @@ The ASC Discord server is where members ask rigging questions, report dock issue
 
 ## Getting Started
 
-1. **Download the app.** Or use Discord in any web browser (no download required). [discord.com/download](https://discord.com/download)
-2. **Create a free account.** Discord is free. You'll need an email address and a username. Skip any optional setup steps: you can fill them in later.
-3. **Click your invitation link** from your membership welcome email to join the ASC server.
-4. **Read `#start-here`.** Then introduce yourself in `#introductions`. Members are friendly and happy to help.
+::::steps
+:::step[Download the app]
+Or use Discord in any web browser (no download required). [discord.com/download](https://discord.com/download)
+:::
+:::step[Create a free account]
+Discord is free. You'll need an email address and a username. Skip any optional setup steps: you can fill them in later.
+:::
+:::step[Click your invitation link]
+From your membership welcome email, to join the ASC server.
+:::
+:::step[Read `#start-here`]
+Then introduce yourself in `#introductions`. Members are friendly and happy to help.
+:::
+::::
 
 New to Discord? The [Beginner's Guide](https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord) covers the basics.
 

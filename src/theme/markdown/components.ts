@@ -597,6 +597,38 @@ const table = defineComponent({
   },
 });
 
+// ─── Availability: a content-facing wrapper around the shared availability-chip (basic-polish
+// batch 2b, 2026-07-16) ──────────────────────────────────────────────────────────────────────
+// Storage pages (waitlists.md) have their own "Status: Waitlist" bold-prose lines with no chip
+// at all, unlike the event surfaces that already draw `.asc-availability-chip` straight from
+// Svelte markup (SpineRow, ClassSchedule, the event detail page). No content-facing directive
+// reached that chip, so this component is the bridge: it renders the exact same class, styled
+// in asc-components.css already, and invents no new visual (per the "reuse the shipped CSS"
+// scope). The optional note slot is `kind: 'inline'` rather than `'markdown'` so its phrasing
+// content sits in the same `<p>` as the chip, one short status line, not a block paragraph
+// stacked under it.
+function buildAvailability(ctx: ComponentContext): Element {
+  const chip = h('span', { className: ['asc-availability-chip'] }, ctx.slot('title'));
+  const note = ctx.slot('body');
+  return h('p', { className: ['asc-availability'] }, note.length ? [chip, ' ', ...note] : [chip]);
+}
+
+const availability = defineComponent({
+  name: 'availability',
+  label: 'Availability status',
+  description: 'A status chip (Waitlist, Open, and similar), reusing the shared event availability-chip style, with an optional inline note.',
+  use: "Mark a resource's current availability status, with a short explanatory note.",
+  insertTemplate: ':::availability[Waitlist]\nMulti-year wait is typical.\n:::',
+  build: buildAvailability,
+  slots: [
+    { name: 'title', label: 'Status', kind: 'inline', required: true },
+    { name: 'body', label: 'Note (optional)', kind: 'inline' },
+  ],
+  group: 'Page structure',
+  icon: 'list-checks',
+  preview: { slots: { title: 'Waitlist', body: 'Multi-year wait is typical.' } },
+});
+
 export const ascRegistry = defineRegistry({
   components: [
     callout,
@@ -612,6 +644,7 @@ export const ascRegistry = defineRegistry({
     steps,
     step,
     table,
+    availability,
     contactForm,
     donateForm,
     classSchedule,

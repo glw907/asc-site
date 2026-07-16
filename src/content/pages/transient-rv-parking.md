@@ -6,12 +6,26 @@ The Alaska Sailing Club welcomes members to bring RVs to the club for short stay
 
 ## Before You Arrive
 
-- **Maximum box length:** 27'
-- **Maximum stay:** 4 days (longer stays require Site Committee Chair approval and must not conflict with an event weekend)
-- **Power:** Provided at no charge (bring your own extension cord)
-- **Water:** No potable water on site; lakewater sink available for dishes
-- **Fire extinguisher:** Required on board
-- **Mat-Su Borough compliance:** Your RV must be movable on short notice and removed within 72 hours if requested by the Mat-Su Borough. Failure to comply results in towing at your expense.
+::::facts
+:::fact[Maximum box length]
+27'
+:::
+:::fact[Maximum stay]
+4 days (longer stays require Site Committee Chair approval and must not conflict with an event weekend)
+:::
+:::fact[Power]
+Provided at no charge (bring your own extension cord)
+:::
+:::fact[Water]
+No potable water on site; lakewater sink available for dishes
+:::
+:::fact[Fire extinguisher]
+Required on board
+:::
+:::fact[Mat-Su Borough compliance]
+Your RV must be movable on short notice and removed within 72 hours if requested by the Mat-Su Borough. Failure to comply results in towing at your expense.
+:::
+::::
 
 ## When You Arrive
 

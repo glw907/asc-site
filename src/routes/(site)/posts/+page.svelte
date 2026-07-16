@@ -38,7 +38,10 @@
 <!-- The stats bar (completion-pass manifest item 7): three at-a-glance counts, matching the live
      archive's own wayfinding header but reading from this build's real data, never a hardcoded
      number. -->
-<div class="news-stats mt-s flex flex-wrap gap-l border-b border-card-border pb-m">
+<!-- Basic-polish batch 2b (2026-07-16): flex-wrap alone let a narrow viewport strand the last
+     stat alone on its own row. flex-col below `sm:` composes all three into one stacked block
+     instead, then reverts to the original wrapped row once there's room. -->
+<div class="news-stats mt-s flex flex-col gap-2xs border-b border-card-border pb-m sm:flex-row sm:flex-wrap sm:gap-l">
   <div class="news-stat flex items-center gap-2xs">
     <svg class="h-5 w-5 text-muted" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"
       ><path d={ICON_PATHS.newspaper} /></svg
@@ -68,8 +71,10 @@
      finding: three of the old Hugo tags collapsed into "club" during the migration, a deliberate
      editorial call, not an oversight this pass should quietly widen). -->
 <section class="mt-m">
-  <h2 class="m-0 font-display text-step-2 font-semibold text-base-content">Browse by Topic</h2>
-  <ul class="topic-grid mt-s grid grid-cols-1 gap-s sm:grid-cols-2 lg:grid-cols-3">
+  <h2 class="m-0 border-b border-card-border pb-2xs font-display text-step-2 font-semibold text-base-content">
+    Browse by Topic
+  </h2>
+  <ul class="topic-grid mt-s grid grid-cols-2 gap-s">
     {#each data.browseTopics as topic (topic.value)}
       <li>
         <a
@@ -96,7 +101,7 @@
     </h2>
     <ul class="mt-s flex flex-col gap-xs">
       {#each entries as post (post.id)}
-        <li class="flex flex-wrap items-baseline gap-xs">
+        <li class="flex flex-col gap-3xs sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-xs">
           <a href={post.permalink} class="font-semibold text-primary">{post.title}</a>
           {#if post.date}<time datetime={post.date} class="text-step--1 text-muted">{formatDate(post.date)}</time>{/if}
         </li>

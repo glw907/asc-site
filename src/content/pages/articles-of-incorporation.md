@@ -2,11 +2,20 @@
 title: "Articles of Incorporation"
 description: "Amended and Restated Articles of Incorporation for The Alaska Sailing Club, Inc., a 501(c)(3) nonprofit."
 ---
-**Document:** Amended and Restated Articles of Incorporation of Alaska Sailing Club, Inc.  
-**Adopted:** October 19, 2007  
-**Authority:** Two-thirds vote of voting membership ([Article X](#article-x-amendment))
-
+::::facts
+:::fact[Document]
+Amended and Restated Articles of Incorporation of Alaska Sailing Club, Inc.
+:::
+:::fact[Adopted]
+October 19, 2007
+:::
+:::fact[Authority]
+Two-thirds vote of voting membership ([Article X](#article-x-amendment))
+:::
+:::fact[Documents]
 [Download the PDF](/uploads/2024/04/amended-and-restated-articles-of-incorporation-of-alaska-sailing-club-inc.pdf)
+:::
+::::
 
 :::callout[Plain-English Summary]{tone="note"}
 The Articles of Incorporation are the founding document of the Alaska Sailing Club. Filed with the State of Alaska, they formally establish the club as a nonprofit corporation and define its legal existence, tax status, and mission. Everything else — the bylaws, the board, the committees — rests on this foundation.
