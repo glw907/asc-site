@@ -68,9 +68,9 @@ back with nothing visible) shows one honest line instead of a silent blank page.
     gap: var(--spacing-2xs) var(--spacing-m);
     padding: var(--spacing-xs) 0 var(--spacing-m);
   }
-  /* Basic-polish batch 1 (2026-07-16): the quiet link idiom (navy, underline only on hover),
-     the same affordance every other cross-page link on the site carries, in place of a muted
-     gray with no underline at any state, which read as inert text rather than a jump link. */
+  /* The quiet link idiom (navy, underline only on hover), the same affordance every other
+     cross-page link on the site carries, in place of a muted gray with no underline at any
+     state, which read as inert text rather than a jump link. */
   .events-toc-link {
     font-family: var(--font-display);
     font-size: var(--text-step-1);
@@ -100,9 +100,9 @@ back with nothing visible) shows one honest line instead of a silent blank page.
     position: relative;
     padding-left: calc(var(--spine-line-x) + var(--spine-content-gap));
   }
-  /* Basic-polish batch 1 (2026-07-16): the line used to run the full height of `.spine` (`top: 0;
-     bottom: 0`), overshooting past both the first waypoint marker's own top offset and the last
-     row's marker, into that row's own trailing padding and description text. `top` now starts
+  /* The line used to run the full height of `.spine` (`top: 0; bottom: 0`), overshooting past
+     both the first waypoint marker's own top offset and the last row's marker, into that row's
+     own trailing padding and description text. `top` now starts
      exactly at the first waypoint marker's vertical center (its own `top: 0.5em` plus half its
      0.75rem diameter); the tail past the last row's marker is erased below, since a marker's own
      vertical offset is a fixed, content-independent value but the LAST row's total height is not

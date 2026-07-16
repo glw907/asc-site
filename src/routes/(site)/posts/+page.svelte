@@ -38,9 +38,9 @@
 <!-- The stats bar (completion-pass manifest item 7): three at-a-glance counts, matching the live
      archive's own wayfinding header but reading from this build's real data, never a hardcoded
      number. -->
-<!-- Basic-polish batch 2b (2026-07-16): flex-wrap alone let a narrow viewport strand the last
-     stat alone on its own row. flex-col below `sm:` composes all three into one stacked block
-     instead, then reverts to the original wrapped row once there's room. -->
+<!-- flex-wrap alone let a narrow viewport strand the last stat alone on its own row. flex-col
+     below `sm:` composes all three into one stacked block instead, then reverts to the original
+     wrapped row once there's room. -->
 <div class="news-stats mt-s flex flex-col gap-2xs border-b border-card-border pb-m sm:flex-row sm:flex-wrap sm:gap-l">
   <div class="news-stat flex items-center gap-2xs">
     <svg class="h-5 w-5 text-muted" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"

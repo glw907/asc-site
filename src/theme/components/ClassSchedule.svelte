@@ -90,9 +90,9 @@ same neutral chip rather than a color-per-status vocabulary. -->
     grid-template-areas: 'name dates chip action';
     gap: 0.35rem 1rem;
     align-items: baseline;
-    /* Register round (2026-07-15): one step tighter than the row's old 0.6rem literal, moved
-       onto the site's own spacing scale so the row rhythm reads off the same tokens as
-       everything around it rather than a hand-picked value. */
+    /* One step tighter than the row's old 0.6rem literal, moved onto the site's own spacing
+       scale so the row rhythm reads off the same tokens as everything around it rather than a
+       hand-picked value. */
     padding-block: var(--spacing-2xs);
   }
   .cs-row + .cs-row {
@@ -117,8 +117,8 @@ same neutral chip rather than a color-per-status vocabulary. -->
      `.asc-availability-chip` class in asc-components.css. `.cs-row`'s `align-items: baseline`
      measures a grid item's baseline from its own content-box top, so the chip's border and
      padding push its text baseline down past its plain-text siblings (`.cs-name`, `.cs-dates`),
-     which carry neither (basic-polish batch 1, 2026-07-16). `align-self: center` opts this one
-     item out of that baseline math and centers it on the row instead. */
+     which carry neither. `align-self: center` opts this one item out of that baseline math and
+     centers it on the row instead. */
   .cs-chip {
     grid-area: chip;
     justify-self: start;

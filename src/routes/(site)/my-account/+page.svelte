@@ -274,9 +274,9 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
 {/if}
 
 <style>
-  /* Basic-polish batch 1 (2026-07-16): the sign-in form used the page's own wide reading measure
-     (`max-w-measure-wide`, ~640px+), so the fixed-width Turnstile widget (~300px) and the
-     content-sized button sat well short of the full-width email input's own right edge, a ragged
+  /* The sign-in form used the page's own wide reading measure (`max-w-measure-wide`, ~640px+),
+     so the fixed-width Turnstile widget (~300px) and the content-sized button sat well short of
+     the full-width email input's own right edge, a ragged
      column. A narrower shared measure, matching the Turnstile widget's own natural width, plus
      dropping the button's `self-start` (so it stretches like every other child in this `flex-col`
      stack) brings all three controls' right edges into line. */

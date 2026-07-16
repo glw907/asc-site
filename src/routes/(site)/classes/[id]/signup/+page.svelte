@@ -327,10 +327,9 @@ pivot before the visitor fills out the rest of the form. -->
     font-size: var(--text-step--1);
     color: var(--color-primary);
   }
-  /* Basic-polish batch 1 (2026-07-16): the disclosure triangle rendered the browser's own
-     default marker ink, a plain gray beside the navy summary text next to it. Both marker
-     pseudo-elements carry the same navy so the whole affordance reads as one link-family
-     control. */
+  /* The disclosure triangle rendered the browser's own default marker ink, a plain gray beside
+     the navy summary text next to it. Both marker pseudo-elements carry the same navy so the
+     whole affordance reads as one link-family control. */
   .waiver-text summary::marker {
     color: var(--color-primary);
   }

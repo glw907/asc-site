@@ -6,11 +6,10 @@ quiet ("needs to be a little more present") and too hero-attached. The reference
 card sitting directly under the hero's CTA; this rebuilds that form with the club's own pennant
 glyph standing in for the reference's bare gold accent bar, the one gold element in the card, set
 at the card's own left edge so it reads as the accent a separate border-left bar would otherwise
-duplicate. The basic-polish composition round (2026-07-16, item 6) swapped the marker's own
-one-off inline path for the theme icon set's `flag-pennant` glyph (`$theme/markdown/icons`), the
-same source every other icon="..." marker on the site draws from, in the star-gold token
+duplicate. The marker draws the theme icon set's `flag-pennant` glyph (`$theme/markdown/icons`),
+the same source every other icon="..." marker on the site draws from, in the star-gold token
 (`--color-secondary`, "marks and waypoints only"): one shared icon vocabulary rather than a
-bespoke shape that happened to draw a similar flag.
+bespoke one-off inline path that happened to draw a similar flag.
 
 Dosage (Geoff's own calibration): the light fill and bounded edges alone do the "more present"
 work. Type stays at plain body scale and ink (`text-step-0 text-base-content`, unchanged from the

@@ -16,11 +16,10 @@ reader with no JavaScript. -->
   // assignable to IslandRegistry's Component<Record<string, unknown>> signature.
   let {}: Record<string, unknown> = $props();
 
-  // Basic-polish composition round (2026-07-16, item 4c): the first preset starts selected, so
-  // the submit button rests in its own active fireweed state rather than the disabled gray one
-  // (the chosen fix; the alternative, a deliberate gated-disabled treatment, would still ask a
-  // donor to make a choice before the button does anything, where a sensible default asks for one
-  // fewer click and never reads as broken).
+  // The first preset starts selected, so the submit button rests in its own active fireweed
+  // state rather than the disabled gray one (the chosen fix; the alternative, a deliberate
+  // gated-disabled treatment, would still ask a donor to make a choice before the button does
+  // anything, where a sensible default asks for one fewer click and never reads as broken).
   let selected = $state<number | null>(DONATE_PRESETS[0] ?? null);
   // Svelte binds a numeric input's value as a number (or undefined when the field is empty), not
   // a string.
@@ -64,9 +63,8 @@ reader with no JavaScript. -->
 
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Custom amount</legend>
-      <!-- Basic-polish composition round (2026-07-16, item 4b): a currency-value width, not the
-           full form measure, so the field reads as a short amount input rather than a name/email
-           field wearing the wrong size. -->
+      <!-- A currency-value width, not the full form measure, so the field reads as a short
+           amount input rather than a name/email field wearing the wrong size. -->
       <label class="input w-32">
         <span aria-hidden="true">$</span>
         <input type="number" min="1" max="9999" placeholder="Other amount" bind:value={custom} />
@@ -85,14 +83,14 @@ reader with no JavaScript. -->
 
     <input type="hidden" name="amount" value={amount ?? ''} />
 
-    <!-- Basic-polish batch 1 (2026-07-16): `data-theme="auto"` follows light/dark mode; the
-         reserved-space rule lives in site.css's shared `.cf-turnstile` rule. -->
+    <!-- `data-theme="auto"` follows light/dark mode; the reserved-space rule lives in site.css's
+         shared `.cf-turnstile` rule. -->
     <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="auto"></div>
 
-    <!-- Basic-polish composition round (2026-07-16, item 4c): the site's own fireweed action
-         class (asc-components.css's `.prose .asc-cta-btn`), not the plain navy `.btn-primary` —
-         donating is this page's one genuine conversion action, the fireweed budget's natural
-         spend here (this page's only other tint is the sage facts strip, no second CTA). -->
+    <!-- The site's own fireweed action class (asc-components.css's `.prose .asc-cta-btn`), not
+         the plain navy `.btn-primary` — donating is this page's one genuine conversion action,
+         the fireweed budget's natural spend here (this page's only other tint is the sage facts
+         strip, no second CTA). -->
     <button
       type="submit"
       class="asc-cta-btn self-start"
@@ -106,7 +104,7 @@ reader with no JavaScript. -->
 </div>
 
 <style>
-  /* The submit button's pending state (item 4c): `.asc-cta-btn` carries no disabled treatment of
+  /* The submit button's pending state: `.asc-cta-btn` carries no disabled treatment of
      its own (every other consumer is a plain link, never disableable), so this button-only state
      is local to the one consumer that needs it. */
   .donate-form :global(.asc-cta-btn:disabled) {

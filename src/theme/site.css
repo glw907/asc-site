@@ -181,7 +181,7 @@ body {
   text-decoration-color: currentColor;
 }
 
-/* Sitewide en-dash list markers (2026-07-15 register round): an unclassed prose bullet list (a
+/* Sitewide en-dash list markers: an unclassed prose bullet list (a
    plain markdown `- item` list, never a themed component like `.fleet-list` or `.amenity-list`,
    which already carry their own dash-marker construction) replicates that same idiom exactly,
    rather than the chassis's stock disc bullet, so an ordinary list inside an article reads with
@@ -207,7 +207,7 @@ body {
   left: 0;
 }
 
-/* Form control accent (basic-polish batch 1, 2026-07-16): a plain, unclassed radio or checkbox
+/* Form control accent: a plain, unclassed radio or checkbox
    (join/apply's membership-tier radios, the liability-waiver checkbox on join/apply and class
    signup) renders the browser's own UA-default cornflower blue, a color from no palette this
    site owns. One accent-color rule reaches every native form control under the public site
@@ -219,7 +219,7 @@ body {
   accent-color: var(--color-primary);
 }
 
-/* Reserved Turnstile slot (basic-polish batch 1, 2026-07-16): the `<div class="cf-turnstile">`
+/* Reserved Turnstile slot: the `<div class="cf-turnstile">`
    every public form (join/apply, donate, contact, my-account's sign-in) renders is empty until
    Cloudflare's `api.js` implicit-render scan inserts the widget iframe as a child, so the div
    collapses to zero height at first paint and then jumps open the moment the widget lands,

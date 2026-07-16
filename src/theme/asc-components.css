@@ -126,9 +126,8 @@
   .prose .asc-card-body > * + * {
     margin-top: var(--spacing-2xs);
   }
-  /* Basic-polish batch 1 (2026-07-16): the arrow is now plain text inside the title span (the
-     :::related idiom), so it inherits the title's own navy link color and hover underline with
-     no rule of its own. */
+  /* The arrow is plain text inside the title span (the :::related idiom), so it inherits the
+     title's own navy link color and hover underline with no rule of its own. */
 
   @media (prefers-reduced-motion: reduce) {
     .prose a.asc-card-link {
@@ -145,11 +144,11 @@
   .prose .asc-facts {
     --flow-space: var(--spacing-m);
     display: grid;
-    /* Basic-polish composition round (2026-07-16, item 7): a fixed `12rem` growth limit stretched
-       every label column to that width regardless of the block's own content (CSS Grid grows a
-       definite-max track to fill leftover space when nothing else claims it), opening a dead
-       gutter on a short-label block like moorings' (Cost, Eligibility, Boat size). `max-content`
-       instead sizes the column to THIS block's own longest label, so a short-label block tightens
+    /* A fixed `12rem` growth limit stretched every label column to that width regardless of the
+       block's own content (CSS Grid grows a definite-max track to fill leftover space when
+       nothing else claims it), opening a dead gutter on a short-label block like moorings' (Cost,
+       Eligibility, Boat size). `max-content` instead sizes the column to THIS block's own longest
+       label, so a short-label block tightens
        and a long-label one (new-member-guide's "Update your contact information", the governance
        docs' "Document"/"Authority" pairs) keeps exactly the room it needs — verified against both
        ends, not just moorings. */
@@ -186,9 +185,9 @@
     font-size: var(--text-step--1);
     font-weight: 600;
     color: var(--color-muted);
-    /* Basic-polish batch 2 (2026-07-16): a fact's label or value can hold a dollar amount
-       (join's dues, donate's tier prices), and proportional figures wobble beside a currency
-       sign. Tabular figures on both slots cover whichever one an amount lands in. */
+    /* A fact's label or value can hold a dollar amount (join's dues, donate's tier prices), and
+       proportional figures wobble beside a currency sign. Tabular figures on both slots cover
+       whichever one an amount lands in. */
     font-variant-numeric: tabular-nums;
   }
   .prose .asc-fact-value {
@@ -621,7 +620,7 @@
     color: var(--color-primary);
   }
 
-  /* ─── Callout: the rendered icon (basic-polish batch 2, 2026-07-16) ────────────────────── */
+  /* ─── Callout: the rendered icon ────────────────────────────────────────────────────────── */
   /* Inline before the title text (the `.asc-card-icon`/`.ec-glyph` sizing idiom right above,
      restated here since a callout-title is plain inline text, not a flex row): a callout is a
      compact aside, not a titled section, so the glyph rides inside the heading rather than a

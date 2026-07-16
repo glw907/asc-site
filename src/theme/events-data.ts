@@ -302,8 +302,8 @@ function lastBoundary(cut: string, punctuation: RegExp): number | null {
  *  end (a period, question mark, or exclamation point) reads as a complete thought and needs no
  *  ellipsis; failing that, a clause end (a comma, semicolon, or colon) still needs the ellipsis,
  *  since it signals the sentence keeps going; failing that, the plain last word boundary, so the
- *  teaser never cuts a word or a clause in half (basic-polish batch 1, 2026-07-16: a mid-clause
- *  cut like "…relaxed and fun, no prior" read as an amputated fragment). Exported so this is
+ *  teaser never cuts a word or a clause in half (a mid-clause cut like "…relaxed and fun, no
+ *  prior" read as an amputated fragment). Exported so this is
  *  directly unit-testable rather than only through `buildEventsPage`'s own summary field. */
 export function truncateSummary(text: string, maxLen = 90): string {
   if (text.length <= maxLen) return text;

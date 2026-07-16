@@ -296,10 +296,10 @@ earlier "sign in instead" dead end, unchanged. -->
       </label>
     </fieldset>
 
-    <!-- Basic-polish batch 1 (2026-07-16): `data-theme="auto"` (an implicit-render parameter
-         Turnstile reads off the div) follows the page's own light/dark mode instead of a fixed
-         light widget on a dark page. The reserved-space collapse/expand rule lives in
-         site.css's `.cf-turnstile` rule, shared by every Turnstile mount on the site. -->
+    <!-- `data-theme="auto"` (an implicit-render parameter Turnstile reads off the div) follows
+         the page's own light/dark mode instead of a fixed light widget on a dark page. The
+         reserved-space collapse/expand rule lives in site.css's `.cf-turnstile` rule, shared by
+         every Turnstile mount on the site. -->
     <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="auto"></div>
 
     <button type="submit" class="btn btn-accent self-start" disabled={!!applyJoin.pending}>
@@ -330,10 +330,9 @@ earlier "sign in instead" dead end, unchanged. -->
     font-size: var(--text-step--1);
     color: var(--color-primary);
   }
-  /* Basic-polish batch 1 (2026-07-16): the disclosure triangle rendered the browser's own
-     default marker ink, a plain gray beside the navy summary text next to it. Both marker
-     pseudo-elements carry the same navy so the whole affordance reads as one link-family
-     control. */
+  /* The disclosure triangle rendered the browser's own default marker ink, a plain gray beside
+     the navy summary text next to it. Both marker pseudo-elements carry the same navy so the
+     whole affordance reads as one link-family control. */
   .waiver-text summary::marker {
     color: var(--color-primary);
   }

@@ -101,9 +101,7 @@ both event surfaces. -->
     {#if !data.event.isTbd}
       <a href="/events/{data.event.routeId}.ics" class="ics-link">
         <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
-          <path
-            d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-68-76a12,12,0,1,1-12-12A12,12,0,0,1,140,132Zm44,0a12,12,0,1,1-12-12A12,12,0,0,1,184,132ZM96,172a12,12,0,1,1-12-12A12,12,0,0,1,96,172Zm44,0a12,12,0,1,1-12-12A12,12,0,0,1,140,172Zm44,0a12,12,0,1,1-12-12A12,12,0,0,1,184,172Z"
-          ></path>
+          <path d={ICON_PATHS['calendar-dots']}></path>
         </svg>
         Add to calendar
       </a>
@@ -179,13 +177,13 @@ both event surfaces. -->
     color: var(--color-base-content);
   }
 
-  /* Basic-polish composition round (2026-07-16, item 2): the borderless `:::facts` label/value
-     anatomy (asc-components.css's `.asc-fact` rows are the idiom this matches, restated locally
-     since this page sits outside `.prose`), replacing the bordered card-chrome strip. Two fixed
-     tracks, not `.asc-facts`'s own `minmax(8rem, max-content)` label column: this strip's own
-     labels (Date, Location, Category...) are uniformly short, and a fixed pair holds steady at
-     every width instead of an auto-fill/flex-wrap row that fit two facts per line at some widths
-     and three at others (the 390 "2-then-3" ragged wrap this round fixes). `display: contents` on
+  /* The borderless `:::facts` label/value anatomy (asc-components.css's `.asc-fact` rows are the
+     idiom this matches, restated locally since this page sits outside `.prose`), replacing the
+     bordered card-chrome strip. Two fixed tracks, not `.asc-facts`'s own `minmax(8rem,
+     max-content)` label column: this strip's own labels (Date, Location, Category...) are
+     uniformly short, and a fixed pair holds steady at every width instead of an auto-fill/
+     flex-wrap row that fit two facts per line at some widths and three at others (the 390
+     "2-then-3" ragged wrap this fixes). `display: contents` on
      `.event-fact` is the same wrapper-disappears trick `.asc-fact` uses, so `dt`/`dd` sit as direct
      grid items of the `dl`'s own two-column grid while the markup still nests validly. */
   .event-facts {
@@ -206,9 +204,9 @@ both event surfaces. -->
   .event-fact:first-child dd {
     border-top: none;
   }
-  /* Register round (2026-07-15): dt/dd share one size (the component-body step, matching the
-     shared-components `:::facts` label/value idiom in asc-components.css) and split hierarchy
-     by weight and ink alone, not by size. */
+  /* dt/dd share one size (the component-body step, matching the shared-components `:::facts`
+     label/value idiom in asc-components.css) and split hierarchy by weight and ink alone, not
+     by size. */
   .event-fact dt {
     margin: 0;
     font-size: var(--text-step--1);
@@ -218,9 +216,9 @@ both event surfaces. -->
   .event-fact dd {
     margin: 0;
     font-size: var(--text-step--1);
-    /* Basic-polish batch 1 (2026-07-16): an `em`-relative (not unitless) line-height computes
-       once, off `dd`'s own font-size, and inherits to a nested child as that fixed length rather
-       than recomputing against the child's own smaller font-size. The Category/Registration
+    /* An `em`-relative (not unitless) line-height computes once, off `dd`'s own font-size, and
+       inherits to a nested child as that fixed length rather than recomputing against the
+       child's own smaller font-size. The Category/Registration
        facts nest a chip at a step down in size (`.asc-category-chip`/`.asc-availability-chip`,
        asc-components.css); without this, that smaller font gave the chip a shorter line box than
        its plain-text siblings (Date, Location, Fee), so its own text baseline sat visibly higher
@@ -287,9 +285,9 @@ both event surfaces. -->
     font-size: var(--text-step--1);
     color: var(--color-muted);
   }
-  /* The listing's own iconed calendar-link idiom (events/+page.svelte's `.calendar-subscribe-link`,
-     basic-polish composition round, 2026-07-16): an inline glyph beside the text, quieter than the
-     register CTA beside it, so both surfaces read as one calendar vocabulary. */
+  /* The listing's own iconed calendar-link idiom (events/+page.svelte's
+     `.calendar-subscribe-link`): an inline glyph beside the text, quieter than the register CTA
+     beside it, so both surfaces read as one calendar vocabulary. */
   .ics-link {
     display: inline-flex;
     align-items: center;

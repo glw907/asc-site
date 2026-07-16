@@ -19,10 +19,10 @@
   const isGovernanceSubpage = $derived(
     data.entry.concept === 'pages' && GOVERNANCE_SUBPAGE_SLUGS.has(data.entry.slug),
   );
-  // Basic-polish composition round (2026-07-16, item 8): members' own card rows mix one- and
-  // two-line descriptions ("Manage your membership." beside "Find members."), so the base
-  // `.asc-cards` `align-items: start` (deliberately kept elsewhere for education's own
-  // wildly-different-length cards, see asc-components.css) leaves a short sibling's bottom edge
+  // Members' own card rows mix one- and two-line descriptions ("Manage your membership." beside
+  // "Find members."), so the base `.asc-cards` `align-items: start` (deliberately kept elsewhere
+  // for education's own wildly-different-length cards, see asc-components.css) leaves a short
+  // sibling's bottom edge
   // and trailing link riding above a taller one in the same row. Scoped to members alone so every
   // other card grid on the site keeps its own top-aligned sizing unchanged.
   const equalizeCardRows = $derived(data.entry.slug === 'members');
@@ -185,19 +185,49 @@
    *  only) rather than mis-slicing unrelated markup. Powers the title-adjacent hero's own lede
    *  (axis A of the 2026-07-08 benchmark-alignment pass): title, lede, and photo compose as one
    *  visual unit, matching the home page's own hero grammar, rather than floating the lede below
-   *  the whole hero row. Originally scoped to long-form pages only, not every `isPageHero` page, so
-   *  the composition change stayed inside that pass's own target. The basic-polish composition
-   *  round (2026-07-16) reaches into two of those held-back pages by name (`LEDE_MERGE_SLUGS`
-   *  below): new-member-guide's own hero left an L-shaped dead quadrant beside the title with the
-   *  lede stranded below the whole hero row, and donate's hero carried the same void. */
+   *  the whole hero row. Originally scoped to long-form pages only, not every `isPageHero` page;
+   *  `SECONDARY_PAGE_OVERRIDES` below (`mergeLede`) opts a secondary page in by name, for the same
+   *  L-shaped-dead-quadrant reason: new-member-guide and donate's own heroes left the lede stranded
+   *  below the whole hero row instead of composed beside the title. */
   function splitLede(html: string): { lede: string; rest: string } {
     const match = /^\s*<p>[\s\S]*?<\/p>/.exec(html);
     if (!match) return { lede: '', rest: html };
     return { lede: match[0], rest: html.slice(match[0].length) };
   }
 
-  const LEDE_MERGE_SLUGS = new Set(['new-member-guide', 'donate']);
-  const mergeLedeIntoHero = $derived(isPageHero && (Boolean(longFormSlug) || LEDE_MERGE_SLUGS.has(data.entry.slug)));
+  /** A secondary page (outside `longFormSlug`) opting into one of the long-form template's own
+   *  devices by name. Every field is optional and missing-key-safe: a slug absent from the table
+   *  below, or a field left unset on its entry, keeps that page's plain default. */
+  interface SecondaryPageOverrides {
+    /** Merges the hero's lede into the title-adjacent hero, the device `longFormSlug` pages get
+     *  automatically (`splitLede` above). */
+    mergeLede?: boolean;
+    /** Drops the density-gated panel frame (`showPanels` below) for plain, unpanelled prose, on a
+     *  page whose per-h2 card stack reads as heavy assembly rather than designed prose (the design
+     *  contract's own phase-1 defect: "heavy card use"). The page keeps its TOC either way
+     *  (`showToc` is independent); only the card chrome drops. */
+    flatten?: boolean;
+    /** h2 heading ids that keep the site's one reserved tinted link-cluster panel (the same "a
+     *  page may use ONE tinted panel around its primary action group" amendment
+     *  `REGISTRATION_BAND_HEADING_ID` spends for education) instead of the flat prose `flatten`
+     *  otherwise renders for the rest of the page. */
+    linkClusterHeadingIds?: Set<string>;
+  }
+
+  const SECONDARY_PAGE_OVERRIDES: Record<string, SecondaryPageOverrides> = {
+    'new-member-guide': {
+      mergeLede: true,
+      flatten: true,
+      linkClusterHeadingIds: new Set(['your-first-week', 'ready-to-get-more-involved']),
+    },
+    donate: { mergeLede: true },
+    'articles-of-incorporation': { flatten: true },
+    'member-expectations': { flatten: true },
+    committees: { flatten: true },
+  };
+  const pageOverrides = $derived(SECONDARY_PAGE_OVERRIDES[data.entry.slug]);
+
+  const mergeLedeIntoHero = $derived(isPageHero && (Boolean(longFormSlug) || Boolean(pageOverrides?.mergeLede)));
   const ledeSplit = $derived(mergeLedeIntoHero ? splitLede(data.html) : null);
 
   /** Marks the lede's trailing action link ("See class dates →") so the CSS can promote it to its
@@ -236,28 +266,14 @@
   const toc = $derived(extractToc(contentHtml));
   const showToc = $derived(toc.length >= 8 && !longFormSlug);
 
-  // The basic-polish composition round (2026-07-16): four secondary pages' own per-h2 card stack
-  // reads as heavy assembly, not designed prose (the design contract's own phase-1 defect: "heavy
-  // card use"). Keyed by slug, the same tolerance every other page-specific map in this file
-  // carries: a page not listed here keeps the density-gated panel frame exactly as it already
-  // works (bylaws, moorings, waitlists, and the rest of the long secondary catalog). Opting a page
-  // out here still keeps its TOC (`showToc` is independent), only the card chrome drops.
-  const FLAT_SECONDARY_SLUGS = new Set(['new-member-guide', 'articles-of-incorporation', 'member-expectations', 'committees']);
   // The section-panel treatment (the presentation round's Strand 2) is the pages concept's own
   // template device, not a general density-gated feature: a long post or bulletin still earns the
-  // sticky gutter TOC below, but its body stays plain prose, unpanelled.
-  const showPanels = $derived(showToc && data.entry.concept === 'pages' && !FLAT_SECONDARY_SLUGS.has(data.entry.slug));
+  // sticky gutter TOC below, but its body stays plain prose, unpanelled. A secondary page can also
+  // flatten by name (`SECONDARY_PAGE_OVERRIDES` above): bylaws, moorings, waitlists, and the rest
+  // of the long secondary catalog keep the panel frame, unlisted there.
+  const showPanels = $derived(showToc && data.entry.concept === 'pages' && !pageOverrides?.flatten);
 
-  // New-member-guide's own exception inside its flattened body (Batch 3, item 1): the page's two
-  // genuine link-card clusters ("Your First Week", "Ready to Get More Involved?") keep the site's
-  // one reserved tinted-panel idiom, the same "a page may use ONE tinted panel around its primary
-  // action group" amendment REGISTRATION_BAND_HEADING_ID already spends for education, so the card
-  // grids inside them read as a deliberate destination rather than orphaned white boxes on the bare
-  // page ground. Every other page's own h2 sections are untouched (the set below is empty for them).
-  const LINK_CLUSTER_PANEL_HEADING_IDS: Record<string, Set<string>> = {
-    'new-member-guide': new Set(['your-first-week', 'ready-to-get-more-involved']),
-  };
-  const linkClusterHeadingIds = $derived(LINK_CLUSTER_PANEL_HEADING_IDS[data.entry.slug] ?? new Set<string>());
+  const linkClusterHeadingIds = $derived(pageOverrides?.linkClusterHeadingIds ?? new Set<string>());
 
   // The long-form site TOC standard's own list (Geoff, 2026-07-07): h2 sections only, computed
   // over the whole document (`contentHtml`, which already excludes the hero's own lede paragraph
@@ -291,7 +307,7 @@
     return `<section class="content-panel">${withLede}</section>`;
   }
 
-  /** The link-cluster panel (new-member-guide's own reserved tint, see LINK_CLUSTER_PANEL_HEADING_IDS
+  /** The link-cluster panel (new-member-guide's own reserved tint, see `SECONDARY_PAGE_OVERRIDES`
    *  above): the same lede-marking touch as `toPanel`, in the lighter `.link-cluster-panel` shell
    *  (a flat tint, no border/shadow) rather than the bordered white `.content-panel` card, since this
    *  page's own card grid already carries its own hairline chrome one level in. */
@@ -429,11 +445,10 @@
     );
   }
 
-  // Basic-polish composition round (2026-07-16, item 8's coverage-debt addition): members' own
-  // "At the Club & On the Water" section holds 4 cards, which the base `.asc-cards` auto-fill
-  // grid renders as 3 fitting columns plus one stranded on its own row at every width past the
-  // mobile single column. Keyed by slug, like every other per-page map in this file: a page not
-  // listed here keeps the grid's own auto-fill column count.
+  // Members' own "At the Club & On the Water" section holds 4 cards, which the base `.asc-cards`
+  // auto-fill grid renders as 3 fitting columns plus one stranded on its own row at every width
+  // past the mobile single column. Keyed by slug, like every other per-page map in this file: a
+  // page not listed here keeps the grid's own auto-fill column count.
   const TWO_UP_CARDS_HEADING_IDS: Record<string, string[]> = {
     members: ['at-the-club--on-the-water'],
   };
@@ -1112,18 +1127,17 @@
     justify-content: stretch;
   }
 
-  /* Basic-polish composition round (2026-07-16, item 8, coverage-debt addition): the fixed
-     2-column rebalance for members' "At the Club & On the Water" row (`markCardsTwoUp` above sets
-     `cards-two-up` on that one grid only). Gated to `min-width: 40rem`: below it the row's own
-     breakout measure is already too narrow for two comfortable columns, and the base `.asc-cards`
-     auto-fill rule already renders a single column there, so no override is needed. */
+  /* The fixed 2-column rebalance for members' "At the Club & On the Water" row (`markCardsTwoUp`
+     above sets `cards-two-up` on that one grid only). Gated to `min-width: 40rem`: below it the
+     row's own breakout measure is already too narrow for two comfortable columns, and the base
+     `.asc-cards` auto-fill rule already renders a single column there, so no override is needed. */
   @media (min-width: 40rem) {
     article.prose.long-form-page :global(.asc-cards.cards-two-up) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
-  /* Item 8: members' own row-height equalizer (`equalize-card-rows`, set above). Scoped past
+  /* Members' own row-height equalizer (`equalize-card-rows`, set above). Scoped past
      asc-components.css's own tied specificity the same way the single-card rule right above does,
      so this beats the shared `.prose .asc-cards { align-items: start }` default regardless of
      build-time source order. */
@@ -1631,12 +1645,12 @@
     }
   }
 
-  /* Basic-polish composition round (2026-07-16, item 1): new-member-guide's one reserved tinted
-     panel, around its two genuine link-card clusters only (LINK_CLUSTER_PANEL_HEADING_IDS above).
-     A flat tint, not the bordered/shadowed `.content-panel` card: the `:::cards` grid one level
-     inside already carries its own hairline chrome (asc-components.css's `.asc-card`), so a second
-     white card wrapping it would double that chrome exactly the way the per-section panel stack
-     used to. No separate `:has()` trigger on `.article-sections` either (unlike `.content-panel`
+  /* New-member-guide's one reserved tinted panel, around its two genuine link-card clusters only
+     (`SECONDARY_PAGE_OVERRIDES` above). A flat tint, not the bordered/shadowed `.content-panel`
+     card: the `:::cards` grid one level inside already carries its own hairline chrome
+     (asc-components.css's `.asc-card`), so a second white card wrapping it would double that
+     chrome exactly the way the per-section panel stack used to. No separate `:has()` trigger on
+     `.article-sections` either (unlike `.content-panel`
      above), since only two of this page's many sections ever carry this class — tinting the whole
      sections column for two panels would read as a mistake, not a deliberate accent. */
   .prose :global(.link-cluster-panel) {

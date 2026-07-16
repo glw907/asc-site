@@ -42,7 +42,7 @@ const makeIcon = makeIconRenderer(ICON_PATHS);
 const LINK_PATTERN = '^(#|/|cairn:|https?://)';
 const LINK_HELP = 'Use an anchor (#id), a path (/page), a cairn: link, or a full URL.';
 
-// ─── Callout: cairn's own showcase shape, plus a rendered icon (basic-polish batch 2) ───
+// ─── Callout: cairn's own showcase shape, plus a rendered icon ──────────────────────────
 // The `icon` attribute below was declared but never drawn: `ctx.attributes.icon` reached the
 // hast tree as a data attribute (remarkDirectiveStamp carries every declared attribute), but
 // build() never read it, so authoring `icon="anchor"` on a `requirement` callout (the field's
@@ -144,9 +144,9 @@ function buildCard(ctx: ComponentContext): Element {
   const href = strAttr(ctx, 'href');
   const kids: ElementContent[] = [];
   if (icon) kids.push(h('span', { className: ['asc-card-icon'] }, [makeIcon(icon)]));
-  // Basic-polish batch 1 (2026-07-16): the arrow rides inline at the end of the title text, an
-  // aria-hidden trailing span exactly like :::related's own arrow idiom, rather than a floating
-  // block glyph stranded on its own line under the card body.
+  // The arrow rides inline at the end of the title text, an aria-hidden trailing span exactly
+  // like :::related's own arrow idiom, rather than a floating block glyph stranded on its own
+  // line under the card body.
   const titleKids: ElementContent[] = [...ctx.slot('title')];
   if (href) titleKids.push(h('span', { className: ['asc-card-arrow'], ariaHidden: 'true' }, [' →']));
   kids.push(h('span', { className: ['asc-card-title'] }, titleKids));
@@ -597,8 +597,7 @@ const table = defineComponent({
   },
 });
 
-// ─── Availability: a content-facing wrapper around the shared availability-chip (basic-polish
-// batch 2b, 2026-07-16) ──────────────────────────────────────────────────────────────────────
+// ─── Availability: a content-facing wrapper around the shared availability-chip ─────────────
 // Storage pages (waitlists.md) have their own "Status: Waitlist" bold-prose lines with no chip
 // at all, unlike the event surfaces that already draw `.asc-availability-chip` straight from
 // Svelte markup (SpineRow, ClassSchedule, the event detail page). No content-facing directive

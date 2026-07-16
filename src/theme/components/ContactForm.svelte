@@ -60,8 +60,8 @@ precedent in ecxc.ski). -->
         <textarea class="textarea h-32 w-full" required {...message.as('text')}></textarea>
       </fieldset>
 
-      <!-- Basic-polish batch 1 (2026-07-16): `data-theme="auto"` follows light/dark mode; the
-           reserved-space rule lives in site.css's shared `.cf-turnstile` rule. -->
+      <!-- `data-theme="auto"` follows light/dark mode; the reserved-space rule lives in
+           site.css's shared `.cf-turnstile` rule. -->
       <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="auto"></div>
 
       <button type="submit" class="btn btn-primary self-start" disabled={!!sendMessage.pending}>

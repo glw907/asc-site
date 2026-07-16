@@ -21,8 +21,8 @@
 <h1 class="mt-2xs mb-0 font-display text-step-5 font-semibold leading-tight tracking-tight text-base-content">
   {data.topic.label}
 </h1>
-<!-- The index's own stat-line vocabulary (basic-polish batch 2b, 2026-07-16): a post-count line
-     under the h1, in the same eyebrow-weight styling as /posts's stats bar counts. -->
+<!-- The index's own stat-line vocabulary: a post-count line under the h1, in the same
+     eyebrow-weight styling as /posts's stats bar counts. -->
 <p class="mt-2xs text-step--1 text-muted">{data.posts.length} {data.posts.length === 1 ? 'post' : 'posts'}</p>
 
 {#if data.posts.length > 0}
