@@ -67,7 +67,7 @@ reader with no JavaScript. -->
            amount input rather than a name/email field wearing the wrong size. -->
       <label class="input w-32">
         <span aria-hidden="true">$</span>
-        <input type="number" min="1" max="9999" placeholder="Other amount" bind:value={custom} />
+        <input type="number" inputmode="decimal" min="1" max="9999" placeholder="Other amount" bind:value={custom} />
       </label>
     </fieldset>
 

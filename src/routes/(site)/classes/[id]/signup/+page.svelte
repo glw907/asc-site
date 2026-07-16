@@ -276,7 +276,7 @@ pivot before the visitor fills out the rest of the form. -->
       </p>
     </fieldset>
 
-    <fieldset class="fieldset waiver-fieldset">
+    <fieldset class="fieldset">
       <legend class="fieldset-legend">Liability release</legend>
       <details class="waiver-text">
         <summary>Read the release (version {data.waiverVersion})</summary>
@@ -317,11 +317,6 @@ pivot before the visitor fills out the rest of the form. -->
     margin: 0;
   }
 
-  .waiver-fieldset {
-    border: var(--border) solid var(--color-card-border);
-    border-radius: var(--radius-box);
-    padding: var(--spacing-s) var(--spacing-m);
-  }
   .waiver-text summary {
     cursor: pointer;
     font-size: var(--text-step--1);

@@ -93,6 +93,15 @@ html {
    the class contract; the site owns the pixels by overriding these. */
 body {
   overflow-x: clip;
+  /* The three variable faces (Figtree, Source Sans 3, Source Code Pro; theme.css's
+     --font-display/--font-body/--font-mono) all carry an optical-size axis; `auto` lets each one
+     tune its own weight/width per rendered size instead of using its default-size design
+     throughout. Inherited, so one declaration at the body root covers every face. */
+  font-optical-sizing: auto;
+  /* Mobile Safari/Chrome's default tap highlight is a flat gray flash with no relation to the
+     site's own palette; a faint flag-navy tint (the token, not a literal color) reads as a quiet
+     acknowledgment instead. */
+  -webkit-tap-highlight-color: color-mix(in oklab, var(--color-primary) 15%, transparent);
 }
 .site-main figure {
   margin: var(--spacing-l) 0;

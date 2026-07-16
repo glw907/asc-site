@@ -55,7 +55,7 @@ Full seasonal access to club grounds, including the clubhouse, sauna, campfire, 
 
 ::::table{variant="fees"}
 | Item | Fee |
-| --- | --- |
+| --- | ---: |
 | Trailer row storage | $100/season |
 | RV seasonal parking | $100/season |
 | Moorings | $300/season |
@@ -110,8 +110,6 @@ The board reviews new applications in the background (typically 2-3 business day
 Already a member? Renewing is straightforward: log in to your account and complete payment. No approval needed.
 :::
 ::::
-
-### Apply Now
 
 ::::page-cta[Ready to Join?]
 :::cta-action[Apply and pay online]{href="/join/apply" kind="primary"}

@@ -447,10 +447,12 @@
 
   // Members' own "At the Club & On the Water" section holds 4 cards, which the base `.asc-cards`
   // auto-fill grid renders as 3 fitting columns plus one stranded on its own row at every width
-  // past the mobile single column. Keyed by slug, like every other per-page map in this file: a
-  // page not listed here keeps the grid's own auto-fill column count.
+  // past the mobile single column. "Getting Started" and "Governance" each hold only 2 cards,
+  // which the same auto-fill grid hugs to the left of the 3-column track instead of centering an
+  // even 2-up row. Keyed by slug, like every other per-page map in this file: a page not listed
+  // here keeps the grid's own auto-fill column count.
   const TWO_UP_CARDS_HEADING_IDS: Record<string, string[]> = {
-    members: ['at-the-club--on-the-water'],
+    members: ['getting-started', 'at-the-club--on-the-water', 'governance'],
   };
 
   /** Marks the first `.asc-cards` grid inside one h2 section (the heading through the next h2) with
@@ -1127,10 +1129,11 @@
     justify-content: stretch;
   }
 
-  /* The fixed 2-column rebalance for members' "At the Club & On the Water" row (`markCardsTwoUp`
-     above sets `cards-two-up` on that one grid only). Gated to `min-width: 40rem`: below it the
-     row's own breakout measure is already too narrow for two comfortable columns, and the base
-     `.asc-cards` auto-fill rule already renders a single column there, so no override is needed. */
+  /* The fixed 2-column rebalance for members' 2-card rows ("Getting Started", "At the Club & On
+     the Water", "Governance"; `markCardsTwoUp` above sets `cards-two-up` on each one). Gated to
+     `min-width: 40rem`: below it the row's own breakout measure is already too narrow for two
+     comfortable columns, and the base `.asc-cards` auto-fill rule already renders a single column
+     there, so no override is needed. */
   @media (min-width: 40rem) {
     article.prose.long-form-page :global(.asc-cards.cards-two-up) {
       grid-template-columns: repeat(2, minmax(0, 1fr));

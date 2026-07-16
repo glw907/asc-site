@@ -141,9 +141,10 @@ earlier "sign in instead" dead end, unchanged. -->
       <legend class="fieldset-legend">Membership tier</legend>
       <div class="flex flex-col gap-xs">
         {#each ['individual', 'family', 'young-adult'] as const as option (option)}
-          <label class="flex items-center gap-xs">
+          <label class="flex items-center gap-xs py-xs">
             <input
               type="radio"
+              class="radio"
               name="tier"
               value={option}
               checked={tier === option}
@@ -159,11 +160,11 @@ earlier "sign in instead" dead end, unchanged. -->
       <legend class="fieldset-legend">Your details</legend>
       <div class="flex flex-col gap-s">
         <label class="flex flex-col gap-2xs text-step--1">
-          Full name
+          <span class="field-label">Full name</span>
           <input class="input w-full" name="purchaserName" autocomplete="name" required bind:value={purchaserName} />
         </label>
         <label class="flex flex-col gap-2xs text-step--1">
-          Email address
+          <span class="field-label">Email address</span>
           <input
             class="input w-full"
             name="purchaserEmail"
@@ -176,12 +177,12 @@ earlier "sign in instead" dead end, unchanged. -->
           />
         </label>
         <label class="flex flex-col gap-2xs text-step--1">
-          Phone number (optional)
+          <span class="field-label">Phone number (optional)</span>
           <input class="input w-full" name="purchaserPhone" type="tel" autocomplete="tel" bind:value={purchaserPhone} />
         </label>
         {#if tier === 'young-adult'}
           <label class="flex flex-col gap-2xs text-step--1">
-            Birthdate (to verify you're under 26)
+            <span class="field-label">Birthdate (to verify you're under 26)</span>
             <input class="input w-full" name="purchaserBirthdate" type="date" required bind:value={purchaserBirthdate} />
           </label>
         {/if}
@@ -316,7 +317,8 @@ earlier "sign in instead" dead end, unchanged. -->
 
 <style>
   /* Matches ContactForm/DonateForm/the class-signup form's own eyebrow legend. */
-  .fieldset-legend {
+  .fieldset-legend,
+  .field-label {
     font-family: var(--font-display);
     font-size: var(--text-step--1);
     font-weight: 700;

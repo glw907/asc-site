@@ -144,6 +144,7 @@
     font-size: var(--text-step-0);
     line-height: var(--leading-snug);
     --flow-space: var(--spacing-m);
+    text-wrap: balance;
   }
   .prose h4 + * {
     margin-top: var(--spacing-3xs);

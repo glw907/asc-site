@@ -160,6 +160,23 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   senior; if it ever reads accidental, widen it, never shrink). Per-template, not
   per-page; codified in `docs/image-standard.md`.
 
+- **Submit-button color: fireweed for money/conversion, navy for utility (ratified by the
+  conductor 2026-07-16, from the coherence read)**: a form's primary submit spends the
+  fireweed budget only when the action is money or membership conversion (join/apply,
+  donate, the class fee payment) — the site's genuine "at most twice per page" pop color,
+  consistent with the fireweed-budget doctrine (see the club-grounds color story). A form
+  whose action is a utility step (contact, a class waitlist join, sign-in) keeps the plain
+  navy `.btn-primary`, since none of those asks a visitor to spend money or commit to
+  membership.
+
+- **Form field labels: the uppercase tracked muted label is the one idiom (ratified by the
+  conductor 2026-07-16, from the coherence read)**: every field label on the site (a
+  `<legend class="fieldset-legend">`, or an inline `<label>`'s own visible text) reads in the
+  site's eyebrow device — `font-display`, `text-step--1`, weight 700, `tracking-eyebrow`,
+  uppercase, `color-muted` — matching ContactForm/DonateForm/the class-signup form/my-account's
+  own precedent. A fieldset's group legend carries the same register as a single field's own
+  label; there is no separate, quieter treatment for a group heading.
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
