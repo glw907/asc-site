@@ -198,12 +198,26 @@ const card = defineComponent({
 // back to the plain auto-fill grid with no lattice class.
 const MAX_LATTICE_COUNT = 6;
 
+// Round 3 (2026-07-16): the per-count columns used to gate on a viewport `@media` breakpoint,
+// but a lattice's real available width depends on where it lands (the new-member-guide "Your
+// First Week" panel loses width to its own panel padding and a sticky TOC rail, join's and
+// members' grids lose width to the long-form template's own wide-breakout clamp), so a viewport
+// breakpoint forced 3-up in containers far too narrow for it (169px cards, mid-word title
+// breaks, a split code chip). The fix is `@container` queries against the lattice's own real
+// inline size (asc-components.css), which requires a size-containing ANCESTOR: a bare
+// `container-type: inline-size` on `.asc-cards` itself cannot query itself (a container query
+// always resolves against the nearest ANCESTOR container, never the element that establishes the
+// container being queried), and the grid's actual parent context varies too widely across the
+// site (`.content-panel`, `.link-cluster-panel`, `.registration-band-inner`, plain `.prose` flow)
+// to safely own the container-type declaration itself. This wrapper is the fix: a dedicated,
+// always-present container-query ancestor, present regardless of what the grid is nested inside.
 function buildCards(ctx: ComponentContext): Element {
   const kids = nestedChildren(ctx.slot('body'), 'asc-card');
   const count = kids.length;
   const className = ['asc-cards'];
   if (count >= 1 && count <= MAX_LATTICE_COUNT) className.push(`asc-cards-${count}`);
-  return h('div', { className }, kids);
+  const grid = h('div', { className }, kids);
+  return h('div', { className: ['asc-cards-container'] }, [grid]);
 }
 
 const cards = defineComponent({
@@ -631,13 +645,28 @@ const table = defineComponent({
 // Svelte markup (SpineRow, ClassSchedule, the event detail page). No content-facing directive
 // reached that chip, so this component is the bridge: it renders the exact same class, styled
 // in asc-components.css already, and invents no new visual (per the "reuse the shipped CSS"
-// scope). The optional note slot is `kind: 'inline'` rather than `'markdown'` so its phrasing
-// content sits in the same `<p>` as the chip, one short status line, not a block paragraph
-// stacked under it.
+// scope).
+//
+// The note is authored as the directive's body content, which the engine's `ctx.slot('body')`
+// returns as a single-paragraph node (round 3, 2026-07-16 fix): nesting that `<p>` straight
+// inside this component's own `<p class="asc-availability">` is invalid HTML, and a real
+// browser parser auto-closes the outer paragraph the instant it meets the inner one, hoisting
+// the note out as a DETACHED SIBLING paragraph (invisible to this file's own tests, which check
+// the naive serializer's markup rather than a parsed DOM, but very visible on render). Unwrap
+// that single leading paragraph and fold its children into an inline `.asc-availability-note`
+// span instead, joined to the chip by a middot, so chip and note read as one grouped status
+// line (the `&middot;` idiom SiteFooter already uses for its own copyright/nonprofit line).
+function unwrapParagraph(nodes: ElementContent[]): ElementContent[] {
+  if (nodes.length === 1 && isElement(nodes[0]) && nodes[0].tagName === 'p') return nodes[0].children;
+  return nodes;
+}
+
 function buildAvailability(ctx: ComponentContext): Element {
   const chip = h('span', { className: ['asc-availability-chip'] }, ctx.slot('title'));
-  const note = ctx.slot('body');
-  return h('p', { className: ['asc-availability'] }, note.length ? [chip, ' ', ...note] : [chip]);
+  const note = unwrapParagraph(ctx.slot('body'));
+  if (!note.length) return h('p', { className: ['asc-availability'] }, [chip]);
+  const noteSpan = h('span', { className: ['asc-availability-note'] }, note);
+  return h('p', { className: ['asc-availability'] }, [chip, ' · ', noteSpan]);
 }
 
 const availability = defineComponent({

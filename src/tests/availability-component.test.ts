@@ -11,11 +11,17 @@ describe(':::availability status chip component', () => {
     expect(html).toContain('<span class="asc-availability-chip">Waitlist</span>');
   });
 
-  it('renders the optional note alongside the chip in one line', async () => {
+  it('renders the optional note as an inline span joined to the chip by a middot, not a nested paragraph', async () => {
     const md = [':::availability[Waitlist]', 'Multi-year wait is typical.', ':::'].join('\n');
     const html = await renderMarkdown(md);
-    expect(html).toContain('class="asc-availability"');
-    expect(html).toContain('Multi-year wait is typical.');
+    const [statusLine] = html.match(/<p class="asc-availability"[^>]*>[\s\S]*?<\/p>/) ?? [];
+    expect(statusLine).toBeDefined();
+    // A nested <p> here would auto-close the outer paragraph in a real browser parse, hoisting
+    // the note out as a detached sibling — the exact bug round 3 fixes.
+    expect(statusLine).not.toMatch(/<p[^>]*>[\s\S]*<p/);
+    expect(statusLine).toContain('<span class="asc-availability-chip">Waitlist</span>');
+    expect(statusLine).toContain('<span class="asc-availability-note">Multi-year wait is typical.</span>');
+    expect(statusLine).toContain('·');
   });
 
   it('omits the note entirely when none is authored', async () => {

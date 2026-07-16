@@ -59,25 +59,38 @@
      Education's one card grid (Your Registration Path) renders inside
      `.registration-band-inner`, which overrides `.asc-cards` to a numbered flex column
      regardless of count (see that file's own comment on the registration band); it never reaches
-     this stretch/lattice rule, so the redesign leaves it pixel-unchanged. */
-  .prose .asc-cards {
+     this stretch/lattice rule, so the redesign leaves it pixel-unchanged.
+
+     Round 3 (2026-07-16): the wrapper `.asc-cards-container` (markdown/components.ts) is the
+     `@container` query's size-containing ancestor; `--flow-space` moves there too, since that
+     wrapper, not this inner grid, is now the element chassis prose.css's owl selector
+     (`.prose > * + *` and every page-local restatement of it) actually spaces. */
+  .prose .asc-cards-container {
+    container-type: inline-size;
+    container-name: asc-cards;
     --flow-space: var(--spacing-m);
+  }
+  .prose .asc-cards {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
     gap: var(--spacing-m);
     align-items: stretch;
     grid-auto-rows: 1fr;
   }
-  /* Below 40rem every lattice collapses to the auto-fill single column above (14rem leaves no
-     room for a second track at a phone width); the fixed per-count columns below apply from
-     40rem up, the breakpoint the retired `cards-two-up` device used. Grids span the full
-     available measure at every count: 2 and 4 cards read as 2-up (4 as 2x2, via row wrap), 3, 5,
-     and 6 read as 3-up (6 as 3x2). */
-  @media (min-width: 40rem) {
+  /* Real-width thresholds (measured against rendered card widths, not a round viewport number):
+     3 columns need roughly 42rem of container (3 * 13rem tracks + 2 gaps), 2 columns roughly
+     26rem. Below 26rem every lattice stays on the auto-fill single column above (14rem leaves no
+     room for a second track that narrow). A 3/5/6-count grid with between 26rem and 42rem of
+     container (the new-member-guide panel, at 1440, is exactly this case) has no forced-3-up
+     override to reach, so it falls through to the same auto-fill grid, which naturally lands 2-up
+     there on its own. */
+  @container asc-cards (min-width: 26rem) {
     .prose .asc-cards-2,
     .prose .asc-cards-4 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
+  @container asc-cards (min-width: 42rem) {
     .prose .asc-cards-3,
     .prose .asc-cards-5,
     .prose .asc-cards-6 {
@@ -520,15 +533,21 @@
   .prose .asc-table th[align='right'] {
     text-align: right;
   }
-  /* A dense results/fees/gear row (a full member name, a class title) wrapped mid-word at narrow
-     widths even though chassis prose.css deliberately wraps an ordinary prose cell (see that
-     file's own table comment, and the raw-table exception directly below): a variant table's own
-     `.table-scroll` wrapper (chassis, `overflow-x: auto`) is the correct escape hatch for THESE
-     tables specifically, a dense numeric grid or a short fee/gear list, never for a raw
-     paragraph-length legacy table, which keeps the chassis wrap so a full sentence in a cell still
-     reads as a sentence. */
-  .prose .asc-table td,
-  .prose .asc-table th {
+  /* A dense results row (a full member name, a class title, a numeric score) wrapped mid-word at
+     narrow widths even though chassis prose.css deliberately wraps an ordinary prose cell (see
+     that file's own table comment, and the raw-table exception directly below): the results
+     variant's own `.table-scroll` wrapper (chassis, `overflow-x: auto`) is the correct escape
+     hatch for a dense numeric scoreboard, which keeps every column readable in one scan rather
+     than wrapping mid-race. This does NOT extend to `fees`/`gear`: their cells hold real prose
+     (racing's gear-table Notes column, "A jacket and pants that can handle wind and spray..."),
+     and blanket nowrap there clipped that prose mid-word at 1440 and drove it fully off-screen at
+     390 (basic-polish round 3, 2026-07-16 — a batch-1 over-application). A right-aligned numeric
+     cell in ANY variant still gets nowrap, since a wrapped number is never wanted regardless of
+     variant. */
+  .prose .asc-table-results td,
+  .prose .asc-table-results th,
+  .prose .asc-table td[align='right'],
+  .prose .asc-table th[align='right'] {
     white-space: nowrap;
   }
   /* One row-separation treatment, not both: chassis prose.css draws a hairline under every tbody
@@ -647,6 +666,20 @@
     line-height: 1;
     color: var(--color-star-gold-dot);
   }
+  /* ─── Availability (content-facing): one grouped status line (round 3, 2026-07-16) ────── */
+  /* `.asc-availability` (markdown/components.ts) always follows the heading it belongs to
+     (waitlists' "## Moorings" and its siblings); `--flow-space: var(--spacing-xs)` matches the
+     `.prose h2 + *`/`h3 + *` tight-below-heading value above so the status line groups with its
+     heading by proximity, one step tighter than an ordinary paragraph gap, and holds that
+     tightness even where a future page's availability line doesn't directly follow a heading. */
+  .prose .asc-availability {
+    --flow-space: var(--spacing-xs);
+  }
+  .prose .asc-availability-note {
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+  }
+
   .prose .asc-availability-chip,
   .asc-availability-chip {
     display: inline-block;

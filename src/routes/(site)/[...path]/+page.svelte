@@ -964,8 +964,14 @@
 
      Below the rail's own breakpoint (the media query just past this rule) the breakout is
      unconstrained: the gutter rail is not on screen there (`.jump-links` renders in its place),
-     so there is nothing for the row to run into. */
-  .long-form-page :global(.asc-cards),
+     so there is nothing for the row to run into.
+
+     Round 3 (2026-07-16): targets `.asc-cards-container` (markdown/components.ts's wrapper), not
+     `.asc-cards` itself. The wrapper establishes the `@container` size asc-components.css's
+     per-count column rules query, so it must be the element that actually carries this width; a
+     card lattice's real rendered width has to equal what its own container query believes it is,
+     or the query and the breakout would disagree about how much room the row has. */
+  .long-form-page :global(.asc-cards-container),
   .long-form-page .promise-hero-photo,
   .long-form-page .promise-hero-facts {
     width: min(var(--container-measure-wide), 100vw - 3rem);
@@ -990,7 +996,7 @@
      width this resolves to, three columns where it fits, two where the narrowed measure only
      leaves room for two. */
   @media (min-width: 80rem) {
-    .long-form-page :global(.asc-cards),
+    .long-form-page :global(.asc-cards-container),
     .long-form-page .promise-hero-photo,
     .long-form-page .promise-hero-facts {
       width: min(calc(var(--container-measure) + var(--spacing-m)), 100vw - 3rem);
@@ -1042,12 +1048,19 @@
      block for why (the owner's live read: 3 different-height boxes read as "a faceplant" and
      crowded the rail). The `article.prose` prefix (beyond `.registration-band-inner` alone) is the
      same defensive specificity bump the Questions-card and program-photo rules below use, to beat
-     asc-components.css's own tied specificity outright regardless of build-time source order. */
-  article.prose :global(.registration-band-inner .asc-cards) {
+     asc-components.css's own tied specificity outright regardless of build-time source order.
+
+     Round 3 (2026-07-16): the width/position reset (undoing the long-form-page wide breakout
+     above) now targets `.asc-cards-container`, the element that breakout actually lands on; the
+     flex-column restyle stays on `.asc-cards` itself, the inner grid element it has always
+     applied to. */
+  article.prose :global(.registration-band-inner .asc-cards-container) {
     width: 100%;
     position: static;
     left: auto;
     transform: none;
+  }
+  article.prose :global(.registration-band-inner .asc-cards) {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-m);
@@ -1631,28 +1644,6 @@
       padding: var(--spacing-l);
     }
   }
-  /* "Your First Week"'s own 3-card lattice (round 2, measured at 1440px against this template's
-     TOC-rail content column, ~614px here, not the full container-measure-wide prose): the
-     count-aware grid (asc-components.css) holds 3-up at full comfortable width elsewhere on the
-     site, but this panel's column is narrower than a plain long-form section (the sticky TOC
-     rail beside it claims 14rem plus its own gutter). Per the round-2 ruling ("3-up must still
-     balance, reduce card padding one step rather than dropping to 2+1"), both the panel's own
-     outer padding and each card's own inline padding step down one token inside this panel only,
-     recovering enough width that "Read the Member Expectations," the longest of the three
-     titles, wraps near the end of the word instead of deep into its middle (the site's own
-     `overflow-wrap: anywhere` safety net, chassis prose.css, still breaks the final syllable at
-     this column width; a genuinely word-boundary wrap would need a fourth column's worth of
-     room this panel does not have). Every other card grid on the site keeps its own default
-     padding. */
-  @media (min-width: 48rem) {
-    .prose :global(.link-cluster-panel) {
-      padding: var(--spacing-m);
-    }
-  }
-  .prose :global(.link-cluster-panel .asc-card) {
-    padding-inline: var(--spacing-s);
-  }
-
   /* The mobile/tablet collapsible TOC (the pre-existing `.toc` recipe above) and the wide-viewport
      sticky gutter TOC render the same `tocList` snippet twice and toggle by breakpoint, rather
      than mounting and unmounting one or the other: both exist with no JavaScript at all, so a
