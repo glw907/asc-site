@@ -104,8 +104,25 @@ dispatch. Everything lands on dev; Geoff's before/after gallery reviews the fini
 - Discord #channel names in the code-chip register: literal tokens, stays (emails do not).
 - Season gold dot vs star: retracted by the observer against the north star.
 
-## Coverage debt
+## Coverage-debt additions (supplementary observer, folded 2026-07-16)
 
-The critic named surfaces the sweep missed: `/racing`, `/members`, `/class-registration-complete`,
-the live notification page. A supplementary observer covers them before the coherence read; their
-findings fold into Batch 2/3 or the backlog.
+The four missed surfaces are fundamentally well-composed; seven polish findings fold in:
+
+Into Batch 2:
+- `/racing` "What to Bring" → `::::table{variant="gear"}` with caption.
+- `/class-registration-complete` joins the confirmation-page item: kicker eyebrow, a success
+  affordance, and the dead void closed — both system success pages get the same designed
+  surface.
+- The membership-open bulletin (`/bulletins/2026-03-membership-open`) ends on a `:::related`
+  or `:::page-cta` closer instead of a hard stop.
+- The h3 icon rule (join's item 1) extends to `/racing`: per page, peer h3s are icon-consistent
+  — icons stay in card titles where they are card vocabulary; prose h3s drop them.
+
+Into Batch 3:
+- `/members` card rows equalize height (grid stretch) so bottom edges and affordances share a
+  baseline.
+- `/members` "At the Club & On the Water" holds 4 cards in a 3-wide grid, stranding one —
+  rebalance (2x2 or an even count); gallery flag.
+
+Observer note: the live notification page routes at `/bulletins/<slug>`, not
+`/notifications/<slug>` (consistent with the notification-pages memory).
