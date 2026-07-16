@@ -57,4 +57,9 @@ memory); the full rebuild runs once at settle.
   the mobile design can be QUITE DIFFERENT from desktop, composed as its own screen for an
   occasional member on a phone (compact masthead, the one action first, full-width stacked
   reference rows). Responsive divergence is licensed, not just graceful collapse.
+  AMENDED same breath: phones will be a very common access point, so mobile is CO-PRIMARY,
+  not secondary — the mobile composition carries the full usability bar in its own right
+  (thumb-reach action placement, 44px targets, zero horizontal cleverness, the
+  occasional-user recognition principle applied doubly). The portal spec designs mobile
+  first-class and verifies it with the same rigor as desktop.
 - Class-door whole-template verdict — probe page open. AWAITING VERDICT.
