@@ -133,6 +133,73 @@ a redesign").
    (the small step), keeping the owl-selector system intact. Education must render
    pixel-identical (its baselines are the proof); NMG lands at the benchmark rhythm.
 
+## Round 3 (the five-template first pass, adjudicated from workflow wf_2dd7fd6d-362)
+
+Round-2 verification: forms/rhythm CLEAN; cards clean everywhere except one root cause. Five
+template observations (class-door, racing, news-post, utility-leaf, member-portal — the portal
+captured signed-in for the first time, light+dark, via a seeded local session). Execution is
+four sequential batches; racing's lower-two-thirds pacing and the post-hero width are
+DELIBERATELY DEFERRED to Geoff's interactive exemplar round (taste, not basics).
+
+### Batch 3A: component contracts (gate the rest)
+
+1. **Card lattices go container-query** (round-2 verify HIGH): the per-count column rules gate
+   on a 40rem VIEWPORT breakpoint, but the NMG panel's lattice lives in a ~560px container at
+   1440 — forced 3-up gives 169px cards (mid-word title break, split code chip, ~150px dead
+   space). `.asc-cards`' parent context gets `container-type: inline-size`; the count rules
+   move to `@container` gates on the lattice's real width (3-up needs roughly ≥42rem of
+   container; 2-up ≥26rem; below that, one column). NMG's panel lands at 2-up naturally.
+2. **Table nowrap scoped down** (racing HIGH; a Batch-1 over-application): the blanket
+   `.asc-table td { white-space: nowrap }` clips prose Notes columns (racing's gear table cut
+   mid-word at 1440, the whole column off-screen at 390). Scope nowrap to the results variant
+   and right-aligned numeric cells; fees/gear prose cells wrap on the measure.
+3. **Availability inline-note contract** (utility HIGH): the note slot renders as a detached
+   sibling paragraph. Coerce it inline — chip + middot + note in one grouped status line
+   (`.asc-availability-note`, muted, step--1) — and tighten the chip's flow-space so it groups
+   with its heading.
+
+### Batch 3B: class-door + utility-leaf first passes
+
+- Class-door: the meta row becomes the facts-family anatomy (drop the "Alaska Sailing Club"
+  self-reference location; add fee; availability as the neutral chip, killing the
+  colored-sentence status); the "Sign up: {name}" setup-colon title recomposes as an eyebrow
+  kicker + class-name title; one light seam ("Your details" group legend) between the reading
+  half and the acting half; outcome/pivot panels move off daisyUI info/success tints onto the
+  site's own callout vocabulary; the pre-submit Turnstile void collapses when the managed
+  challenge passes invisibly (the :empty rule misses the hidden-input case — investigate
+  :has(iframe) or equivalent; no jump in either state).
+- Utility-leaf: trailered's raw closing link → `:::related` (identical to rack's); waitlists
+  gains the same closer; rack + trailered get one real multi-row facts block near the top
+  (Cost / Eligibility / Contact, moorings as the model) replacing the sparse single-row block;
+  the four "To express interest:" bold-colon lines drop the faux-structure frame for plain
+  sentences.
+
+### Batch 3C: news-post + racing first passes
+
+- News-post: a designed tail — rule, "Filed under" tag chips LINKED to /tags/[tag] (they are
+  currently inert decoration) with hover/focus states, prev/next between date-adjacent posts,
+  and a "More news →" index link; a "News" back-link above the date (the governance back-link
+  device); the post's first paragraph gets the lede treatment via the existing splitLede
+  machinery; the dangling "And here's a PDF copy to download:" line is removed from the
+  results post's source (FLAG for Geoff: the PDF asset needs re-locating from the legacy site
+  before a real download slot is worth building).
+- Racing: a `:::page-cta` closer (one fireweed action toward /events/, a quiet education
+  secondary); the TOC gains a nested h3 tier for this page via the template's override device
+  (education's settled TOC untouched); the "What to Bring" caption echo drops (the h3 already
+  names the table).
+
+### Batch 3D: member-portal first pass
+
+One shared portal field-label class propagating the sentence-case ruling to profile, classes,
+household, directory (deleting the four duplicated uppercase blocks); assets rows become one
+consistent label/value grammar with the status chip and tabular fees (killing the em-dash /
+label-colon / inline-warning mix); every member-facing date routes through the one shared
+long-form formatter (no raw ISO slices); row actions (Release / Update listing / Withdraw /
+Cancel / Leave waitlist) take the portal-quiet-action affordance, destructive confirm tier
+unchanged; the landing adopts one deliberate card-vs-flat grouping rule (status/household/
+assets carded; receipts and the nav row flat) with deliberate spacing steps; the classes
+empty-state stack tightens.
+
 ## Rejected / already-ruled (not applied, logged so nothing is silently dropped)
 
 - The category-dot + availability-chip two-register pairing: the deliberately shipped chip
