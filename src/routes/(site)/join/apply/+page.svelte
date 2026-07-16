@@ -158,18 +158,27 @@ earlier "sign in instead" dead end, unchanged. -->
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Your details</legend>
       <div class="flex flex-col gap-s">
-        <input class="input w-full" name="purchaserName" autocomplete="name" placeholder="Full name" required bind:value={purchaserName} />
-        <input
-          class="input w-full"
-          name="purchaserEmail"
-          type="email"
-          autocomplete="email"
-          placeholder="Email address"
-          required
-          bind:value={purchaserEmail}
-          onblur={onPurchaserEmailBlur}
-        />
-        <input class="input w-full" name="purchaserPhone" type="tel" autocomplete="tel" placeholder="Phone number (optional)" bind:value={purchaserPhone} />
+        <label class="flex flex-col gap-2xs text-step--1">
+          Full name
+          <input class="input w-full" name="purchaserName" autocomplete="name" placeholder="Full name" required bind:value={purchaserName} />
+        </label>
+        <label class="flex flex-col gap-2xs text-step--1">
+          Email address
+          <input
+            class="input w-full"
+            name="purchaserEmail"
+            type="email"
+            autocomplete="email"
+            placeholder="Email address"
+            required
+            bind:value={purchaserEmail}
+            onblur={onPurchaserEmailBlur}
+          />
+        </label>
+        <label class="flex flex-col gap-2xs text-step--1">
+          Phone number (optional)
+          <input class="input w-full" name="purchaserPhone" type="tel" autocomplete="tel" placeholder="Phone number (optional)" bind:value={purchaserPhone} />
+        </label>
         {#if tier === 'young-adult'}
           <label class="flex flex-col gap-2xs text-step--1">
             Birthdate (to verify you're under 26)

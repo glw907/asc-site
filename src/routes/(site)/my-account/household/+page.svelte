@@ -85,7 +85,7 @@ primary sets any household member's), and the lean leave-the-club action (design
     <p class="mt-2xs mb-0 text-step--1 text-base-content">Recorded. The club will follow up.</p>
   {:else if !confirmingLeave}
     <p class="mt-2xs mb-0 text-step--1 text-muted">Stops renewal reminders and lets the club know. This does not delete your history.</p>
-    <button type="button" class="btn btn-ghost btn-sm mt-xs" onclick={() => (confirmingLeave = true)}>Leave the club</button>
+    <button type="button" class="btn btn-sm portal-quiet-action mt-xs" onclick={() => (confirmingLeave = true)}>Leave the club</button>
   {:else}
     <p class="mt-2xs mb-0 text-step--1 text-base-content">Are you sure? This stops renewal reminders for your household.</p>
     <div class="mt-xs flex gap-xs">
@@ -105,6 +105,15 @@ primary sets any household member's), and the lean leave-the-club action (design
     font-weight: 700;
     letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Portal quiet-action tier (2026-07-15 invisible-polish fix): matches my-account/+page.svelte's
+     own `.portal-quiet-action` (plain unmodified `.btn`, the profile page's own "Update" button
+     convention, plus muted ink), a step up from `.btn-ghost`'s chromeless rest state. This button
+     opens the confirm step; it must not read as destructive itself, that weight belongs only to the
+     "Yes, leave the club" `.btn-error` confirm below. */
+  .portal-quiet-action {
     color: var(--color-muted);
   }
 </style>

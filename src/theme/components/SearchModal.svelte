@@ -171,6 +171,13 @@ ecxc.ski's own SearchModal, the family's standing Pagefind pattern.
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+  /* One step past hover, applied instantly (2026-07-15 invisible-polish rider): matches
+     `.theme-toggle:active` in SiteHeader.svelte, the same trio member with the same Tailwind
+     `hover:text-base-content` utility and no CSS hover rule to step past directly. */
+  .search-trigger:active {
+    color: color-mix(in oklab, var(--color-base-content), black 15%);
+    transition: none;
+  }
   /* The trio's own 44px pointer target (owner-round-2 fix, 2026-07-07), matching the same
      invisible-`::before` extension `.donate-link`/`.theme-toggle` use in SiteHeader.svelte: the
      visible 36px box (`h-9 w-9`) stays put, and the actual hit area grows 4px past every edge. */

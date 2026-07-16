@@ -417,6 +417,19 @@ state. -->
   .nav-caret {
     transition: color 0.15s ease;
   }
+  /* One step past hover, applied instantly (2026-07-15 invisible-polish rider): the trio's own
+     hover is a Tailwind utility on the element (`hover:text-base-content`/`hover:text-primary`),
+     not a CSS rule here, so there is no existing hover formula to step past on the same axis in the
+     literal sense; these two rules instead darken the trio's own hover *target* color one step
+     further, matching the ink-deepens family's own `black 15%` value (`.nav-link:active` above). */
+  .theme-toggle:active {
+    color: color-mix(in oklab, var(--color-base-content), black 15%);
+    transition: none;
+  }
+  .donate-link:active {
+    color: color-mix(in oklab, var(--color-primary), black 15%);
+    transition: none;
+  }
   /* Tailwind v4's preflight leaves `<button>` at the OS default arrow cursor (a deliberate v3+
      removal); `.donate-link` needs no rule of its own since it is an `<a href>`, which already
      gets the browser's own pointer cursor. Without this, hovering across the icon trio
@@ -550,6 +563,11 @@ state. -->
   .mobile-sublink:hover {
     color: var(--color-primary);
   }
+  /* One step past hover, applied instantly (2026-07-15 invisible-polish rider). */
+  .mobile-sublink:active {
+    color: color-mix(in oklab, var(--color-primary), black 15%);
+    transition: none;
+  }
   .mobile-sublink:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: -2px;
@@ -585,6 +603,15 @@ state. -->
   .mobile-link.active {
     color: var(--color-primary);
     font-weight: 650;
+  }
+  /* One step past rest, the nav-link family's own ink-deepens value, applied instantly
+     (2026-07-15 invisible-polish rider): `.mobile-link` has no `:hover` (a touch-first surface),
+     so there is no intermediate hover color to step past; this darkens straight toward the same
+     `--color-primary`-mixed target `.nav-link:active` uses, declared last so it also wins on the
+     current-page `.active` variant. */
+  .mobile-link:active {
+    color: color-mix(in oklab, var(--color-primary), black 15%);
+    transition: none;
   }
 
   /* Re-derived after the wordmark span was removed above (Geoff's live-page finding, 2026-07-07):

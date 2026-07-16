@@ -249,7 +249,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
         {#each data.receipts as receipt (receipt.id)}
           <li class="flex flex-wrap justify-between gap-xs">
             <span>{receipt.date.slice(0, 10)} · {receipt.what}</span>
-            <span>{formatDollars(receipt.amount)}</span>
+            <span class="tabular-nums">{formatDollars(receipt.amount)}</span>
           </li>
         {/each}
       </ul>
@@ -269,7 +269,7 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
   </p>
 
   <form method="POST" action="?/signOut" class="mt-l">
-    <button type="submit" class="btn btn-ghost btn-sm">Sign out</button>
+    <button type="submit" class="btn btn-sm portal-quiet-action">Sign out</button>
   </form>
 {/if}
 
@@ -281,6 +281,15 @@ section's own "Pay" doors do the same for an approved, unpaid asset assignment t
     font-weight: 700;
     letter-spacing: var(--tracking-eyebrow);
     text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  /* Portal quiet-action tier (2026-07-15 invisible-polish fix): the profile page's own "Update"
+     button already establishes plain unmodified `.btn` (real border/fill chrome, no color modifier)
+     as this portal's quiet-but-real-button convention, a step up from `.btn-ghost`'s chromeless rest
+     state, which read as plain text rather than a clickable control. Muted ink keeps it visually
+     quieter than the primary/error tiers used elsewhere on this page. */
+  .portal-quiet-action {
     color: var(--color-muted);
   }
 </style>

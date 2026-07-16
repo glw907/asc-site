@@ -44,6 +44,11 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
       {/each}
     </ul>
   </section>
+{:else}
+  <section class="mt-l max-w-measure-wide">
+    <h2 class="m-0 text-step-1 font-semibold text-base-content">My classes</h2>
+    <p class="mt-xs mb-0 text-step--1 text-muted">No classes on your account yet.</p>
+  </section>
 {/if}
 
 {#if data.myWaitlist.length > 0}
@@ -77,6 +82,11 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
         </li>
       {/each}
     </ul>
+  </section>
+{:else}
+  <section class="mt-l max-w-measure-wide">
+    <h2 class="m-0 text-step-1 font-semibold text-base-content">My waitlist</h2>
+    <p class="mt-xs mb-0 text-step--1 text-muted">Not on any waitlist right now.</p>
   </section>
 {/if}
 
