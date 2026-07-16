@@ -23,4 +23,11 @@ memory); the full rebuild runs once at settle.
   (racing is today's only nested consumer; the rule is the tier's, not the page's).
 - Racing season-event passage treatment (A eyebrow / B navy rule / C gold tick / none) —
   probed in probe-racing.html. AWAITING VERDICT.
-- Class-door + portal whole-template verdicts — probe pages open. AWAITING VERDICT.
+- Member portal — VERDICT: NEEDS A BIGGER DESIGN PASS (Geoff live: "the after is better than
+  the before, but not by much. This is a key page, and it can carry its own components or
+  other one-time design features if needed to make it friendly and effective"). The portal
+  graduates from vocabulary conformance to a designed member-home direction with bespoke
+  components licensed. Next: conductor designs 2-3 direction candidates (frontend-design
+  method), presented as token-true static mocks in a probe page for Geoff's pick; the picked
+  direction specs and lands as its own pass, not inside this round's settle.
+- Class-door whole-template verdict — probe page open. AWAITING VERDICT.
