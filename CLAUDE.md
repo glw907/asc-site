@@ -55,6 +55,19 @@ values may tune, but a color never crosses roles:
 - The semantic palette (caution/success/error) stays a separate reserved vocabulary. The
   education category can never collide with a warning color again, the way it did on the old site.
 
+### The resolved-craft bar (Geoff, 2026-07-15)
+
+Every page must feel _designed_, never assembled — and this bar covers the whole site and all
+design work, basic work included, not just dedicated polish passes. The operating rubric is the
+invisible-craft catalogue in `docs/2026-07-15-asc-invisible-polish-brief.md` (spacing rhythm,
+register boundaries, optical alignment, weight-built hierarchy, tinted neutrals, layered depth,
+motion discipline, state coverage, micro-typography): a new surface gets the catalogue applied
+at build time, not deferred to a later polish round. `scripts/design-probe.mjs` carries the
+machine-detectable checks as standing gates; a fresh-context whole-page coherence read (390 and
+1440, "would an expert see assembly tells?") closes any substantial design pass. Durable
+verdicts live in `docs/design-benchmark/ledger.md` — a verdict stands unless the graded code
+changed or Geoff reopens it.
+
 ### One-check and visual-fidelity, for any design change
 
 This site follows cairn-cms's family-wide doctrine (see that repo's `CLAUDE.md` for the full
