@@ -104,14 +104,6 @@ reader with no JavaScript. -->
 </div>
 
 <style>
-  /* The submit button's pending state: `.asc-cta-btn` carries no disabled treatment of
-     its own (every other consumer is a plain link, never disableable), so this button-only state
-     is local to the one consumer that needs it. */
-  .donate-form :global(.asc-cta-btn:disabled) {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
   /* Matches ContactForm's own eyebrow legend, the site's field-label convention. */
   .donate-form :global(.fieldset-legend) {
     font-family: var(--font-display);

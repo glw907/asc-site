@@ -192,7 +192,7 @@ pivot before the visitor fills out the rest of the form. -->
           <input type="hidden" name="enrollmentId" value={joinClass.result.enrollmentId} />
           <input type="hidden" name="classId" value={data.cls.id} />
           <div use:turnstileExplicit></div>
-          <button type="submit" class="btn btn-primary btn-sm" disabled={!!payClassFee.pending}>
+          <button type="submit" class="asc-cta-btn" disabled={!!payClassFee.pending}>
             {payClassFee.pending ? 'Redirecting…' : `Pay $${data.cls.fee} now`}
           </button>
         </form>

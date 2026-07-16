@@ -344,7 +344,11 @@
      never inherits the blue underline dress. The shadow pair is the light-ground variant of the
      home closing band's craft hover (that band sits on navy; this button sits on the page's own
      white/base-100 ground), so the fireweed itself tints the shadow rather than a flat black. */
-  .prose .asc-cta-btn {
+  /* `button.asc-cta-btn` rides along so a route-page form submit (the class-fee payment button,
+     which sits outside any `.prose` container) draws the same fireweed tier; a button never
+     fights the chassis `.prose a` link rules the `.prose`-scoped selector exists to outrank. */
+  .prose .asc-cta-btn,
+  button.asc-cta-btn {
     display: inline-block;
     background: var(--color-fireweed);
     color: white;
@@ -357,19 +361,27 @@
       0 4px 12px -6px color-mix(in oklab, var(--color-fireweed) 55%, transparent);
     transition: background 0.15s ease, box-shadow 0.15s ease;
   }
-  .prose .asc-cta-btn:hover {
+  .prose .asc-cta-btn:hover,
+  button.asc-cta-btn:hover {
     background: color-mix(in oklab, var(--color-fireweed), black 8%);
   }
   /* One step past hover on the same axis (2026-07-15 invisible-polish fix), applied instantly
      (`transition: none`) so a press acknowledges within a frame rather than over the button's own
      0.15s hover animation. */
-  .prose .asc-cta-btn:active {
+  .prose .asc-cta-btn:active,
+  button.asc-cta-btn:active {
     background: color-mix(in oklab, var(--color-fireweed), black 12%);
     transition: none;
   }
-  .prose .asc-cta-btn:focus-visible {
+  .prose .asc-cta-btn:focus-visible,
+  button.asc-cta-btn:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+  /* A submit consumer's pending state; link consumers are never disableable. */
+  button.asc-cta-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 
   /* ─── Page CTA: the sitewide closing panel (generalized 2026-07-15) ────── */
