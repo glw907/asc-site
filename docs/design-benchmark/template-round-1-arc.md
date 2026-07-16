@@ -12,8 +12,10 @@ memory); the full rebuild runs once at settle.
 - Racing "Ready to try it?" action pair — PROBED (racing-round-probes.html): current state
   measured inverted (secondary 62px/18px vs primary 44px/15.2px, two button families);
   candidates A matched-pair ghost (one geometry two skins, home's two-tier grammar) and
-  B button + quiet arrow link. Conductor recommends A. Rider: the lede's "Events page" link
-  duplicates the primary's destination. AWAITING VERDICT.
+  B button + quiet arrow link. VERDICT A (matched pair), Geoff live. The secondary skin
+  becomes an .asc-cta-btn family variant at settle, and page-cta's kind="secondary" maps to
+  it SITEWIDE (the bulletin's Join/Renew pair has the same defect). Rider ruled by conductor
+  under latitude: the lede's duplicate "Events page" link drops.
 - Racing TOC nested tier — PROBED (same page): current differentiates by indent alone (both
   tiers 13.1px/500); refined treatment per the secondary-nav craft recipe (sub-tier 0.85em,
   weight 400, muted ink, tight within groups, 0.45rem between groups, 0.85rem indent).
