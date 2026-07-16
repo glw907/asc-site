@@ -42,4 +42,14 @@ memory); the full rebuild runs once at settle.
   members who are only using it occasionally." Governing principle: recognition over recall —
   zero-click answers, plain-language self-labeling, full dates, one obvious action,
   no memory-dependent cleverness.
+- Portal direction — VERDICT (Geoff live): "C from a functional standpoint, but the overall
+  design of A is more pleasant, and I think the use of the 2nd column is helpful." The ruled
+  direction D = C's semantics (masthead standing band, one weighted action, value mirror,
+  off-season reassure-and-anticipate) in A's two-column body. Owner taste overrides the
+  research's anti-two-column lean; the research warning survives as a CONSTRAINT: the rail
+  stays subordinate (quiet reference tiles, never an equal-weight menu) and collapses to a
+  sensible single column on mobile. COPY RULE (Geoff, same breath): avoid em dashes — the
+  round-3 asset-row "name — detail" delimiter retires for structural label/value or middot
+  separation, portal-wide and in future UI copy.
+  Next iteration: a confirming D mock on the directions page, then the portal spec.
 - Class-door whole-template verdict — probe page open. AWAITING VERDICT.
