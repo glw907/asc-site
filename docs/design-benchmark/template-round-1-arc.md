@@ -52,4 +52,9 @@ memory); the full rebuild runs once at settle.
   round-3 asset-row "name — detail" delimiter retires for structural label/value or middot
   separation, portal-wide and in future UI copy.
   Next iteration: a confirming D mock on the directions page, then the portal spec.
+- Portal layout license (Geoff live, follow-on): the desktop version can USE the desktop
+  width (not pinned to the prose measure; generous working area, full-bleed masthead) and
+  the mobile design can be QUITE DIFFERENT from desktop, composed as its own screen for an
+  occasional member on a phone (compact masthead, the one action first, full-width stacked
+  reference rows). Responsive divergence is licensed, not just graceful collapse.
 - Class-door whole-template verdict — probe page open. AWAITING VERDICT.
