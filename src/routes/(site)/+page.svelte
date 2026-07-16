@@ -479,14 +479,19 @@ before the photography existed, never a broken image. -->
 <style>
   /* The two-tier CTA grammar (Geoff-ratified, 2026-07-15): "quiet tier" is the invitation, spent
      only on the hero's own low-stakes first ask; "solid tier" is the ask, the fireweed button
-     everywhere else spends its budget on a real commitment (joining, registering, paying). Both
-     read from `--color-fireweed` directly; only their weight differs. */
+     everywhere else spends its budget on a real commitment (joining, registering, paying). The
+     solid tier reads `--color-fireweed` directly (white text on a fireweed fill, unaffected by
+     the ink step below); the quiet tier is fireweed's first use as actual text ink, so it reads
+     `--color-fireweed-ink` throughout (text, border, both background washes) instead: identical
+     to `--color-fireweed` in light mode, but a dark-mode-only lightness step (theme.css) keeps
+     the translucent wash legible on the dark hero ground (the dark-mode contrast fix, 2026-07-15
+     conductor ruling). */
   .cta-btn-quiet {
     display: inline-block;
     align-self: flex-start;
-    background: color-mix(in oklab, var(--color-fireweed) 6%, transparent);
-    color: var(--color-fireweed);
-    border: 1px solid color-mix(in oklab, var(--color-fireweed) 55%, transparent);
+    background: color-mix(in oklab, var(--color-fireweed-ink) 6%, transparent);
+    color: var(--color-fireweed-ink);
+    border: 1px solid color-mix(in oklab, var(--color-fireweed-ink) 55%, transparent);
     font-weight: 600;
     font-size: var(--text-step--1);
     padding: 0.55rem 1.3rem;
@@ -495,8 +500,8 @@ before the photography existed, never a broken image. -->
     transition: background 0.15s ease, border-color 0.15s ease;
   }
   .cta-btn-quiet:hover {
-    background: color-mix(in oklab, var(--color-fireweed) 12%, transparent);
-    border-color: var(--color-fireweed);
+    background: color-mix(in oklab, var(--color-fireweed-ink) 12%, transparent);
+    border-color: var(--color-fireweed-ink);
   }
   .cta-btn-quiet:focus-visible {
     outline: 2px solid var(--color-primary);

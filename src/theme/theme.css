@@ -246,6 +246,14 @@
   --cairn-error-ink: oklch(50% 0.17 27);
   --cairn-info-ink: oklch(48% 0.1 235);
 
+  /* Fireweed's own dark-mode ink step (the two-tier CTA grammar's quiet tier, 2026-07-15
+     conductor ruling): identical to `--color-fireweed` here, the light-mode default, since
+     fireweed reads fine as text ink against the light hero ground (measured 5.11:1). The
+     dark-mode override below is the first time fireweed itself needs a contrast-derived
+     variant, the same reasoning `--color-star-gold-dot` (above) already established for the
+     Season dot. */
+  --color-fireweed-ink: var(--color-fireweed);
+
   --cairn-shadow: 0 1px 2px color-mix(in oklab, var(--color-base-content) 6%, transparent),
     0 6px 20px -8px color-mix(in oklab, var(--color-base-content) 12%, transparent);
 
@@ -263,6 +271,18 @@
     --cairn-warning-ink: oklch(82% 0.12 76);
     --cairn-error-ink: oklch(76% 0.14 27);
     --cairn-info-ink: oklch(80% 0.1 235);
+
+    /* Measured against the home hero's own dark ground (Playwright + sharp rendered-pixel
+       sampling of the quiet-tier button, not the computed CSS value, since its background is a
+       translucent wash composited over that ground): `--color-fireweed` at its light-mode 53.9%
+       lightness read 3.02:1 there, short of the 4.5:1 WCAG floor for normal text — fireweed's
+       first use as actual text ink, not a fill with white text on top. Same hue and chroma as
+       `--color-fireweed`, raised to 67% lightness (the same step-search `--color-star-gold-dot`
+       above already established for the Season dot), measured at 5.00:1 against that same dark
+       ground, comfortably past the 4.8:1 target with margin for render variance. Light mode is
+       untouched: `--color-fireweed-ink` equals `--color-fireweed` there (the `:root` default
+       above), still 5.11:1. */
+    --color-fireweed-ink: oklch(67% 0.166 352.8);
 
     --color-card-border: color-mix(in oklab, var(--color-base-content) 16%, transparent);
     --cairn-shadow: 0 1px 2px color-mix(in oklab, black 40%, transparent),
@@ -282,6 +302,9 @@
   --cairn-warning-ink: oklch(82% 0.12 76);
   --cairn-error-ink: oklch(76% 0.14 27);
   --cairn-info-ink: oklch(80% 0.1 235);
+  /* See the `@media (prefers-color-scheme: dark)` block's own comment above for the derivation;
+     this is the explicit-toggle path for the same measured value. */
+  --color-fireweed-ink: oklch(67% 0.166 352.8);
   --color-card-border: color-mix(in oklab, var(--color-base-content) 16%, transparent);
   --cairn-shadow: 0 1px 2px color-mix(in oklab, black 40%, transparent),
     0 8px 24px -10px color-mix(in oklab, black 55%, transparent);
