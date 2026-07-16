@@ -19,7 +19,8 @@ memory); the full rebuild runs once at settle.
 - Racing TOC nested tier — PROBED (same page): current differentiates by indent alone (both
   tiers 13.1px/500); refined treatment per the secondary-nav craft recipe (sub-tier 0.85em,
   weight 400, muted ink, tight within groups, 0.45rem between groups, 0.85rem indent).
-  AWAITING VERDICT.
+  VERDICT KEEP ("much better"), Geoff live. Lands on the page-toc-rail nested tier at settle
+  (racing is today's only nested consumer; the rule is the tier's, not the page's).
 - Racing season-event passage treatment (A eyebrow / B navy rule / C gold tick / none) —
   probed in probe-racing.html. AWAITING VERDICT.
 - Class-door + portal whole-template verdicts — probe pages open. AWAITING VERDICT.
