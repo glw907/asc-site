@@ -97,6 +97,42 @@ dispatch. Everything lands on dev; Geoff's before/after gallery reviews the fini
 7. **Moorings facts label column**: tightened toward content-max so short labels don't open a
    dead gutter (the one moorings finding).
 
+## Round 2 (Geoff's gallery notes, 2026-07-16; conductor-designed, measured before ruled)
+
+Geoff's five notes translate to three axes; the card notes (1, 2, 5) are one system ruled
+whole per his own words ("this card idiom is a problem in all cases, and the component needs
+a redesign").
+
+1. **The card component, redesigned** (`components.ts` buildCard/buildCards +
+   `asc-components.css`):
+   - Anatomy: the icon hangs in a fixed leading column (top-aligned to the title's cap
+     height) and NEVER sits inline with title text; the text column carries the title (600,
+     inline trailing arrow as shipped) with the description below it, aligned to the title's
+     left edge — wrapped title lines stay in the text column.
+   - Grids are count-aware lattices (the builder knows the count): 2 cards → 2-up, 3 → 3-up,
+     4 → 2x2, 5 → 3-up, 6 → 3x2 — always spanning the full available measure, with
+     `align-items: stretch` AND `grid-auto-rows: 1fr` so every card in a lattice shares one
+     height (fixes join's 169/145 mix, members' 120/96 mix, the NMG panel's 198/173/202
+     2+1). The members-only equalize device and the TWO_UP heading-ID device retire into
+     this (they were patches on the un-designed system).
+   - A single card is not a grid: render it as a full-measure quiet row-card (icon left,
+     title + description right), replacing the lone 448px box floating in a 614px container
+     (NMG's Discord/Account/Get-Involved cards).
+   - Measured baselines: join 6-card heights 169/145/145/169/145/169; NMG panel
+     grid-template 257/257 holding 3 cards; members grid2 120/120/120/96/96/96. After: one
+     height per lattice, full-measure tracks.
+2. **Form label register, two-level** (reverses the finish-round one-idiom ruling — Geoff:
+   "the labels and form title look too similar"): field labels are sentence-case, weight
+   600, `--text-step--1`, base-content ink; group legends and section titles keep the
+   uppercase tracked muted eyebrow. Applied to ALL five forms (join/apply, contact, donate,
+   class signup, my-account). decisions.md updated: the 2026-07-16 one-idiom entry is
+   OVERRULED by Geoff, this two-level scheme is the ruling.
+3. **Heading rhythm** (measured: education's settled h2-to-content gap is 13px; NMG's
+   de-carded flow shows 56px, the awkward space Geoff flagged on Life at the Club): add
+   tight-below-heading rules for h2/h3 as `--flow-space` overrides on `h2 + *` / `h3 + *`
+   (the small step), keeping the owl-selector system intact. Education must render
+   pixel-identical (its baselines are the proof); NMG lands at the benchmark rhythm.
+
 ## Rejected / already-ruled (not applied, logged so nothing is silently dropped)
 
 - The category-dot + availability-chip two-register pairing: the deliberately shipped chip
