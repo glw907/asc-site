@@ -124,12 +124,16 @@ cover, for the attorney's review:
 - whether the club should require proof of liability insurance for moored boats, and
   whether the club is named on it, is a board policy question the draft presents both
   ways for the attorney
-- who owns, inspects, and maintains the mooring tackle is a fact the attorney needs
-  before drafting: club-supplied tackle raises negligent-maintenance exposure that
-  disclaimer language handles differently than member-supplied tackle. Control is also
-  the bailment test, so club-maintained tackle strengthens any argument that the club
-  has custody of the boat; the drafting counters with an explicit no-bailment,
-  no-custody disclaimer either way
+- tackle ownership is settled (Geoff, 2026-07-17): **the club owns up to the mooring
+  ball; the member owns everything beyond it** (pendant, lines, shackles, and the boat
+  itself). The draft encodes the split: the member is responsible for the adequacy,
+  condition, and maintenance of their own gear beyond the ball and for their boat's
+  suitability for the mooring; the club makes no warranty or safety representation
+  about its ground tackle (per the Donahue no-representations factor) while stating
+  its maintenance practice honestly. The member-side gear is the usual failure point
+  in a break-away, which the indemnification language leans on. The no-bailment,
+  no-custody disclaimer applies regardless: the member attaches and detaches their own
+  boat, and the club never handles it
 - the stored-property research (Appendix B) concludes the mooring document should
   carry full property-storage substance, not just an injury-style release: a boat on a
   club mooring is stored property, and the no-bailment disclaimer, specifically named
@@ -332,7 +336,7 @@ documents.
 | Mooring agreement (release + property terms) | Mooring holders | Annual | Mooring fee | Core |
 | Dry storage agreement (with lien/abandonment clause) | Storage holders | Annual | Storage fee | Core |
 | Per-asset rules acknowledgements | Asset holders | Annual | Asset fee | Core |
-| Regatta / race entry waiver | Each competitor (parent for minors) | Per event | Race registration | Core if racing |
+| Regatta / race entry waiver | Each competitor (parent for minors) | Per event | Race registration | Core (the club runs regattas) |
 | Youth medical & emergency form (consent-to-treat) | Parent/guardian | Per season | Class signup | Core for youth classes |
 | Minor photo/media consent | Parent/guardian | Standing, revocable | Class signup or profile | Core (public site shows youth photos) |
 | Adult photo/media consent | Adult members | Standing, revocable | Join or profile | Recommended |
