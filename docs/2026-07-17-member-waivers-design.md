@@ -57,6 +57,15 @@ and acknowledgement that applies to them.
 8. **Admin surface framed as "is the club protected".** A per-season rollup: each
    document with signed and outstanding counts, drill-through to either member list,
    plus per-member signature history with the frozen signed text retrievable.
+9. **The general release covers class participation; no separate class waiver**
+   (Geoff, 2026-07-17). All class participants are members, so the annual release is
+   drafted to expressly name instruction risks (on-water training, capsize and
+   recovery drills, cold-water immersion, club-boat use during class), and class
+   signup gates on the current-season release without re-presenting it when already
+   signed. A member handles this once, at join or renewal. Two exceptions by nature:
+   race entries (RRS Rule 82 bars the general text there regardless) and the youth
+   medical form (per-season operational data, not a waiver). The attorney confirms
+   the single-document coverage in review.
 
 ## The signature record
 
@@ -218,8 +227,10 @@ renewal, not an annual stack of forms.
   operation (publish this season's document versions) in place of the current manual
   two-place version bump.
 - `waiver-text.ts` and `settings.waiver_text_version` retire once the document model
-  lands; the existing join and class-signup checkboxes upgrade to the typed-name flow
-  against the same gates.
+  lands. The join checkbox upgrades to the typed-name flow; the class-signup checkbox
+  disappears for members whose current-season release is on file (decision 9) and
+  becomes the typed-name flow only for the member who somehow reaches class signup
+  unsigned.
 - Whether stored property needs its own agreement affects only the document inventory,
   not the machinery; the model absorbs another document without schema change.
 
@@ -316,7 +327,7 @@ documents.
 
 | Document | Who signs | Cadence | Signs at | Tier |
 |---|---|---|---|---|
-| General liability release | Every adult; parent for each minor | Annual | Join / renewal | Core |
+| General liability release (expressly covers class participation) | Every adult; parent for each minor | Annual | Join / renewal | Core |
 | Club rules acknowledgement | All members | Annual | Join / renewal | Core |
 | Mooring agreement (release + property terms) | Mooring holders | Annual | Mooring fee | Core |
 | Dry storage agreement (with lien/abandonment clause) | Storage holders | Annual | Storage fee | Core |
@@ -333,6 +344,10 @@ documents.
 
 Notes that ride the table into the board packet:
 
+- **There is deliberately no separate class waiver.** All class participants are
+  members, and the general release names instruction risks expressly, so class signup
+  adds no paperwork for a member whose current-season release is on file (ratified
+  decision 9; attorney confirms coverage).
 - **Race entries are a separate document by rule, not preference.** Racing Rules of
   Sailing Rule 82 prohibits indemnification language in a race entry document, so the
   general release text cannot serve regatta entries under US Sailing sanction.
