@@ -8,36 +8,58 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**IN FLIGHT: THE PORTAL REDESIGN PASS — branch `portal-redesign`, spec
-docs/2026-07-16-portal-redesign-design.md + plan docs/plans/2026-07-16-portal-redesign.md
-(Geoff-ratified from the mock-D probe arc; visual reference docs/design-benchmark/portal-mock-d/).
-Round-1's settle batch landed and verified (980dd09); a stale runaway guard from that session
-alarmed "idle 1557s" AFTER the job finished, not a real stall. LANDED THIS PASS (uncommitted on
-the branch as of this writing): T1 portal-state.ts (pure four-way state machine + valueMirror, 17
-tests) and T5a the member-session e2e mint helper + deterministic portal fixture. THREE MID-PASS
-GEOFF RULINGS, all logged in docs/design-benchmark/decisions.md and the plan — read those, not
-this summary: (1) THE GEAR DOOR — /my-account/gear becomes the gear home absorbing the asset
-verbs (Release/Request/Cancel) mock D's reference-only rail gave no home; grounded in live data
-(ZERO asset_requests ever filed, 40 assignments / 148 households), so a rare verb earns a door,
-not landing real estate. Gear joins the doors row (spec amendment). (2) RECEIPTS REPOINT AT THE
-LEDGER — listReceipts' memberships/asset_payments union went stale when 0021_money_ledger landed;
-143 class-fee lines + 5 donations are invisible to the members who paid them. NOT a schema change;
-adding class-fee payment columns would duplicate the ledger and BE the write-around. Must REPLACE
-the union (217 dues lines overlap 235 paid memberships; a combined read double-counts) and the
-units change (cents, not dollars). (3) RELEASE GETS A TWO-STEP CONFIRM — it gives up a scarce
-resource with a waitlist behind it, no undo, admin-only recovery, and shipped as one tap beside
-Pay. ALSO RULED (Geoff, live): the old "full-bleed bands are HOME-ONLY, no per-page exception"
-rule is reframed to "considered and justified" — decisions.md carries the standard WITH the worked
-examples in both directions (home yes, portal yes, education still no), since a bright line
-carries information a bare judgment standard loses. Task order: T1 ✓, T5a ✓, T1b (receipts, in
-flight) → T2 (desktop landing) → T2b (gear door) → T3 (mobile) → T4 (child riders) → T5 (visual
-spec + CI baselines) → T6 (review fan-out, gate, push). Baselines regen ONLY via the ci.yml
-update_snapshots dispatch. Geoff's before/after against mock D still gates the apex.
-Still awaiting Geoff verdicts (arc log): racing passage treatment, class-door template line.
-QUEUED BEHIND IT (ROADMAP, Geoff 2026-07-16): the events-redesign initiative (from-scratch,
-FUNCTIONAL brainstorm first, own template licensed) and the member-directory initiative
-(number-one member-requested feature, full brainstorm + pass) — both open INTERACTIVE with
-Geoff, fresh sessions, probe-iteration process governing the design work.**
+**PORTAL REDESIGN PASS: SHIPPED TO DEV 2026-07-17 (merge 510b266, PR #1). AWAITING GEOFF'S
+BEFORE/AFTER against mock D — that gate is the apex's, not dev's; dev is live now.** Spec
+docs/2026-07-16-portal-redesign-design.md + plan docs/plans/2026-07-16-portal-redesign.md,
+visual reference docs/design-benchmark/portal-mock-d/. The landing rebuilt to mock D across all
+four states (needs-you / all-clear / off-season / renewal), mobile composed as its own screen
+(the action row's stacked anatomy fixes the mid-phrase wrap Geoff named on the probe), plus TWO
+NEW DOORS the ratified mock left no home for and RECEIPTS REPOINTED AT THE LEDGER. Four Geoff
+rulings taken live mid-pass, all logged with their grounding in docs/design-benchmark/decisions.md
+(read those, never this summary): the gear door, the renewal door, Release's two-step confirm, and
+the full-bleed rule reframed from "HOME-ONLY, no exception" to "considered and justified" (with
+worked examples both ways, since a bright line carries information a bare standard loses).
+
+ELEVEN DEFECTS FIXED ON THE WAY PAST, every one green on check/test/build. The adversarial review
+gate (16 findings survived refutation) caught three BLOCKERS: the Pay button silently dead (the
+landing never destructured `form`), portal body ink at 1.07:1 in dark mode, and the all-clear
+moment rendering under the renewal CTA. The conductor's own render read caught three more: the
+masthead band ignoring the dark theme (it reached for fixed --color-sage where the site bands with
+--color-base-200 — identical in light, broken in dark), Sign out stranded at left=283 against
+everything else's left=80, and money dropping a trailing zero ("$247.5"). One member-facing money
+formatter now serves the whole portal.
+
+THE PATTERN WORTH CARRYING FORWARD (four instances, one root): THE RATIFIED MOCK DEPICTED DATA THE
+SYSTEM CANNOT PRODUCE, because a probe agent built the reference without querying the database or
+the dark theme. Mock D showed a class-fee receipt the schema could not express, slot identifiers
+("B-Dock slip 12") that do not exist (all 40 live assignments carry free text about the member's
+BOAT: "Sailboat", "BUCC", 'Purple Buccaneer 18 "Dionysus"'), a "Gear locker" asset type the club
+does not have, and a light-only palette. THE FIXTURES THEN REPRODUCED THE FICTION, so the baseline
+looked right while production would have rendered gibberish — verification concealing the defect it
+exists to catch. BINDING ON THE EVENTS-REDESIGN AND MEMBER-DIRECTORY PROBE ARCS: ground a probe
+against real rows and both themes BEFORE ratifying it, or the ratification bakes in fiction.
+
+ALSO FIXED, INFRASTRUCTURE: ci.yml's update_snapshots dispatch hardcoded e2e/site-visual.spec.ts
+and its snapshot dir, so it SILENTLY DID NOTHING for the portal's new spec and reported success
+(1912cf8 + the commit before it; both steps are now spec-agnostic, and the staging glob must be
+shell-expanded — git's own pathspec globbing does not match UNTRACKED dirs, which is exactly what a
+new spec's baselines are). Note for any future visual spec: PLAYWRIGHT WRITES MISSING SNAPSHOTS ON
+FIRST RUN BY DEFAULT, no --update-snapshots needed — a local run mints workstation baselines that
+break CI if committed. The repo rule ("never a local --update-snapshots run") is true but
+incomplete. Baselines for the portal are CI-minted (a2f3198); site-visual's came back UNCHANGED,
+proving the rebuild shifted no other page.
+
+LIVE DEFECT THIS FIXES FOR REAL MEMBERS: receipts read the money ledger (migration 0021) instead of
+a stale two-table union whose premise went out of date the day 0021 landed. 143 class-fee payments
+and 5 donations were invisible to the members who made them. NOT a schema change; the canonical
+store already existed and every write path already fed it.
+
+OPEN / CARRY-FORWARD: Geoff's before/after against mock D (four states rendered light+dark at
+390/1440 available on request). Backlog-worthy, none blocking: the portal's 44px touch-target floor
+is unmet sitewide (row actions ship at .btn-sm/32px, "Manage gear & moorings" at 17px) — a
+PRE-EXISTING gap this pass did not introduce and deliberately did not widen; the desktop landing
+shows a tall whitespace void when the main column is short and the rail is not; the landing renders
+two h1s (one display:none, benign for AT) as the cost of the not-a-collapse dual composition.
 
 **ROUNDS 2-3 LANDED + THE PROCESS SHIFT TO PROBE ITERATION (2026-07-16 day, same session
 continuing the arc below on Geoff's live notes). ROUND 2 (Geoff's five gallery notes, ruled
