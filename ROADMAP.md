@@ -34,9 +34,14 @@ Then converge: once directory, waivers, and events have shipped to dev with Geof
 before/afters, the pre-cutover member surface is complete. Clear the accumulated review
 queue (portal, payments, and these), run the `mw-cutover` apex cutover, and phase-2
 absorption follows, with directory and waivers already down-payments on the MW
-retirement. Batching note: the directory and waivers brainstorms share the
-membership/portal surface and can run in one sitting; events and nav/roles are their
-own. Three of Geoff's sittings for five passes.
+retirement.
+
+Batching (Geoff confirmed, 2026-07-17): the directory and waivers brainstorms run in
+ONE sitting — they share the membership/portal surface and the member-record data seam.
+Keep them delineated within it (directory fully, then waivers) and keep their design and
+build passes separate and in order; the win is Geoff's attended time, not a merged
+feature. Events and nav/roles brainstorm on their own. Three of Geoff's sittings for
+five passes.
 
 ## Active
 

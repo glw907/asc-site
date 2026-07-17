@@ -8,18 +8,24 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**IMMEDIATE NEXT ACTION (Geoff, 2026-07-17): OPEN THE `member-directory` PASS, FABLE-CONDUCTED,
-IN A FRESH SESSION.** Geoff ruled the remaining pre-cutover initiatives a queued series (order in
-ROADMAP's "Pre-cutover pass sequence"): directory → waivers → events-redesign → admin-nav+roles,
-then converge on the apex cutover. The directory is first and is high-impact Fable design work.
-It opens with a functional brainstorm, interactive with Geoff: what members want from it (find
-people, boats, moorings; contact; opt-in privacy model), then design against the portal
-redesign's rulings (occasional-user recognition, mobile co-primary, the portal component
-license). The existing /my-account/directory screen and MW's directory function (one of the four
-absorbed MW functions) are evidence of requirements, not a blueprint. Resume prompt: "Open the
-member-directory pass: read the ROADMAP `member-directory` entry and the pre-cutover pass
-sequence, then start the functional brainstorm with Geoff." Launch from ~/Projects/aksailingclub-org,
-`/model fable` first.
+**IMMEDIATE NEXT ACTION (Geoff, 2026-07-17): OPEN A COMBINED `member-directory` + `member-waivers`
+FUNCTIONAL-BRAINSTORM SITTING, FABLE-CONDUCTED, IN A FRESH SESSION.** Geoff ruled the remaining
+pre-cutover initiatives a queued series (order in ROADMAP's "Pre-cutover pass sequence"):
+directory → waivers → events-redesign → admin-nav+roles, then converge on the apex cutover. He
+confirmed the directory and waivers BRAINSTORMS batch into one sitting (shared membership/portal
+surface, shared member-record data seam), while their design and build passes stay separate and
+in order. Run them as two delineated topics: DIRECTORY FIRST (the #1 member ask, higher value,
+sets the membership-surface context), then WAIVERS. Do not blur a browse/privacy problem into a
+legal-signing problem. Directory brainstorm: what members want (find people, boats, moorings;
+contact; opt-in privacy model), designed against the portal redesign's rulings (occasional-user
+recognition, mobile co-primary, the portal component license); the existing /my-account/directory
+screen and MW's directory function are evidence of requirements, not a blueprint. Waivers
+brainstorm: the liability release plus the mooring and storage variants, the annual re-sign
+cadence (not a one-time checkbox), the e-signature capture, and the hooks into the built
+signup/renewal flows and season-rollover. Resume prompt: "Open the combined member-directory +
+member-waivers brainstorm sitting: read the ROADMAP `member-directory` and `member-waivers`
+entries and the pre-cutover pass sequence, then start the directory functional brainstorm with
+Geoff, waivers second." Launch from ~/Projects/aksailingclub-org, `/model fable` first.
 
 **FRAGMENTS MIGRATION & DX/CONTRACT HARVEST: SHIPPED TO DEV 2026-07-17 (PR #2, Opus-conducted).
 The site runs cairn ^0.87.0 with the fragments concept live. TWO THINGS ARE OPEN AND NEITHER IS
