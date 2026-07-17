@@ -8,16 +8,30 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**IMMEDIATE NEXT ACTION (Geoff, 2026-07-17): OPEN THE `member-directory` PASS, OPUS-CONDUCTED,
-IN A FRESH SESSION.** Execute docs/plans/2026-07-17-member-directory.md against spec
-docs/2026-07-17-member-directory-design.md: T0 design probes (grounded in real rows, both
-themes, Geoff-verdicted) then the build tasks through the deploy gate. Resume prompt: "Open the
-member-directory pass: read docs/plans/2026-07-17-member-directory.md and its spec, then start
-T0." Launch from ~/Projects/aksailingclub-org, `/model opus`. INDEPENDENTLY SCHEDULABLE, any
-time Geoff's review availability suits: the FABLE waivers sitting (waivers plan T7 + the T4
-signing-UX design — attorney draft packet, board packet, and the ratified signing-moment
-probes; it must land before the waivers BUILD session reaches T4, and it depends only on the
-spec, not the directory pass or the build).
+**IMMEDIATE NEXT ACTION (Geoff, 2026-07-17): OPEN THE ROLES & COMMITTEES BRAINSTORM,
+FABLE-CONDUCTED, IN A FRESH SESSION.** The member-directory pass T0 surfaced that "roles" is
+really a structured roles-and-committees model (per-committee chairs, notable committee
+membership, member self-service + admin management, and a member-facing committees surface).
+Geoff called for a Fable brainstorm. Run `superpowers:brainstorming` from the seed
+docs/2026-07-17-roles-committees-brainstorm-seed.md. Resume prompt: "Open the roles & committees
+brainstorm: read docs/2026-07-17-roles-committees-brainstorm-seed.md, then brainstorm the model
+with me." Launch from ~/Projects/aksailingclub-org, `/model fable`.
+
+**THE `member-directory` PASS IS PAUSED MID-T0 (2026-07-17, Opus).** The T0 composition probe is
+BUILT and delivered from real asc-club rows — a hairline-separated de-carded list, person-first
+entries, contained reading width (masthead/rail unborrowed), one smart search across name + boat
++ role, three chips, mobile as its own composition with 44px tappable contact. Probe lives in the
+session scratchpad (real member names never land in git); arc log
+docs/design-benchmark/member-directory-round-1-arc.md. AWAITING Geoff's visual verdict on the
+non-roles parts (entry anatomy, header, mobile). The build (T1+) waits on the brainstorm above,
+since plan T1/T5/T6 all depend on the roles/committees model. Real-data note for whoever resumes:
+NO role or committee data exists anywhere (empty class_instructors, only Geoff in the auth editor
+table) — the first seed is Geoff-supplied.
+
+INDEPENDENTLY SCHEDULABLE, any time Geoff's review availability suits: the FABLE waivers sitting
+(waivers plan T7 + the T4 signing-UX design — attorney draft packet, board packet, and the
+ratified signing-moment probes; it must land before the waivers BUILD session reaches T4, and it
+depends only on the spec, not the directory pass or the build).
 
 **DIRECTORY + WAIVERS BRAINSTORM SITTING: DONE 2026-07-17 (this sitting, Fable-conducted).
 Both specs and both plans are committed and Geoff-approved; the queue's next two passes are
