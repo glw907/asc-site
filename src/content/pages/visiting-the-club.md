@@ -109,10 +109,4 @@ The club stays in good shape because members pitch in (there's no paid staff). I
 
 Even 20 minutes makes a difference.
 
-::::page-cta[Questions?]
-- Sailing questions → [#education on Discord](/discord-server/)
-- Something broken or missing → [Issues & Support](/issues-and-support/)
-
-:::cta-action[Contact us]{href="/contact/" kind="secondary"}
-:::
-::::
+::include{fragment="who-to-ask"}

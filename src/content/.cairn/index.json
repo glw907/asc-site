@@ -22,6 +22,15 @@
       "links": []
     },
     {
+      "id": "who-to-ask",
+      "concept": "fragments",
+      "title": "Who to ask",
+      "permalink": "/fragments/who-to-ask",
+      "summary": "Questions? Sailing questions → #education on Discord Something broken or missing → Issues & Support Contact us",
+      "draft": false,
+      "links": []
+    },
+    {
       "id": "2026-03-membership-open",
       "concept": "notifications",
       "title": "Membership open for 2026",
@@ -89,7 +98,10 @@
       "permalink": "/club-boat-use-and-qualification",
       "summary": "Our fleet is available to all qualified members at no extra charge. We have Lido 14s, Lasers, Optimists, a Buccaneer 18, a Catalina 16.5, a Skipjack 15, and an Ensign 22. Getting Qualified Completed…",
       "draft": false,
-      "links": []
+      "links": [],
+      "includes": [
+        "who-to-ask"
+      ]
     },
     {
       "id": "committees",
@@ -280,6 +292,9 @@
       "links": [],
       "mediaRefs": [
         "123c6cd3c2758c8c"
+      ],
+      "includes": [
+        "who-to-ask"
       ]
     },
     {
@@ -376,7 +391,10 @@
       "permalink": "/visiting-the-club",
       "summary": "Use this page as a quick reference when you're planning a trip out to the club. If this is your first visit, start with the New Member Guide: it covers everything here and more, including club…",
       "draft": false,
-      "links": []
+      "links": [],
+      "includes": [
+        "who-to-ask"
+      ]
     },
     {
       "id": "waitlists",

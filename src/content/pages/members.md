@@ -78,8 +78,4 @@ Join a committee, support club projects, or learn about board service.
 :::
 ::::
 
-## Questions?
-
-- Sailing questions → [#education on Discord](/discord-server/)
-- Something broken → [Issues & Support](/issues-and-support/)
-- Everything else → [contact us](/contact/)
+::include{fragment="who-to-ask"}
