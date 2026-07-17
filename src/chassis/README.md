@@ -13,14 +13,14 @@ not resolve in CSS), always naming one of the files below.
 
 The chassis files here came from `cairn-cms`'s own showcase, the reference site the chassis
 boundary was first cut against (verbatim where a file is genuinely site-agnostic; `content.ts`,
-`feed.ts`, and `cairn.server.ts` carry the same shape but wire ASC's own four concepts, `posts`,
-`pages`, `bulletins`, and `notifications`).
+`feed.ts`, and `cairn.server.ts` carry the same shape but wire ASC's own five concepts, `posts`,
+`pages`, `bulletins`, `notifications`, and `fragments`).
 
 ## What lives here
 
 | File | What it is |
 | --- | --- |
-| `content.ts` | The delivery content layer: globs the markdown, builds the site/posts/pages/bulletins/notifications indexes through `createSiteIndexes`. |
+| `content.ts` | The delivery content layer: globs the markdown, builds the site/posts/pages/bulletins/notifications/fragments indexes through `createSiteIndexes`. |
 | `feed.ts` | Maps the posts index into `cairn-cms/delivery`'s `FeedItem` shape, shared by the RSS and JSON Feed routes. |
 | `cairn.server.ts` | The one server-side runtime composition point (`composeRuntime`, `createCairnAdmin`); every server route that needs the runtime imports it from here. |
 | `theme-toggle.ts` | The light/dark toggle mechanism: resolve the active theme, apply a choice, persist it to a cookie. |

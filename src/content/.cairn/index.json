@@ -114,7 +114,7 @@
       "concept": "pages",
       "title": "Contact",
       "permalink": "/contact",
-      "summary": "Send Us a Message Use the form below and choose a topic; we'll route your message to the right volunteer committee. We typically respond within a few days. :::contact-form ::: Our Location Our club…",
+      "summary": "Send Us a Message Use the form below and choose a topic; we'll route your message to the right volunteer committee. We typically respond within a few days. Our Location Our club sits on Big Lake in…",
       "draft": false,
       "links": []
     },
@@ -132,7 +132,7 @@
       "concept": "pages",
       "title": "Member Directory",
       "permalink": "/directory",
-      "summary": "The online member directory isn't ready yet: it's being rebuilt as part of the club's phase-2 work. :::callout[In the Meantime]{tone=\"note\"} Looking for a committee chair or another member? Ask in…",
+      "summary": "The online member directory isn't ready yet: it's being rebuilt as part of the club's phase-2 work. In the Meantime Looking for a committee chair or another member? Ask in the relevant Discord…",
       "draft": false,
       "links": []
     },

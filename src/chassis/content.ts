@@ -30,12 +30,21 @@ const notificationsRaw = import.meta.glob('/src/content/notifications/*.md', {
   import: 'default',
   eager: true,
 }) as Record<string, string>;
+// Fragments also route 'embedded' (see cairn.config.ts's routing declaration): a fragment has no
+// public page of its own, and reaches a reader only through the `::include` directive of an entry
+// that carries it.
+const fragmentsRaw = import.meta.glob('/src/content/fragments/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
 
 const indexes = createSiteIndexes(cairn, siteConfig, {
   posts: postsRaw,
   pages: pagesRaw,
   bulletins: bulletinsRaw,
   notifications: notificationsRaw,
+  fragments: fragmentsRaw,
 });
 
 export const site = indexes.site;
@@ -43,6 +52,7 @@ export const posts = indexes.posts;
 export const pages = indexes.pages;
 export const bulletins = indexes.bulletins;
 export const notifications = indexes.notifications;
+export const fragments = indexes.fragments;
 
 export const ORIGIN = 'https://dev.aksailingclub.org';
 export const SITE_DESCRIPTION =

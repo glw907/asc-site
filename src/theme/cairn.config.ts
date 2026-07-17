@@ -85,7 +85,13 @@ export const navLayout: NavLayout = [
   },
   {
     label: 'Content',
-    children: [{ screen: 'posts' }, { screen: 'bulletins' }, { screen: 'pages' }, { screen: 'notifications' }],
+    children: [
+      { screen: 'posts' },
+      { screen: 'bulletins' },
+      { screen: 'pages' },
+      { screen: 'fragments' },
+      { screen: 'notifications' },
+    ],
   },
   {
     label: 'Site',
@@ -193,6 +199,20 @@ export const cairn = defineAdapter({
         facts: fields.multiselect({ label: 'Fact strip', creatable: true }),
       }),
     }),
+    // The Fragments concept (0.87.0): a piece of markdown authored once and spliced into any
+    // number of posts/pages/bulletins via `::include{fragment="<id>"}`. `routing: 'embedded'` is
+    // required by the reserved `fragments` key (a routable fragment would publish a bare
+    // permalink with no context around it). Empty for now; Stage 3 of the fragments-migration
+    // pass converts the surviving candidates from docs/fragment-candidates.md.
+    fragments: defineConcept({
+      dir: 'src/content/fragments',
+      label: 'Fragments',
+      singular: 'Fragment',
+      routing: 'embedded',
+      fields: fieldset({
+        title: fields.text({ label: 'Title', required: true }),
+      }),
+    }),
     // The bulletins concept: short, time-sensitive announcements with their own permalinked page
     // (the live site's `/bulletins/<slug>/`, a completion-pass restoration; the earlier content
     // migration folded these into the `notifications` banner alone and dropped the pages
@@ -242,8 +262,8 @@ export const cairn = defineAdapter({
   // The media R2 binding: the /media delivery route streams content-addressed bytes from here.
   media: { bucketBinding: 'MEDIA_BUCKET' },
   rendering: {
-    render: ({ body, resolve, resolveMedia }) =>
-      renderMarkdown(body, { resolve, resolveMedia: resolveMedia ?? publicMediaResolver }),
+    render: ({ body, resolve, resolveMedia, resolveFragment }) =>
+      renderMarkdown(body, { resolve, resolveMedia: resolveMedia ?? publicMediaResolver, resolveFragment }),
     components: ascRegistry,
     icons: ICON_PATHS,
     // The contact and donate directives' live components (completion-pass manifest item 2),

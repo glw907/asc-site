@@ -18,6 +18,7 @@ export default defineConfig({
         pages: '/src/content/pages/*.md',
         bulletins: '/src/content/bulletins/*.md',
         notifications: '/src/content/notifications/*.md',
+        fragments: '/src/content/fragments/*.md',
       },
       manifestPath: '/src/content/.cairn/index.json',
     }),
