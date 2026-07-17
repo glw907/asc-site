@@ -15,11 +15,9 @@ primary sets any household member's), and the lean leave-the-club action (design
   <title>Household — My Account — {siteConfig.siteName}</title>
 </svelte:head>
 
-<a href="/my-account" class="text-step--1 text-primary underline-offset-2 hover:underline">&larr; My account</a>
+<a href="/my-account" class="portal-back-link">&larr; My account</a>
 
-<h1 class="mt-xs m-0 font-display text-step-4 font-semibold leading-tight tracking-tight text-base-content">
-  Household
-</h1>
+<h1 class="portal-page-title">Household</h1>
 <p class="mt-s max-w-measure-wide text-step-0 text-muted">
   As the primary, you can add or remove household members and set anyone's directory listing.
   Each member can also change their own listing from their own profile.
@@ -85,15 +83,15 @@ primary sets any household member's), and the lean leave-the-club action (design
     <p class="mt-2xs mb-0 text-step--1 text-base-content">Recorded. The club will follow up.</p>
   {:else if !confirmingLeave}
     <p class="mt-2xs mb-0 text-step--1 text-muted">Stops renewal reminders and lets the club know. This does not delete your history.</p>
-    <button type="button" class="btn btn-sm portal-quiet-action mt-xs" onclick={() => (confirmingLeave = true)}>Leave the club</button>
+    <button type="button" class="btn btn-sm portal-quiet-action portal-touch-btn mt-xs" onclick={() => (confirmingLeave = true)}>Leave the club</button>
   {:else}
     <p class="mt-2xs mb-0 text-step--1 text-base-content">Are you sure? This stops renewal reminders for your household.</p>
     <div class="mt-xs flex gap-xs">
       <form method="POST" action="?/leave">
         <input type="hidden" name="csrf" value={data.csrf} />
-        <button type="submit" class="btn btn-error btn-sm">Yes, leave the club</button>
+        <button type="submit" class="btn btn-error btn-sm portal-touch-btn">Yes, leave the club</button>
       </form>
-      <button type="button" class="btn btn-ghost btn-sm" onclick={() => (confirmingLeave = false)}>Cancel</button>
+      <button type="button" class="btn btn-ghost btn-sm portal-touch-btn" onclick={() => (confirmingLeave = false)}>Cancel</button>
     </div>
   {/if}
 </section>

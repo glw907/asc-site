@@ -66,3 +66,7 @@ if (!schemaAlreadyMigrated()) {
 
 d1File(path.join(repoRoot, 'e2e/fixtures/events-seed.sql'));
 d1File(path.join(repoRoot, 'e2e/fixtures/signup-seed.sql'));
+// Applied AFTER signup-seed.sql: that file's own household/member/membership deletes are
+// blanket and unconditional, so this file's rows would be wiped right back out if it ran first
+// (portal-seed.sql's own header explains the full ordering).
+d1File(path.join(repoRoot, 'e2e/fixtures/portal-seed.sql'));

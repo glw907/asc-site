@@ -34,11 +34,9 @@ same weight as the name, not the lighter `text-muted` metadata tone the househol
   <title>Member Directory — My Account — {siteConfig.siteName}</title>
 </svelte:head>
 
-<a href="/my-account" class="text-step--1 text-primary underline-offset-2 hover:underline">&larr; My account</a>
+<a href="/my-account" class="portal-back-link">&larr; My account</a>
 
-<h1 class="mt-xs m-0 font-display text-step-4 font-semibold leading-tight tracking-tight text-base-content">
-  Member directory
-</h1>
+<h1 class="portal-page-title">Member directory</h1>
 <p class="mt-s max-w-measure-wide text-step-0 text-muted">
   Fellow members who've chosen to be listed. Change your own listing, or your household's, from
   <a href="/my-account/profile" class="text-primary underline-offset-2 hover:underline">Profile</a>.

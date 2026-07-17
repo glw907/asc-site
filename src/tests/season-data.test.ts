@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSeasonMonths, loadSeasonMonths, routeIdOf, splitSeasonColumns } from '$theme/season-data';
+import { buildSeasonMonths, loadSeasonHasLiveEvents, loadSeasonMonths, routeIdOf, seasonHasLiveEvents, splitSeasonColumns } from '$theme/season-data';
 import type { SeasonMonth } from '$theme/season-data';
 import { fakeD1 } from './_fake-d1';
 
@@ -262,5 +262,108 @@ describe('loadSeasonMonths', () => {
     const names = months.flatMap((m) => m.events).map((e) => e.name);
     expect(names).not.toContain('Adult Intro');
     expect(names).toContain('BNAC');
+  });
+});
+
+describe('seasonHasLiveEvents', () => {
+  const TODAY = new Date('2026-07-07T00:00:00Z');
+
+  it('is true when a row starts today or later', () => {
+    expect(seasonHasLiveEvents([row({ start_date: '2026-07-07' })], TODAY)).toBe(true);
+    expect(seasonHasLiveEvents([row({ start_date: '2026-09-05' })], TODAY)).toBe(true);
+  });
+
+  it('is false when every row is strictly in the past', () => {
+    expect(seasonHasLiveEvents([row({ start_date: '2026-07-06' })], TODAY)).toBe(false);
+  });
+
+  it('prefers end_date over start_date, so a multi-day event stays live through its last day', () => {
+    expect(seasonHasLiveEvents([row({ start_date: '2026-07-01', end_date: '2026-07-07' })], TODAY)).toBe(true);
+    expect(seasonHasLiveEvents([row({ start_date: '2026-07-01', end_date: '2026-07-06' })], TODAY)).toBe(false);
+  });
+
+  it('counts a row with a null end_date on its start_date alone', () => {
+    expect(seasonHasLiveEvents([row({ start_date: '2026-07-07', end_date: null })], TODAY)).toBe(true);
+  });
+
+  it('never counts a genuinely undated (TBD) row toward liveness', () => {
+    expect(seasonHasLiveEvents([row({ start_date: null, end_date: null })], TODAY)).toBe(false);
+  });
+
+  it('is true if any one row among several is live', () => {
+    expect(
+      seasonHasLiveEvents(
+        [row({ start_date: '2026-01-01' }), row({ start_date: '2026-08-01' })],
+        TODAY,
+      ),
+    ).toBe(true);
+  });
+
+  it('is false for an empty calendar', () => {
+    expect(seasonHasLiveEvents([], TODAY)).toBe(false);
+  });
+
+  it('with no currentSeason bound, counts a future-year row live (the pre-fix, unscoped behavior)', () => {
+    expect(seasonHasLiveEvents([row({ start_date: '2027-05-01' })], TODAY)).toBe(true);
+  });
+
+  it('excludes a row dated a LATER season than currentSeason: next season entered early during off-season admin prep is not evidence the current season still has anything live', () => {
+    expect(seasonHasLiveEvents([row({ start_date: '2027-05-01' })], TODAY, 2026)).toBe(false);
+  });
+
+  it('still counts a currentSeason-year row live when a later-season row is also present', () => {
+    expect(
+      seasonHasLiveEvents(
+        [row({ start_date: '2027-05-01' }), row({ start_date: '2026-09-05' })],
+        TODAY,
+        2026,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('loadSeasonHasLiveEvents', () => {
+  const EVENT_ROWS = [{ id: 'bnac', title: 'BNAC', slug: 'bnac', event_type: 'racing', start_date: '2026-05-24', end_date: '2026-05-24', date_history: null }];
+  const FUTURE_CLASS_ROWS = [{ id: 'class-2026', title: 'Adult Intro', slug: 'adult-intro', event_type: 'class', start_date: '2026-08-12', end_date: '2026-08-14', date_history: null }];
+
+  it('reads true off a future class row for the current season', async () => {
+    const { db } = fakeD1({
+      firstResults: { "FROM settings WHERE key = 'current_season'": { value: '2026' } },
+      allResults: { 'FROM events WHERE': EVENT_ROWS, 'FROM classes WHERE': FUTURE_CLASS_ROWS },
+    });
+    expect(await loadSeasonHasLiveEvents(db, new Date('2026-07-07T00:00:00Z'))).toBe(true);
+  });
+
+  it('reads false once every event and class is in the past', async () => {
+    const { db } = fakeD1({
+      firstResults: { "FROM settings WHERE key = 'current_season'": { value: '2026' } },
+      allResults: { 'FROM events WHERE': EVENT_ROWS, 'FROM classes WHERE': FUTURE_CLASS_ROWS },
+    });
+    expect(await loadSeasonHasLiveEvents(db, new Date('2026-09-01T00:00:00Z'))).toBe(false);
+  });
+
+  it('degrades to false (never throws) on a D1 read failure', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        "FROM settings WHERE key = 'current_season'": () => {
+          throw new Error('D1 unavailable');
+        },
+      },
+    });
+    expect(await loadSeasonHasLiveEvents(db, new Date('2026-07-07T00:00:00Z'))).toBe(false);
+  });
+
+  it('the season-rollover boundary: a next-year event entered during off-season admin prep does not pin the portal off the off-season state', async () => {
+    // Reproduces the finding this scoping fixes: an admin enters next year's regatta in
+    // December, well before `settings.current_season` itself rolls over. Without the
+    // `currentSeason` bound, that one row would read as "live" year-round and the off-season
+    // state (the reassure-and-anticipate window this exact scenario needs) would never be
+    // reachable again until the season setting advances.
+    const NEXT_SEASON_ROW = [{ id: 'frostbite-2027', title: 'Frostbite Regatta', slug: 'frostbite-2027', event_type: 'racing', start_date: '2027-05-01', end_date: null, date_history: null }];
+    const { db } = fakeD1({
+      firstResults: { "FROM settings WHERE key = 'current_season'": { value: '2026' } },
+      allResults: { 'FROM events WHERE': NEXT_SEASON_ROW, 'FROM classes WHERE': [] },
+    });
+    expect(await loadSeasonHasLiveEvents(db, new Date('2026-12-15T00:00:00Z'))).toBe(false);
   });
 });

@@ -31,14 +31,24 @@ const DEFAULT_BASE_URL = 'http://localhost:4173';
 const BASE_URL = process.env.BASE_URL || DEFAULT_BASE_URL;
 const REPO_ROOT = new URL('..', import.meta.url).pathname;
 
-// The site-wide band rule (site.css carries the same line): only a landing-style page composes
-// full-bleed alternating bands (a `.home-shell`-marked root breaking out of the shared reading
-// column); every other page stays plain article or list flow inside that column. A page's OWN
+// The site-wide band rule (site.css carries the same line, reframed 2026-07-16: a full-bleed
+// band composition is a considered-and-justified device a page earns, not a free default, per
+// docs/design-benchmark/decisions.md's "Bands and full-bleed composition" entry): a page that
+// earns it marks its own root (`.home-shell`, `.portal-shell`) to break out of the shared reading
+// column; every other page stays plain article or list flow inside that column. A page's OWN
 // components can still tint a section locally for their own reasons (EventsListing's month
 // groups alternate their own background as a zebra-stripe readability aid, entirely inside the
 // normal reading column); that is a different, smaller-scale device than page-level band
-// composition and not what this rule governs. Home is the only band-composed page today; a
-// future page that adopts the same full-bleed composition adds its path here.
+// composition and not what this rule governs.
+//
+// Home is the only page checked here today. The member portal landing (`.portal-shell`) also
+// earns full-bleed composition now, but it is deliberately NOT added to this list: every check
+// below renders each path SIGNED OUT (this script carries no session-seeding of its own), and
+// `/my-account` signed out shows the plain sign-in form, not the full-bleed masthead: adding it
+// here would check nothing real and could pass green while the actual band-composed render goes
+// unchecked. The portal's own band gets its render-level checks from the seeded-session e2e specs
+// instead (e2e/portal-session.spec.ts and its visual-baseline siblings). A future band-composed
+// page reachable while signed out adds its path here.
 const HOME_PATH = '/';
 const BAND_COMPOSED_PAGES = [HOME_PATH];
 

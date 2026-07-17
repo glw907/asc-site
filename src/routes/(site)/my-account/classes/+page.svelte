@@ -15,11 +15,9 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
   <title>Classes — My Account — {siteConfig.siteName}</title>
 </svelte:head>
 
-<a href="/my-account" class="text-step--1 text-primary underline-offset-2 hover:underline">&larr; My account</a>
+<a href="/my-account" class="portal-back-link">&larr; My account</a>
 
-<h1 class="mt-xs m-0 font-display text-step-4 font-semibold leading-tight tracking-tight text-base-content">
-  Classes
-</h1>
+<h1 class="portal-page-title">Classes</h1>
 
 {#if form && 'error' in form && form.error}
   <p class="mt-s max-w-measure-wide rounded-field border border-error bg-error/10 px-s py-xs text-step--1 text-error">{form.error}</p>
@@ -35,7 +33,7 @@ leave/claim/pass on a live offer (design doc's own "2. Classes"). -->
       {#each data.myClasses as row (row.enrollmentId)}
         <li class="rounded-box border border-card-border bg-base-100 p-s text-step--1">
           <div class="flex flex-wrap items-center justify-between gap-xs">
-            <span class="text-base-content">{row.className} — {row.memberName}</span>
+            <span class="text-base-content">{row.className} · {row.memberName}</span>
             <form method="POST" action="?/withdraw">
               <input type="hidden" name="csrf" value={data.csrf} />
               <input type="hidden" name="enrollmentId" value={row.enrollmentId} />

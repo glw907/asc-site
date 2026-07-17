@@ -221,12 +221,17 @@ export async function getMemberStanding(db: D1Database, memberId: string): Promi
   }
 
   const { status, expiry, graceEnd } = await standingWindowFor(db, standing.paidAt, new Date());
+  // A full plain-words sentence (the design doc's own quoted example, "You're current through
+  // May 17, 2027."; mock D renders the identical string), not the bare "Current through {date}"
+  // fragment this used to read: the masthead's greeting directly above it ("Welcome back,
+  // {firstName}.") is already a complete sentence, and this line is the page's single most
+  // important one.
   const statusLine =
     status === 'current'
-      ? `Current through ${formatMemberDate(expiry)}`
+      ? `You're current through ${formatMemberDate(expiry)}.`
       : status === 'grace'
-        ? `Your membership lapsed ${formatMemberDate(expiry)} · renew by ${formatMemberDate(graceEnd)} to avoid a gap`
-        : `Your membership lapsed ${formatMemberDate(expiry)}`;
+        ? `Your membership lapsed ${formatMemberDate(expiry)} · renew by ${formatMemberDate(graceEnd)} to avoid a gap.`
+        : `Your membership lapsed ${formatMemberDate(expiry)}.`;
 
   return {
     memberId: member.id,

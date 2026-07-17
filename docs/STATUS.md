@@ -8,12 +8,32 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**NEXT INITIATIVE: THE PORTAL REDESIGN PASS — spec docs/2026-07-16-portal-redesign-design.md
-+ plan docs/plans/2026-07-16-portal-redesign.md (both Geoff-ratified from the mock-D probe
-arc; a fresh session executes T1-T6). Round-1's ratified settle batch (CTA matched pair
-sitewide, TOC nested tier, racing lede link, decisions distillation) was dispatched at this
-session's close — if its commit is absent from main, check the arc log and redispatch. Still
-awaiting Geoff verdicts (arc log): racing passage treatment, class-door template line.
+**IN FLIGHT: THE PORTAL REDESIGN PASS — branch `portal-redesign`, spec
+docs/2026-07-16-portal-redesign-design.md + plan docs/plans/2026-07-16-portal-redesign.md
+(Geoff-ratified from the mock-D probe arc; visual reference docs/design-benchmark/portal-mock-d/).
+Round-1's settle batch landed and verified (980dd09); a stale runaway guard from that session
+alarmed "idle 1557s" AFTER the job finished, not a real stall. LANDED THIS PASS (uncommitted on
+the branch as of this writing): T1 portal-state.ts (pure four-way state machine + valueMirror, 17
+tests) and T5a the member-session e2e mint helper + deterministic portal fixture. THREE MID-PASS
+GEOFF RULINGS, all logged in docs/design-benchmark/decisions.md and the plan — read those, not
+this summary: (1) THE GEAR DOOR — /my-account/gear becomes the gear home absorbing the asset
+verbs (Release/Request/Cancel) mock D's reference-only rail gave no home; grounded in live data
+(ZERO asset_requests ever filed, 40 assignments / 148 households), so a rare verb earns a door,
+not landing real estate. Gear joins the doors row (spec amendment). (2) RECEIPTS REPOINT AT THE
+LEDGER — listReceipts' memberships/asset_payments union went stale when 0021_money_ledger landed;
+143 class-fee lines + 5 donations are invisible to the members who paid them. NOT a schema change;
+adding class-fee payment columns would duplicate the ledger and BE the write-around. Must REPLACE
+the union (217 dues lines overlap 235 paid memberships; a combined read double-counts) and the
+units change (cents, not dollars). (3) RELEASE GETS A TWO-STEP CONFIRM — it gives up a scarce
+resource with a waitlist behind it, no undo, admin-only recovery, and shipped as one tap beside
+Pay. ALSO RULED (Geoff, live): the old "full-bleed bands are HOME-ONLY, no per-page exception"
+rule is reframed to "considered and justified" — decisions.md carries the standard WITH the worked
+examples in both directions (home yes, portal yes, education still no), since a bright line
+carries information a bare judgment standard loses. Task order: T1 ✓, T5a ✓, T1b (receipts, in
+flight) → T2 (desktop landing) → T2b (gear door) → T3 (mobile) → T4 (child riders) → T5 (visual
+spec + CI baselines) → T6 (review fan-out, gate, push). Baselines regen ONLY via the ci.yml
+update_snapshots dispatch. Geoff's before/after against mock D still gates the apex.
+Still awaiting Geoff verdicts (arc log): racing passage treatment, class-door template line.
 QUEUED BEHIND IT (ROADMAP, Geoff 2026-07-16): the events-redesign initiative (from-scratch,
 FUNCTIONAL brainstorm first, own template licensed) and the member-directory initiative
 (number-one member-requested feature, full brainstorm + pass) — both open INTERACTIVE with

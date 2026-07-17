@@ -17,9 +17,23 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
 
 ## Settled decisions
 
-- **Bands**: full-page alternating tints are HOME-ONLY. A long-form page may use ONE tinted
-  band around its primary action group (education's registration+CTA is the first). Ruling
-  amended by the owner 2026-07-08; both forms codified in docs/2026-07-06-asc-phase-1-design.md.
+- **Bands and full-bleed composition: considered and justified, not an exception list (Geoff,
+  2026-07-16, reframing the older home-only rule)**: a page-level full-bleed composition is a
+  deliberate design device that each page must earn. It is not forbidden everywhere except a
+  named list, and it is not free. The standard is that the page's own function asks for it and
+  the pass can say why. The worked examples carry the calibration, in both directions: HOME
+  earns it (the north star's alternating bands are the page's whole composition). The MEMBER
+  PORTAL earns it (an app surface, not a content page; the full-bleed masthead is the standing
+  surface a member reads first, ratified in docs/2026-07-16-portal-redesign-design.md and
+  confirmed by Geoff live: "the portal is a somewhat unique screen by design"). EDUCATION did
+  NOT earn it: a pass gave it its own pitch-section bands and Geoff ruled them out on dev the
+  same day, because a long-form content page's bands were decoration applied to prose, not
+  composition the page's function needed. That outcome still stands under this framing. A
+  long-form page may still use ONE tinted band around its primary action group (education's
+  registration+CTA is the first; owner-amended 2026-07-08). The older "HOME-ONLY, no per-page
+  exception" wording is superseded: it was protecting against unjustified bands, and the
+  justification test protects against those directly. What a future pass owes is the reasoning,
+  written down where the next reader will find it, not a plea for an exception.
 - **Full-bleed**: content blocks (photos, card rows, galleries) never stretch viewport-wide
   at wide viewports — they cap at the wide content breakout. Edge-to-edge is fine at tablet
   and below where viewport and measure converge. Background bands may bleed.
@@ -220,6 +234,41 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   separation between h2 groups. The boxed-panel `.toc`/`.page-toc-sticky` system (bylaws and the
   rest of the long secondary catalog) keeps its own plain indent-only treatment unchanged; only the
   long-form rail/jump-list pair was probed and ratified.
+
+- **The gear door: a rare verb earns a door, not landing real estate (Geoff, 2026-07-16, portal
+  redesign pass)**: mock D's rail is reference-only ("links only, never a button"), but the
+  landing carried three real asset verbs (Release, Request an asset, Cancel request) the mock
+  gave no home. Ruled: `/my-account/gear` becomes the gear-and-moorings home, absorbing the whole
+  assets composition (assignment rows with payment standing, waitlist positions, pending requests
+  with cancel, the request form, per-row release). The rail tile stays exactly as mock D draws it
+  and gains one quiet "Manage gear & moorings" foot link; Gear joins the doors row. Paying an
+  outstanding fee is NOT affected: it stays the main column's one weighted action row.
+  GROUNDED IN LIVE DATA, not intuition: zero `asset_requests` have ever been filed, zero waitlist
+  rows today, 40 active assignments across 148 households. Release and request run to single
+  digits per season club-wide. The generalizable rule: landing real estate is priced by
+  recognition value, and the rail rows already deliver the recognition ("you hold B-Dock 12");
+  a door named by the noun the member is already reading IS the recognition path, so inline
+  chrome buys a rare verb no findability and spends the page's calm. What would reverse this:
+  real seasonal request churn (a spring mooring scramble). The fix then is a seasonal
+  needs-attention pointer linking to the door, never a landing form.
+
+- **The renewal door (Geoff, 2026-07-16, portal redesign pass)**: mock D draws the masthead's
+  renewal CTA as one plain fireweed button, so the landing's old tier `<select>` had nowhere to
+  live. Rebuilding it as a hidden field defaulting to the household's last tier was NOT a
+  survivable simplification: it turns a grown household's one-click renewal into a silent purchase
+  of the wrong tier at the wrong price, with nothing catching it. Ruled: the masthead CTA LINKS to
+  `/my-account/renew`, a small step that states the tier and price plainly and continues to Stripe.
+  The masthead keeps mock D's single button exactly. GROUNDED: 3 of 88 renewals with a prior season
+  changed tier (~3.4%) -- rare, and rarer things than this earn a door under the gear ruling above,
+  but not zero, and money correctness is not a rounding error. Same shape as [[the gear door]]: a
+  rare verb earns a door, and the landing keeps its calm.
+
+- **Release gets a two-step confirm (Geoff, 2026-07-16)**: releasing an assignment gives up a
+  scarce club resource with a waitlist behind it, has no member-side undo, and recovery needs an
+  admin, yet it shipped as one tap on a quiet button sharing a wrap-flexed row with Pay (plausibly
+  mis-tapped at 390px). An inline two-step in the plain-words register, no modal: "This gives up
+  your mooring for your household. The club may offer it to the next member. [Release mooring]
+  [Keep it]".
 
 - **Em dashes: banned from UI copy sitewide (Geoff, 2026-07-16, from the portal round's own copy
   ruling)**: the round-3 asset-row "name — detail" delimiter retires for structural label/value or

@@ -69,7 +69,7 @@ describe('getMemberStanding', () => {
     expect(standing?.status).toBe('current');
     expect(standing?.tier).toBe('individual');
     expect(standing?.season).toBe(2026);
-    expect(standing?.statusLine).toMatch(/^Current through /);
+    expect(standing?.statusLine).toMatch(/^You're current through .*\.$/);
   });
 
   it('reads "current" exactly at the paid_at + 1 year instant (inclusive boundary)', async () => {
@@ -101,7 +101,7 @@ describe('getMemberStanding', () => {
     });
     const standing = await getMemberStanding(db, MEMBER.id);
     expect(standing?.status).toBe('grace');
-    expect(standing?.statusLine).toMatch(/^Your membership lapsed .* · renew by .* to avoid a gap$/);
+    expect(standing?.statusLine).toMatch(/^Your membership lapsed .* · renew by .* to avoid a gap\.$/);
   });
 
   it('reads "grace" throughout the settings-configured grace window, then "lapsed" once it passes', async () => {

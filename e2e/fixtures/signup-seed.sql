@@ -29,6 +29,11 @@ DELETE FROM asset_requests;
 DELETE FROM class_enrollments;
 DELETE FROM class_instructors;
 DELETE FROM asset_waitlist;
+-- asset_payments references asset_assignments (0007_assets_email); portal-seed.sql (applied
+-- right after this file) is the first fixture in this pipeline to write asset_payments rows, so
+-- a warm workstation replica's second run needs this delete ahead of asset_assignments' own, or
+-- the local FK-enforcing replica refuses that delete with "FOREIGN KEY constraint failed".
+DELETE FROM asset_payments;
 DELETE FROM asset_assignments;
 DELETE FROM member_tokens;
 DELETE FROM member_sessions;

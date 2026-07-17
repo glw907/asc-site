@@ -46,23 +46,30 @@ html {
   min-width: 0;
 }
 
-/* The site-wide band rule: only the landing-style home page composes full-bleed alternating
-   bands AT THE PAGE-SHELL LEVEL (this rule, below); every long-form content page (education,
-   racing, governance, join, events, contact, donate, posts, tags) stays plain article or list
-   flow inside the shared reading column, with no bands at all, uniformly, and with no per-page
-   exception. (Originally the design-polish pass's audit, 2026-07-07; a later pass gave education
-   its own smaller-scale pitch-section bands, which Geoff reviewed on dev and ruled out the same
-   day, reaffirming this rule verbatim with no carve-outs — see [...path]/+page.svelte's own
-   history for the removed mechanism.)
+/* The site-wide band rule: a full-bleed, page-shell-level band composition is a CONSIDERED AND
+   JUSTIFIED DEVICE a page earns, not a free default and not an exception list (Geoff, 2026-07-16,
+   reframing the original "HOME-ONLY, no per-page exception" wording that shipped from the
+   design-polish pass's audit, 2026-07-07). The standard: the page's own function asks for it, and
+   the pass adding it can say why, written down where the next reader will find it
+   (docs/design-benchmark/decisions.md's "Bands and full-bleed composition" entry is the authority
+   and carries the full reasoning plus every worked example). Two pages earn it today, each with
+   its own marker below: HOME (the north star's alternating bands ARE the page's whole
+   composition) and the MEMBER PORTAL landing (an app surface, not a content page: the full-bleed
+   masthead is the standing surface a member reads first, ratified in
+   docs/2026-07-16-portal-redesign-design.md). EDUCATION did NOT earn it: a pass gave it its own
+   pitch-section bands and Geoff ruled them out on dev the same day, since a long-form content
+   page's bands were decoration applied to prose, not composition the page's function needed; every
+   other long-form content page (racing, governance, join, events, contact, donate, posts, tags)
+   stays plain article or list flow inside the shared reading column for the same reason.
 
-   The home template breaks the shared reading-column contract deliberately: the north star's
-   bands are full-bleed to the viewport (alternating white/tinted/navy sections), never framed to
-   the prose article measure every other route reads at. `:has()` detects the marker the home
-   page's own root element carries (`.home-shell`) and cancels this box for that one route only;
-   every prose page (education, governance, a post) keeps the narrower reading column untouched.
-   Each home section then owns its own full-bleed background and boxes its own content to
-   `--container-measure-wide`, the same width SiteHeader/SiteFooter use, so the whole page reads as
-   one aligned content column under the full-bleed bands.
+   Both earning pages break the shared reading-column contract the same way: each root element
+   carries its own full-bleed marker class (`.home-shell`, `.portal-shell`), and `:has()` cancels
+   this box only for that one marked route; every prose page (education, governance, a post) keeps
+   the narrower reading column untouched. Each band-composed page then owns its own full-bleed
+   background per section/band and boxes its own content back down (home's own sections read at
+   `--container-measure-wide`, the same width SiteHeader/SiteFooter use; the portal's own working
+   area reads at its own wider desktop-width measure, see `/my-account/+page.svelte`'s own comment
+   on why), so the page still reads as one aligned content column under the full-bleed background.
 
    `margin-inline` must be cancelled here too, not just `max-width`: `main` is a flex item in the
    layout's column flex (`.flex.flex-col`), and a flex item's own `auto` margins absorb the cross
@@ -72,6 +79,16 @@ html {
    content's natural width (the widest inner `max-w-measure-wide` box) instead of stretching to the
    viewport, and every "full-bleed" band silently reverts to a boxed panel. */
 .site-main:has(> .home-shell) {
+  max-width: none;
+  margin-inline: 0;
+  padding: 0;
+}
+
+/* The member portal landing's own full-bleed marker (`/my-account/+page.svelte`'s signed-in
+   composition only; the signed-out sign-in form on the same route renders no `.portal-shell` at
+   all, so it keeps the shared reading column). Same three cancellations, same flexbox reasoning,
+   as the home rule immediately above. */
+.site-main:has(> .portal-shell) {
   max-width: none;
   margin-inline: 0;
   padding: 0;

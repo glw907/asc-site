@@ -27,11 +27,9 @@ own "3. Profile"). -->
   <title>Profile — My Account — {siteConfig.siteName}</title>
 </svelte:head>
 
-<a href="/my-account" class="text-step--1 text-primary underline-offset-2 hover:underline">&larr; My account</a>
+<a href="/my-account" class="portal-back-link">&larr; My account</a>
 
-<h1 class="mt-xs m-0 font-display text-step-4 font-semibold leading-tight tracking-tight text-base-content">
-  Profile
-</h1>
+<h1 class="portal-page-title">Profile</h1>
 
 {#if form && 'error' in form && form.error}
   <p class="mt-s max-w-measure-wide rounded-field border border-error bg-error/10 px-s py-xs text-step--1 text-error">{form.error}</p>

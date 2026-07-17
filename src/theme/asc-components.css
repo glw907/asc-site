@@ -408,9 +408,13 @@
      white/base-100 ground), so the fireweed itself tints the shadow rather than a flat black. */
   /* `button.asc-cta-btn` rides along so a route-page form submit (the class-fee payment button,
      which sits outside any `.prose` container) draws the same fireweed tier; a button never
-     fights the chassis `.prose a` link rules the `.prose`-scoped selector exists to outrank. */
+     fights the chassis `.prose a` link rules the `.prose`-scoped selector exists to outrank.
+     `a.asc-cta-btn` rides the same way (portal redesign T2c): the member masthead's own renewal
+     CTA is a plain navigation link to `/my-account/renew`, not a form submit, and sits outside
+     `.prose` the same as the class-fee button. */
   .prose .asc-cta-btn,
-  button.asc-cta-btn {
+  button.asc-cta-btn,
+  a.asc-cta-btn {
     display: inline-block;
     background: var(--color-fireweed);
     color: white;
@@ -424,19 +428,22 @@
     transition: background 0.15s ease, box-shadow 0.15s ease;
   }
   .prose .asc-cta-btn:hover,
-  button.asc-cta-btn:hover {
+  button.asc-cta-btn:hover,
+  a.asc-cta-btn:hover {
     background: color-mix(in oklab, var(--color-fireweed), black 8%);
   }
   /* One step past hover on the same axis (2026-07-15 invisible-polish fix), applied instantly
      (`transition: none`) so a press acknowledges within a frame rather than over the button's own
      0.15s hover animation. */
   .prose .asc-cta-btn:active,
-  button.asc-cta-btn:active {
+  button.asc-cta-btn:active,
+  a.asc-cta-btn:active {
     background: color-mix(in oklab, var(--color-fireweed), black 12%);
     transition: none;
   }
   .prose .asc-cta-btn:focus-visible,
-  button.asc-cta-btn:focus-visible {
+  button.asc-cta-btn:focus-visible,
+  a.asc-cta-btn:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
@@ -788,5 +795,50 @@
      confirm tier (`.btn-error`, household's "Yes, leave the club") stays separate and unchanged. */
   .portal-quiet-action {
     color: var(--color-muted);
+  }
+
+  /* T4 of the portal redesign pass: the child-screen header (the "← My account" back link plus
+     the page's own h1) was the same literal utility-class string pasted onto profile, classes,
+     household, and directory. Two shared classes, matching this section's own established idiom
+     (`.portal-field-label` above records the exact same "four screens quietly drifted" reasoning
+     for fixing this kind of duplication). Both reproduce the prior recipe's rendered look exactly
+     (verified by screenshot at 320/390/1440); `.portal-back-link` additionally closes a real gap
+     against this pass's own binding "44px touch targets" constraint the plain-text link never met
+     (a `text-step--1` line box is nowhere near 44px tall). */
+  .portal-back-link {
+    display: inline-block;
+    /* Grows the tap target vertically without pushing the h1 below it any further down: the
+       padding enlarges the link's own clickable box, and the equal negative margin cancels that
+       growth back out of the surrounding layout, the standard invisible-padding touch-target
+       technique. */
+    padding-block: 0.6875rem;
+    margin-block: -0.6875rem;
+    font-size: var(--text-step--1);
+    color: var(--color-primary);
+    text-decoration: none;
+    text-underline-offset: 2px;
+  }
+  .portal-back-link:hover {
+    text-decoration: underline;
+  }
+
+  .portal-page-title {
+    margin: var(--spacing-xs) 0 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--text-step-4);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-base-content);
+  }
+
+  /* The 44px touch-target floor (this pass's own binding mobile constraint) for a specific set
+     of row/confirm actions that render at daisyUI's fixed 32px `.btn-sm` height, which carries
+     no responsive step of its own (`ActionRow.svelte`'s own stacked-mobile button already grows
+     the same way). Not folded into `.portal-quiet-action`: that class also covers dense
+     `.btn-xs` list controls (household's per-member Remove/Update listing rows), which this
+     constraint does not name, so hoisting it there would grow rows this pass never flagged. */
+  .portal-touch-btn {
+    min-height: 2.75rem;
   }
 }

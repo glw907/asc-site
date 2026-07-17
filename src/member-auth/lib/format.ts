@@ -23,3 +23,30 @@ export function formatMemberDate(value: Date | string): string {
   const date = typeof value === 'string' ? parseMemberDate(value) : value;
   return LONG_DATE.format(date);
 }
+
+/**
+ * Format an integer-cent amount for a MEMBER-facing surface: "$250" for a whole-dollar amount,
+ * "$247.50" when there really are cents to show.
+ *
+ * Distinct from `$admin-club/lib/ui`'s own `formatCents`, which always renders two decimals. That
+ * is right for the admin's ledger and money screens, where a column of amounts wants a fixed
+ * decimal place to scan against, and wrong for a member reading their own short receipts list:
+ * all 298 live charges are whole dollars (verified 2026-07-16), so a hard `.00` is noise on every
+ * row anyone will actually see, and mock D's ratified receipts read "$250" and "$150". The cents
+ * still render whenever they exist, so an odd amount is never silently rounded away.
+ *
+ * This is the ONE member-facing money formatter: the receipts list, the action row's amount, and
+ * the gear page's fees all render through it. Do not reach for a bare
+ * `` `$${(cents / 100).toLocaleString()}` `` at a call site instead. That shape looks equivalent
+ * and is not: `toLocaleString` drops a trailing zero, so 24750 renders "$247.5" rather than
+ * "$247.50". It reads as correct against whole-dollar fixture data and misprints the first real
+ * amount that carries cents.
+ */
+export function formatMemberCents(amountCents: number): string {
+  const sign = amountCents < 0 ? '-' : '';
+  const abs = Math.abs(amountCents);
+  const dollars = Math.floor(abs / 100).toLocaleString('en-US');
+  const cents = abs % 100;
+  const amount = cents === 0 ? dollars : `${dollars}.${String(cents).padStart(2, '0')}`;
+  return `${sign}$${amount}`;
+}

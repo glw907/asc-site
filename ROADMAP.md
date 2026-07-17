@@ -149,6 +149,41 @@ the apex A record is a proxied placeholder), so the flip is a custom-domain/rout
 reassignment, edge-instant both ways — the low-TTL ruling's intent (instant rollback) is
 satisfied by the mechanism, stated in the doc.
 
+### Member waivers & digital signing `member-waivers`
+Every member signs a liability release; a mooring holder signs a separate mooring release; and
+anyone storing property on unsecured club grounds (RVs, boats, trailers) should sign a storage
+release too. Waivers change year to year, so each season needs fresh signatures and
+acknowledgements, not a one-time signup checkbox. Needs its own pass to organize and plan all of
+it (Geoff, 2026-07-16): high-quality DRAFT waivers written for a lawyer's review (drafts for
+legal review, never legal advice — the club's attorney is the gate), plus the UI/UX for members
+to sign digitally.
+
+WHAT ALREADY EXISTS (verified 2026-07-16, narrower than the need on every axis): the
+`waiver_acceptances` table (migration 0001) records who accepted what version and when, but its
+`context` CHECK admits only `'class-signup'` and `'join'` — there is no mooring or storage
+context, and no season column. `settings.waiver_text_version` ('2026-01') plus
+`WAIVER_TEXT_VERSION`/`WAIVER_RELEASE_TEXT` in `src/theme/waiver-text.ts` carry ONE hardcoded
+class/join liability release, deliberately not editor-managed (that file's header explains the
+call, and pairs any text edit with a manual version bump in two places).
+
+THE REAL GAPS, then: only two of the needed contexts exist; there is one waiver document where
+several are wanted; nothing re-asks an existing member at season rollover (a member who joined in
+2024 has never re-signed); acceptance is a signup checkbox rather than anything resembling a
+signature; and nothing GATES on a missing signature (a member can hold a mooring today having
+never signed a mooring release). Questions the brainstorm owes: what "digitally sign" must mean
+to be worth anything (the ESIGN/UETA-style record is typed name + timestamp + waiver version +
+IP, retained and reproducible — is that the bar, or does the club want more?); whether waiver
+text becomes real content or stays code-managed once there are several documents versioned per
+season; where an unsigned waiver blocks (assignment? renewal? nothing, just a nag?); and what the
+board can see about who has signed what.
+
+Natural seams: the portal redesign's "Needs your attention" rows are the obvious member-facing
+surface for an outstanding signature, and `season-rollover` already carries "the annual
+`waiver_text_version` review" in its own inventory — these two initiatives will want sequencing
+against each other. The schema is fully evolvable (CLAUDE.md), so the context CHECK and a season
+dimension are real migrations, never worked around in code. Interactive brainstorm with Geoff;
+not overnight-eligible (legal exposure plus a product fork on what signing means).
+
 ### Events page from-scratch redesign `events-redesign`
 A full from-scratch design of the events page, OPENING WITH A FUNCTIONAL BRAINSTORM
 (what the page must do for members and visitors before any visual work), interactive

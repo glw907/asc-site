@@ -37,23 +37,46 @@ jobs:
         if: ${{ !(github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true') }}
         run: npm run test:e2e
       # Manual regen mode: a dispatcher ticks `update_snapshots` after a deliberate rendering
-      # change. Runs the visual spec by its file path (never a title grep, which silently skips
-      # any test whose name doesn't match), on the CI runner itself, since baselines are
-      # CI-canonical and a workstation render is never an acceptable substitute. Commits the
-      # changed PNGs straight back to the branch the dispatch ran against, the same
-      # checkout-commit-push shape as aksailingclub-legacy's sync-editors.yml.
+      # change. Runs on the CI runner itself, since baselines are CI-canonical and a workstation
+      # render is never an acceptable substitute. Commits the changed PNGs straight back to the
+      # branch the dispatch ran against, the same checkout-commit-push shape as
+      # aksailingclub-legacy's sync-editors.yml.
+      #
+      # SPEC-AGNOSTIC ON PURPOSE, both steps. Until 2026-07-16 these hardcoded
+      # `e2e/site-visual.spec.ts` and `e2e/site-visual.spec.ts-snapshots/`, from when that was the
+      # only visual spec. The portal redesign pass added `e2e/portal-visual.spec.ts` (the first
+      # signed-in baselines) and the dispatch SILENTLY DID NOTHING for it: the regen step never
+      # rendered it, the commit step never staged it, and the job still reported success with "No
+      # baseline changes to commit." A green run that quietly skipped the thing it was dispatched
+      # for is worse than a red one. Running the whole suite is the future-proof shape: a spec with
+      # no screenshot assertion is unaffected by `--update-snapshots`, so the third visual spec
+      # needs no edit here to be covered. The original "never a title grep" warning still holds
+      # (a grep silently skips whatever does not match); running everything is the opposite
+      # failure mode, and the safe one.
       - name: Regenerate the visual baseline snapshots
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true' }}
-        run: npm run test:e2e -- e2e/site-visual.spec.ts --update-snapshots
+        run: npm run test:e2e -- --update-snapshots
+      # The glob is expanded by the SHELL (unquoted, via nullglob), never handed to git as a
+      # pathspec. `git add 'e2e/*-snapshots/'` looks equivalent and fails with "pathspec did not
+      # match any files": git's own pathspec globbing does not match UNTRACKED directories, which
+      # is exactly what a brand-new spec's baselines are on their first regen. nullglob then makes
+      # the genuinely-empty case a clean no-op instead of passing git a literal `*` and exiting 128.
       - name: Commit the regenerated visual baselines
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true' }}
         run: |
+          shopt -s nullglob
+          snapshot_dirs=(e2e/*-snapshots/)
+          if [ ${#snapshot_dirs[@]} -eq 0 ]; then
+            echo "No snapshot directories were produced; nothing to stage."
+            exit 0
+          fi
+          echo "Staging: ${snapshot_dirs[*]}"
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add e2e/site-visual.spec.ts-snapshots/
+          git add "${snapshot_dirs[@]}"
           if git diff --staged --quiet; then
             echo "No baseline changes to commit."
           else
-            git commit -m "chore(e2e): regenerate the site-visual baselines"
+            git commit -m "chore(e2e): regenerate the visual baselines"
             git push
           fi
