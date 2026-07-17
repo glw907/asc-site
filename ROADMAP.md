@@ -190,14 +190,29 @@ so the two repos already agree on the shape. Still true and worth holding: a fra
 consumer is worse than the duplication it replaces, so a candidate that turns out to have one real
 home gets dropped, not converted.
 
-THE HARVEST HALF, which is why this is an initiative and not a chore: the portal pass (2026-07-16/17)
-demonstrated the failure class this should hunt. Its ratified probe depicted data the system could
-not produce four separate ways, its fixtures reproduced the fiction so the baseline hid the defect,
-and `ci.yml`'s baseline dispatch silently did nothing while reporting success. Every one of those
-was green on `check`/`test`/`build`. So the harvest's question is not "does the API work" but
-"where can a consumer be green and wrong": contract gaps cairn does not enforce, promises its docs
-make that nothing checks, and seams where a site can hold it wrong without being told. File findings
-against cairn-cms as the DX harvest, and fix the site contract's own failures here.
+THE HARVEST HALF, SCOPED TO FRAGMENTS (Geoff, 2026-07-17): log the DX and site-contract
+deficiencies and improvement opportunities **associated with the fragments capability**, not a
+general audit. This pass is fragments' FIRST REAL CONSUMER TEST outside cairn's own showcase, from
+both seats at once, which is exactly what the feature has not had:
+- the **developer** seat (declaring the reserved `fragments` concept, the `routing: 'embedded'`
+  requirement, the `^0.87.0` bump, what the contract does and does not enforce), and
+- the **editor** seat (the "Include a fragment" picker, the include's block-splice behavior in the
+  preview, the "Included in" consumer list, what rename actually rewrites, what happens when a
+  consuming entry is published but the fragment is not).
+
+WHERE FINDINGS GO: `~/Projects/cairn-cms/docs/internal/docs-friction-log.md`, which takes a
+perspective tag per finding (`developer` | `editor` | `maintainer` | `operator`) and triages into
+that repo's ROADMAP/STATUS. The log was CLEARED at the 0.87.0 cut, so it starts empty and this
+pass's findings are its first entries; that repo keeps no separate backlog file. This also
+discharges the standing [[feedback_dx_harvest_mandate]] for this surface.
+
+WHAT TO HUNT, earned from the portal pass (2026-07-16/17): not "does the API work" but **where a
+consumer can be GREEN AND WRONG**. That pass's ratified probe depicted data the system could not
+produce four separate ways, its fixtures reproduced the fiction so the baseline hid the defect, and
+`ci.yml`'s dispatch reported success while doing nothing. Every one was green on
+`check`/`test`/`build`. The fragments analogue is the same shape: a promise the docs make that
+nothing enforces, a way to hold the concept wrong without being told, an include that silently
+resolves to nothing. Fix the site contract's own failures here; file cairn's against cairn.
 
 ### Member waivers & digital signing `member-waivers`
 Every member signs a liability release; a mooring holder signs a separate mooring release; and

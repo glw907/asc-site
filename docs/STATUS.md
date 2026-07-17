@@ -35,11 +35,20 @@ grounded, all verified 2026-07-17 rather than assumed:
 - **navLayout rides along** (cairn-cms's STATUS: "navLayout addition + content migration there"),
   which touches the `admin-roles` / `admin-nav-reorg` initiatives -- check their sequencing at the
   brainstorm rather than assuming this pass owns it.
-- **The harvest's question**, earned from the portal pass: not "does the API work" but "WHERE CAN A
+- **The harvest is SCOPED TO FRAGMENTS** (Geoff, 2026-07-17): log the DX and site-contract
+  deficiencies and improvement opportunities ASSOCIATED WITH THE FRAGMENTS CAPABILITY, not a general
+  audit. This is fragments' first real consumer test outside cairn's own showcase, from both seats:
+  DEVELOPER (the reserved concept, the `routing: 'embedded'` requirement, the bump, what the
+  contract does not enforce) and EDITOR (the "Include a fragment" picker, the block splice in
+  preview, the "Included in" list, what rename rewrites, a published consumer whose fragment is
+  not). Findings go to `~/Projects/cairn-cms/docs/internal/docs-friction-log.md` with a perspective
+  tag (`developer`|`editor`|`maintainer`|`operator`); that log was CLEARED at the 0.87.0 cut, so
+  these are its first entries. Discharges the standing DX-harvest mandate for this surface.
+- **The question to hunt**, earned from the portal pass: not "does the API work" but "WHERE CAN A
   CONSUMER BE GREEN AND WRONG". That pass's ratified probe depicted impossible data four ways, its
   fixtures reproduced the fiction so the baseline hid the defect, and ci.yml's dispatch reported
-  success while doing nothing. All green on check/test/build. Hunt contract gaps cairn does not
-  enforce and docs promises nothing checks.
+  success while doing nothing. All green on check/test/build. The fragments analogue: a docs promise
+  nothing enforces, a way to hold the concept wrong silently, an include resolving to nothing.
 
 **PORTAL REDESIGN PASS: SHIPPED TO DEV 2026-07-17 (merge 510b266, PR #1). AWAITING GEOFF'S
 BEFORE/AFTER against mock D — that gate is the apex's, not dev's; dev is live now.** Spec
