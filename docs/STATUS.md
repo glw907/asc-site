@@ -24,8 +24,17 @@ grounded, all verified 2026-07-17 rather than assumed:
   payment confirmation and class-registration-complete live in the PAGES concept
   (`/confirmation`, `/class-registration-complete`) and their old public URLs resolve via
   `$theme/redirects.ts`, verified on dev (307 -> 301 -> 200, `?session_id=` survives).
-- **Survey before declaring fragments** (37 pages, 31 posts): grep for blocks that actually recur.
-  A fragment serving one consumer is worse than the duplication it replaces.
+- **THE SURVEY ALREADY EXISTS -- do not re-survey**: `docs/fragment-candidates.md` (Geoff started
+  it 2026-07-15; the 2026-07-15 pass has fed it since under a standing "duplicate freely, log the
+  duplicate" policy). NINE ready cases, each with its location, likely fragment shape, and the
+  CANONICAL WORDING that pass already converged the duplicates onto to make extraction mechanical.
+  Its header names this pass as its consumer ("a future content-consolidation pass converts this
+  list and deletes it"). cairn-cms's STATUS tracks the same work from the other side. First task is
+  VERIFY AND EXTEND that list, not a fresh grep. A candidate with one real consumer gets dropped,
+  not converted.
+- **navLayout rides along** (cairn-cms's STATUS: "navLayout addition + content migration there"),
+  which touches the `admin-roles` / `admin-nav-reorg` initiatives -- check their sequencing at the
+  brainstorm rather than assuming this pass owns it.
 - **The harvest's question**, earned from the portal pass: not "does the API work" but "WHERE CAN A
   CONSUMER BE GREEN AND WRONG". That pass's ratified probe depicted impossible data four ways, its
   fixtures reproduced the fiction so the baseline hid the defect, and ci.yml's dispatch reported

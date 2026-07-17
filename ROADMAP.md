@@ -175,9 +175,20 @@ axis.** The stale memory that made it look breaking (it claimed payment confirma
 embedded concept) is corrected; those system pages are in the PAGES concept and their old URLs
 resolve via `$theme/redirects.ts`.
 
-CANDIDATE REPEATED CONTENT (37 pages, 31 posts): the survey is the first task, not an assumption.
-Grep for the blocks that actually recur before declaring what becomes a fragment; a fragment that
-serves one consumer is worse than the duplication it replaces.
+**THE SURVEY ALREADY EXISTS: `docs/fragment-candidates.md`** (Geoff started it 2026-07-15, and the
+2026-07-15 pass has been feeding it since under a standing policy: duplicate freely, format
+consistently, LOG THE DUPLICATE). Nine ready cases, each carrying what the content is, where it
+currently lives, its likely fragment shape, and -- the part that makes this cheap -- the CANONICAL
+WORDING that pass already converged the duplicates onto ("gentle realignment that makes the future
+extraction mechanical"). Mooring cost/eligibility, the club address, the storage-fee table, and six
+more. That file's own header names this pass as its consumer: "a future content-consolidation pass
+converts this list and deletes it." So the first task is to VERIFY and extend that list against
+today's content, never to re-survey from scratch. cairn-cms's own STATUS tracks this from the other
+side ("PARALLEL, in ASC's own session: the ASC consolidation consumes fragments; its
+docs/fragment-candidates.md holds nine ready cases; navLayout addition + content migration there"),
+so the two repos already agree on the shape. Still true and worth holding: a fragment serving one
+consumer is worse than the duplication it replaces, so a candidate that turns out to have one real
+home gets dropped, not converted.
 
 THE HARVEST HALF, which is why this is an initiative and not a chore: the portal pass (2026-07-16/17)
 demonstrated the failure class this should hunt. Its ratified probe depicted data the system could
