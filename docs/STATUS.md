@@ -8,6 +8,30 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
+**NEXT INITIATIVE: THE FRAGMENTS MIGRATION & DX/CONTRACT HARVEST (Geoff, 2026-07-16; ROADMAP
+`fragments-migration`). FRESH SESSION, FABLE-CONDUCTED PLANNING (Geoff's own call).** Migrate
+repeated content onto cairn's Fragments (shipped in 0.87.0) and use the pass to harvest cairn DX and
+site-contract FAILURES, not just consume the feature. Pre-baked so the planning session starts
+grounded, all verified 2026-07-17 rather than assumed:
+- **The bump is deliberate**: the site pins `^0.86.0` and a 0.x caret EXCLUDES higher minors, so
+  nothing arrives until someone bumps to `^0.87.0`. Latest published is 0.87.0.
+- **Fragments**: reserved `fragments` concept key (requires `routing: 'embedded'`),
+  `::include{fragment="<id>"}` block splice, editor picker, rename rewrites inbound includes, an
+  "Included in" consumer list, no public URL (its permalink 404s).
+- **0.87.0's other change and its consumer action**: `routing: 'embedded'` is now GENUINELY
+  non-routable. CHECKED: ASC's only embedded concept is `notifications` (home-banner data, no URL),
+  so the bump looks SAFE on that axis. The stale memory that made it look breaking is corrected --
+  payment confirmation and class-registration-complete live in the PAGES concept
+  (`/confirmation`, `/class-registration-complete`) and their old public URLs resolve via
+  `$theme/redirects.ts`, verified on dev (307 -> 301 -> 200, `?session_id=` survives).
+- **Survey before declaring fragments** (37 pages, 31 posts): grep for blocks that actually recur.
+  A fragment serving one consumer is worse than the duplication it replaces.
+- **The harvest's question**, earned from the portal pass: not "does the API work" but "WHERE CAN A
+  CONSUMER BE GREEN AND WRONG". That pass's ratified probe depicted impossible data four ways, its
+  fixtures reproduced the fiction so the baseline hid the defect, and ci.yml's dispatch reported
+  success while doing nothing. All green on check/test/build. Hunt contract gaps cairn does not
+  enforce and docs promises nothing checks.
+
 **PORTAL REDESIGN PASS: SHIPPED TO DEV 2026-07-17 (merge 510b266, PR #1). AWAITING GEOFF'S
 BEFORE/AFTER against mock D — that gate is the apex's, not dev's; dev is live now.** Spec
 docs/2026-07-16-portal-redesign-design.md + plan docs/plans/2026-07-16-portal-redesign.md,

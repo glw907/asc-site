@@ -149,6 +149,45 @@ the apex A record is a proxied placeholder), so the flip is a custom-domain/rout
 reassignment, edge-instant both ways — the low-TTL ruling's intent (instant rollback) is
 satisfied by the mechanism, stated in the doc.
 
+### Fragments migration & the DX/contract harvest `fragments-migration`
+Migrate repeated content onto cairn's Fragments, shipped in **0.87.0** (Geoff, 2026-07-16), and use
+the pass as the deliberate occasion to harvest cairn DX and site-contract failures rather than
+filing them one at a time. Opens with FABLE-CONDUCTED PLANNING (Geoff's own call), a fresh session,
+and the standing DX-harvest mandate ([[feedback_dx_harvest_mandate]]) escalated from a background
+duty to this initiative's actual point: **look for failures**, do not just consume the feature.
+
+WHAT 0.87.0 SHIPS: a site declares the reserved `fragments` concept key (which requires
+`routing: 'embedded'`); an editor includes a published fragment in any post or page with
+`::include{fragment="<id>"}`, inserted by the editor's own "Include a fragment" picker. Editing the
+fragment updates every consumer. The include is a block splice, so the fragment's markdown lands in
+place. A fragment has no public URL and its computed permalink 404s, so it reaches a reader only
+through a consuming entry. Renaming rewrites every inbound include, and a fragment's edit screen
+carries a standing "Included in" consumer list.
+
+THE BUMP IS DELIBERATE: the site pins `^0.86.0`, and a 0.x caret EXCLUDES higher minors, so nothing
+arrives until someone bumps to `^0.87.0`. That bump also carries 0.87.0's other change, and the
+changelog names a consumer action: `routing: 'embedded'` is now GENUINELY non-routable (entries stop
+resolving through `byPermalink`, prerendering through `entries()`, and appearing in `site.all()`);
+previously the shorthand was declarable but unenforced, so embedded entries were served and
+sitemapped like routable ones. **Checked 2026-07-17, not assumed: ASC's only embedded concept is
+`notifications`, which holds home-banner data with no URL of its own, so the bump looks safe on that
+axis.** The stale memory that made it look breaking (it claimed payment confirmation lived in the
+embedded concept) is corrected; those system pages are in the PAGES concept and their old URLs
+resolve via `$theme/redirects.ts`.
+
+CANDIDATE REPEATED CONTENT (37 pages, 31 posts): the survey is the first task, not an assumption.
+Grep for the blocks that actually recur before declaring what becomes a fragment; a fragment that
+serves one consumer is worse than the duplication it replaces.
+
+THE HARVEST HALF, which is why this is an initiative and not a chore: the portal pass (2026-07-16/17)
+demonstrated the failure class this should hunt. Its ratified probe depicted data the system could
+not produce four separate ways, its fixtures reproduced the fiction so the baseline hid the defect,
+and `ci.yml`'s baseline dispatch silently did nothing while reporting success. Every one of those
+was green on `check`/`test`/`build`. So the harvest's question is not "does the API work" but
+"where can a consumer be green and wrong": contract gaps cairn does not enforce, promises its docs
+make that nothing checks, and seams where a site can hold it wrong without being told. File findings
+against cairn-cms as the DX harvest, and fix the site contract's own failures here.
+
 ### Member waivers & digital signing `member-waivers`
 Every member signs a liability release; a mooring holder signs a separate mooring release; and
 anyone storing property on unsecured club grounds (RVs, boats, trailers) should sign a storage
