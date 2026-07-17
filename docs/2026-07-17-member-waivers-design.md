@@ -250,9 +250,11 @@ renewal, not an annual stack of forms.
 
 ## Appendix A: research summaries
 
-Three commissioned research reports inform this spec (2026-07-17). Full reports are
-retained in the session record; their load-bearing conclusions are captured here and in
-the decisions above.
+Three commissioned research reports inform this spec (2026-07-17). The full reports,
+with citations, are preserved in `docs/research/` (esignature-validity,
+stored-property-liability, document-inventory-benchmark, all dated 2026-07-17); the
+load-bearing conclusions are captured here and in the decisions above. The drafting
+sitting and the board packet work from the full reports.
 
 ### Electronic-signature validity
 
