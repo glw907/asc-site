@@ -56,12 +56,24 @@ jobs:
       - name: Regenerate the visual baseline snapshots
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true' }}
         run: npm run test:e2e -- --update-snapshots
+      # The glob is expanded by the SHELL (unquoted, via nullglob), never handed to git as a
+      # pathspec. `git add 'e2e/*-snapshots/'` looks equivalent and fails with "pathspec did not
+      # match any files": git's own pathspec globbing does not match UNTRACKED directories, which
+      # is exactly what a brand-new spec's baselines are on their first regen. nullglob then makes
+      # the genuinely-empty case a clean no-op instead of passing git a literal `*` and exiting 128.
       - name: Commit the regenerated visual baselines
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_snapshots == 'true' }}
         run: |
+          shopt -s nullglob
+          snapshot_dirs=(e2e/*-snapshots/)
+          if [ ${#snapshot_dirs[@]} -eq 0 ]; then
+            echo "No snapshot directories were produced; nothing to stage."
+            exit 0
+          fi
+          echo "Staging: ${snapshot_dirs[*]}"
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add 'e2e/*-snapshots/'
+          git add "${snapshot_dirs[@]}"
           if git diff --staged --quiet; then
             echo "No baseline changes to commit."
           else
