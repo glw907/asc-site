@@ -242,11 +242,14 @@ const SWEEP_PROMPT =
   'repeated fee or rule statements, repeated closers. The nine known candidates are out of scope. Apply the ' +
   'blocks-only bar from the spec before proposing anything; an empty result is a fine result.'
 
-if (!args || !args.stage) {
+// Some callers deliver args JSON-encoded rather than as a value; accept both.
+const input = typeof args === 'string' ? JSON.parse(args) : args
+
+if (!input || !input.stage) {
   throw new Error("Pass args {stage: 'adopt' | 'probes' | 'survey' | 'extract'} per the plan doc.")
 }
 
-if (args.stage === 'adopt') {
+if (input.stage === 'adopt') {
   phase('Adopt')
   const result = await agent(
     PREAMBLE +
@@ -267,9 +270,18 @@ if (args.stage === 'adopt') {
   return result
 }
 
-if (args.stage === 'probes') {
+// The editor seat probes admin UI that cairn has already rebuilt on an unreleased branch (the
+// include chip, the fold pill, the preview boundary, the publish blast radius). Probing 0.87.0
+// would harvest friction that 0.88.0 already fixes, so E1-E8 defer until it ships
+// (Geoff, 2026-07-17). Pass {editor: true} once ASC is on ^0.88.0.
+if (input.stage === 'probes') {
   phase('Probes')
-  log('P1-P7 fan out in worktrees; editor agents run serially beside them')
+  const withEditor = input.editor === true
+  log(
+    withEditor
+      ? 'P1-P7 fan out in worktrees; editor agents run serially beside them'
+      : 'P1-P7 fan out in worktrees; editor seat E1-E8 DEFERRED to cairn 0.88.0',
+  )
   const [dev, editor] = await parallel([
     () =>
       parallel(
@@ -285,6 +297,7 @@ if (args.stage === 'probes') {
         ),
       ),
     async () => {
+      if (!withEditor) return []
       const happy = await agent(EDITOR_HAPPY, {
         agentType: 'general-purpose',
         model: 'sonnet',
@@ -308,10 +321,11 @@ if (args.stage === 'probes') {
     developer: (dev || []).filter(Boolean),
     editor: (editor || []).flatMap((r) => r.findings),
     screenshots: (editor || []).flatMap((r) => r.screenshots),
+    editorDeferred: !withEditor,
   }
 }
 
-if (args.stage === 'survey') {
+if (input.stage === 'survey') {
   phase('Survey')
   const [verdicts, sweep] = await parallel([
     () =>
@@ -338,13 +352,13 @@ if (args.stage === 'survey') {
   return { verdicts: (verdicts || []).filter(Boolean), sweep }
 }
 
-if (args.stage === 'extract') {
+if (input.stage === 'extract') {
   phase('Extract')
-  if (!Array.isArray(args.fragments) || !Array.isArray(args.agreements)) {
-    throw new Error('extract needs args.fragments and args.agreements, resolved by the conductor at plan step 3.')
+  if (!Array.isArray(input.fragments) || !Array.isArray(input.agreements)) {
+    throw new Error('extract needs input.fragments and input.agreements, resolved by the conductor at plan step 3.')
   }
   const results = []
-  for (const f of args.fragments) {
+  for (const f of input.fragments) {
     results.push(
       await agent(
         PREAMBLE +
@@ -374,7 +388,7 @@ if (args.stage === 'extract') {
     PREAMBLE +
       ' Write src/tests/content-agreement.test.ts per the spec section "The agreement test", test-first, from this ' +
       'conductor-resolved agreements list: ' +
-      JSON.stringify(args.agreements) +
+      JSON.stringify(input.agreements) +
       ' For each canonical fact string, assert it appears in each named content file (read the files from disk in the ' +
       'test, vitest style, matching the existing src/tests/ conventions). Prove the test is meaningful: temporarily ' +
       'break one fact in one file, watch it fail, restore it. Then delete docs/fragment-candidates.md (its header ' +
@@ -391,4 +405,4 @@ if (args.stage === 'extract') {
   return { fragments: results.filter(Boolean), agreementTest }
 }
 
-throw new Error('Unknown stage: ' + args.stage)
+throw new Error('Unknown stage: ' + input.stage)
