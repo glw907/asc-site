@@ -15,17 +15,19 @@ block governs where it conflicts with the original text; the arc log
 
 - **Composition: compact-expand (Compact A).** A compact row per member that expands to the
   full person-first entry, not an always-inline list. Resting row: name; a filled top-title
-  chip with a "+N" for multiple titles; a boats-else-city secondary (class abbreviating to
+  chip with a "+N" for multiple titles; a boats-else-city secondary (the model abbreviating to
   "Bucc 18" on narrow screens); and, for a visible member, the phone (muted text on desktop, a
   call icon on mobile) beside an email icon. A search or chip narrowing to ≤3 auto-expands.
 - **Boats attach to a MEMBER, not a household** — SUPERSEDES decision 4. A boat shows on its
   owner's entry; families with several boats get per-owner clarity.
-- **Boat capture is structured**: name REQUIRED going forward; class from a fixed, non-editable
-  picker (Buccaneer 18 / Laser / Other → typed model). The seed normalizes class so like boats
-  read alike and attaches boats to owners, with Geoff resolving initial ambiguity at import
-  review.
-- **Full address captured going forward**, on the household ("a group of people under one
-  roof"), shown in the expanded view at the **visible** contact tier — it rides the existing
+- **Boat capture is structured**: name REQUIRED going forward; a single `model` from a fixed
+  picker (Buccaneer 18 / Laser / Other, where Other means typing the real model), stored as the
+  resolved string (migration 0028 collapsed the old class-plus-conditional-model pair into one
+  required `model`). The seed normalizes the model so like boats read alike and attaches boats
+  to owners, with Geoff resolving initial ambiguity at import review.
+- **Full address seeded and captured going forward**, on the household ("a group of people under
+  one roof"), seeded from the MembershipWorks export (plan T2c) and shown in the expanded view
+  at the **visible** contact tier — it rides the existing
   visibility dial (decision 7 stands: no new switch), joining email and phone as sensitive-tier
   fields.
 

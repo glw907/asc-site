@@ -39,13 +39,16 @@ applied live, carrying four tables plus a households address addition. `boats`: 
 member_id (FK to members — a boat belongs to its OWNER, not the household; this
 SUPERSEDES directory spec decision 4, and lets a family with several boats name who
 owns which), name TEXT (nullable in schema to admit nameless legacy seed rows, but
-REQUIRED at every capture path going forward), class TEXT CHECK ('Buccaneer
-18','Laser','Other'), model TEXT (required when class='Other', else NULL — the fixed
-picker, not editable, since club boat types change slowly), sail_number nullable,
+REQUIRED at every capture path going forward), model TEXT NOT NULL (a single required,
+non-empty field; the Buccaneer 18 / Laser / Other picker is a capture-time affordance and
+the resolved string is stored — a picker value or the free-typed "Other" model. REVISED
+2026-07-17 by migration 0028, which supersedes 0027's `class` picker plus conditional
+`model` pair; boats was empty, so 0028 recreated the table), sail_number nullable,
 kept_on TEXT CHECK ('trailer','mooring') DEFAULT 'trailer', timestamps. `households`
 gains full-address columns (line1, line2 nullable, state, postal_code; `city` already
-exists) — one address per household ("a group of people under one roof"), captured
-going forward and shown at the visible contact tier. `committees`: id, slug, name, description, kind TEXT CHECK
+exists) — one address per household ("a group of people under one roof"), SEEDED from the
+MembershipWorks export (T2c) and captured going forward, shown at the visible contact
+tier. `committees`: id, slug, name, description, kind TEXT CHECK
 ('standing','established'), sort_order, archived_at, timestamps. `committee_members`:
 id, committee_id (FK), member_id (FK), role TEXT CHECK ('chair','co-chair','member')
 DEFAULT 'member', status TEXT CHECK ('pending','active') DEFAULT 'pending',
@@ -54,17 +57,18 @@ kind TEXT CHECK ('officer','director','appointed'), title TEXT NOT NULL, sort_or
 timestamps. The flat `member_roles` table from the superseded decision 6 is never
 built. No new visibility COLUMN (directory spec decision 7 stands): the new households
 address is gated at render by the existing `directory_visibility` dial (visible tier),
-not a new switch. Tests assert every CHECK constraint (including boat class/model — model
-required iff class='Other'), FK behavior, and the UNIQUE pair.
+not a new switch. Tests assert every CHECK constraint (including boats' single required,
+non-empty `model` — migration 0028), FK behavior, and the UNIQUE pair.
 
 ## T2 — Boat seeder from assignment free text
 
 Outcome: a verified-import script in scripts/import (dry-run plan, audit trail,
 verify.sql, rollback) that parses asset-assignment free text into boats rows where a
 boat is recognizably described, attaching each boat to its OWNER (a member), setting
-kept_on='mooring' for a mooring assignment, and normalizing class to the picker values
-('Buccaneer 18','Laser', else 'Other' with the raw text kept as `model`) so every
-Buccaneer 18 and every Laser reads alike. It SKIPS ambiguous text rather than guessing
+kept_on='mooring' for a mooring assignment, and normalizing the `model` to the picker
+values ('Buccaneer 18','Laser') else the raw text kept as the free-typed model, so every
+Buccaneer 18 and every Laser reads alike. Every seeded boat's `name` stays NULL (members
+name their boats going forward). It SKIPS ambiguous text rather than guessing
 (the audit lists skips). Boat→owner attribution is ambiguous where an assignment is
 household-level: the dry-run plan lists those cases and Geoff resolves them at import
 review (the same shape as the plan's Geoff-supplied director rows), never guessed.
@@ -85,6 +89,21 @@ director without an office come from Geoff at import review (the dry-run plan is
 prompt for that list). Names match against `members`; misses land in the audit, never
 guessed. Dry-run reviewed by the conductor, and the director list confirmed by
 Geoff, before live apply.
+
+## T2c — Household address seeder from the MembershipWorks export
+
+Outcome: a verified-import script (`scripts/import/household-address-seed.mjs`, same
+pattern as T2) that fills each household's `address_line1`/`state`/`postal_code` from its
+PRIMARY member's export row (`households.primary_member_id` → `members.mw_account_id` →
+the export's unique `Account ID`), one address per household ("one roof"). UPDATE-if-NULL
+only, so it never clobbers a later member edit and converges to a no-op; `city` stays the
+member import's domain, untouched; `address_line2` has no export source and is left NULL.
+Values store verbatim (no re-casing). A household whose primary has no matching row, or a
+row with no street, is reported and skipped, never guessed. The street-suppression choice
+is already honored: the member import maps the export's "Do not show street address in
+profile" flag to `directory_visibility='partial'`, which nulls the address at render, so
+no new switch is needed (directory spec decision 7). Dry-run + audit + verify + rollback;
+Geoff reviews the worksheet before live apply.
 
 ## T3 — Directory query and listing rule
 
@@ -113,8 +132,8 @@ from positions kinds officer/director plus chair/co-chair rows, and Instructors 
 the appointed 'Instructor' title. The COMPACT resting row: name (the loud element); one
 filled top-title chip with a quiet "+N" when the member holds more than one title
 (plain committee membership stays expand-tier); a secondary datum that is the member's
-boats when they own any (named boats by name, unnamed collapsed by class, first two +
-"+N", class abbreviating to "Bucc 18" on narrow screens) and city otherwise; and, for a
+boats when they own any (named boats by name, unnamed collapsed by model, first two +
+"+N", the model abbreviating to "Bucc 18" on narrow screens) and city otherwise; and, for a
 visible member, the phone as muted tabular text on desktop / a 44px call icon on mobile,
 beside an email icon. The EXPANDED entry (a quiet sage wash, no card chrome) is the full
 person-first anatomy: household line, every position + derived chair title + plain
@@ -130,16 +149,16 @@ gates (scripts/design-probe.mjs) pass; both themes composed, not just light.
 
 Outcome: boat add/edit/remove on the member's PROFILE (primary, since a boat now belongs
 to its owner) and, on the household screen, the household's boats listed grouped by owner;
-same override precedence as visibility today. Boat capture REQUIRES a name and a class
-picked from the fixed list (Buccaneer 18 / Laser / Other), with a model field required
-only when class='Other'; kept_on picks trailer/mooring. The full household ADDRESS
+same override precedence as visibility today. Boat capture REQUIRES a name and a model:
+the fixed picker (Buccaneer 18 / Laser / Other) writes the model, and picking Other means
+typing the real model; kept_on picks trailer/mooring. The full household ADDRESS
 (line1/line2/state/postal_code, city already present) edits on the household screen. The
 profile "what others see" preview extends to show positions, committee memberships, boats,
 AND the address under each visibility state (the choice stays legible to an occasional
 user; roster names stay visible even for hidden, per roles spec decision 5, and the
 preview says so plainly — and that address shows only at the visible tier). Server actions
-validate name presence, class against the CHECK values, model-required-iff-Other, kept_on,
-and lengths; no new auth surface in this task (committee actions live in T6b).
+validate name presence, a non-empty model, kept_on against the CHECK values, and lengths;
+no new auth surface in this task (committee actions live in T6b).
 
 ## T6 — Admin screen: committees, memberships, positions
 
