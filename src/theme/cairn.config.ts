@@ -59,6 +59,11 @@ export const navLayout: NavLayout = [
       // reused 'inbox' below names the same constraint); 'table' fits the screen's own
       // season-flat table best.
       { label: 'Money', icon: 'table', href: '/admin/club/money' },
+      // member-directory pass T6 (docs/plans/2026-07-17-member-directory.md): the deliberately
+      // small committees/positions admin stopgap the queued admin-nav-reorg + admin-roles pass
+      // absorbs later. Every allowlisted icon is already claimed by this point; reuses 'users'
+      // (Members' own icon), the same small tradeoff Announce's reused 'inbox' already accepts.
+      { label: 'Committees', icon: 'users', href: '/admin/club/committees' },
     ],
   },
   {
