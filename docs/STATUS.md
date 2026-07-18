@@ -8,18 +8,25 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**IMMEDIATE NEXT ACTION (Geoff, 2026-07-17): RESUME THE `member-directory` PASS, OPUS-CONDUCTED,
-IN A FRESH SESSION.** The roles & committees brainstorm is DONE (entry below); the pass is
-unblocked. Resume prompt: "Resume the member-directory pass: read
-docs/2026-07-17-member-directory-design.md, docs/2026-07-17-roles-committees-design.md, and
-docs/plans/2026-07-17-member-directory.md, then continue — T0's probe verdict first, then T1."
-Launch from ~/Projects/aksailingclub-org, `/model opus`. T0 state: the round-1 composition probe
-was built from real asc-club rows and awaits Geoff's visual verdict on the non-roles parts; it
-lived in the PAUSED session's scratchpad (session-specific, real member names never land in git),
-so the resuming conductor regenerates it from real rows for the verdict if the path is gone. Arc
-log: docs/design-benchmark/member-directory-round-1-arc.md. INDEPENDENTLY SCHEDULABLE, any time
-Geoff's review availability suits: the FABLE waivers sitting (waivers plan T7 + the T4 signing-UX
-design; must land before the waivers BUILD reaches T4; depends only on the waivers spec).
+**IMMEDIATE NEXT ACTION (2026-07-17): the `member-directory` pass is at T2 (boat seeder),
+OPUS-CONDUCTED. T0 + T1 ARE DONE.** T0: composition ratified as **Compact A** (a compact row per
+member that expands to the full entry); Geoff's data-model decisions folded into the spec + plan
+(full ledger in the arc log, docs/design-benchmark/member-directory-round-1-arc.md). T1: migration
+**0027_directory_domain** (boats keyed to a member, household address columns, committees /
+committee_members / member_positions) committed (**3e5e356**), scratch-proven, gate-green, and
+**APPLIED + VERIFIED on live asc-club** (all four tables + four address columns confirmed; additive,
+no existing data touched). Resume prompt: "Resume the member-directory pass at T2: read the updated
+docs/plans/2026-07-17-member-directory.md and docs/2026-07-17-roles-committees-design.md, then
+dispatch T2 (the boat seeder) — a verified-import script parsing assignment free text into
+per-member boats, normalizing class to Buccaneer 18/Laser/Other, surfacing boat→owner ambiguity for
+Geoff at the dry-run review." Launch from ~/Projects/aksailingclub-org, `/model opus`. Key T0
+outcomes in spec+plan: Compact A (phone-at-rest, "+N" multi-title chip, boats-else-city secondary,
+auto-expand ≤3); **boats per MEMBER not household** (supersedes directory decision 4); **full
+household address** at the visible tier; **boat name required** + fixed class picker; seed
+normalizes class, Geoff matches boats→owners at import. Round-2 probe (real rows, both themes):
+scratchpad `directory-probe/round-2/` (compact.html + shot-refined-*, regenerate if gone).
+INDEPENDENTLY SCHEDULABLE, any time Geoff's review suits: the FABLE waivers sitting (waivers plan
+T7 + the T4 signing-UX design; before the waivers BUILD reaches T4).
 
 **ROLES & COMMITTEES BRAINSTORM: DONE 2026-07-17 (Fable-conducted, this sitting). Spec
 docs/2026-07-17-roles-committees-design.md is committed and Geoff-approved; it SUPERSEDES the

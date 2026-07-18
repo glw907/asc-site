@@ -6,6 +6,29 @@
 > that order, per the pre-cutover pass sequence. The waivers spec from the same sitting
 > is `docs/2026-07-17-member-waivers-design.md`.
 
+## Revisions (Geoff, 2026-07-17, directory T0 design pass)
+
+The T0 design pass ratified the visual composition and revised several decisions below. This
+block governs where it conflicts with the original text; the arc log
+(`docs/design-benchmark/member-directory-round-1-arc.md`) carries the reasoning, the plan
+(`docs/plans/2026-07-17-member-directory.md`) the task-level shape.
+
+- **Composition: compact-expand (Compact A).** A compact row per member that expands to the
+  full person-first entry, not an always-inline list. Resting row: name; a filled top-title
+  chip with a "+N" for multiple titles; a boats-else-city secondary (class abbreviating to
+  "Bucc 18" on narrow screens); and, for a visible member, the phone (muted text on desktop, a
+  call icon on mobile) beside an email icon. A search or chip narrowing to ≤3 auto-expands.
+- **Boats attach to a MEMBER, not a household** — SUPERSEDES decision 4. A boat shows on its
+  owner's entry; families with several boats get per-owner clarity.
+- **Boat capture is structured**: name REQUIRED going forward; class from a fixed, non-editable
+  picker (Buccaneer 18 / Laser / Other → typed model). The seed normalizes class so like boats
+  read alike and attaches boats to owners, with Geoff resolving initial ambiguity at import
+  review.
+- **Full address captured going forward**, on the household ("a group of people under one
+  roof"), shown in the expanded view at the **visible** contact tier — it rides the existing
+  visibility dial (decision 7 stands: no new switch), joining email and phone as sensitive-tier
+  fields.
+
 ## What the directory is for
 
 The number-one member-requested feature: find people, boats, and roles inside the club,

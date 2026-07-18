@@ -48,7 +48,63 @@ member whose surname differs from the household name; (2) a fleet of near-identi
 Black's three Buccaneers) — per-line vs. collapse-duplicates; (3) density (calm vs. tighter);
 (4) the "Contact private" marker wording — keep or drop.
 
-**Verdicts:** _(pending Geoff's review of the non-roles composition — entry anatomy, header, mobile)_
+**Verdicts (Geoff, 2026-07-17, resumed session):** The non-roles composition is close but not
+ratified — Geoff called for another round. Three details settled: (2) duplicate boats **collapse**
+to a count (`2 × Buccaneer`), named/numbered boats still break out on their own line; (4) the
+"Contact private" marker is **dropped** — a partial member shows no contact block, absence carries
+the meaning. Density (3) was not answered directly: Geoff turned it into a design question —
+"Does it make sense to have a compact list that expands, given that we're hanging more and more
+off an entry?" — reflecting how much the roles/committees model now hangs off each entry. (1) the
+different-surname household line is not yet verdicted; it rides into round 2. The filled-chip /
+outline-marker roles rendering is now the roles spec's decision 6 and stands regardless.
+
+## Round 2 — compact-expand vs. flat (2026-07-17, Fable-conducted design sitting)
+
+**Launched.** Geoff chose to see a compact-row-that-expands variant beside the current flat list
+(both carrying the two settled fixes) before ratifying either, and chose a Fable-conducted sitting
+for the design (Opus conducts the pass; the plan's escape hatch fires because a new interaction
+model is genuinely novel design work, not a tweak inside the ratified language). The round is an
+async probe arc: one probe page, current-flat beside compact-expand candidate(s), real rows, both
+themes, 390/1440, for Geoff's async verdict. Probe lives in the session scratchpad
+(`directory-probe/round-2/`), never git.
+
+**Verdicts + refinements (Geoff, 2026-07-17, round 2):** COMPOSITION RATIFIED as Compact A —
+compact rows that expand to the ratified flat entry on a sage wash. Settled:
+- **Compact A** over flat and over variant B (contact reachable at rest).
+- **Auto-expand at ≤3 results**: kept (a narrow search lands on the full entry).
+- **Phone at rest**: shown as muted tabular text on desktop, a 44px call icon on mobile (the
+  most-wanted datum; the muted number forms a calm right-edge column, not clutter).
+- **Multi-title indicator**: top-title chip + a quiet "+N" when a member holds more than one
+  title (e.g. "Grounds Committee Chair +1"). Plain committee membership stays expand-tier.
+- **Secondary datum at rest = boats when present, else city.** City is a weak signal (nearly
+  everyone reads "Anchorage"); boats are distinctive and serve the boat-finding job. Named
+  boats by name, unnamed collapse by class, first two + "+N" overflow. Class abbreviates on
+  narrow screens (Buccaneer 18 → Bucc 18).
+- Collapse-duplicate-boats and drop-private-marker carried in from round 1.
+
+**DATA-MODEL DECISIONS (Geoff, 2026-07-17 — several SUPERSEDE the ratified directory spec;
+fold into the spec + plan):**
+1. **Boats attach to a MEMBER, not a household.** SUPERSEDES directory spec decision 4. A boat
+   shows on its owner's entry only. Reason: families with multiple boats — the owner is explicit.
+2. **Capture full address going forward**, shown in the expanded view at the **visible** contact
+   tier. New data: the schema stores only `city` today (households). Address joins the sensitive
+   visible tier (a privacy step past email/phone, decided deliberately).
+3. **Boat class is a curated picker**: Buccaneer 18 / Laser / Lido / Other (→ specify model).
+   Not free text (the committees curated-list lesson).
+4. **Boat name required going forward** (capture requirement; legacy seed rows may stay nameless
+   until a member fills them, matching "members correct over time").
+5. **Normalize boat class in the seed** — all Buccaneer 18 read alike, all Laser alike.
+6. **Seeder attaches boats to owners; Geoff resolves boat→owner ambiguity at import review**
+   (dry-run plan is the prompt), same shape as the plan's Geoff-supplied director rows.
+
+**Plan impact (formal spec + plan edits pending Geoff's ledger confirm):** T1 boats table gains
+`member_id` FK (drops household_id), class picker + optional model, name; households gain address
+fields. T2 seeds per-member boats with class normalization and owner-matching at review. T3/T4
+join boats by member; composition is compact-expand + the refinements above. T5 boat capture
+requires name + class picker, plus address capture and the extended preview.
+
+**Status: composition CONVERGED pending Geoff's confirm of the full ledger; the data-model
+decisions await the same confirm before the spec/plan are rewritten.**
 
 **PAUSED for a roles/committees brainstorm (2026-07-17).** Reviewing the roles slice, Geoff grew
 it into a structured roles-and-committees model (per-committee chairs, notable committee

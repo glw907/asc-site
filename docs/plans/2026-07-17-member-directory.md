@@ -35,26 +35,42 @@ justification.
 ## T1 — Schema: boats, committees, committee_members, member_positions
 
 Outcome: asc-club migrations with forward/rollback/verify, scratch-proven then
-applied live, carrying four tables. `boats`: id, household_id (FK), name,
-class_model, sail_number nullable, kept_on TEXT CHECK ('trailer','mooring') DEFAULT
-'trailer', timestamps. `committees`: id, slug, name, description, kind TEXT CHECK
+applied live, carrying four tables plus a households address addition. `boats`: id,
+member_id (FK to members — a boat belongs to its OWNER, not the household; this
+SUPERSEDES directory spec decision 4, and lets a family with several boats name who
+owns which), name TEXT (nullable in schema to admit nameless legacy seed rows, but
+REQUIRED at every capture path going forward), class TEXT CHECK ('Buccaneer
+18','Laser','Other'), model TEXT (required when class='Other', else NULL — the fixed
+picker, not editable, since club boat types change slowly), sail_number nullable,
+kept_on TEXT CHECK ('trailer','mooring') DEFAULT 'trailer', timestamps. `households`
+gains full-address columns (line1, line2 nullable, state, postal_code; `city` already
+exists) — one address per household ("a group of people under one roof"), captured
+going forward and shown at the visible contact tier. `committees`: id, slug, name, description, kind TEXT CHECK
 ('standing','established'), sort_order, archived_at, timestamps. `committee_members`:
 id, committee_id (FK), member_id (FK), role TEXT CHECK ('chair','co-chair','member')
 DEFAULT 'member', status TEXT CHECK ('pending','active') DEFAULT 'pending',
 timestamps, UNIQUE (committee_id, member_id). `member_positions`: id, member_id (FK),
 kind TEXT CHECK ('officer','director','appointed'), title TEXT NOT NULL, sort_order,
 timestamps. The flat `member_roles` table from the superseded decision 6 is never
-built. No visibility schema change (directory spec decision 7). Tests assert every
-CHECK constraint, FK behavior, and the UNIQUE pair.
+built. No new visibility COLUMN (directory spec decision 7 stands): the new households
+address is gated at render by the existing `directory_visibility` dial (visible tier),
+not a new switch. Tests assert every CHECK constraint (including boat class/model — model
+required iff class='Other'), FK behavior, and the UNIQUE pair.
 
 ## T2 — Boat seeder from assignment free text
 
 Outcome: a verified-import script in scripts/import (dry-run plan, audit trail,
 verify.sql, rollback) that parses asset-assignment free text into boats rows where a
-boat is recognizably described, sets kept_on='mooring' for households holding a
-mooring assignment, and SKIPS ambiguous text rather than guessing (the audit lists
-skips). The directory never reads assignment data at runtime; seeding is the only
-touch. Dry-run output reviewed by the conductor before live apply.
+boat is recognizably described, attaching each boat to its OWNER (a member), setting
+kept_on='mooring' for a mooring assignment, and normalizing class to the picker values
+('Buccaneer 18','Laser', else 'Other' with the raw text kept as `model`) so every
+Buccaneer 18 and every Laser reads alike. It SKIPS ambiguous text rather than guessing
+(the audit lists skips). Boat→owner attribution is ambiguous where an assignment is
+household-level: the dry-run plan lists those cases and Geoff resolves them at import
+review (the same shape as the plan's Geoff-supplied director rows), never guessed.
+Nameless seed boats stay nameless (name is required going forward, not retroactively).
+The directory never reads assignment data at runtime; seeding is the only touch.
+Dry-run output and the owner-matching list reviewed by Geoff before live apply.
 
 ## T2b — Committees and people seeder
 
@@ -72,41 +88,58 @@ Geoff, before live apply.
 
 ## T3 — Directory query and listing rule
 
-Outcome: the directory read joins members, households, boats, member_positions, and
-active committee_members (with committee names), and lists only current-or-grace,
-non-archived, non-hidden members (directory spec decision 8), sourcing standing from
-the unified-signup machinery's definition, never a directory-local clock. Chair
-titles DERIVE in this layer ("{committee.name} Chair" / "{committee.name} Co-Chair");
-they are never stored (roles spec decision 2). Partial visibility nulls contact
-fields; visible exposes them; boats, positions, and committee memberships show for
-any listed member. Pending committee rows never appear in directory data. Unit tests
-cover each visibility state, the grace boundary day, an archived member, a household
-with multiple listed members sharing one boat, derived chair titles, and the
-exclusion of pending rows.
+Outcome: the directory read joins members, households, boats (by `member_id` — a boat
+shows on its owner only), member_positions, and active committee_members (with committee
+names), and lists only current-or-grace, non-archived, non-hidden members (directory
+spec decision 8), sourcing standing from the unified-signup machinery's definition,
+never a directory-local clock. Chair titles DERIVE in this layer ("{committee.name}
+Chair" / "{committee.name} Co-Chair"); they are never stored (roles spec decision 2).
+Partial visibility nulls the contact fields (email, phone, AND the new household
+address); visible exposes them; boats, positions, and committee memberships show for
+any listed member. The row also carries the derived at-rest secondary the screen needs:
+a boat summary when the member owns boats, else city. Pending committee rows never
+appear in directory data. Unit tests cover each visibility state (including address
+gated with contact), the grace boundary day, an archived member, boat-by-owner
+attribution (a boat on its owner, not their household-mate), derived chair titles, and
+the exclusion of pending rows.
 
 ## T4 — The directory screen
 
-Outcome: /my-account/directory rebuilt to the T0-ratified composition: one search box
-matching across member name, boat name, position title, and committee name; the chip
-row (Board & chairs, Instructors, On a mooring) reading Board & chairs from positions
-kinds officer/director plus chair/co-chair rows, and Instructors from the appointed
-'Instructor' title; person-first entries rendered fully inline with the ratified
-roles rendering (filled chip for positions and derived chair titles, outline marker
-for plain membership); mobile as its own composition with 44px targets and
-thumb-reach actions. Search filters client-side at club scale (~210 members, the
-whole list in page data, as today). Recognition over recall: one obvious thing to do
-on arrival. Design-probe gates (scripts/design-probe.mjs) pass; both themes composed,
-not just light.
+Outcome: /my-account/directory rebuilt to the T0-ratified composition — **Compact A: a
+compact row per member that expands to the full entry** (round-2 verdict, arc log).
+One search box matching across member name, boat name, position title, and committee
+name; the chip row (Board & chairs, Instructors, On a mooring) reading Board & chairs
+from positions kinds officer/director plus chair/co-chair rows, and Instructors from
+the appointed 'Instructor' title. The COMPACT resting row: name (the loud element); one
+filled top-title chip with a quiet "+N" when the member holds more than one title
+(plain committee membership stays expand-tier); a secondary datum that is the member's
+boats when they own any (named boats by name, unnamed collapsed by class, first two +
+"+N", class abbreviating to "Bucc 18" on narrow screens) and city otherwise; and, for a
+visible member, the phone as muted tabular text on desktop / a 44px call icon on mobile,
+beside an email icon. The EXPANDED entry (a quiet sage wash, no card chrome) is the full
+person-first anatomy: household line, every position + derived chair title + plain
+committee-membership markers (filled/outline grammar), boats (collapsed, kept-on), and
+contact per visibility (address, email, phone). A row with nothing behind it never shows
+a caret and never expands (the caret must not lie). A search or chip narrowing to ≤3
+auto-expands the matches. Mobile is its own composition with 44px targets and thumb-reach
+actions. Search filters client-side at club scale (~210 members, the whole list in page
+data, as today). Recognition over recall: one obvious thing to do on arrival. Design-probe
+gates (scripts/design-probe.mjs) pass; both themes composed, not just light.
 
 ## T5 — Member edit surface: boats and the preview
 
-Outcome: boat add/edit/remove on the household screen (primary) and profile screen,
-same override precedence as visibility today; the profile "what others see" preview
-extends to show positions, committee memberships, and boats under each visibility
-state (the choice stays legible to an occasional user; roster names stay visible even
-for hidden, per roles spec decision 5, and the preview says so plainly). Server
-actions validate kept_on against the CHECK values and lengths; no new auth surface in
-this task (committee actions live in T6b).
+Outcome: boat add/edit/remove on the member's PROFILE (primary, since a boat now belongs
+to its owner) and, on the household screen, the household's boats listed grouped by owner;
+same override precedence as visibility today. Boat capture REQUIRES a name and a class
+picked from the fixed list (Buccaneer 18 / Laser / Other), with a model field required
+only when class='Other'; kept_on picks trailer/mooring. The full household ADDRESS
+(line1/line2/state/postal_code, city already present) edits on the household screen. The
+profile "what others see" preview extends to show positions, committee memberships, boats,
+AND the address under each visibility state (the choice stays legible to an occasional
+user; roster names stay visible even for hidden, per roles spec decision 5, and the
+preview says so plainly — and that address shows only at the visible tier). Server actions
+validate name presence, class against the CHECK values, model-required-iff-Other, kept_on,
+and lengths; no new auth surface in this task (committee actions live in T6b).
 
 ## T6 — Admin screen: committees, memberships, positions
 
