@@ -134,8 +134,7 @@ export function planAddressSeed(households, exportByAccountId) {
     if (household.state == null && state) update.state = state;
     if (household.postal_code == null && postalCode) update.postal_code = postalCode;
 
-    const columnsSet = ADDRESS_COLUMNS.filter((c) => c in update);
-    if (columnsSet.length === 0) {
+    if (!ADDRESS_COLUMNS.some((c) => c in update)) {
       skipped.push({ householdId: household.id, householdName: household.name, reason: 'already-filled' });
       continue;
     }
