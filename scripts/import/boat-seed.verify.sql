@@ -10,18 +10,16 @@
 -- runs as the resolutions file fills in.
 
 SELECT 'boats' AS check_name, COUNT(*) AS value FROM boats;
-SELECT class, COUNT(*) AS n FROM boats GROUP BY class ORDER BY class;
+SELECT model, COUNT(*) AS n FROM boats GROUP BY model ORDER BY model;
 SELECT kept_on, COUNT(*) AS n FROM boats GROUP BY kept_on ORDER BY kept_on;
 
 -- Every seeded boat's id follows the locked scheme (boat-<source assignment id>).
 SELECT COUNT(*) AS non_conforming_id FROM boats WHERE id NOT LIKE 'boat-ops-assignment-%';
 
--- No boat has an invalid class or violates the class/model CHECK (belt-and-suspenders on top
--- of SQLite's own table-level CHECK; this only ever runs after a real insert already passed it).
-SELECT COUNT(*) AS invalid_class_or_model FROM boats
-WHERE class NOT IN ('Buccaneer 18', 'Laser', 'Other')
-   OR (class = 'Other' AND model IS NULL)
-   OR (class <> 'Other' AND model IS NOT NULL);
+-- No boat has a missing or empty model (belt-and-suspenders on top of SQLite's own table-level
+-- NOT NULL and CHECK; this only ever runs after a real insert already passed it).
+SELECT COUNT(*) AS invalid_model FROM boats
+WHERE model IS NULL OR model = '';
 
 -- The FK chain proof: every boat's member_id resolves to a real members row, no orphan (an
 -- inner join returning fewer rows than boats itself would mean a dangling reference).

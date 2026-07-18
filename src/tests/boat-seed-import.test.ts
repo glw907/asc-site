@@ -1,31 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { keptOnFor, nameHintOwner, normalizeClass, planBoatSeed, resolveOwner } from '../../scripts/import/boat-seed.mjs';
+import { keptOnFor, nameHintOwner, normalizeModel, planBoatSeed, resolveOwner } from '../../scripts/import/boat-seed.mjs';
 
-describe('normalizeClass', () => {
+describe('normalizeModel', () => {
   it('normalizes every Buccaneer spelling to the picker value', () => {
-    expect(normalizeClass('BUCC')).toEqual({ class: 'Buccaneer 18', model: null });
-    expect(normalizeClass('Blue Bucc')).toEqual({ class: 'Buccaneer 18', model: null });
-    expect(normalizeClass('Purple Buccaneer 18 "Dionysus"')).toEqual({ class: 'Buccaneer 18', model: null });
-    expect(normalizeClass('BUCC 2')).toEqual({ class: 'Buccaneer 18', model: null });
+    expect(normalizeModel('BUCC')).toBe('Buccaneer 18');
+    expect(normalizeModel('Blue Bucc')).toBe('Buccaneer 18');
+    expect(normalizeModel('Purple Buccaneer 18 "Dionysus"')).toBe('Buccaneer 18');
+    expect(normalizeModel('BUCC 2')).toBe('Buccaneer 18');
   });
 
   it('normalizes Laser, including casual "LASER II", to the picker value', () => {
-    expect(normalizeClass('Yellow laser')).toEqual({ class: 'Laser', model: null });
-    expect(normalizeClass('LASER II')).toEqual({ class: 'Laser', model: null });
-    expect(normalizeClass('Laser Spirit of 76')).toEqual({ class: 'Laser', model: null });
+    expect(normalizeModel('Yellow laser')).toBe('Laser');
+    expect(normalizeModel('LASER II')).toBe('Laser');
+    expect(normalizeModel('Laser Spirit of 76')).toBe('Laser');
   });
 
-  it('falls back to Other with the raw trimmed text as model', () => {
-    expect(normalizeClass('HOBI')).toEqual({ class: 'Other', model: 'HOBI' });
-    expect(normalizeClass('DINGY')).toEqual({ class: 'Other', model: 'DINGY' });
-    expect(normalizeClass('  sailboat  ')).toEqual({ class: 'Other', model: 'sailboat' });
+  it('falls back to the raw trimmed text as the free-typed model', () => {
+    expect(normalizeModel('HOBI')).toBe('HOBI');
+    expect(normalizeModel('DINGY')).toBe('DINGY');
+    expect(normalizeModel('  sailboat  ')).toBe('sailboat');
   });
 
   it('returns null for an empty, whitespace-only, or missing description (a skip)', () => {
-    expect(normalizeClass('')).toBeNull();
-    expect(normalizeClass('   ')).toBeNull();
-    expect(normalizeClass(null)).toBeNull();
-    expect(normalizeClass(undefined)).toBeNull();
+    expect(normalizeModel('')).toBeNull();
+    expect(normalizeModel('   ')).toBeNull();
+    expect(normalizeModel(null)).toBeNull();
+    expect(normalizeModel(undefined)).toBeNull();
   });
 });
 
@@ -138,14 +138,14 @@ describe('planBoatSeed (synthetic fixture)', () => {
     { id: 'ops-assignment-4', asset_type: 'small_boat', description: '  ', household_id: 'hh-solo' },
     // solo household, dropped by review -> dropped
     { id: 'ops-assignment-5', asset_type: 'boat_parking', description: 'BUCC', household_id: 'hh-solo' },
-    // solo household, class override -> seed with overridden class/model
+    // solo household, model override -> seed with overridden model
     { id: 'ops-assignment-6', asset_type: 'boat_parking', description: 'HOBI', household_id: 'hh-solo' },
   ];
 
   const resolutions = {
     owners: { 'ops-assignment-3': 'm-gabe' },
     drop: ['ops-assignment-5'],
-    class: { 'ops-assignment-6': { class: 'Other', model: 'Hobie Cat' } },
+    model: { 'ops-assignment-6': 'Hobie Cat' },
   };
 
   it('buckets each assignment into exactly one of seed/held/dropped/skipped', () => {
@@ -177,23 +177,17 @@ describe('planBoatSeed (synthetic fixture)', () => {
     expect(trailered?.kept_on).toBe('trailer');
   });
 
-  it('applies a resolutions.class override in place of the parsed class/model', () => {
+  it('applies a resolutions.model override in place of the parsed model', () => {
     const plan = planBoatSeed(assignments, { membersByHousehold, resolutions });
     const overridden = plan.seed.find((r) => r.sourceAssignmentId === 'ops-assignment-6');
-    expect(overridden).toMatchObject({ class: 'Other', model: 'Hobie Cat' });
-  });
-
-  it('leaves model null for every non-Other seeded class', () => {
-    const plan = planBoatSeed(assignments, { membersByHousehold, resolutions });
-    const bucc = plan.seed.find((r) => r.sourceAssignmentId === 'ops-assignment-1');
-    expect(bucc?.model).toBeNull();
+    expect(overridden).toMatchObject({ model: 'Hobie Cat' });
   });
 
   it('carries the owner basis and the household onto a held row', () => {
     const plan = planBoatSeed(assignments, { membersByHousehold, resolutions });
     expect(plan.held[0]).toMatchObject({
       householdId: 'hh-multi',
-      class: 'Buccaneer 18',
+      model: 'Buccaneer 18',
       suggestion: { id: 'm-gabe', name: 'Gabe Black' },
     });
   });

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * Import script: asc-club's own asset-assignment free text (already imported by
- * `ops-assets.mjs`) -> asc-club's `boats` table (migration `0027_directory_domain`,
- * `docs/plans/2026-07-17-member-directory.md`'s T2). This reads `asc-club` ONLY; `asc-ops`
- * has nothing to do with this seeder, its assignments are already imported.
+ * `ops-assets.mjs`) -> asc-club's `boats` table (migration `0027_directory_domain`, reshaped
+ * to a single `model` column by `0028_boats_model`; `docs/plans/2026-07-17-member-directory.md`'s
+ * T2). This reads `asc-club` ONLY; `asc-ops` has nothing to do with this seeder, its
+ * assignments are already imported.
  *
  * BOATS ATTACH TO A MEMBER, NOT A HOUSEHOLD (the ratified roles-and-committees model,
  * migration 0027's own header comment): every active boat-related asset assignment
@@ -17,12 +18,13 @@
  * ACTIVE ONLY: a released assignment is a historical parking record, not current boat
  * ownership, so it is never seeded (counted and reported as excluded, never silently dropped).
  *
- * CLASS NORMALIZES, NEVER INVENTS: free text matching `/bucc/i` or `/laser/i` (including
+ * MODEL NORMALIZES, NEVER INVENTS: free text matching `/bucc/i` or `/laser/i` (including
  * casual "LASER II" -- the picker has no Laser II, so this normalizes to Laser and the
  * dry-run flags the raw text for Geoff to override if he wants) becomes the fixed picker
- * value; everything else becomes `class = 'Other'` with the raw trimmed text preserved
- * verbatim as `model` (the table's own CHECK requires exactly this: `model` non-null iff
- * `class = 'Other'`). This is an honest "we do not know", never a guess dressed as data.
+ * value (`'Buccaneer 18'` or `'Laser'`); everything else becomes the raw trimmed text stored
+ * verbatim as `model` (migration `0028_boats_model`'s single required `model` column holds
+ * either the picker value or the free-typed "Other" text). This is an honest "we do not
+ * know", never a guess dressed as data.
  *
  * NAME NEVER BACKFILLS FROM FREE TEXT: every seeded boat's `name` is NULL, even where a name
  * is visible in the raw description (e.g. "Dionysus"). Name capture is required going
@@ -36,10 +38,10 @@
  *
  * RESOLUTIONS FILE (`boat-seed.resolutions.json`, committed, git-reviewable): `owners` maps an
  * ambiguous assignment id to the member id Geoff picked; `drop` lists an assignment id that is
- * not a real boat (or a duplicate) and should never seed; `class` overrides a parsed class/model
- * call. Member ids are opaque UUIDs with no PII, so this file is safe to commit. The dry-run
- * reads it fresh every run, so the loop is: dry-run, Geoff fills the file from the report,
- * dry-run again, apply.
+ * not a real boat (or a duplicate) and should never seed; `model` overrides a parsed model
+ * call with a plain string. Member ids are opaque UUIDs with no PII, so this file is safe to
+ * commit. The dry-run reads it fresh every run, so the loop is: dry-run, Geoff fills the file
+ * from the report, dry-run again, apply.
  *
  * Usage:
  *   node scripts/import/boat-seed.mjs --dry-run [--club-db-name NAME]
@@ -71,25 +73,23 @@ const BOAT_ASSET_TYPES = ['boat_parking', 'small_boat', 'mooring'];
 // ---------------------------------------------------------------------------
 
 /**
- * Normalizes one assignment's free-text description into a fixed picker `class` plus, for
- * the `'Other'` catch-all, the raw text preserved as `model` (the table's own CHECK requires
- * `model` non-null iff `class = 'Other'`, and null otherwise). Matching is case-insensitive
- * and deliberately loose: `/bucc/` catches every "BUCC"/"Buccaneer"/"Bucc 18" spelling seen in
- * the real data, `/laser/` catches "Laser" and casual "LASER II" alike (the picker has no
- * Laser II; this normalizes it to Laser and the dry-run flags the raw text for Geoff to
- * override if he wants).
+ * Normalizes one assignment's free-text description into a single `model` string (migration
+ * `0028_boats_model`'s single required `model` column). Matching is case-insensitive and
+ * deliberately loose: `/bucc/` catches every "BUCC"/"Buccaneer"/"Bucc 18" spelling seen in the
+ * real data, `/laser/` catches "Laser" and casual "LASER II" alike (the picker has no Laser
+ * II; this normalizes it to Laser and the dry-run flags the raw text for Geoff to override if
+ * he wants). Anything else is the raw trimmed text, unchanged: the free-typed "Other" model.
  * @param {string | null | undefined} description
- * @returns {{ class: 'Buccaneer 18' | 'Laser' | 'Other', model: string | null } | null} `null`
- *   signals a skip (empty/whitespace-only/missing description; audited as `skipped:
- *   'empty-description'`).
+ * @returns {string | null} `null` signals a skip (empty/whitespace-only/missing description;
+ *   audited as `skipped: 'empty-description'`).
  */
-export function normalizeClass(description) {
+export function normalizeModel(description) {
   if (description == null) return null;
   const trimmed = description.trim();
   if (trimmed === '') return null;
-  if (/bucc/i.test(trimmed)) return { class: 'Buccaneer 18', model: null };
-  if (/laser/i.test(trimmed)) return { class: 'Laser', model: null };
-  return { class: 'Other', model: trimmed };
+  if (/bucc/i.test(trimmed)) return 'Buccaneer 18';
+  if (/laser/i.test(trimmed)) return 'Laser';
+  return trimmed;
 }
 
 /**
@@ -187,8 +187,7 @@ export function resolveOwner(assignmentId, householdId, membersByHousehold, reso
  * @property {string} id `boat-<assignmentId>`, the idempotency key
  * @property {string} member_id
  * @property {null} name always null; see the module header
- * @property {'Buccaneer 18' | 'Laser' | 'Other'} class
- * @property {string | null} model
+ * @property {string} model
  * @property {null} sail_number
  * @property {'mooring' | 'trailer'} kept_on
  * @property {string} sourceAssignmentId
@@ -201,8 +200,7 @@ export function resolveOwner(assignmentId, householdId, membersByHousehold, reso
  * @property {string} sourceAssignmentId
  * @property {string | null} rawDescription
  * @property {string} assetType
- * @property {'Buccaneer 18' | 'Laser' | 'Other'} class
- * @property {string | null} model
+ * @property {string} model
  * @property {string} householdId
  * @property {string | null} primaryMemberId
  * @property {{ id: string, name: string }[]} candidates
@@ -233,7 +231,7 @@ export function resolveOwner(assignmentId, householdId, membersByHousehold, reso
  * @param {{
  *   membersByHousehold: Map<string, { id: string, name: string }[]>,
  *   primaryByHousehold?: Map<string, string>,
- *   resolutions: { owners?: Record<string, string>, drop?: string[], class?: Record<string, { class: string, model: string | null }> },
+ *   resolutions: { owners?: Record<string, string>, drop?: string[], model?: Record<string, string> },
  * }} context
  * @returns {{ seed: BoatSeedRow[], held: HeldRow[], dropped: DroppedRow[], skipped: SkippedRow[] }}
  */
@@ -248,7 +246,7 @@ export function planBoatSeed(assignments, { membersByHousehold, primaryByHouseho
   const skipped = [];
 
   for (const src of assignments) {
-    const normalized = normalizeClass(src.description);
+    const normalized = normalizeModel(src.description);
     if (!normalized) {
       skipped.push({ skipped: 'empty-description', sourceAssignmentId: src.id, rawDescription: src.description });
       continue;
@@ -259,9 +257,7 @@ export function planBoatSeed(assignments, { membersByHousehold, primaryByHouseho
       continue;
     }
 
-    const override = resolutions.class?.[src.id];
-    const classValue = override ? /** @type {'Buccaneer 18' | 'Laser' | 'Other'} */ (override.class) : normalized.class;
-    const modelValue = override ? (override.model ?? null) : normalized.model;
+    const modelValue = resolutions.model?.[src.id] ?? normalized;
 
     const owner = resolveOwner(src.id, src.household_id, membersByHousehold, resolutions, src.description);
     if (owner.basis === 'ambiguous') {
@@ -269,7 +265,6 @@ export function planBoatSeed(assignments, { membersByHousehold, primaryByHouseho
         sourceAssignmentId: src.id,
         rawDescription: src.description,
         assetType: src.asset_type,
-        class: classValue,
         model: modelValue,
         householdId: src.household_id,
         primaryMemberId: primaryByHousehold.get(src.household_id) ?? null,
@@ -283,7 +278,6 @@ export function planBoatSeed(assignments, { membersByHousehold, primaryByHouseho
       id: `boat-${src.id}`,
       member_id: owner.memberId,
       name: null,
-      class: classValue,
       model: modelValue,
       sail_number: null,
       kept_on: keptOnFor(src.asset_type),
@@ -320,14 +314,14 @@ function query(dbName, sql) {
 }
 
 /** Reads the committed resolutions file fresh every run.
- * @returns {{ owners: Record<string, string>, drop: string[], class: Record<string, { class: string, model: string | null }> }} */
+ * @returns {{ owners: Record<string, string>, drop: string[], model: Record<string, string> }} */
 function readResolutions() {
   const raw = readFileSync(RESOLUTIONS_PATH, 'utf8');
   return JSON.parse(raw);
 }
 
 /**
- * Renders the machine-local review worksheet Geoff fills `resolutions.owners`/`drop`/`class`
+ * Renders the machine-local review worksheet Geoff fills `resolutions.owners`/`drop`/`model`
  * from. Never committed (member names appear in it).
  * @param {{ seed: BoatSeedRow[], held: HeldRow[], dropped: DroppedRow[], skipped: SkippedRow[] }} plan
  * @param {Map<string, string>} memberNameById
@@ -350,19 +344,20 @@ function renderWorksheet(plan, memberNameById, householdNameById, releasedExclud
   ];
   for (const row of plan.seed) {
     lines.push(
-      `- ${row.sourceAssignmentId}: "${row.rawDescription ?? ''}" -> ${row.class}${row.model ? ` (${row.model})` : ''}, ` +
+      `- ${row.sourceAssignmentId}: "${row.rawDescription ?? ''}" -> ${row.model}, ` +
         `kept_on=${row.kept_on}, owner=${memberNameById.get(row.member_id) ?? row.member_id} (${row.ownerBasis})`,
     );
   }
   if (plan.seed.length === 0) lines.push('(none)');
 
-  lines.push('', '## class = Other, verify', '');
-  const otherRows = [...plan.seed, ...plan.held].filter((r) => r.class === 'Other');
-  for (const row of otherRows) {
+  lines.push('', '## typed models, verify', '');
+  const knownModels = ['Buccaneer 18', 'Laser'];
+  const typedRows = [...plan.seed, ...plan.held].filter((r) => !knownModels.includes(r.model));
+  for (const row of typedRows) {
     const bucket = 'member_id' in row ? 'seeded' : 'held for owner';
-    lines.push(`- ${row.sourceAssignmentId}: "${row.rawDescription ?? ''}" -> Other (${bucket})`);
+    lines.push(`- ${row.sourceAssignmentId}: "${row.rawDescription ?? ''}" -> ${row.model} (${bucket})`);
   }
-  if (otherRows.length === 0) lines.push('(none)');
+  if (typedRows.length === 0) lines.push('(none)');
 
   lines.push('', '## Held for owner', '');
   for (const row of plan.held) {
@@ -370,7 +365,7 @@ function renderWorksheet(plan, memberNameById, householdNameById, releasedExclud
     const candidateList = row.candidates.map((c) => `${c.name} <${c.id}>`).join(', ');
     const suggestionLine = row.suggestion ? `suggest ${row.suggestion.name} <${row.suggestion.id}>` : 'no suggestion';
     lines.push(
-      `- ${row.sourceAssignmentId}: "${row.rawDescription ?? ''}" -> ${row.class}, household "${householdName}"; ` +
+      `- ${row.sourceAssignmentId}: "${row.rawDescription ?? ''}" -> ${row.model}, household "${householdName}"; ` +
         `candidates: ${candidateList}; ${suggestionLine}`,
     );
   }
@@ -432,9 +427,9 @@ async function main() {
       `${plan.dropped.length} dropped, ${plan.skipped.length} skipped`,
   );
   /** @type {Record<string, number>} */
-  const classCounts = {};
-  for (const row of plan.seed) classCounts[row.class] = (classCounts[row.class] ?? 0) + 1;
-  console.log(`boat-seed: seed class split ${JSON.stringify(classCounts)}`);
+  const modelCounts = {};
+  for (const row of plan.seed) modelCounts[row.model] = (modelCounts[row.model] ?? 0) + 1;
+  console.log(`boat-seed: seed model split ${JSON.stringify(modelCounts)}`);
 
   if (DRY_RUN) {
     mkdirSync(path.dirname(WORKSHEET_PATH), { recursive: true });
@@ -458,15 +453,14 @@ async function main() {
       continue;
     }
     statements.push(
-      `INSERT INTO boats (id, member_id, name, class, model, sail_number, kept_on) VALUES ` +
-        `(${sqlLiteral(row.id)}, ${sqlLiteral(row.member_id)}, ${sqlLiteral(row.name)}, ${sqlLiteral(row.class)}, ${sqlLiteral(row.model)}, ${sqlLiteral(row.sail_number)}, ${sqlLiteral(row.kept_on)});`,
+      `INSERT INTO boats (id, member_id, name, model, sail_number, kept_on) VALUES ` +
+        `(${sqlLiteral(row.id)}, ${sqlLiteral(row.member_id)}, ${sqlLiteral(row.name)}, ${sqlLiteral(row.model)}, ${sqlLiteral(row.sail_number)}, ${sqlLiteral(row.kept_on)});`,
     );
     const detail = JSON.stringify({
       batchId,
       sourceAssignmentId: row.sourceAssignmentId,
       rawDescription: row.rawDescription,
       ownerBasis: row.ownerBasis,
-      class: row.class,
       model: row.model,
       keptOn: row.kept_on,
     });

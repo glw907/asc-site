@@ -3,11 +3,11 @@
 ## What this does
 
 Reads `asc-club`'s own asset-assignment free text (already imported by `ops-assets.mjs`; this
-script never touches `asc-ops`) and plans one `boats` row (migration `0027_directory_domain`)
-for each active boat-related assignment: `asset_type IN ('boat_parking', 'small_boat',
-'mooring')` and `status = 'active'`. A released assignment is a historical parking record, not
-current ownership, so it is excluded from seeding and reported as an excluded count, never
-silently dropped.
+script never touches `asc-ops`) and plans one `boats` row (migration `0027_directory_domain`,
+reshaped to a single `model` column by `0028_boats_model`) for each active boat-related
+assignment: `asset_type IN ('boat_parking', 'small_boat', 'mooring')` and `status = 'active'`.
+A released assignment is a historical parking record, not current ownership, so it is excluded
+from seeding and reported as an excluded count, never silently dropped.
 
 **Boats attach to a member, not a household.** The ratified roles-and-committees model lets a
 household with several members say who owns which boat. A solo household (exactly one
@@ -22,16 +22,16 @@ ships an edit surface, so a re-run of this seeder must never clobber one. The id
 
 ## Normalization rules
 
-| Raw description matches | `class` | `model` |
-|---|---|---|
-| `/bucc/i` (BUCC, Buccaneer, Bucc 18, ...) | `Buccaneer 18` | `NULL` |
-| `/laser/i` (Laser, Yellow laser, LASER II, ...) | `Laser` | `NULL` |
-| anything else, non-empty | `Other` | the raw trimmed text |
-| empty, whitespace-only, or missing | skipped (`skipped: 'empty-description'`) | n/a |
+| Raw description matches | `model` |
+|---|---|
+| `/bucc/i` (BUCC, Buccaneer, Bucc 18, ...) | `Buccaneer 18` |
+| `/laser/i` (Laser, Yellow laser, LASER II, ...) | `Laser` |
+| anything else, non-empty | the raw trimmed text |
+| empty, whitespace-only, or missing | skipped (`skipped: 'empty-description'`) |
 
 `LASER II` normalizes to `Laser`: the picker has no Laser II model, and casual usage dominates
 the real data. The dry-run worksheet still shows the raw text next to every seed row, so Geoff
-can override a specific row through the resolutions file's `class` map if he wants a different
+can override a specific row through the resolutions file's `model` map if he wants a different
 call.
 
 `kept_on` follows the source asset type: `'mooring'` for a mooring assignment, `'trailer'` for
@@ -60,13 +60,13 @@ Every active row resolves one of four ways:
 `scripts/import/boat-seed.resolutions.json` (committed, git-reviewable) starts empty:
 
 ```json
-{ "owners": {}, "drop": [], "class": {} }
+{ "owners": {}, "drop": [], "model": {} }
 ```
 
 - `owners`: `{ "<assignment id>": "<member id>" }`, resolves an ambiguous household.
 - `drop`: `["<assignment id>", ...]`, rows to exclude entirely.
-- `class`: `{ "<assignment id>": { "class": "...", "model": null } }`, overrides a parsed
-  class/model call for one row.
+- `model`: `{ "<assignment id>": "<model string>" }`, overrides a parsed model call for one
+  row with a plain string.
 
 Member ids are opaque UUIDs carrying no name or email, so this file is safe to commit. The
 workflow is: run `--dry-run`, read the worksheet, add entries to the resolutions file, run
@@ -77,9 +77,10 @@ Geoff needs; nothing is guessed to force a row through early.
 
 `--dry-run` prints a summary to the console and writes a machine-local worksheet to
 `~/.local/asc-data/boat-seed-owner-worksheet.md` (never committed, since it carries member
-names). The worksheet lists every seed row (raw description, class/model, `kept_on`, owner and
-basis), a `class = Other, verify` callout of every unclassified row so Geoff can add a `class`
-override or a `drop` entry, and the held-for-owner section (raw description, class, household
+names). The worksheet lists every seed row (raw description, model, `kept_on`, owner and
+basis), a `typed models, verify` callout of every row whose model is not a known picker value
+(`Buccaneer 18` or `Laser`) so Geoff can eyeball the free-typed models and add a `model`
+override or a `drop` entry, and the held-for-owner section (raw description, model, household
 name, every candidate member with their opaque id, and the name-hint suggestion when one
 exists) that `owners` gets filled from.
 
@@ -87,8 +88,8 @@ exists) that `owners` gets filled from.
 
 Each inserted boat gets an `audit_log` row: `actor = 'import:boat-seed'`, `action =
 'import.insert'`, `entity = 'boat'`, `entity_id` the boat id, `detail` a JSON object
-`{ batchId, sourceAssignmentId, rawDescription, ownerBasis, class, model, keptOn }`. Every run,
-even a complete no-op, also writes one `action = 'import.batch'` summary row (`entity = 'boat'`,
+`{ batchId, sourceAssignmentId, rawDescription, ownerBasis, model, keptOn }`. Every run, even a
+complete no-op, also writes one `action = 'import.batch'` summary row (`entity = 'boat'`,
 `entity_id = NULL`), `detail` a JSON object `{ inserted, held, dropped, skipped,
 releasedExcluded, sourceActive }`.
 
