@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { fakeD1 } from './_fake-d1';
-import { addHouseholdMember, getHouseholdInfo, leaveClub, listHouseholdMembers, removeHouseholdMember, setDirectoryVisibility } from '$member-portal/lib/household';
+import {
+  addHouseholdMember,
+  getHouseholdAddress,
+  getHouseholdInfo,
+  leaveClub,
+  listHouseholdMembers,
+  removeHouseholdMember,
+  setDirectoryVisibility,
+  updateHouseholdAddress,
+} from '$member-portal/lib/household';
 
 const HOUSEHOLD_ROW = { id: 'hh-1', name: 'The Scratches', primary_member_id: 'mem-primary', left_at: null };
 
@@ -109,5 +118,73 @@ describe('leaveClub', () => {
     const update = calls.find((c) => c.sql.startsWith('UPDATE households'));
     expect(update?.sql).toContain('left_at IS NULL');
     expect(update?.args).toEqual(['hh-1']);
+  });
+});
+
+describe('getHouseholdAddress', () => {
+  it('reads the household\'s own address columns, camelCased', async () => {
+    const { db } = fakeD1({
+      firstResults: {
+        'FROM households WHERE id': { city: 'Anchorage', address_line1: '123 Main St', address_line2: null, state: 'AK', postal_code: '99501' },
+      },
+    });
+    await expect(getHouseholdAddress(db, 'hh-1')).resolves.toEqual({
+      addressLine1: '123 Main St',
+      addressLine2: null,
+      city: 'Anchorage',
+      state: 'AK',
+      postalCode: '99501',
+    });
+  });
+
+  it('answers null for an unknown household', async () => {
+    const { db } = fakeD1();
+    await expect(getHouseholdAddress(db, 'hh-missing')).resolves.toBeNull();
+  });
+});
+
+describe('updateHouseholdAddress', () => {
+  const VALID_ADDRESS = { addressLine1: '123 Main St', addressLine2: 'Apt 2', state: 'AK', postalCode: '99501' };
+
+  it('writes all four fields when every one validates', async () => {
+    const { db, calls } = fakeD1();
+    const result = await updateHouseholdAddress(db, 'hh-1', VALID_ADDRESS);
+    expect(result).toEqual({ ok: true });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE households'));
+    expect(update?.args).toEqual(['123 Main St', 'Apt 2', 'AK', '99501', 'hh-1']);
+  });
+
+  it('clears every field on empty input (all four are optional)', async () => {
+    const { db, calls } = fakeD1();
+    const result = await updateHouseholdAddress(db, 'hh-1', { addressLine1: '', addressLine2: '', state: '', postalCode: '' });
+    expect(result).toEqual({ ok: true });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE households'));
+    expect(update?.args).toEqual([null, null, null, null, 'hh-1']);
+  });
+
+  it('trims whitespace before writing', async () => {
+    const { db, calls } = fakeD1();
+    await updateHouseholdAddress(db, 'hh-1', { ...VALID_ADDRESS, addressLine1: '  123 Main St  ' });
+    const update = calls.find((c) => c.sql.startsWith('UPDATE households'));
+    expect((update?.args as unknown[])[0]).toBe('123 Main St');
+  });
+
+  it('refuses (writing nothing) on an over-length address line', async () => {
+    const { db, calls } = fakeD1();
+    const result = await updateHouseholdAddress(db, 'hh-1', { ...VALID_ADDRESS, addressLine1: 'x'.repeat(121) });
+    expect(result).toEqual({ ok: false, error: expect.stringContaining('120 characters') });
+    expect(calls.some((c) => c.sql.startsWith('UPDATE'))).toBe(false);
+  });
+
+  it('refuses an over-length state', async () => {
+    const { db } = fakeD1();
+    const result = await updateHouseholdAddress(db, 'hh-1', { ...VALID_ADDRESS, state: 'x'.repeat(41) });
+    expect(result).toEqual({ ok: false, error: expect.stringContaining('40 characters') });
+  });
+
+  it('refuses an over-length postal code', async () => {
+    const { db } = fakeD1();
+    const result = await updateHouseholdAddress(db, 'hh-1', { ...VALID_ADDRESS, postalCode: 'x'.repeat(13) });
+    expect(result).toEqual({ ok: false, error: expect.stringContaining('12 characters') });
   });
 });

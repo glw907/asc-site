@@ -4,7 +4,18 @@
 // redirects a non-primary away, since this screen has nothing for them to do.
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { addHouseholdMember, getHouseholdInfo, leaveClub, listHouseholdMembers, removeHouseholdMember, setDirectoryVisibility, type DirectoryVisibility } from '$member-portal/lib/household';
+import {
+  addHouseholdMember,
+  getHouseholdAddress,
+  getHouseholdInfo,
+  leaveClub,
+  listHouseholdMembers,
+  removeHouseholdMember,
+  setDirectoryVisibility,
+  updateHouseholdAddress,
+  type DirectoryVisibility,
+} from '$member-portal/lib/household';
+import { listHouseholdBoatsGroupedByOwner } from '$member-portal/lib/boats';
 import { sendClubEmail, type EmailBindingEnv } from '$admin-club/lib/club-email';
 import { portalAction } from '$member-portal/lib/portal-action';
 import { issueMemberCsrfToken } from '$member-auth/lib/auth';
@@ -28,8 +39,12 @@ export const load: PageServerLoad = async (event) => {
     error(403, "Only your household's primary member can manage it. Contact the club to change the primary.");
   }
 
-  const members = await listHouseholdMembers(db, member.householdId);
-  return { csrf, household, members };
+  const [members, boatGroups, address] = await Promise.all([
+    listHouseholdMembers(db, member.householdId),
+    listHouseholdBoatsGroupedByOwner(db, member.householdId),
+    getHouseholdAddress(db, member.householdId),
+  ]);
+  return { csrf, household, members, boatGroups, address };
 };
 
 export const actions: Actions = {
@@ -63,6 +78,20 @@ export const actions: Actions = {
     const visibility = String(form.get('visibility') ?? '');
     if (!memberId || !VISIBILITY_VALUES.includes(visibility as DirectoryVisibility)) return { error: 'Invalid request.' };
     await setDirectoryVisibility(ctx.db, memberId, visibility as DirectoryVisibility);
+    return { saved: true as const };
+  }),
+
+  // The full household address (item 4 of T5's own outcome): primary-only, same plain
+  // latest-write-wins shape `setDirectoryVisibility` already uses, no extra conflict machinery.
+  updateAddress: portalAction(async ({ form, ctx }) => {
+    if (!ctx.isPrimary) return { error: 'Only the primary member can update the household address.' };
+    const result = await updateHouseholdAddress(ctx.db, ctx.member.householdId, {
+      addressLine1: String(form.get('addressLine1') ?? ''),
+      addressLine2: String(form.get('addressLine2') ?? ''),
+      state: String(form.get('state') ?? ''),
+      postalCode: String(form.get('postalCode') ?? ''),
+    });
+    if (!result.ok) return { error: result.error };
     return { saved: true as const };
   }),
 

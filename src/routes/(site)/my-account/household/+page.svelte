@@ -77,6 +77,56 @@ primary sets any household member's), and the lean leave-the-club action (design
   </form>
 </section>
 
+<section class="mt-l max-w-measure-wide">
+  <h2 class="m-0 text-step-1 font-semibold text-base-content">Boats</h2>
+  <p class="mt-2xs mb-0 text-step--1 text-muted">Each member adds and edits their own boats from their own profile.</p>
+  {#if data.boatGroups.length === 0}
+    <p class="mt-xs mb-0 text-step--1 text-muted">No boats on file yet.</p>
+  {:else}
+    <ul class="mt-xs flex flex-col gap-s">
+      {#each data.boatGroups as group (group.ownerId)}
+        <li>
+          <p class="m-0 text-step--1 font-semibold text-base-content">{group.ownerName}</p>
+          <ul class="mt-2xs flex flex-col gap-3xs">
+            {#each group.boats as boat (boat.id)}
+              <li class="text-step--1 text-muted">
+                {boat.name ?? boat.model} &middot; {boat.model} &middot; {boat.keptOn === 'mooring' ? 'On a mooring' : 'On a trailer'}
+              </li>
+            {/each}
+          </ul>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+</section>
+
+<section class="mt-l max-w-measure-wide">
+  <h2 class="m-0 text-step-1 font-semibold text-base-content">Household address</h2>
+  <p class="mt-2xs mb-0 text-step--1 text-muted">
+    Shown to other members only when a household member's own listing is set to Visible.
+  </p>
+  <form method="POST" action="?/updateAddress" class="mt-xs flex flex-col gap-s">
+    <input type="hidden" name="csrf" value={data.csrf} />
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend portal-field-label">Address line 1</legend>
+      <input class="input w-full" type="text" name="addressLine1" value={data.address?.addressLine1 ?? ''} />
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend portal-field-label">Address line 2 (optional)</legend>
+      <input class="input w-full" type="text" name="addressLine2" value={data.address?.addressLine2 ?? ''} />
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend portal-field-label">State</legend>
+      <input class="input w-full" type="text" name="state" value={data.address?.state ?? ''} />
+    </fieldset>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend portal-field-label">ZIP code</legend>
+      <input class="input w-full" type="text" name="postalCode" value={data.address?.postalCode ?? ''} />
+    </fieldset>
+    <button type="submit" class="btn btn-primary self-start">Save address</button>
+  </form>
+</section>
+
 <section class="mt-l max-w-measure-wide rounded-box border border-error/40 bg-error/5 p-m">
   <h2 class="m-0 text-step-0 font-semibold text-base-content">Leave the club</h2>
   {#if form && 'left' in form && form.left}

@@ -144,3 +144,71 @@ export async function setDirectoryVisibility(db: D1Database, memberId: string, v
 export async function leaveClub(db: D1Database, householdId: string): Promise<void> {
   await db.prepare("UPDATE households SET left_at = datetime('now') WHERE id = ?1 AND left_at IS NULL").bind(householdId).run();
 }
+
+/** A household's own street address (migration 0027_directory_domain's four new columns, plus
+ *  the pre-existing `city`), as the household screen's edit form and the profile preview's
+ *  "does an address exist yet" check both need it. Gated at render by the existing
+ *  `directory_visibility` dial (T3's own visible-tier rule), never a new switch. */
+export interface HouseholdAddress {
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+}
+
+export async function getHouseholdAddress(db: D1Database, householdId: string): Promise<HouseholdAddress | null> {
+  const row = await db
+    .prepare('SELECT city, address_line1, address_line2, state, postal_code FROM households WHERE id = ?1 LIMIT 1')
+    .bind(householdId)
+    .first<{ city: string | null; address_line1: string | null; address_line2: string | null; state: string | null; postal_code: string | null }>();
+  return row
+    ? { addressLine1: row.address_line1, addressLine2: row.address_line2, city: row.city, state: row.state, postalCode: row.postal_code }
+    : null;
+}
+
+/** The address edit form's own raw fields, before {@link updateHouseholdAddress} validates and
+ *  trims them. */
+export interface HouseholdAddressInput {
+  addressLine1: string;
+  addressLine2: string;
+  state: string;
+  postalCode: string;
+}
+
+const MAX_ADDRESS_LINE_LENGTH = 120;
+const MAX_STATE_LENGTH = 40;
+const MAX_POSTAL_CODE_LENGTH = 12;
+
+function validateAddressField(value: string, maxLength: number, label: string): { ok: true; value: string | null } | { ok: false; error: string } {
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  if (trimmed.length > maxLength) return { ok: false, error: `${label} must be ${maxLength} characters or fewer.` };
+  return { ok: true, value: trimmed };
+}
+
+/**
+ * Update the household's own street address: every field is optional (a household may choose not
+ * to keep one on file, matching the address's own nullable schema), an empty field clears its
+ * column, and each non-empty field is length-checked before any write (the same
+ * validate-everything-first shape `profile.ts`'s `updateProfile` uses). `city` is untouched here
+ * (the member-import's own domain; not part of this edit form). Only the household's primary may
+ * call this; the route layer draws that line, the same boundary this module's other writers trust
+ * their caller to have already checked.
+ */
+export async function updateHouseholdAddress(db: D1Database, householdId: string, input: HouseholdAddressInput): Promise<{ ok: true } | { ok: false; error: string }> {
+  const line1 = validateAddressField(input.addressLine1, MAX_ADDRESS_LINE_LENGTH, 'Address line 1');
+  if (!line1.ok) return line1;
+  const line2 = validateAddressField(input.addressLine2, MAX_ADDRESS_LINE_LENGTH, 'Address line 2');
+  if (!line2.ok) return line2;
+  const state = validateAddressField(input.state, MAX_STATE_LENGTH, 'State');
+  if (!state.ok) return state;
+  const postalCode = validateAddressField(input.postalCode, MAX_POSTAL_CODE_LENGTH, 'ZIP code');
+  if (!postalCode.ok) return postalCode;
+
+  await db
+    .prepare("UPDATE households SET address_line1 = ?1, address_line2 = ?2, state = ?3, postal_code = ?4, updated_at = datetime('now') WHERE id = ?5")
+    .bind(line1.value, line2.value, state.value, postalCode.value, householdId)
+    .run();
+  return { ok: true };
+}
