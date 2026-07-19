@@ -187,4 +187,24 @@ describe('?/resend (the Turnstile gate, 2026-07-15 hardening pass)', () => {
     expect(result).toEqual({ ok: false, prefillEmail: MEMBER_ROW.email, resent: true });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("carries a `next` value from its own closed allowlist through to the resent link (review fix: a waiver resend used to strand the member on the portal home)", async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { db } = fakeD1({ firstResults: { 'FROM members WHERE lower(email)': MEMBER_ROW } });
+    const send = vi.fn().mockResolvedValue(undefined);
+    await actions.resend(confirmEvent({ email: MEMBER_ROW.email, next: '/my-account/sign?context=renewal' }, db, { emailBinding: { send } }) as never);
+    expect(send).toHaveBeenCalledTimes(1);
+    const message = send.mock.calls[0][0] as { text: string };
+    expect(message.text).toContain(`next=${encodeURIComponent('/my-account/sign?context=renewal')}`);
+  });
+
+  it('drops a `next` value outside the allowlist rather than carry it into the resent link (never an open redirect)', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { db } = fakeD1({ firstResults: { 'FROM members WHERE lower(email)': MEMBER_ROW } });
+    const send = vi.fn().mockResolvedValue(undefined);
+    await actions.resend(confirmEvent({ email: MEMBER_ROW.email, next: 'https://evil.example/phish' }, db, { emailBinding: { send } }) as never);
+    expect(send).toHaveBeenCalledTimes(1);
+    const message = send.mock.calls[0][0] as { text: string };
+    expect(message.text).not.toContain('next=');
+  });
 });

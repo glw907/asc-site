@@ -258,8 +258,10 @@ function resolvePublishedDocument(season: number, documentId: string) {
  * household owed, send the managing adult the resumption email -- unless the signer IS the
  * managing adult (`ctx.isPrimary`), whose own moment continues straight to payment, exactly the
  * spec's own "unless the signer IS the managing adult". Best-effort throughout (a notify failure
- * never fails the signature that already committed), and a `join` context sends nothing yet (see
- * {@link paymentPathFor}'s own header).
+ * never fails the signature that already committed). A `join` context sends the same resumption
+ * email as `renewal` -- it deep-links to `/my-account/finish-joining` rather than
+ * `/my-account/renew` (see {@link paymentPathFor}'s own header); every other context short-circuits
+ * above since `paymentPathFor` returns `null` for it.
  */
 async function maybeSendResumptionEmail(ctx: PortalActionContext, event: PortalActionEvent, context: SigningContext, season: number): Promise<void> {
   if (ctx.isPrimary) return;

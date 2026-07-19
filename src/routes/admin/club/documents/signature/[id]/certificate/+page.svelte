@@ -28,6 +28,13 @@ so printing shows the plain certificate alone, per the task's own "no admin chro
   }
 </script>
 
+<svelte:head>
+  <!-- The printed page's own title (fix round, review finding): browsers default a print/save-as-PDF
+       job's suggested filename and header to `document.title`, which without this fell back to
+       whatever generic title the admin shell last set -- never naming the certificate itself. -->
+  <title>{data.detail ? `Certificate — ${data.documentTitle} — ${data.detail.personName}` : 'Certificate of completion'}</title>
+</svelte:head>
+
 {#if !data.detail}
   <div class="rounded-box border border-[var(--cairn-card-border)] bg-base-100 py-10 text-center">
     <p class="text-sm text-muted">{data.error}</p>

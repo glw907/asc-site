@@ -71,6 +71,7 @@ could be traced back to a member. -->
   {/if}
   <form method="POST" action="?/resend" class="mt-l flex max-w-measure-wide flex-col gap-m">
     <input type="hidden" name="csrf" value={data.csrf} />
+    <input type="hidden" name="next" value={data.next ?? ''} />
     <fieldset class="fieldset">
       <legend class="fieldset-legend">Email address</legend>
       <input class="input w-full" type="email" name="email" autocomplete="email" required value={form.prefillEmail ?? ''} />

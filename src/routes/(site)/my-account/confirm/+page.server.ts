@@ -105,6 +105,13 @@ export const actions: Actions = {
 
     const form = await event.request.formData();
     const email = String(form.get('email') ?? '');
+    // Carries the same `?next=` deep link the expired token itself would have (review fix,
+    // 2026-07-19): without this, a waivers magic-link resend re-validates against a fresh token
+    // but strands the member on the portal home rather than back at `/my-account/sign`.
+    // Re-validated here rather than trusted from the submitted field, same discipline as the
+    // `confirm` action's own `next` handling above.
+    const rawNext = String(form.get('next') ?? '');
+    const next = isSafeNextPath(rawNext) ? rawNext : undefined;
 
     // Coverage table item 1 (docs/2026-07-15-payments-live-smoke-design.md section 2b):
     // `resend` is the higher-value target of the confirm page's two actions (it sends a fresh
@@ -122,6 +129,7 @@ export const actions: Actions = {
       origin: event.url.origin,
       siteName: siteConfig.siteName,
       from: FROM_ADDRESS,
+      next,
     });
     return { ok: false as const, prefillEmail: email, resent: true as const };
   },

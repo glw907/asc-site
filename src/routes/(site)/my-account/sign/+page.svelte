@@ -31,9 +31,12 @@ not just the first. -->
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
-  /** True while a sign or confirm request is in flight, so the submitted button shows its working
-   *  state and cannot be double-fired. */
-  let submitting = $state(false);
+  /** The key of the one form currently in flight (an entry's own `key`, `'contact-edit'`,
+   *  `'contact-confirm'`, or `nudge-${row.key}`), or `null` when nothing is submitting. Scoped
+   *  per-form (fix round, review finding) rather than one shared boolean: a shared flag disabled
+   *  every form on the page for the duration of any one submit and, since `disabled` steals focus
+   *  eligibility, could yank focus off a field in an unrelated entry the member was still reading. */
+  let submittingKey: string | null = $state(null);
   /** The contact-confirm card's edit mode ("Update it" opens the same fields editable). */
   let editingContact = $state(false);
   /** The edit form's first field (Email) and the "Update it" button that opens it: entering and
@@ -73,38 +76,38 @@ not just the first. -->
     target.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'center' });
   }
 
-  /** `title` is the entry being signed, captured at the click that opened this submit (never read
-   *  off `moment` after the fact, since a signed entry's own item may already be gone from the
-   *  outstanding list by the time this runs). */
-  const submitEnhance = (title: string) => {
-    submitting = true;
+  /** `key`/`title` are the entry being signed, captured at the click that opened this submit
+   *  (never read off `moment` after the fact, since a signed entry's own item may already be gone
+   *  from the outstanding list by the time this runs). */
+  const submitEnhance = (key: string, title: string) => {
+    submittingKey = key;
     return async ({ update }: { update: (opts?: { reset?: boolean }) => Promise<void> }) => {
       await update({ reset: false });
-      submitting = false;
+      submittingKey = null;
       await advanceFocus();
       announcement = moment ? `Signed ${title}. ${moment.signedCount} of ${moment.total} done.` : `Signed ${title}.`;
     };
   };
 
-  const confirmEnhance = () => {
-    submitting = true;
+  const confirmEnhance = (key: string) => {
+    submittingKey = key;
     return async ({ update }: { update: (opts?: { reset?: boolean }) => Promise<void> }) => {
       await update({ reset: false });
-      submitting = false;
+      submittingKey = null;
       editingContact = false;
       await advanceFocus();
       announcement = 'Contact info confirmed.';
     };
   };
 
-  /** `?/sendNudge`'s own submit handler: shares `submitEnhance`'s submitting/advanceFocus shape,
-   *  but never touches `announcement` -- the nudge's own confirmation ("Sent.", below) is a plain
-   *  visible status line, not part of the signing moment's own running commentary. */
-  const nudgeEnhance = () => {
-    submitting = true;
+  /** `?/sendNudge`'s own submit handler: shares `submitEnhance`'s submittingKey/advanceFocus
+   *  shape, but never touches `announcement` -- the nudge's own confirmation ("Sent.", below) is a
+   *  plain visible status line, not part of the signing moment's own running commentary. */
+  const nudgeEnhance = (key: string) => {
+    submittingKey = key;
     return async ({ update }: { update: (opts?: { reset?: boolean }) => Promise<void> }) => {
       await update({ reset: false });
-      submitting = false;
+      submittingKey = null;
       await advanceFocus();
     };
   };
@@ -213,7 +216,7 @@ not just the first. -->
               <div class="signing-sheet">
                 <div class="signing-sheet-text prose">{@html entry.bodyHtml}</div>
 
-                <form method="POST" action="?/sign&{contextQuery}" class="signing-strip" use:enhance={() => submitEnhance(entry.title)}>
+                <form method="POST" action="?/sign&{contextQuery}" class="signing-strip" use:enhance={() => submitEnhance(entry.key, entry.title)}>
                   <input type="hidden" name="csrf" value={data.csrf} />
                   <input type="hidden" name="documentId" value={entry.documentId} />
                   <input type="hidden" name="version" value={entry.version} />
@@ -241,14 +244,15 @@ not just the first. -->
                       value={entry.prefillName}
                       required
                       data-focus-target
+                      aria-describedby="signing-name-helper-{entry.key}"
                     />
-                    <p class="signing-name-helper">
+                    <p id="signing-name-helper-{entry.key}" class="signing-name-helper">
                       The club keeps a record of the text you saw, your name as you typed it, and the date and time.
                     </p>
                   </div>
 
-                  <button type="submit" class="btn signing-sign-btn" disabled={submitting}>
-                    {submitting ? 'Signing…' : 'Sign'}
+                  <button type="submit" class="btn signing-sign-btn" disabled={submittingKey === entry.key}>
+                    {submittingKey === entry.key ? 'Signing…' : 'Sign'}
                   </button>
                 </form>
               </div>
@@ -272,7 +276,7 @@ not just the first. -->
       </p>
 
       {#if editingContact}
-        <form method="POST" action="?/updateContact&{contextQuery}" class="signing-contact-form" use:enhance={confirmEnhance}>
+        <form method="POST" action="?/updateContact&{contextQuery}" class="signing-contact-form" use:enhance={() => confirmEnhance('contact-edit')}>
           <input type="hidden" name="csrf" value={data.csrf} />
           <div class="signing-contact-fields">
             <label class="signing-field">
@@ -305,7 +309,7 @@ not just the first. -->
             </label>
           </div>
           <div class="signing-contact-actions">
-            <button type="submit" class="btn signing-sign-btn" disabled={submitting}>{submitting ? 'Saving…' : 'Save and confirm'}</button>
+            <button type="submit" class="btn signing-sign-btn" disabled={submittingKey === 'contact-edit'}>{submittingKey === 'contact-edit' ? 'Saving…' : 'Save and confirm'}</button>
             <button type="button" class="portal-quiet-action portal-touch-btn btn btn-sm" onclick={cancelEditingContact}>Cancel</button>
           </div>
         </form>
@@ -331,9 +335,9 @@ not just the first. -->
           </div>
         </dl>
         <div class="signing-contact-actions">
-          <form method="POST" action="?/confirmContact&{contextQuery}" use:enhance={confirmEnhance}>
+          <form method="POST" action="?/confirmContact&{contextQuery}" use:enhance={() => confirmEnhance('contact-confirm')}>
             <input type="hidden" name="csrf" value={data.csrf} />
-            <button type="submit" class="btn signing-sign-btn" disabled={submitting}>{submitting ? 'Saving…' : 'This is current'}</button>
+            <button type="submit" class="btn signing-sign-btn" disabled={submittingKey === 'contact-confirm'}>{submittingKey === 'contact-confirm' ? 'Saving…' : 'This is current'}</button>
           </form>
           <button bind:this={updateItButtonEl} type="button" class="portal-quiet-action portal-touch-btn btn btn-sm" onclick={openEditingContact}>Update it</button>
         </div>
@@ -360,20 +364,22 @@ not just the first. -->
             <span class="signing-household-label">{row.label}</span>
             <span class="signing-household-status">{row.statusText}</span>
             {#if row.nudgeMemberId}
-              <form method="POST" action="?/sendNudge&{contextQuery}" use:enhance={nudgeEnhance}>
+              <form method="POST" action="?/sendNudge&{contextQuery}" use:enhance={() => nudgeEnhance(`nudge-${row.key}`)}>
                 <input type="hidden" name="csrf" value={data.csrf} />
                 <input type="hidden" name="targetMemberId" value={row.nudgeMemberId} />
-                <button type="submit" class="portal-quiet-action portal-touch-btn btn btn-sm" disabled={submitting}>
-                  {submitting ? 'Sending…' : row.nudgeButtonLabel}
+                <button type="submit" class="portal-quiet-action portal-touch-btn btn btn-sm" disabled={submittingKey === `nudge-${row.key}`}>
+                  {submittingKey === `nudge-${row.key}` ? 'Sending…' : row.nudgeButtonLabel}
                 </button>
               </form>
             {/if}
           </li>
         {/each}
       </ul>
-      {#if form && 'nudgeSent' in form && form.nudgeSent}
-        <p class="signing-done-line" role="status">Sent.</p>
-      {/if}
+      <!-- Rendered up front, empty, rather than only once `form.nudgeSent` is true (fix round,
+           WCAG 4.1.3): a `role="status"` region a screen reader has never seen before is not
+           reliably announced the instant it's inserted, only once it already exists and its text
+           content changes. -->
+      <p class="signing-done-line" role="status">{form && 'nudgeSent' in form && form.nudgeSent ? 'Sent.' : ''}</p>
       <a href="/my-account" class="portal-quiet-action portal-touch-btn btn btn-sm">I&#8217;ll come back later</a>
     </section>
   {:else if showCompletion}
