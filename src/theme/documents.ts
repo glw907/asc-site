@@ -93,3 +93,28 @@ export function loadPublishedDocuments(
     .filter((entry): entry is SignableDocument => entry !== undefined);
   return resolvePublishedDocuments(entries, season);
 }
+
+/**
+ * Resolve one exact document version by business id (member-waivers T6, the admin evidence
+ * views): unlike {@link resolvePublishedDocuments}, this ignores `status` entirely and returns
+ * the version regardless of whether it is still the published one for its season. A signature
+ * record (`waiver_acceptances`) names the exact `document_id`/`version` it was signed under, and
+ * that version's own file never disappears just because a later publish superseded it for the
+ * same season (decision 6: a season-rollover publish adds a new version, it never replaces one
+ * in place) -- the admin certificate and signature-text views need to keep resolving it. `null`
+ * when no entry matches (the file was renamed or removed since signing, a genuinely missing case
+ * the caller renders as "text unavailable" rather than throwing).
+ */
+export function resolveDocumentVersion(entries: SignableDocument[], documentId: string, version: number): SignableDocument | null {
+  return entries.find((entry) => entry.frontmatter.document === documentId && entry.frontmatter.version === version) ?? null;
+}
+
+/** {@link resolveDocumentVersion} over a live `documents` `ContentIndex`, matching {@link
+ *  loadPublishedDocuments}'s own read-every-entry-including-drafts precedent. */
+export function loadDocumentVersion(index: ContentIndex<DocumentFrontmatter>, documentId: string, version: number): SignableDocument | null {
+  const entries = index
+    .all({ includeDrafts: true })
+    .map((summary) => index.byId(summary.id))
+    .filter((entry): entry is SignableDocument => entry !== undefined);
+  return resolveDocumentVersion(entries, documentId, version);
+}

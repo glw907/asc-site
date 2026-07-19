@@ -246,6 +246,7 @@ follow-up, out of this task's scope.
               <div class="flex items-center gap-2">
                 <span class="badge {visibility.cls}">{visibility.label}</span>
                 {#if member.archived}<span class="badge badge-ghost badge-sm font-medium opacity-60">Archived</span>{/if}
+                <a class="btn btn-ghost btn-xs" href="/admin/club/documents/member/{member.id}">Signatures</a>
                 <button type="button" class="btn btn-ghost btn-xs" onclick={() => openEditMemberDialog(member)}>Edit</button>
                 <button type="button" class="btn btn-ghost btn-xs" onclick={() => openMoveDialog(member)}>Move&hellip;</button>
                 <form method="post" action="?/setArchived">

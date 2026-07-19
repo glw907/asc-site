@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import type { ContentIndex, ContentSummary } from '@glw907/cairn-cms/delivery';
 import {
+  loadDocumentVersion,
   loadPublishedDocuments,
+  resolveDocumentVersion,
   resolvePublishedDocuments,
   type DocumentFrontmatter,
   type SignableDocument,
@@ -103,5 +105,32 @@ describe('loadPublishedDocuments', () => {
     ];
     const resolved = loadPublishedDocuments(fakeIndex(entries), 2027);
     expect(resolved.get('general-release')?.id).toBe('general-release-v2');
+  });
+});
+
+describe('resolveDocumentVersion', () => {
+  it('finds a version regardless of status, unlike resolvePublishedDocuments', () => {
+    const entries = [entry({ id: 'general-release-v1', status: 'draft', version: 1 })];
+    expect(resolveDocumentVersion(entries, 'general-release', 1)?.id).toBe('general-release-v1');
+  });
+
+  it('finds a superseded version still on file after a later version published for the same season', () => {
+    const entries = [
+      entry({ id: 'general-release-v1', status: 'published', version: 1 }),
+      entry({ id: 'general-release-v2', status: 'published', version: 2 }),
+    ];
+    expect(resolveDocumentVersion(entries, 'general-release', 1)?.id).toBe('general-release-v1');
+  });
+
+  it('returns null for a version that does not exist', () => {
+    const entries = [entry({ id: 'general-release-v1', status: 'published', version: 1 })];
+    expect(resolveDocumentVersion(entries, 'general-release', 9)).toBeNull();
+  });
+});
+
+describe('loadDocumentVersion', () => {
+  it('resolves a specific version off a live ContentIndex, including drafts', () => {
+    const entries = [entry({ id: 'general-release-v1', status: 'draft', version: 1 })];
+    expect(loadDocumentVersion(fakeIndex(entries), 'general-release', 1)?.id).toBe('general-release-v1');
   });
 });

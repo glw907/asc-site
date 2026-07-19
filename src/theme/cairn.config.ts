@@ -65,6 +65,11 @@ export const navLayout: NavLayout = [
       // absorbs later. Every allowlisted icon is already claimed by this point; reuses 'users'
       // (Members' own icon), the same small tradeoff Announce's reused 'inbox' already accepts.
       { label: 'Committees', icon: 'users', href: '/admin/club/committees' },
+      // member-waivers T6 (docs/plans/2026-07-17-member-waivers.md, spec decision 8): "is the club
+      // protected" -- the per-season signed/outstanding rollup. Every allowlisted icon is already
+      // claimed by this point; reuses 'list' (Signups' own icon), the same small tradeoff
+      // Committees' reused 'users' already accepts.
+      { label: 'Waivers', icon: 'list', href: '/admin/club/documents' },
     ],
   },
   {
