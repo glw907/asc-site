@@ -8,6 +8,45 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
+**THE FABLE WAIVERS SITTING IS DONE (2026-07-18): the T7 attorney-draft packet and the
+T4 signing-experience design are both delivered.** What landed:
+
+- **The draft packet, `docs/waivers/`** (all DRAFTs for the attorney; nothing in force):
+  the 2027 general release (Donahue-shaped, cold-water immersion named, AS 09.65.292
+  minors Part Two), rules acknowledgement, mooring agreement (tackle split at the ball,
+  assumed ground-tackle failure, zero inspection language, insurance both ways), dry
+  storage agreement (no-bailment, unsecured-lot statement, Borough 72-hour covenant,
+  contractual lien/abandonment, insurance both ways), three per-asset acknowledgements
+  (Trailer Row / boat parking / rack — Geoff's mid-sitting note "folks accept specific
+  rules per asset" is exactly these), the youth medical field set, the signing framing
+  copy (finished words for the build), the Donahue pre-publish checklist, and
+  `board-packet.md` (inventory, board decisions, attorney questions, discrepancy memo).
+- **Sources verified, not assumed:** the current MW join-form release captured live from
+  the widget (it never says "negligence" — the core defect the redraft cures); the full
+  MSB006789 text confirmed to carry NO 72-hour/RV language; the 72-hour clause traces to
+  the pre-2022 Borough permit ("under Borough Permit since 2013" per the Borough
+  manager's Apr–Jun 2022 report), which is NOT publicly posted — the board packet
+  carries the records-request path (Land & Resource Mgmt Division).
+- **Review gates run:** Vale (cairn slop styles clean), the register editor (findings
+  applied, e.g. "named plainly" killed across three documents), an Opus facts pass
+  (every citation/figure verified; 4 low findings applied), and an independent critic on
+  the framing copy (5 high findings applied — framing lines no longer characterize legal
+  effect).
+- **The T4 probe deck** (scratchpad/signing-probe/, arc log
+  `docs/design-benchmark/waivers-signing-round-1-arc.md`): the signing moment grounded
+  in the real release draft at 1440/390 both themes — sheet vs inline candidates,
+  collapsed-receipt progress, filled-navy Sign, contact-confirm glance card. **OPEN ON
+  GEOFF'S QUEUE: the probe verdicts** (deck opened in the browser; six questions on it).
+
+**IMMEDIATE NEXT ACTION: the waivers BUILD session (Opus-conducted), T1–T3 + T5–T6 now,
+T4 once Geoff's probe verdicts ratify the signing design.** Resume prompt: "Start the
+waivers build: read docs/plans/2026-07-17-member-waivers.md and docs/waivers/ (the
+sitting's drafts + signing-framing-copy.md + the arc log's ratified verdicts), then
+execute T1–T6 and T8 with Sonnet implementers per task." Launch from
+~/Projects/aksailingclub-org. The attorney packet can go out on Geoff's go — it does not
+wait for the build. After the build: events-redesign, then the review-queue clear and
+mw-cutover per ROADMAP.
+
 **THE MEMBER-DIRECTORY PASS IS BUILT AND PUBLISHED TO DEV (2026-07-18, Fable-conducted
 finish on Geoff's "finish and publish with a workflow"). T0–T7 are all executed; what
 remains is REVIEW, not build.** The session landed, in order:
@@ -60,16 +99,6 @@ section primitive (the quiet hairline list is hand-rolled per page, third occurr
 `--container-measure-list` token (60rem is a raw literal in directory + committees);
 `.portal-text-action` LANDED as the named text-register tier (probe's harvest note,
 shipped in T6b).
-
-**IMMEDIATE NEXT ACTION: the FABLE WAIVERS SITTING** (waivers plan T7 + the T4 signing-UX
-design; independently schedulable, precedes the waivers BUILD's T4; the attorney review it
-feeds is the launch checklist's longest external lead). Resume prompt: "Run the Fable
-waivers sitting: read docs/2026-07-17-member-waivers-design.md and
-docs/plans/2026-07-17-member-waivers.md, then execute the plan's T7 (legal draft packet +
-board packet) and the T4 signing-UX probes, per the sitting scope recorded there." Launch
-from ~/Projects/aksailingclub-org. After it: the waivers BUILD (Opus), then
-events-redesign, then the review-queue clear and mw-cutover per ROADMAP's pre-cutover
-sequence.
 
 **STILL OPEN ON GEOFF'S QUEUE (pointers; full entries in docs/status-archive.md):** portal
 redesign before/after against mock D (PR #1, merge 510b266); the payments live smoke
