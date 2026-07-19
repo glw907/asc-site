@@ -127,12 +127,13 @@ All in `docs/waivers/`, each with drafting notes for the attorney at the end:
    industry practice runs 14–90.
 3. **Season labeling**: the drafts target the 2027 season; the board may elect to
    publish for the remainder of 2026 once counsel signs off.
-4. **The stuck-household window.** Join and renewal are gated household-complete
-   (every member's signatures before payment or activation — the money moment is
-   the club's one easy enforcement lever). If a second adult never signs, the
-   family's join or renewal sits incomplete indefinitely; the board picks the
-   policy for that window (for example: the pending join expires after 14 days
-   with any authorized payment released, and the family restarts when ready).
+
+One method the packet states rather than asks: **a family membership application is
+not complete until all members have signed.** Signatures come before payment, so no
+money is ever taken on an incomplete application and nothing needs expiring or
+refunding — the application simply remains incomplete until the household finishes
+it. The money moment is the club's one easy enforcement lever for liability
+paperwork, and this method uses it.
 
 ## The Borough verification item (discrepancy memo)
 

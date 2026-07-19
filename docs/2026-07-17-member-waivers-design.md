@@ -65,8 +65,12 @@ and acknowledgement that applies to them.
    complete their liability paperwork." A signature stays personal (one adult never
    signs for another): an incomplete household sees a waiting state naming who
    remains, with a sign-in nudge the managing adult can send; payment unlocks when
-   the household is complete. The no-lockout rule above still governs BETWEEN money
-   moments for already-active memberships.
+   the household is complete. The method is deliberately simple (Geoff, 2026-07-18:
+   no board policy needed): **a family membership application is not complete until
+   all members have signed**; because signatures precede payment, no money is ever
+   held on an incomplete application and nothing needs expiring or refunding. The
+   no-lockout rule above still governs BETWEEN money moments for already-active
+   memberships.
 8. **Admin surface framed as "is the club protected".** A per-season rollup: each
    document with signed and outstanding counts, drill-through to either member list,
    plus per-member signature history with the frozen signed text retrievable.
