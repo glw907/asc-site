@@ -67,10 +67,15 @@ and mooring holders the moment ends with the prefilled contact-info confirm step
 
 ## T5 — Gates and portal integration
 
-Outcome: join and renewal hard-gate on every applicable document; asset-fee payment
-and season assignment confirmation gate on the matching asset documents; class signup
-gates on the current-season general release and presents nothing when it is already
-on file (decision 9). Outstanding documents surface as portal "Needs your attention"
+Outcome: join and renewal hard-gate on every applicable document, and the gate is
+HOUSEHOLD-COMPLETE (decision 7 as amended 2026-07-18): no payment is taken, no
+membership activates, and no joined state displays until every member's signatures
+are in; an incomplete household gets a waiting state naming who remains plus a
+sign-in nudge, and payment unlocks when the household completes. Asset-fee payment
+and season assignment confirmation gate on the matching asset documents; class
+signup requires an active (signature-complete) membership, gates on the
+current-season general release, and presents nothing when it is already on file
+(decision 9). Outstanding documents surface as portal "Needs your attention"
 rows linking to one signing page that clears everything in a sitting; no other nags.
 `waiver-text.ts` and `settings.waiver_text_version` retire; the join checkbox
 upgrades to the typed-name flow. web-auth-security-reviewer runs on the signing and

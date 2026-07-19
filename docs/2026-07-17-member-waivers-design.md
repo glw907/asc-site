@@ -54,6 +54,19 @@ and acknowledgement that applies to them.
    document. Mooring and other asset documents also gate the asset fee payment and the
    season assignment confirmation. Between money moments, an outstanding document is a
    portal "Needs your attention" row, never a lockout.
+
+   **Amended 2026-07-18 (Geoff, during the signing-UX probe round): the join/renewal
+   gate is household-complete.** The club takes no payment, activates no membership,
+   and never displays a family as joined until EVERY member's applicable signatures
+   are in — each adult's own release and acknowledgement, and a parent's election per
+   child. Class registration likewise requires a signature-complete (active)
+   membership on top of the registrant's own documents. Rationale, Geoff verbatim:
+   the money moment "is really the only easy lever we have to make sure that members
+   complete their liability paperwork." A signature stays personal (one adult never
+   signs for another): an incomplete household sees a waiting state naming who
+   remains, with a sign-in nudge the managing adult can send; payment unlocks when
+   the household is complete. The no-lockout rule above still governs BETWEEN money
+   moments for already-active memberships.
 8. **Admin surface framed as "is the club protected".** A per-season rollup: each
    document with signed and outstanding counts, drill-through to either member list,
    plus per-member signature history with the frozen signed text retrievable.

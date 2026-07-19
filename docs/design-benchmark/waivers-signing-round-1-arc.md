@@ -72,9 +72,14 @@ prefill the name (editable) and the attestation from the previous child, and eac
 document still takes its own Sign click — a distinct affirmative act per document with
 the retyping ceremony removed. Goes to the attorney flagged for confirmation.
 
-**Policy the composition encodes (consistent with ratified decision 7):** a signature
-is personal — one adult can never sign for another. Household renewal completes for
-the renewing adult; other adults get their own portal attention rows, an optional
-nudge email, and hard gates at their own money/class moments.
+**Policy, as ruled mid-round (SUPERSEDES this round's first cut):** a signature is
+personal — one adult can never sign for another — but the gate is
+HOUSEHOLD-COMPLETE (Geoff, 2026-07-18, now a dated amendment to spec decision 7):
+no payment, no class registration, no joined state until every member's signatures
+are in. The money moment is "the only easy lever we have to make sure that members
+complete their liability paperwork." The composition therefore ends an incomplete
+household's moment at a WAITING state (who remains, nudge action, payment locked),
+not at a completed renewal with a quiet coda. `scenario=waiting` probes that state;
+the household-signatures block reads "payment waits on these" for the absent adult.
 
 **Verdicts:** (pending)
