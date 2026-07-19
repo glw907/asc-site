@@ -56,7 +56,6 @@ function freeCapacityDb() {
       'FROM classes WHERE id': CLASS_ROW,
       'FROM class_enrollments WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 9 }),
       'FROM class_waitlist WHERE class_id': { n: 0 },
-      "'waiver_text_version'": { value: '2026-01' },
       ...STANDING_ELIGIBLE,
     },
   });
@@ -71,7 +70,6 @@ function fullClassDb() {
       'FROM class_enrollments WHERE class_id': { n: 10 },
       "COALESCE(MAX(position)": { next_position: 1 },
       'FROM class_waitlist WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 0 }),
-      "'waiver_text_version'": { value: '2026-01' },
       ...STANDING_ELIGIBLE,
     },
   });
@@ -83,7 +81,6 @@ const INPUT = {
   email: 'jamie@example.com',
   phone: '',
   interests: '',
-  waiverAccepted: true,
   'cf-turnstile-response': '',
 };
 
@@ -221,7 +218,6 @@ describe('the class-door standing gate (Task 4)', () => {
         'FROM classes WHERE id': CLASS_ROW,
         'FROM class_enrollments WHERE class_id': (args: unknown[]) => (args.length === 2 ? null : { n: 9 }),
         'FROM class_waitlist WHERE class_id': { n: 0 },
-        "'waiver_text_version'": { value: '2026-01' },
         "'renewal_grace_days'": { value: '30' },
         'FROM members WHERE email': opts.email ?? (opts.memberFound ? { id: MEMBER_ROW.id, household_id: MEMBER_ROW.household_id } : null),
         'FROM members WHERE id': opts.memberFound ? MEMBER_ROW : null,

@@ -62,17 +62,16 @@ describe('/classes/[id]/signup load', () => {
     );
   });
 
-  it('returns the class with counts plus the current waiver text version', async () => {
+  it('returns the class with counts, and whether it is open for a fresh signup', async () => {
     const { db } = fakeD1({
       firstResults: {
         'FROM classes WHERE id': CLASS_ROW,
         'FROM class_enrollments WHERE class_id': { n: 9 },
         'FROM class_waitlist WHERE class_id': { n: 0 },
-        "'waiver_text_version'": { value: '2026-02' },
       },
     });
     const result = await runLoad(CLASS_ROW.id, db);
-    expect(result.waiverVersion).toBe('2026-02');
+    expect(result.open).toBe(true);
     expect(result.cls).toEqual(expect.objectContaining({ id: CLASS_ROW.id, enrolledCount: 9, isFull: false }));
   });
 });

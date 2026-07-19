@@ -55,21 +55,20 @@ function normalizeMember(member: JoinMember): NormalizedMember {
 }
 
 /**
- * Validates and normalizes a join submission per the design's own rules: the purchaser accepts
- * the current waiver (ruling 4); the young-adult tier requires a purchaser birthdate showing
- * under {@link YOUNG_ADULT_MAX_AGE} as of `today` (ruling 3); only the family tier may carry
- * additional household members (ruling 2, since the individual and young-adult tiers each cover
- * one person); every class pick's `memberIndex` must resolve to a real household member (`0` the
- * purchaser, `1` and up `members[0]`, `members[1]`, ...). Every violation is collected, not just
- * the first, so a form can surface them all together. `normalized` is populated only when every
- * rule passes; a caller must never price or write statements from a failed result.
+ * Validates and normalizes a join submission per the design's own rules: the young-adult tier
+ * requires a purchaser birthdate showing under {@link YOUNG_ADULT_MAX_AGE} as of `today` (ruling
+ * 3); only the family tier may carry additional household members (ruling 2, since the
+ * individual and young-adult tiers each cover one person); every class pick's `memberIndex` must
+ * resolve to a real household member (`0` the purchaser, `1` and up `members[0]`, `members[1]`,
+ * ...). Every violation is collected, not just the first, so a form can surface them all
+ * together. `normalized` is populated only when every rule passes; a caller must never price or
+ * write statements from a failed result.
  */
 export function validateJoinInput(input: JoinInput, opts: { today: string }): ValidationResult {
   const errors: string[] = [];
 
   if (!input.purchaser.name.trim()) errors.push('A name is required.');
   if (!input.purchaser.email.trim()) errors.push('An email address is required.');
-  if (!input.waiverAccepted) errors.push('You must accept the waiver to join.');
 
   if (input.tier === 'young-adult') {
     if (!input.purchaser.birthdate) {
@@ -110,7 +109,6 @@ export function validateJoinInput(input: JoinInput, opts: { today: string }): Va
       purchaser: normalizePurchaser(input.purchaser),
       members: input.members.map(normalizeMember),
       classPicks: input.classPicks,
-      waiverAccepted: input.waiverAccepted,
     },
   };
 }

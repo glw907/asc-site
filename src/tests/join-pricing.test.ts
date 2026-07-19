@@ -10,7 +10,6 @@ function normalized(overrides: Partial<NormalizedJoinInput> = {}): NormalizedJoi
     purchaser: { name: 'Ada Lovelace', email: 'ada@example.com', phone: null, birthdate: null },
     members: [],
     classPicks: [],
-    waiverAccepted: true,
     ...overrides,
   };
 }

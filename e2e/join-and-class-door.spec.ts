@@ -40,10 +40,6 @@ test('join happy path: individual tier submits and surfaces the stub checkout de
   await page.getByLabel('Full name').fill('Pat Purchaser');
   await page.getByLabel('Email address').fill('pat.purchaser@example.com');
 
-  await page
-    .getByRole('checkbox', { name: /I have read and accept the liability release/ })
-    .check();
-
   await page.getByRole('button', { name: 'Join and continue to payment' }).click();
 
   await expect(

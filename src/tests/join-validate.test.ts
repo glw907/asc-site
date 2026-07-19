@@ -10,7 +10,6 @@ function individualInput(overrides: Partial<JoinInput> = {}): JoinInput {
     purchaser: { name: 'ada Lovelace', email: '  Ada@Example.com  ', phone: '(907) 555-0142' },
     members: [],
     classPicks: [],
-    waiverAccepted: true,
     ...overrides,
   };
 }
@@ -36,10 +35,10 @@ describe('validateJoinInput', () => {
     expect(result.normalized?.purchaser.phone).toBe('call me');
   });
 
-  it('rejects a submission with no waiver acceptance', () => {
-    const result = validateJoinInput(individualInput({ waiverAccepted: false }), { today: TODAY });
+  it('rejects a submission with no purchaser name', () => {
+    const result = validateJoinInput(individualInput({ purchaser: { name: '', email: 'ada@example.com' } }), { today: TODAY });
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('You must accept the waiver to join.');
+    expect(result.errors).toContain('A name is required.');
     expect(result.normalized).toBeNull();
   });
 
@@ -140,10 +139,13 @@ describe('validateJoinInput', () => {
   });
 
   it('collects every violation at once, not just the first', () => {
-    const result = validateJoinInput(individualInput({ waiverAccepted: false, members: [{ name: 'Bob' }] }), { today: TODAY });
+    const result = validateJoinInput(
+      individualInput({ purchaser: { name: '', email: 'ada@example.com' }, members: [{ name: 'Bob' }] }),
+      { today: TODAY },
+    );
     expect(result.valid).toBe(false);
     expect(result.errors).toEqual(
-      expect.arrayContaining(['You must accept the waiver to join.', 'Only the family tier can include additional household members.']),
+      expect.arrayContaining(['A name is required.', 'Only the family tier can include additional household members.']),
     );
   });
 });

@@ -5,7 +5,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getClassWithCounts, isPubliclyOpen } from '$admin-club/lib/classes-store';
-import { getWaiverTextVersion } from '$admin-club/lib/club-settings';
 import { hasActiveOfferForClass } from '$admin-club/lib/offers';
 
 // The class's fullness (and so whether this page enrolls or waitlists) is read live at request
@@ -19,10 +18,9 @@ export const load: PageServerLoad = async ({ params, platform }) => {
   const cls = await getClassWithCounts(db, params.id);
   if (!cls || !cls.visible) error(404, 'No such class.');
 
-  const waiverVersion = await getWaiverTextVersion(db);
   // The freed-spot rule (`classes-store.ts`'s `isPubliclyOpen`): whether THIS page enrolls or
   // waitlists a fresh submission, distinct from `cls.isFull` alone (a class with a technically
   // free spot but a live queue still shows and behaves as "full — join the waitlist" here).
   const open = isPubliclyOpen(cls, await hasActiveOfferForClass(db, params.id));
-  return { cls, waiverVersion, open };
+  return { cls, open };
 };

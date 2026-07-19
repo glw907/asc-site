@@ -12,13 +12,15 @@
 // a public waitlist join may not be a member yet, and `class_waitlist.member_id` stays NULL with
 // the person identified by `applicant_name`/`applicant_email`/`applicant_phone` instead (the
 // table's own CHECK, `(member_id IS NOT NULL) OR (applicant_email IS NOT NULL)`, already allows
-// this). Both branches also write a `waiver_acceptances` row in the same `db.batch()` (the gap
-// analysis's item 1): the signer's acceptance of the current liability-release wording is atomic
-// with their signup, never a second round-trip that could land one row without the other. Every
-// write here audits as actor `'public:signup'` (offers.ts's own `'public:claim'`/`'public:decline'`
-// convention, for the same reason: a public submission has no signed-in editor behind it, so
-// `adminAction`'s `ctx.audit` is never available and this module writes its own `audit_log` row
-// directly).
+// this). Every write here audits as actor `'public:signup'` (offers.ts's own
+// `'public:claim'`/`'public:decline'` convention, for the same reason: a public submission has no
+// signed-in editor behind it, so `adminAction`'s `ctx.audit` is never available and this module
+// writes its own `audit_log` row directly).
+//
+// The gap-analysis rider's own `waiver_acceptances` write retired with the pre-T2 waiver
+// machinery (member-waivers T5a): the per-document signature model (T2/T4) is the one place a
+// real signature lands now, and this pass does not yet wire that gate into class signup (T5b/c's
+// own job), so a signup writes no waiver row of any shape.
 import type { D1Database } from '@cloudflare/workers-types';
 import { getClassWithCounts, isPubliclyOpen } from './classes-store';
 import { hasActiveOfferForClass } from './offers';
@@ -61,9 +63,6 @@ export interface SignUpForClassInput {
    *  `class_enrollments.interests` column; a waitlisted one stores the same answer on
    *  `class_waitlist.notes` instead, since a waitlist entry has no enrollment row yet to hold it. */
   interests?: string;
-  /** The wording version to stamp the `waiver_acceptances` row with: the caller reads this from
-   *  `club-settings.ts`'s `getWaiverTextVersion` at the moment of submission, never here. */
-  waiverVersion: string;
 }
 
 /** `signUpForClass`'s optional welcome-email trigger (the class-reminder set's own `welcome`
@@ -89,20 +88,6 @@ function isUniqueViolation(err: unknown, table: string): boolean {
   return err instanceof Error && err.message.includes('UNIQUE') && err.message.includes(table);
 }
 
-/** The `waiver_acceptances` insert both branches below add to their own `db.batch()`: unlike
- *  `offers.ts`'s ctx-less writers, the audit row here rides in the SAME atomic batch as the
- *  primary mutation (not a separate best-effort write afterward), so a batch failure must
- *  propagate rather than be swallowed, or a visitor could be told "you're enrolled" when nothing
- *  actually committed. */
-function waiverAcceptanceInsert(db: D1Database, input: SignUpForClassInput) {
-  return db
-    .prepare(
-      `INSERT INTO waiver_acceptances (id, person_name, person_email, context, waiver_version)
-       VALUES (?1, ?2, ?3, 'class-signup', ?4)`,
-    )
-    .bind(crypto.randomUUID(), input.name, input.email, input.waiverVersion);
-}
-
 /**
  * Sign up for a class: refuses when the class does not exist or is not visible (asc-club's
  * `classes` table carries no separate registration-open/closed column post-import, per
@@ -110,11 +95,10 @@ function waiverAcceptanceInsert(db: D1Database, input: SignUpForClassInput) {
  * only gating field). Otherwise enrolls immediately if the class is publicly open (the freed-spot
  * rule, `classes-store.ts`'s `isPubliclyOpen`: free capacity AND an empty waitlist AND no live
  * offer), or joins the waitlist otherwise — a class with a technically-free spot but anyone
- * already queued waitlists a new signup too, never enrolls past the queue. Either branch also
- * records the liability-release acceptance, atomically with the signup, in the same `db.batch()`.
- * A batch failure (a constraint violation, a transient D1 error) surfaces as a refusal rather than
- * a false "you're in" success. An immediate enrollment also sends the class-reminder set's own
- * `welcome` touch (best-effort, after the batch has committed, `notify` optional); a waitlist join
+ * already queued waitlists a new signup too, never enrolls past the queue. A batch failure (a
+ * constraint violation, a transient D1 error) surfaces as a refusal rather than a false "you're
+ * in" success. An immediate enrollment also sends the class-reminder set's own `welcome` touch
+ * (best-effort, after the batch has committed, `notify` optional); a waitlist join
  * has no enrollment yet to welcome, so the waitlist branch never touches `notify` at all. Both
  * branches also post a best-effort Discord notification after their own batch commits (the
  * classes-channel committee ping, `docs/discord-notifications-wiring.md`): a waitlist join always
@@ -150,7 +134,6 @@ export async function signUpForClass(
         db
           .prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
           .bind('public:signup', 'enroll', 'enrollment', enrollmentId, detail),
-        waiverAcceptanceInsert(db, input),
       ]);
 
       if (cls.enrolledCount + 1 === cls.capacity) {
@@ -190,7 +173,6 @@ export async function signUpForClass(
       db
         .prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
         .bind('public:signup', 'waitlist', 'waitlist', waitlistId, `class=${input.classId} position=${position}`),
-      waiverAcceptanceInsert(db, input),
     ]);
 
     await notifyDiscord(discord ?? {}, buildWaitlistSignupNotice({ className: cls.name, applicantName: input.name, position }));

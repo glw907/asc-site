@@ -12,7 +12,6 @@ function normalized(overrides: Partial<NormalizedJoinInput> = {}): NormalizedJoi
     purchaser: { name: 'Ada Lovelace', email: 'ada@example.com', phone: '+19075550142', birthdate: null },
     members: [],
     classPicks: [],
-    waiverAccepted: true,
     ...overrides,
   };
 }
@@ -22,7 +21,7 @@ describe('buildJoinStatements', () => {
     const { db, calls } = fakeD1();
     const validated = normalized();
     const pricing = computeJoinPricing(validated, PRICES, new Map());
-    const result = await buildJoinStatements(db, validated, pricing, { season: 2026, waiverVersion: '2026-01', fullClassIds: new Set() });
+    const result = await buildJoinStatements(db, validated, pricing, { season: 2026, fullClassIds: new Set() });
 
     expect(result.enrollmentIds).toEqual([]);
     expect(result.waitlistIds).toEqual([]);
@@ -42,9 +41,9 @@ describe('buildJoinStatements', () => {
     // price_paid is a whole-dollar snapshot (250), never the cents figure (25000).
     expect(membershipInsert?.sql).not.toMatch(/paid_at/);
 
-    const waiverInsert = calls.find((c) => c.sql.startsWith('INSERT INTO waiver_acceptances'));
-    expect(waiverInsert?.sql).toContain("'join'");
-    expect(waiverInsert?.args).toEqual([expect.any(String), 'Ada Lovelace', 'ada@example.com', '2026-01']);
+    // No waiver_acceptances write: the pre-T2 waiver machinery retired (member-waivers T5a), and
+    // this pass does not yet wire the new per-document signature model into the join flow.
+    expect(calls.some((c) => c.sql.startsWith('INSERT INTO waiver_acceptances'))).toBe(false);
 
     const joinAudit = calls.find((c) => c.sql.startsWith('INSERT INTO audit_log') && (c.args as unknown[])[2] === 'membership');
     expect(joinAudit?.args).toEqual(['public:join', 'join', 'membership', result.membershipId, 'tier=individual season=2026']);
@@ -64,7 +63,7 @@ describe('buildJoinStatements', () => {
       ],
     });
     const pricing = computeJoinPricing(validated, PRICES, new Map([['intro-sailing', 100], ['youth-sailing', 75]]));
-    const result = await buildJoinStatements(db, validated, pricing, { season: 2026, waiverVersion: '2026-01', fullClassIds: new Set() });
+    const result = await buildJoinStatements(db, validated, pricing, { season: 2026, fullClassIds: new Set() });
     await db.batch(result.statements);
 
     const memberInserts = calls.filter((c) => c.sql.startsWith('INSERT INTO members ('));
@@ -92,7 +91,6 @@ describe('buildJoinStatements', () => {
     const pricing = computeJoinPricing(validated, PRICES, new Map([['full-class', 100]]));
     const result = await buildJoinStatements(db, validated, pricing, {
       season: 2026,
-      waiverVersion: '2026-01',
       fullClassIds: new Set(['full-class']),
     });
     await db.batch(result.statements);
@@ -120,7 +118,6 @@ describe('buildJoinStatements', () => {
     const pricing = computeJoinPricing(validated, PRICES, new Map());
     const result = await buildJoinStatements(db, validated, pricing, {
       season: 2026,
-      waiverVersion: '2026-01',
       fullClassIds: new Set(['full-class']),
     });
     await db.batch(result.statements);
@@ -133,8 +130,8 @@ describe('buildJoinStatements', () => {
     const { db } = fakeD1();
     const validated = normalized({ classPicks: [{ memberIndex: 0, classId: 'intro-sailing' }] });
     const pricing = computeJoinPricing(validated, PRICES, new Map([['intro-sailing', 100]]));
-    const result = await buildJoinStatements(db, validated, pricing, { season: 2026, waiverVersion: '2026-01', fullClassIds: new Set() });
-    // households + member + household-update + membership + enrollment + audit(enroll) + waiver + audit(join)
-    expect(result.statements).toHaveLength(8);
+    const result = await buildJoinStatements(db, validated, pricing, { season: 2026, fullClassIds: new Set() });
+    // households + member + household-update + membership + enrollment + audit(enroll) + audit(join)
+    expect(result.statements).toHaveLength(7);
   });
 });

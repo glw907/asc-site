@@ -20,7 +20,6 @@ pivot before the visitor fills out the rest of the form. -->
   import { checkKnownEmail } from '$theme/join-apply.remote';
   import { payClassFee } from '$theme/class-fee-checkout.remote';
   import { CLASS_TRACK_LABEL } from '$admin-club/lib/classes-store';
-  import { WAIVER_RELEASE_TEXT } from '$theme/waiver-text';
   import { DATE_TBD, formatDateRange } from '$theme/season-data';
   import { TURNSTILE_SITE_KEY } from '$theme/turnstile';
 
@@ -29,7 +28,7 @@ pivot before the visitor fills out the rest of the form. -->
   const dateDisplay = $derived(data.cls.startDate ? formatDateRange(data.cls.startDate, data.cls.endDate) : DATE_TBD);
   const spotsLeft = $derived(Math.max(0, data.cls.capacity - data.cls.enrolledCount));
 
-  const { name, email, phone, interests, waiverAccepted } = joinClass.fields;
+  const { name, email, phone, interests } = joinClass.fields;
 
   /** The class-door standing gate's own pivot shape: the join invitation carries the entered
    *  fields, the renewal handoff carries just the email the "email me a sign-in link" button
@@ -285,18 +284,6 @@ pivot before the visitor fills out the rest of the form. -->
       </fieldset>
     </fieldset>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Liability release</legend>
-      <details class="waiver-text">
-        <summary>Read the release (version {data.waiverVersion})</summary>
-        <p>{WAIVER_RELEASE_TEXT}</p>
-      </details>
-      <label class="mt-xs flex items-start gap-xs text-step--1">
-        <input class="checkbox mt-[0.15em]" required {...waiverAccepted.as('checkbox')} />
-        I have read and accept the liability release above (version {data.waiverVersion}).
-      </label>
-    </fieldset>
-
     <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
 
     <button type="submit" class="btn btn-primary self-start" disabled={!!joinClass.pending}>
@@ -410,26 +397,5 @@ pivot before the visitor fills out the rest of the form. -->
   }
   .outcome-panel-title {
     color: var(--color-primary);
-  }
-
-  .waiver-text summary {
-    cursor: pointer;
-    font-size: var(--text-step--1);
-    color: var(--color-primary);
-  }
-  /* The disclosure triangle rendered the browser's own default marker ink, a plain gray beside
-     the navy summary text next to it. Both marker pseudo-elements carry the same navy so the
-     whole affordance reads as one link-family control. */
-  .waiver-text summary::marker {
-    color: var(--color-primary);
-  }
-  .waiver-text summary::-webkit-details-marker {
-    color: var(--color-primary);
-  }
-  .waiver-text p {
-    margin: var(--spacing-2xs) 0 0;
-    font-size: var(--text-step--1);
-    line-height: var(--leading-body);
-    color: var(--color-muted);
   }
 </style>

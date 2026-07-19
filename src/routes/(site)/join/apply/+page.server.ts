@@ -1,8 +1,8 @@
-// The public join door's own `load` (Task 3): the current tier prices, the waiver wording
-// version, and every visible current-season class with its live fee and fullness (a full class
-// still lists, so a member can still pick it and land on the waitlist, per the design's own
-// "Classes (optional)" section). Read live at request time, the same reason the class-signup
-// page and the class-schedule island both stay dynamic.
+// The public join door's own `load` (Task 3): the current tier prices, and every visible
+// current-season class with its live fee and fullness (a full class still lists, so a member can
+// still pick it and land on the waitlist, per the design's own "Classes (optional)" section).
+// Read live at request time, the same reason the class-signup page and the class-schedule island
+// both stay dynamic.
 //
 // The class-door standing gate (Task 4): a visitor arriving from the class door's own invitation
 // (`/join/apply?class=<id>&name=…&email=…&phone=…`) carries the fields they already typed there,
@@ -13,7 +13,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { listClassesWithCounts, isPubliclyOpen } from '$admin-club/lib/classes-store';
 import { hasActiveOfferForClass } from '$admin-club/lib/offers';
-import { getCurrentSeason, getTierPrices, getWaiverTextVersion } from '$admin-club/lib/club-settings';
+import { getCurrentSeason, getTierPrices } from '$admin-club/lib/club-settings';
 
 export const prerender = false;
 
@@ -21,9 +21,8 @@ export const load: PageServerLoad = async ({ platform, url }) => {
   const db = platform?.env.CLUB_DB;
   if (!db) error(503, 'Joining online is not available right now.');
 
-  const [prices, waiverVersion, season, allClasses] = await Promise.all([
+  const [prices, season, allClasses] = await Promise.all([
     getTierPrices(db),
-    getWaiverTextVersion(db),
     getCurrentSeason(db),
     listClassesWithCounts(db),
   ]);
@@ -46,5 +45,5 @@ export const load: PageServerLoad = async ({ platform, url }) => {
     classId: carriedClassId && classes.some((cls) => cls.id === carriedClassId) ? carriedClassId : '',
   };
 
-  return { prices, waiverVersion, season, classes, prefill };
+  return { prices, season, classes, prefill };
 };

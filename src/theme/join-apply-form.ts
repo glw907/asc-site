@@ -29,7 +29,7 @@ import type { JoinInput } from '$member-signup/lib/types.js';
 import type { MembershipTier } from '$admin-club/lib/member-types';
 import { getClassWithCounts, isPubliclyOpen } from '$admin-club/lib/classes-store';
 import { hasActiveOfferForClass } from '$admin-club/lib/offers';
-import { getCurrentSeason, getTierPrices, getWaiverTextVersion } from '$admin-club/lib/club-settings';
+import { getCurrentSeason, getTierPrices } from '$admin-club/lib/club-settings';
 import { normalizeEmail } from '$admin-club/lib/member-normalize.js';
 import { MEMBERSHIP_TIER_LABEL, getMemberStanding } from '$member-auth/lib/standing';
 import { requestMemberLink } from '$member-auth/lib/auth';
@@ -67,7 +67,6 @@ export const joinApplySchema = v.object({
   /** One entry per roster slot: the purchaser at `0`, `members[i]` at `i + 1`. `''` means "no
    *  class" for that slot. */
   picks: v.optional(v.array(v.pipe(v.string(), v.trim())), []),
-  waiverAccepted: v.optional(v.boolean(), false),
   // Injected by the Turnstile widget, not a rendered field.
   'cf-turnstile-response': v.optional(v.string(), ''),
 });
@@ -116,7 +115,6 @@ function toJoinInput(input: JoinApplySubmission): JoinInput {
     classPicks: input.picks
       .map((classId, memberIndex) => (classId ? { memberIndex, classId } : null))
       .filter((pick): pick is { memberIndex: number; classId: string } => pick !== null),
-    waiverAccepted: input.waiverAccepted,
   };
 }
 
@@ -332,8 +330,7 @@ export async function handleJoinApply(input: JoinApplySubmission, env: unknown, 
   const pricing = computeJoinPricing({ ...validated, classPicks: nonFullPicks }, prices, classFees);
 
   const season = await getCurrentSeason(db);
-  const waiverVersion = await getWaiverTextVersion(db);
-  const built = await buildJoinStatements(db, validated, pricing, { season, waiverVersion, fullClassIds });
+  const built = await buildJoinStatements(db, validated, pricing, { season, fullClassIds });
   await db.batch(built.statements);
 
   const paidLines = pricing.paidPicks.map((pick) => {

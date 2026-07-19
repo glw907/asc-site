@@ -10,7 +10,6 @@ import { invalid } from '@sveltejs/kit';
 import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { signUpForClass, type SignUpForClassInput, type SignUpResult } from '$admin-club/lib/enrollments';
 import type { EmailBindingEnv } from '$admin-club/lib/club-email';
-import { getWaiverTextVersion } from '$admin-club/lib/club-settings';
 import { normalizeEmail } from '$admin-club/lib/member-normalize.js';
 import { getMemberStanding } from '$member-auth/lib/standing';
 import { requestMemberLink } from '$member-auth/lib/auth';
@@ -30,10 +29,6 @@ export const classSignupSchema = v.object({
   interests: v.optional(
     v.pipe(v.string(), v.trim(), v.maxLength(1000, 'Please keep your answer under 1000 characters.')),
     '',
-  ),
-  waiverAccepted: v.pipe(
-    v.optional(v.boolean(), false),
-    v.check((accepted) => accepted, 'Please check the box to accept the liability release before you sign up.'),
   ),
   // Injected by the Turnstile widget, not a rendered field.
   'cf-turnstile-response': v.optional(v.string(), ''),
@@ -113,8 +108,8 @@ interface ClassSignupEnv {
  *  gracefully when no secret is configured, matching `contact.remote.ts`/`donate.remote.ts`),
  *  gated on the class-door standing check ({@link resolveClassEligibility}; a no-match pivots into
  *  the join door and a `lapsed` household pivots into the renewal handoff, both never reaching the
- *  rest of this function), then reads the current liability-release wording version and hands off
- *  to `enrollments.ts`'s `signUpForClass` for the actual enroll-or-waitlist decision. */
+ *  rest of this function), then hands off to `enrollments.ts`'s `signUpForClass` for the actual
+ *  enroll-or-waitlist decision. */
 export async function handleClassSignup(
   input: ClassSignupSubmission,
   env: unknown,
@@ -152,14 +147,12 @@ export async function handleClassSignup(
     return { pivot: 'renew', email: input.email };
   }
 
-  const waiverVersion = await getWaiverTextVersion(db);
   const signupInput: SignUpForClassInput = {
     classId: input.classId,
     name: input.name,
     email: input.email,
     phone: input.phone || undefined,
     interests: input.interests || undefined,
-    waiverVersion,
   };
   const result = await signUpForClass(
     db,

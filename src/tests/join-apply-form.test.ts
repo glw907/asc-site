@@ -28,7 +28,6 @@ function submission(overrides: Partial<JoinApplySubmission> = {}): JoinApplySubm
     purchaserBirthdate: '',
     members: [],
     picks: [],
-    waiverAccepted: true,
     'cf-turnstile-response': '',
     ...overrides,
   };
@@ -103,8 +102,10 @@ describe('handleJoinApply', () => {
 
   it('surfaces every validateJoinInput rule violation together, writing nothing', async () => {
     const { db, calls } = fakeD1();
-    await expect(handleJoinApply(submission({ waiverAccepted: false }), { CLUB_DB: db }, '203.0.113.5', ORIGIN)).rejects.toSatisfy(
-      (err: unknown) => isValidationError(err) && issueMessages(err).includes('You must accept the waiver to join.'),
+    await expect(
+      handleJoinApply(submission({ members: [{ name: 'Bob', birthdate: '', email: '' }] }), { CLUB_DB: db }, '203.0.113.5', ORIGIN),
+    ).rejects.toSatisfy(
+      (err: unknown) => isValidationError(err) && issueMessages(err).includes('Only the family tier can include additional household members.'),
     );
     expect(calls.some((c) => c.sql.startsWith('INSERT'))).toBe(false);
   });
@@ -112,7 +113,7 @@ describe('handleJoinApply', () => {
   it('a fresh solo join batches the write, then creates a join checkout with empty class metadata', async () => {
     const { db, calls } = fakeD1({
       allResults: { tier_price_individual: TIER_PRICE_ROWS },
-      firstResults: { "'waiver_text_version'": { value: '2026-01' }, "'current_season'": { value: '2026' } },
+      firstResults: { "'current_season'": { value: '2026' } },
     });
     vi.stubGlobal(
       'fetch',
@@ -216,7 +217,6 @@ describe('handleJoinApply', () => {
     const { db, calls } = fakeD1({
       allResults: { tier_price_individual: TIER_PRICE_ROWS },
       firstResults: {
-        "'waiver_text_version'": { value: '2026-01' },
         "'current_season'": { value: '2026' },
         'FROM classes WHERE id': (args: unknown[]) => {
           const id = args[0] as string;
@@ -260,7 +260,6 @@ describe('handleJoinApply', () => {
     const { db } = fakeD1({
       allResults: { tier_price_family: TIER_PRICE_ROWS },
       firstResults: {
-        "'waiver_text_version'": { value: '2026-01' },
         "'current_season'": { value: '2026' },
         'FROM classes WHERE id': (args: unknown[]) => {
           const id = args[0] as string;

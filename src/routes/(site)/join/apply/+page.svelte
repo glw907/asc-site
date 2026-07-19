@@ -2,12 +2,18 @@
 The public join door: tier selection with live prices, the purchaser's own details, family's
 inline household members, optional class picks per roster member (a full class still lists,
 landing the pick on the waitlist instead), a running total delegated to the same
-`computeJoinPricing` the server action uses (no duplicated pricing math), the waiver, and
-Turnstile. Submits through `applyJoin` (join-apply.remote.ts): a fresh join redirects to Stripe,
-and a checkout-unavailable submission shows the same stub message every other payment form on
-this site shows. A visitor carried over from the class door's own invitation
+`computeJoinPricing` the server action uses (no duplicated pricing math), and Turnstile. Submits
+through `applyJoin` (join-apply.remote.ts): a fresh join redirects to Stripe, and a
+checkout-unavailable submission shows the same stub message every other payment form on this site
+shows. A visitor carried over from the class door's own invitation
 (`?class=<id>&name=…&email=…&phone=…`) has those fields and the class pick pre-filled from
 `data.prefill`, so they never have to enter them twice.
+
+The pre-T2 waiver checkbox (a free-text liability release read-and-accept) retired with the rest
+of the pre-T2 waiver machinery (member-waivers T5a): this form gates on no signature requirement
+today, since every real document is still `status: draft` (the T3 requirement engine's own
+no-published-documents pass-through); the household-complete signature gate T5b/c wires in reads
+directly against the per-document signature model instead.
 
 Renew and welcome-back (amended 2026-07-14, `docs/2026-07-13-unified-signup-design.md`'s "Renew
 and welcome-back"): a purchaser email matching a household that has paid a membership before
@@ -27,7 +33,6 @@ earlier "sign in instead" dead end, unchanged. -->
   import type { NormalizedJoinInput } from '$member-signup/lib/types.js';
   import { MEMBERSHIP_TIER_LABEL, type MembershipTier } from '$member-auth/lib/standing';
   import { formatDollars } from '$admin-club/lib/ui';
-  import { WAIVER_RELEASE_TEXT } from '$theme/waiver-text';
   import { TURNSTILE_SITE_KEY } from '$theme/turnstile';
 
   let { data }: { data: PageData } = $props();
@@ -45,8 +50,6 @@ earlier "sign in instead" dead end, unchanged. -->
   let picks = $state<string[]>(untrack(() => [data.prefill.classId]));
   let knownEmailHint = $state(false);
   let nextMemberRowId = 0;
-
-  const { waiverAccepted } = applyJoin.fields;
 
   function selectTier(next: MembershipTier): void {
     tier = next;
@@ -92,7 +95,6 @@ earlier "sign in instead" dead end, unchanged. -->
     purchaser: { name: purchaserName, email: purchaserEmail, phone: null, birthdate: null },
     members: members.map((member) => ({ name: member.name, birthdate: null, email: null })),
     classPicks: openRosterPicks,
-    waiverAccepted: true,
   });
 
   const pricing = $derived(computeJoinPricing(pricingInput, data.prices, classFeeById));
@@ -285,18 +287,6 @@ earlier "sign in instead" dead end, unchanged. -->
       {/if}
     </div>
 
-    <fieldset class="fieldset">
-      <legend class="fieldset-legend">Liability release</legend>
-      <details class="waiver-text">
-        <summary>Read the release (version {data.waiverVersion})</summary>
-        <p>{WAIVER_RELEASE_TEXT}</p>
-      </details>
-      <label class="mt-xs flex items-start gap-xs text-step--1">
-        <input class="checkbox mt-[0.15em]" required {...waiverAccepted.as('checkbox')} />
-        I have read and accept the liability release above (version {data.waiverVersion}).
-      </label>
-    </fieldset>
-
     <!-- `data-theme="auto"` (an implicit-render parameter Turnstile reads off the div) follows
          the page's own light/dark mode instead of a fixed light widget on a dark page. The
          reserved-space collapse/expand rule lives in site.css's `.cf-turnstile` rule, shared by
@@ -333,26 +323,5 @@ earlier "sign in instead" dead end, unchanged. -->
     font-size: var(--text-step--1);
     font-weight: 600;
     color: var(--color-base-content);
-  }
-
-  .waiver-text summary {
-    cursor: pointer;
-    font-size: var(--text-step--1);
-    color: var(--color-primary);
-  }
-  /* The disclosure triangle rendered the browser's own default marker ink, a plain gray beside
-     the navy summary text next to it. Both marker pseudo-elements carry the same navy so the
-     whole affordance reads as one link-family control. */
-  .waiver-text summary::marker {
-    color: var(--color-primary);
-  }
-  .waiver-text summary::-webkit-details-marker {
-    color: var(--color-primary);
-  }
-  .waiver-text p {
-    margin: var(--spacing-2xs) 0 0;
-    font-size: var(--text-step--1);
-    line-height: var(--leading-body);
-    color: var(--color-muted);
   }
 </style>

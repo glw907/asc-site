@@ -40,14 +40,18 @@ function nextPositionReader(db: D1Database) {
 
 /**
  * Builds the household, its members, the unpaid `memberships` row, and every class pick's
- * enrollment or waitlist row (per `opts.fullClassIds`), plus the purchaser's `waiver_acceptances`
- * row and this write's `audit_log` rows, all as unrun `D1PreparedStatement`s for the caller's own
- * `db.batch()`. `pricing.duesCents` sizes `memberships.price_paid` (converted back to whole
- * dollars, matching that column's existing unit); `pricing`'s covered-vs-paid split is NOT
- * reflected in `class_enrollments.fee_paid` here, since every enrollment (credit-covered or not)
- * is written unpaid (`fee_paid = 0`) until the checkout actually settles: `reconcileJoin`
- * (Task 2) is the one place that flips it, for both outcomes, once payment (or a covered
- * redemption) is confirmed.
+ * enrollment or waitlist row (per `opts.fullClassIds`), plus this write's `audit_log` rows, all as
+ * unrun `D1PreparedStatement`s for the caller's own `db.batch()`. `pricing.duesCents` sizes
+ * `memberships.price_paid` (converted back to whole dollars, matching that column's existing
+ * unit); `pricing`'s covered-vs-paid split is NOT reflected in `class_enrollments.fee_paid` here,
+ * since every enrollment (credit-covered or not) is written unpaid (`fee_paid = 0`) until the
+ * checkout actually settles: `reconcileJoin` (Task 2) is the one place that flips it, for both
+ * outcomes, once payment (or a covered redemption) is confirmed.
+ *
+ * The purchaser's own `waiver_acceptances` row retired with the pre-T2 waiver machinery
+ * (member-waivers T5a): the per-document signature model (T2/T4) is the one place a real
+ * signature lands now, and this pass does not yet wire that gate into the join flow (T5b/c's own
+ * job), so a fresh join writes no waiver row of any shape.
  */
 export async function buildJoinStatements(
   db: D1Database,
@@ -116,9 +120,6 @@ export async function buildJoinStatements(
   }
 
   statements.push(
-    db
-      .prepare("INSERT INTO waiver_acceptances (id, person_name, person_email, context, waiver_version) VALUES (?1, ?2, ?3, 'join', ?4)")
-      .bind(crypto.randomUUID(), validated.purchaser.name, validated.purchaser.email, opts.waiverVersion),
     db
       .prepare('INSERT INTO audit_log (actor, action, entity, entity_id, detail) VALUES (?1, ?2, ?3, ?4, ?5)')
       .bind('public:join', 'join', 'membership', membershipId, `tier=${validated.tier} season=${opts.season}`),

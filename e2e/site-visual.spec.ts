@@ -230,7 +230,6 @@ test('class signup — enrolled, pay class fee (Turnstile hardening pass)', asyn
   await page.goto('/classes/test-intro-class/signup');
   await page.getByRole('group', { name: 'Full name' }).getByRole('textbox').fill('E2E Current Member');
   await page.getByRole('group', { name: 'Email address' }).getByRole('textbox').fill('e2e-current-member@example.com');
-  await page.getByRole('checkbox', { name: /I have read and accept the liability release/ }).check();
   await page.getByRole('button', { name: 'Sign up' }).click();
   await expect(page.getByText("You're signed up for Test Intro Class.")).toBeVisible();
   await expect(page.getByRole('button', { name: /Pay \$150 now/ })).toBeVisible();

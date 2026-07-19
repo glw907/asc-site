@@ -8,9 +8,7 @@ import type { D1PreparedStatement } from '@cloudflare/workers-types';
 import type { MembershipTier } from '$admin-club/lib/member-types';
 
 /** The purchaser's own details, as the join form collects them: `memberIndex: 0` in
- *  {@link JoinClassPick} always refers to this person. Only the purchaser accepts the waiver
- *  (`JoinInput.waiverAccepted`); every other household member is covered by that one acceptance,
- *  matching the design's "the purchaser accepts the waiver at join" ruling. */
+ *  {@link JoinClassPick} always refers to this person. */
 export interface JoinPurchaser {
   name: string;
   email: string;
@@ -43,7 +41,6 @@ export interface JoinInput {
    *  individual and young-adult tiers reject a non-empty array (each covers one person only). */
   members: JoinMember[];
   classPicks: JoinClassPick[];
-  waiverAccepted: boolean;
 }
 
 /** {@link JoinPurchaser}, normalized: email lowercased, phone E.164 where parseable (or the
@@ -73,7 +70,6 @@ export interface NormalizedJoinInput {
   purchaser: NormalizedPurchaser;
   members: NormalizedMember[];
   classPicks: JoinClassPick[];
-  waiverAccepted: boolean;
 }
 
 /** {@link validateJoinInput}'s outcome: `errors` is always populated with every rule violation
@@ -108,12 +104,10 @@ export interface JoinPricingResult {
 }
 
 /** {@link buildJoinStatements}'s own inputs beyond the validated form and its pricing: the season
- *  the new membership row belongs to, the waiver wording version to stamp the purchaser's
- *  acceptance with, and which of the picked classes are already full (so that pick lands in
- *  `class_waitlist` instead of `class_enrollments`). */
+ *  the new membership row belongs to, and which of the picked classes are already full (so that
+ *  pick lands in `class_waitlist` instead of `class_enrollments`). */
 export interface BuildJoinStatementsOptions {
   season: number;
-  waiverVersion: string;
   fullClassIds: Set<string>;
 }
 

@@ -33,7 +33,6 @@ const INPUT = {
   name: 'Jamie Rivera',
   email: 'jamie@example.com',
   phone: '+19075551234',
-  waiverVersion: '2026-01',
 };
 
 describe('signUpForClass', () => {
@@ -64,8 +63,7 @@ describe('signUpForClass', () => {
       });
     }
 
-    it('enrolls with the real member id (ensureMember resolves it first) and records the ' +
-      'enrolled-branch waiver acceptance in the same batch, auditing public:signup', async () => {
+    it('enrolls with the real member id (ensureMember resolves it first), auditing public:signup', async () => {
       const { db, calls } = fakeDbFreeCapacity();
       const result = await signUpForClass(db, INPUT);
       expect(result).toEqual({ outcome: 'enrolled', enrollmentId: expect.any(String) });
@@ -87,13 +85,12 @@ describe('signUpForClass', () => {
         `class=${CLASS_ROW.id}`,
       ]);
 
-      const waiverInsert = calls.find((c) => c.sql.startsWith('INSERT INTO waiver_acceptances'));
-      expect(waiverInsert?.args).toEqual([expect.any(String), INPUT.name, INPUT.email, INPUT.waiverVersion]);
-
-      // All three land in one batch call, never as three separate .run()s. (An already-known
-      // member, MEMBER_ROW here, adds no INSERT of its own: ensureMember only writes for a
-      // brand-new person, see the dedicated test below.)
-      expect(calls.filter((c) => c.sql.startsWith('INSERT'))).toHaveLength(3);
+      // No waiver_acceptances write: the pre-T2 waiver machinery retired (member-waivers T5a),
+      // and this pass does not yet wire the new per-document signature model into class signup.
+      // Both remaining inserts land in one batch call, never as two separate .run()s. (An
+      // already-known member, MEMBER_ROW here, adds no INSERT of its own: ensureMember only
+      // writes for a brand-new person, see the dedicated test below.)
+      expect(calls.filter((c) => c.sql.startsWith('INSERT'))).toHaveLength(2);
     });
 
     it('resolves a brand-new member through ensureMember, passing the signup\'s own phone to ' +
@@ -197,7 +194,7 @@ describe('signUpForClass', () => {
       });
     }
 
-    it('waitlists (never enrolls) and records the waitlist-branch waiver acceptance in the same batch', async () => {
+    it('waitlists (never enrolls)', async () => {
       const { db, calls } = fakeDbFull();
       const result = await signUpForClass(db, INPUT);
       expect(result).toEqual({ outcome: 'waitlisted', position: 3 });
@@ -225,8 +222,8 @@ describe('signUpForClass', () => {
         `class=${CLASS_ROW.id} position=3`,
       ]);
 
-      const waiverInsert = calls.find((c) => c.sql.startsWith('INSERT INTO waiver_acceptances'));
-      expect(waiverInsert?.args).toEqual([expect.any(String), INPUT.name, INPUT.email, INPUT.waiverVersion]);
+      // No waiver_acceptances write: the pre-T2 waiver machinery retired (member-waivers T5a).
+      expect(calls.some((c) => c.sql.startsWith('INSERT INTO waiver_acceptances'))).toBe(false);
     });
 
     it("lands a waitlisted signup's interests answer in class_waitlist.notes (migration 0019)", async () => {
