@@ -34,12 +34,29 @@ Apply this **only after** the code declaring the new `roles` vocabulary has depl
 serving. The vocabulary keeps declaring the reserved `owner: 'owner'` entry alongside
 `Administrator`, so a live row still reading `owner` keeps resolving to owner capability right up
 until this migration runs -- never a window where a live row's role name is absent from the
-vocabulary (`resolveCapability` fails such a row closed to `'none'`). One accepted, narrow
-consequence in that same window: `CLUB_ROLES` (`src/admin-club/lib/club-db.ts`) no longer includes
-the literal `owner` string, so a live `owner`-role session is denied `/admin/club` (403) between
-the code deploying and this migration applying, even though it keeps every other engine capability
-`resolveCapability` grants it. The conductor applies this migration immediately after the code
-deploy verifies serving, closing that window quickly.
+vocabulary (`resolveCapability` fails such a row closed to `'none'`).
+
+That dual-name safety argument holds only for the `owner`/`Administrator` pair: `club-admin` left
+the vocabulary entirely (T2's five-role vocabulary has no reserved `club-admin` entry the way it
+keeps one for `owner`), so a live `club-admin` row during this same window would resolve to `none`
+capability and be locked out until this migration applies. The window is closed by a verified
+precondition instead of dual-name validity: no `club-admin` rows exist on the live `editor` table
+today (verified 2026-07-19, `forward.sql`'s own header), and the grant UI built against the new
+vocabulary can no longer mint one, so the gap this asymmetry describes has no row to affect.
+
+This description superseded an earlier, retired claim that a live `owner`-role session would be
+403'd from `/admin/club` during the deploy window because the old, hardcoded `CLUB_ROLES` array
+(`src/admin-club/lib/club-db.ts`) no longer listed the literal `owner` string. That described the
+pre-T4 enforcement mechanism. T4 (`docs/2026-07-19-asc-roles-adoption.md`) replaced it: `/admin/club`
+enforcement now runs through `canReach` (`node_modules/@glw907/cairn-cms/dist/auth/access.js`),
+whose owner-capability branch short-circuits `true` before any map lookup
+(`if (editor.capability === 'owner') { return true; }`, evaluated ahead of every other check). A
+live row still reading `owner` keeps resolving to owner capability throughout the deploy window
+(above), so it is admitted to `/admin/club` and everywhere else the whole time -- the guarantee is
+stronger than the retired claim, not weaker: there is no window in which a live owner-capability
+session is denied. The conductor still applies this migration immediately after the code deploy
+verifies serving, closing the window promptly as a matter of hygiene, not because it is unsafe left
+open.
 
 ## How to run
 

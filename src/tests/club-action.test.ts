@@ -26,7 +26,10 @@ const CSRF_TOKEN = 'test-csrf-token';
  *  established), and `locals.cairnAccess`, the site's real `access` map by default -- the same
  *  value `hooks.server.ts`'s guard attaches, so these tests exercise real map enforcement rather
  *  than `canReach`'s undefined-map fallback. `opts.path` lets a test target a deeper key
- *  (`/admin/club/email`, `/admin/club/announce`) than the section default. */
+ *  (`/admin/club/email`, `/admin/club/announce`) than the section default. `opts.omitAccessMap`
+ *  drops `locals.cairnAccess` entirely -- the guard's own fail-closed branch for a map the layout
+ *  guard never attached (a review-gate finding), which the default-attached map above can never
+ *  exercise. */
 function postEvent(
   editor: Editor,
   opts: {
@@ -34,6 +37,7 @@ function postEvent(
     auditSink?: (record: AdminActionAuditRecord) => void;
     rateLimit?: RateLimit;
     path?: string;
+    omitAccessMap?: boolean;
   } = {},
 ): AdminActionEvent {
   const formData = new FormData();
@@ -49,7 +53,7 @@ function postEvent(
       delete: () => undefined,
     },
     platform: { env: { CLUB_DB: opts.db, RATE_LIMIT_ADMIN: opts.rateLimit } },
-    locals: { editor, auditSink: opts.auditSink, cairnAccess: access },
+    locals: { editor, auditSink: opts.auditSink, cairnAccess: opts.omitAccessMap ? undefined : access },
   } as unknown as AdminActionEvent;
 }
 
@@ -78,6 +82,24 @@ describe('clubAdminAction', () => {
     expect((result as { status: number }).status).toBe(403);
     expect(handler).not.toHaveBeenCalled();
     expect(sink).toHaveBeenCalledWith(expect.objectContaining({ action: 'do', entity: 'widget', editor: instructor.email }));
+  });
+
+  it('fails closed (500) and never runs the handler when the access map is not attached, even for an Administrator', async () => {
+    // Review-gate finding: `canReach(undefined, ...)` admits any editor-capability session, and a
+    // form action never re-runs the ancestor layout's `load` that would normally attach the map --
+    // so an unwired map must fail closed here rather than fall through to an open `canReach` call.
+    // The strongest role (Administrator, owner capability) proves the guard fires before any
+    // capability-based shortcut, not just for the routine roles.
+    const handler = vi.fn();
+    const sink = vi.fn();
+    const action = clubAdminAction(handler, { action: 'do', entity: 'widget' });
+    const result = await action(postEvent(administrator, { db: {}, auditSink: sink, omitAccessMap: true }));
+    expect(isActionFailure(result)).toBe(true);
+    expect((result as { status: number }).status).toBe(500);
+    expect(handler).not.toHaveBeenCalled();
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'do', entity: 'widget', editor: administrator.email, detail: 'rejected: access map not attached' }),
+    );
   });
 
   it('lets a club admin through by default', async () => {

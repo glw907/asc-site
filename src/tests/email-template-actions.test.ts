@@ -3,6 +3,7 @@ import { isActionFailure } from '@sveltejs/kit';
 import type { Editor } from '@glw907/cairn-cms';
 import type { AdminActionAuditRecord } from '@glw907/cairn-cms/sveltekit';
 import { actions } from '../routes/admin/club/email/[id]/+page.server';
+import { access } from '$theme/cairn.config.js';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'Club manager', capability: 'editor' };
@@ -48,7 +49,7 @@ function postEvent(
       delete: () => undefined,
     },
     platform: { env: { CLUB_DB: opts.db } },
-    locals: { editor, auditSink: opts.auditSink },
+    locals: { editor, auditSink: opts.auditSink, cairnAccess: access },
   } as unknown as SaveActionEvent;
 }
 

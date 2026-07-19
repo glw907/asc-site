@@ -4,6 +4,7 @@ import type { Redirect } from '@sveltejs/kit';
 import type { Editor } from '@glw907/cairn-cms';
 import type { AdminActionAuditRecord } from '@glw907/cairn-cms/sveltekit';
 import { actions } from '../routes/admin/club/signups/+page.server';
+import { access } from '$theme/cairn.config.js';
 import { fakeD1 } from './_fake-d1';
 
 // 'Administrator' is the granted owner-capability role name (T2,
@@ -60,7 +61,7 @@ function postEvent(
       delete: () => undefined,
     },
     platform: { env: { CLUB_DB: opts.db ?? clubDb().db } },
-    locals: { editor, auditSink: opts.auditSink },
+    locals: { editor, auditSink: opts.auditSink, cairnAccess: access },
   } as unknown as SignupsActionEvent;
 }
 

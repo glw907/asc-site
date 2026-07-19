@@ -70,14 +70,19 @@ export interface ClubActionOptions {
  *    own doc comment).
  * 2. `CLUB_DB` must resolve off `event.platform.env`, or the action fails closed (500) with an
  *    audited rejection: a missing binding is a deployment misconfiguration, not a normal denial.
- * 3. The acting editor must be admitted by the site's `access` map for this request's path
- *    (`canReach(resolveCairnAccess(event.locals), ctx.editor, event.url.pathname)` — the same map the
- *    layout guard's `requireAccess` reads for loads, so a POST and its section's load can never
- *    disagree); `opts.ownerOnly` additionally requires owner CAPABILITY
- *    (`ctx.editor.capability === 'owner'`), the design's distinction between "may act in this
- *    section" and "may act as its owner", and stacks on top of the `canReach` check rather than
- *    replacing it. Either failure fails closed (403), audited.
- * 4. The handler runs with `ctx` extended by the resolved `db`, so it never re-resolves it.
+ * 3. `locals.cairnAccess` (the site's `access` map, resolved via `resolveCairnAccess`) must be
+ *    present, or the action fails closed (500) with an audited rejection, the same stance as the
+ *    `CLUB_DB` branch: `canReach(undefined, ...)` admits any editor-capability session, and a form
+ *    action never re-runs the ancestor layout's `load`, so an unwired map here would leave the POST
+ *    path unprotected -- a deployment misconfiguration, never a normal 403 denial.
+ * 4. The acting editor must be admitted by the now-guaranteed-present map for this request's path
+ *    (`canReach(accessMap, ctx.editor, event.url.pathname)` — the same map the layout guard's
+ *    `requireAccess` reads for loads, so a POST and its section's load can never disagree);
+ *    `opts.ownerOnly` additionally requires owner CAPABILITY (`ctx.editor.capability === 'owner'`),
+ *    the design's distinction between "may act in this section" and "may act as its owner", and
+ *    stacks on top of the `canReach` check rather than replacing it. Either failure fails closed
+ *    (403), audited.
+ * 5. The handler runs with `ctx` extended by the resolved `db`, so it never re-resolves it.
  */
 export function clubAdminAction<T>(
   handler: (args: { event: AdminActionEvent; form: FormData; ctx: ClubActionContext }) => Promise<T>,
@@ -99,7 +104,16 @@ export function clubAdminAction<T>(
       ctx.audit({ action: opts.action, entity: opts.entity, detail: 'rejected: CLUB_DB not bound' });
       return fail(500, { error: 'CLUB_DB is not bound.' });
     }
-    const hasClubRole = canReach(resolveCairnAccess(event.locals), ctx.editor, event.url.pathname);
+    const accessMap = resolveCairnAccess(event.locals);
+    if (!accessMap) {
+      // Fail closed, matching the CLUB_DB branch above: `canReach(undefined, ...)` admits any
+      // editor-capability session (see its own doc comment), and a form action never re-runs the
+      // ancestor layout's `load`, so an unwired map here is a deployment misconfiguration, not a
+      // normal denial -- never fall through to `canReach` with an absent map.
+      ctx.audit({ action: opts.action, entity: opts.entity, detail: 'rejected: access map not attached' });
+      return fail(500, { error: 'The access map is not attached.' });
+    }
+    const hasClubRole = canReach(accessMap, ctx.editor, event.url.pathname);
     const satisfiesOwnerOnly = !opts.ownerOnly || ctx.editor.capability === 'owner';
     if (!hasClubRole || !satisfiesOwnerOnly) {
       ctx.audit({

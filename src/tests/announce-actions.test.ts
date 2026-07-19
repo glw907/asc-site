@@ -10,6 +10,7 @@ import { load as listLoad, type AnnounceListRow } from '../routes/admin/club/ann
 import { actions, load as detailLoad } from '../routes/admin/club/announce/[id]/+page.server';
 import { deriveAnnouncementSummary, type AnnounceChannelOption } from '$admin-club/lib/announcements';
 import { posts, ORIGIN } from '$chassis/content';
+import { access } from '$theme/cairn.config.js';
 import { fakeD1 } from './_fake-d1';
 
 const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'Club manager', capability: 'editor' };
@@ -75,7 +76,7 @@ function postEvent(
       delete: () => undefined,
     },
     platform: { env: { CLUB_DB: opts.db, ...opts.env } },
-    locals: { editor, auditSink: opts.auditSink },
+    locals: { editor, auditSink: opts.auditSink, cairnAccess: access },
   } as unknown as SendActionEvent;
 }
 
