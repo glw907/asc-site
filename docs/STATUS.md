@@ -8,9 +8,10 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**PASS A `asc-roles-adoption` IS SHIPPED TO DEV AND THE LIVE GRANT ROWS ARE MIGRATED
-(2026-07-19, Fable-conducted, 5 Sonnet implementer dispatches + 2 reviewers + simplifier,
-commits 7a0f597..14c2964, deploy run 29705971324 green).** What shipped:
+**PASS A `asc-roles-adoption` IS SHIPPED TO DEV, THE LIVE GRANT ROWS ARE MIGRATED,
+AND MAIN IS GREEN (2026-07-19, Fable-conducted, 5 Sonnet implementer dispatches +
+2 reviewers + simplifier + a CI round, commits 7a0f597..ae67e5d, CI run 29707448071
+green).** What shipped:
 
 - **cairn `^0.88.0` (installed 0.88.1)**; the bump forced one adaptation (0.88's
   `ResolveNavLayoutOptions.editor` replaced the loose capability/role pair — a breaking
@@ -44,6 +45,20 @@ commits 7a0f597..14c2964, deploy run 29705971324 green).** What shipped:
   reserved-owner rename + ManageEditors phantom listing, the access-guide import
   cycle, the changelog's missing `Consumers must:`, the canReach permissive-fallback
   trap for site-side action gates).
+- **The CI round (the plan's "baselines untouched" claim was wrong twice, both
+  fixed by evidence, not guesswork):** (1) the e2e admin-session helper minted role
+  `'owner'` — post-rename that phantom resolves no club nav groups, so the sidebar
+  test and rollup baselines broke; it now mints `Administrator` and converges the
+  local AUTH_DB replica onto the live shape (cairn's 0001_roles.sql CHECK drop —
+  the frozen 0000_auth.sql seed still carries it). (2) The 0.88 engine's own admin
+  chrome changed: group headers took the collapse-seam button form (label a few px
+  left) and Fragments gained its layers glyph from the widened icon set (it had
+  shared the document glyph — the exact collision the seam fixes). Diagnosed from
+  CI's own PNGs via the NEW failure-artifact upload in ci.yml (added this round —
+  pixel diffs are now diagnosable with evidence); the two 1440 rollup baselines
+  re-minted via the update_snapshots dispatch (ae67e5d, exactly 2 files), read and
+  verified by the conductor's eyes. Admin chrome only; no member-facing surface
+  changed.
 - **NEXT: `asc-sidebar-build` (pass B)** — plan docs/plans/2026-07-19-asc-sidebar-build.md;
   OPENS with the probe round for Geoff's still-owed verdicts (open/closed defaults,
   25-icon assignment, within-group order). Resume prompt: "Start pass B: read
