@@ -106,6 +106,31 @@ requires name + class picker, plus address capture and the extended preview.
 **Status: composition CONVERGED pending Geoff's confirm of the full ledger; the data-model
 decisions await the same confirm before the spec/plan are rewritten.**
 
+## Round 3 — the T6b portal committees page (2026-07-18, Fable-conducted)
+
+**Probe:** `scratchpad/committees-probe/index.html` (deck) over `frame.html`. Built from the LIVE
+seeded rows (7 committees, real chair names, real descriptions; rosters beyond chairs are marked
+placeholders — the tables hold only chairs at seed time). Four actor scenarios (member, chair,
+board, edge states), 1440 + 390, both themes, one live request-to-pending toggle.
+
+**Verdicts (Geoff, 2026-07-18): COMPOSITION RATIFIED for the T6b build.** Settled in one round:
+
+- **The composition stands**: quiet hairline sections in the portal register (no card chrome),
+  contained reading width, zero fireweed on the page (request-to-join is a quiet navy outline
+  button; seven joins would blow the fireweed budget), zero gold.
+- **Chair names LINK to directory entries** — the committees page never renders contact info;
+  reachability lives in the directory, so the visibility dial stays enforced in one place.
+- **Board view manages all seven committees** (the permissions table, rendered literally); a
+  board member sees no Request button on committees they manage into directly.
+- **"Standing committee" caption KEPT** on Finance and Board Development only; the five
+  established committees carry nothing (absence is the default register).
+- **Roster reads as comma-flow at rest** with a MEMBERS · N label; stacked lines appear only in
+  managed views where each name needs a Remove target.
+- **Management affordances stay in the chromeless text-action register** (Approve / Decline /
+  Remove / Add member / Change chair / Edit / Archive) — a member page that chairs also use,
+  never an admin screen. The text-action tier should land as a NAMED class in the theme when
+  T6b builds (the probe hand-rolled a local `.tact`; harvest note).
+
 **PAUSED for a roles/committees brainstorm (2026-07-17).** Reviewing the roles slice, Geoff grew
 it into a structured roles-and-committees model (per-committee chairs, notable committee
 membership, member self-service + admin management, a member-facing committees surface) and called

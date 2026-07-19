@@ -4,6 +4,28 @@
 > STATUS.md's preamble). History only: nothing here is a live instruction, and entries
 > reflect what was true when written. The live rolling status is docs/STATUS.md.
 
+**[Superseded 2026-07-18: the pass executed to completion — see STATUS.] ROLES & COMMITTEES
+BRAINSTORM: DONE 2026-07-17 (Fable-conducted).** Spec docs/2026-07-17-roles-committees-design.md
+committed and Geoff-approved; SUPERSEDES the directory spec's decision 6 (flat member_roles —
+never built); directory plan reshaped IN PLACE. The model: `committees` (kind
+standing|established, archive-not-delete), `committee_members` (chair|co-chair|member +
+pending|active; UNIQUE pair), `member_positions` (kind officer|director|appointed —
+authorization hangs off kind, never title strings). Ratified: request-then-approve joining
+(chair notified via job-runner; decline/leave delete the row); chairs manage their roster;
+board (kind officer/director) appoints chairs and manages the committee list; site admin
+everything; rosters show every active member's NAME regardless of directory_visibility;
+chair titles DERIVE at render. Sitting score: 4 interaction points.
+
+**[Superseded 2026-07-18 by the directory pass finish — the /members before/after and the
+unfiled harvest staging remain open, tracked in STATUS pointers.] FRAGMENTS MIGRATION &
+DX/CONTRACT HARVEST: SHIPPED TO DEV 2026-07-17 (PR #2, Opus-conducted).** The site runs cairn
+^0.87.0 with the fragments concept live. Open at archive time: Geoff's before/after on the one
+class-b page (/members); the harvest DRAFTED BUT UNFILED (staged in
+docs/2026-07-17-fragments-harvest-findings.md; paste into cairn-cms's friction log once its
+live branch merges, then delete the staging file). The editor seat (E1-E8) is UNPROBED — runs
+when ASC moves to ^0.88.0. Full entry with probe findings and pinned-test inventory further
+down this archive.
+
 **[Superseded 2026-07-17 by the roles & committees sitting; the brainstorm ran and the pass
 resumed — see STATUS.] IMMEDIATE NEXT ACTION (Geoff, 2026-07-17): OPEN THE ROLES & COMMITTEES
 BRAINSTORM, FABLE-CONDUCTED, IN A FRESH SESSION.** The member-directory pass T0 surfaced that

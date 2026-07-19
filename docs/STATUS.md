@@ -8,78 +8,71 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**IMMEDIATE NEXT ACTION (2026-07-18): the `member-directory` pass is at T2b (committees +
-people seeder), OPUS-CONDUCTED. T0, T1, T2 (boats), and T2c (addresses) ARE DONE + APPLIED
-LIVE.** T0/T1 as before (Compact A composition; migration 0027 the directory domain). This
-session landed the seed data and a boats-model reshape Geoff ratified mid-pass:
-- **Migration 0028_boats_model** — boats reshaped to a single required `model` field (the
-  Buccaneer 18/Laser/Other picker writes the model; Other means typing it), dropping 0027's
-  `class` + conditional-`model` pair. Committed (**3c6a2ec**), scratch-proven, **APPLIED +
-  VERIFIED live** (boats was empty).
-- **T2 boat seed** — `scripts/import/boat-seed.mjs` seeded **29 boats** live from active
-  boat asset-assignments, attached to owners, models normalized. Owners defaulted to the
-  household primary; Geoff's review corrections are in the committed `boat-seed.resolutions.json`
-  (Gabe/Darren Black owners; models Demon 16, Megabyte, Laser II, Powerboat; Bart Hawkins's
-  duplicate assignment dropped; five names — Dionysus, Bat Boat, Spirit of 76, "Black, Nancy",
-  Daydream Believer). 0 orphans, all models valid. Names otherwise NULL (members fill going forward).
-- **T2c household address seed** — NEW `scripts/import/household-address-seed.mjs` filled
-  `address_line1`/`state`/`postal_code` on **146 households** live from the MW export (each
-  household's primary member's row), Title Cased; 2 street-less households skipped; `city` and
-  `address_line2` untouched. Update-if-null, audited, rollback-able.
-- **Members dedup** — the duplicate "Nancy Black" shadow row (a3c5ece1, contactless, second
-  mw_account_id, zero dependents) archived (reversible, audited). Elayne Hunter's two rows are a
-  legitimate membership history (individual→family), left as-is. Roster is 285 members / 148
-  households; a table-wide exact-name scan found only the one dup.
+**THE MEMBER-DIRECTORY PASS IS BUILT AND PUBLISHED TO DEV (2026-07-18, Fable-conducted
+finish on Geoff's "finish and publish with a workflow"). T0–T7 are all executed; what
+remains is REVIEW, not build.** The session landed, in order:
 
-Commits this session: 3c6a2ec (0028 + boat reshape), 4798cc1 (boat seeder), 5e355ea + 858ff3f +
-250ae71 (address seeder + simplify + title-case/names), 1520405 (spec docs), plus the resolutions
-commit. Spec docs (plan T1/T2/T2c/T4/T5 + design doc) updated in place to the name+model + address-seed model.
+- **T2b committees seed, APPLIED LIVE + VERIFIED** (d41c7a8): 7 committees (2 standing /
+  5 established, published-table sort), 4 officer positions, 8 active chair/co-chair
+  rows, 0 orphans/dupes. Name resolutions at import review: stored-name lookup keys
+  ("David Johnson", "Matthew Flickinger"), and the word-reversed "Stanbro TL" member row
+  FIXED LIVE to "TL Stanbro" (audit actor `admin:member-name-fix`). Geoff confirmed the
+  committee name **"Membership & Events"** and an EMPTY plain-director list (the four
+  officers are the whole board right now).
+- **T3 directory query** (b831de9): one row per listed member; standing sourced from
+  `standing.ts`'s new pure `standingWindowFromPaidAt` (four bounded queries + one
+  grace-days read); chair titles derive at render; partial visibility nulls email+phone+
+  address together; pending/archived-committee rows excluded in SQL.
+- **T4 Compact A directory screen** (c2b9f27, Opus implementer): compact rows expanding on
+  a sage wash, one filled top-title chip +N, boats-else-city secondary with width-aware
+  abbreviation, honest carets, ≤3-result auto-expand, three chips + one smart search,
+  mobile as its own composition. Pure view logic in `directory-view.ts` (27 tests).
+- **T5 edit surfaces** (3177afc): profile boat CRUD (name+model REQUIRED, picker resolves
+  to stored string), household address edit, extended "what others see" preview incl. the
+  roster-names-always-show statement.
+- **T6 admin CRUD** (5c3fde8): /admin/club/committees covering committees/memberships/
+  positions, archive-not-delete, decline-deletes-row; the queued admin-nav pass absorbs it.
+- **T6b portal committees page + delegation + public directive** (08728b1): probe built
+  from live rows, **Geoff-RATIFIED same day** (arc log round 3: text-action register,
+  comma-flow rosters, standing captions, chair names link to directory, zero fireweed);
+  /my-account/committees with request/cancel/leave + chair pending-queues + board
+  management, ALL predicates enforced server-side with denial tests; chair notification
+  via sendClubEmail; public /committees At-a-Glance now renders LIVE data via the
+  `committees-at-a-glance` directive (hand table deleted from committees.md).
+- **Reviews via two workflows** (wf_9276f60c, wf_77d050e4; 12 agents, 0 errors): svelte +
+  a11y on T4-T6 (8 findings fixed, 62256aa), then security + svelte + a11y on T6b
+  (d217669): join-request email spam got an email_log-backed 15-min cooldown,
+  archived-committee writes refused, duplicate add-member handled, board can never mint a
+  "pending chair". Declines are evidence-backed (pre-existing sitewide idioms).
+- **Gate at publish**: check 0/0 (916 files), 123 test files / 1614 tests, build green.
+  Pushed to main → dev deploy. e2e baselines for the two new portal specs minted via the
+  ci.yml update_snapshots dispatch (8 new: directory + committees × 390/1440 × both
+  themes; committees baseline is the fixture empty state — fixtures carry no committee
+  rows, noted in the spec).
 
-Resume prompt: "Resume the member-directory pass at T2b: read docs/plans/2026-07-17-member-directory.md
-and docs/2026-07-17-roles-committees-design.md, then dispatch T2b (committees + people seeder) — the
-seven committees plus officers/chairs from the published /committees At-a-Glance table, verified-import,
-Geoff supplies plain-director rows at the dry-run review. Then T3 (directory query)." Launch from
-~/Projects/aksailingclub-org, `/model opus`.
+**OPEN ON GEOFF'S QUEUE for this pass:** the before/after on dev — /my-account/directory
+(Compact A vs the old household cards), /my-account/committees, the profile/household edit
+surfaces, and the public /committees live table (now says "Membership & Events") — plus
+the standing accumulated queue (pointers below).
 
-INDEPENDENTLY SCHEDULABLE, any time Geoff's review suits: the FABLE waivers sitting (waivers plan
-T7 + the T4 signing-UX design; before the waivers BUILD reaches T4).
+**DX-harvest notes from this pass** (fold into the next harvest filing): a shared portal
+section primitive (the quiet hairline list is hand-rolled per page, third occurrence); a
+`--container-measure-list` token (60rem is a raw literal in directory + committees);
+`.portal-text-action` LANDED as the named text-register tier (probe's harvest note,
+shipped in T6b).
 
-**ROLES & COMMITTEES BRAINSTORM: DONE 2026-07-17 (Fable-conducted, this sitting). Spec
-docs/2026-07-17-roles-committees-design.md is committed and Geoff-approved; it SUPERSEDES the
-directory spec's decision 6 (flat member_roles — never built), and the directory plan is
-reshaped IN PLACE.** The model: `committees` (name, description, kind standing|established,
-archive-not-delete), `committee_members` (chair|co-chair|member + pending|active; UNIQUE pair),
-`member_positions` (kind officer|director|appointed — authorization hangs off kind, never
-title-string matches). Ratified: request-then-approve joining (request notifies chairs via the
-job-runner; decline/leave delete the row); chairs manage their own roster; board members
-(kind officer/director) appoint chairs and create/edit/archive committees; site admin everything;
-rosters show every active member's NAME regardless of directory_visibility (contact stays
-dialed); chair titles DERIVE at render so surfaces cannot drift. Surfaces: /my-account/committees
-(rights-derived affordances, probed and Geoff-verdicted before build), the probed directory
-rendering (filled chip for positions/chair titles, outline for plain membership), and the public
-/committees At-a-Glance table fed by a live directive (chairs/officers are public names, as the
-hand table already is today). Seeds: the seven committees (five established + Finance and Board
-Development standing, per bylaws) and people from the published At-a-Glance table,
-verified-import, misses audited; Geoff supplies plain-director rows at import review. Plan
-deltas: T1 grows to four tables, NEW T2b (committees+people seeder), T5 = boats + extended
-preview only, T6 = whole-model admin CRUD, NEW T6b (portal committees page + delegation +
-public directive; server-side predicate tests including denial cases), T7 adds
-web-auth-security-reviewer on the new authz surface (the pass's riskiest). SITTING SCORE: 4
-interaction points (committee list; bylaws redirect; one batched 4-question round; join-gate
-correction + the board-powers addition folded into the same exchange) — the bylaws redirect
-saved a question round that grounded three decisions. Tokens: not self-measurable; log from
-/cost before clearing if the number should join the trend ledger.
-
-**FRAGMENTS MIGRATION & DX/CONTRACT HARVEST: SHIPPED TO DEV 2026-07-17 (PR #2, Opus-conducted).
-The site runs cairn ^0.87.0 with the fragments concept live. TWO THINGS ARE OPEN AND NEITHER IS
-BLOCKING: Geoff's before/after on the one class-b page (/members), and the harvest is DRAFTED BUT
-UNFILED (staged in docs/2026-07-17-fragments-harvest-findings.md; paste into cairn-cms's friction
-log once its live branch merges, then delete the staging file). The editor seat (E1-E8) is
-UNPROBED, NOT CLEAN — it runs when ASC moves to ^0.88.0. Full entry with the probe findings and
-the pinned-test inventory: docs/status-archive.md.**
+**IMMEDIATE NEXT ACTION: the FABLE WAIVERS SITTING** (waivers plan T7 + the T4 signing-UX
+design; independently schedulable, precedes the waivers BUILD's T4; the attorney review it
+feeds is the launch checklist's longest external lead). Resume prompt: "Run the Fable
+waivers sitting: read docs/2026-07-17-member-waivers-design.md and
+docs/plans/2026-07-17-member-waivers.md, then execute the plan's T7 (legal draft packet +
+board packet) and the T4 signing-UX probes, per the sitting scope recorded there." Launch
+from ~/Projects/aksailingclub-org. After it: the waivers BUILD (Opus), then
+events-redesign, then the review-queue clear and mw-cutover per ROADMAP's pre-cutover
+sequence.
 
 **STILL OPEN ON GEOFF'S QUEUE (pointers; full entries in docs/status-archive.md):** portal
-redesign before/after against mock D (shipped to dev, merge 510b266, PR #1); the payments live
-smoke (canonical steps docs/plans/2026-07-15-payments-live-smoke.md — before/after on four
-public forms, real-browser Turnstile confirm, sandbox dry-smoke, go, key-swap, live smoke,
-revert); the five-stop dev walkthrough; the 07-15 apology-send verification.
+redesign before/after against mock D (PR #1, merge 510b266); the payments live smoke
+(canonical steps docs/plans/2026-07-15-payments-live-smoke.md); the five-stop dev
+walkthrough; the 07-15 apology-send verification; the fragments /members before/after and
+the unfiled fragments harvest (staged in docs/2026-07-17-fragments-harvest-findings.md).
