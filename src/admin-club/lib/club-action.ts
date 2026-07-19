@@ -32,9 +32,9 @@ export interface ClubActionContext extends AdminActionContext {
 }
 
 export interface ClubActionOptions {
-  /** Require the 'owner' seat rather than any club role (owner or admin). Defaults to false,
-   *  the routine-domain gate Task 5's events and this task's classes both use; Settings' own
-   *  role-management and offer-window writes are the owner-only case. */
+  /** Require owner CAPABILITY rather than any club role (Administrator or Club manager).
+   *  Defaults to false, the routine-domain gate Task 5's events and this task's classes both
+   *  use; Settings' own role-management and offer-window writes are the owner-only case. */
   ownerOnly?: boolean;
   /** The audit action verb this call site's successful path uses, reused for a guard
    *  rejection (a missing `CLUB_DB` binding or an insufficient role) so a refused attempt reads
@@ -55,8 +55,8 @@ export interface ClubActionOptions {
  *    own doc comment).
  * 2. `CLUB_DB` must resolve off `event.platform.env`, or the action fails closed (500) with an
  *    audited rejection: a missing binding is a deployment misconfiguration, not a normal denial.
- * 3. The acting editor's role, per the engine's own verified session, must be `'owner'` or
- *    `'club-admin'` (named roles, not capability, so a future editor-level role does not
+ * 3. The acting editor's role, per the engine's own verified session, must be `'Administrator'`
+ *    or `'Club manager'` (named roles, not capability, so a future editor-level role does not
  *    silently inherit club access); `opts.ownerOnly` additionally requires owner CAPABILITY
  *    (`ctx.editor.capability === 'owner'`), the design's distinction between "may act in this
  *    section" and "may act as its owner". Either failure fails closed (403), audited.

@@ -6,10 +6,13 @@ import type { AdminActionAuditRecord } from '@glw907/cairn-cms/sveltekit';
 import { actions } from '../routes/admin/club/signups/+page.server';
 import { fakeD1 } from './_fake-d1';
 
-const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'owner', capability: 'owner' };
-// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+// 'Administrator' is the granted owner-capability role name (T2,
+// docs/2026-07-19-asc-roles-adoption.md); the reserved `owner` role stays declared but carries no
+// club access.
+const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'Administrator', capability: 'owner' };
+// 'Instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
 // (initiative 5 Task 2), not a `club_roles` row.
-const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
+const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'Instructor', capability: 'none' };
 
 /** The double-submit pair `adminAction` checks: a `__Host-`-prefixed cookie (issued over https,
  *  matching every real admin request) against the posted `csrf` field. */

@@ -21,16 +21,28 @@ function editorWithRole(role: Role): Editor {
 }
 
 describe('/admin/club layout guard', () => {
-  it('passes a club owner through with no D1 read', async () => {
-    await expect(load(eventFor(editorWithRole('owner')))).resolves.toEqual({});
+  it('passes an Administrator through with no D1 read', async () => {
+    await expect(load(eventFor(editorWithRole('Administrator')))).resolves.toEqual({});
   });
 
-  it('passes a club admin through', async () => {
-    await expect(load(eventFor(editorWithRole('club-admin')))).resolves.toEqual({});
+  it('passes a Club manager through', async () => {
+    await expect(load(eventFor(editorWithRole('Club manager')))).resolves.toEqual({});
   });
 
-  it('403s an instructor session', async () => {
-    await expect(load(eventFor(editorWithRole('instructor')))).rejects.toSatisfy(
+  // The roles-adoption pass's T2 (docs/2026-07-19-asc-roles-adoption.md): the reserved `owner`
+  // role stays declared (`defineRoles` requires it) but is never granted club access -- only
+  // `Administrator` is. A session still reading the pre-migration `owner` role (the narrow window
+  // between the code deploying and the row migration applying) gets a clean 403 here, same as any
+  // other session with no club role; it keeps every other engine capability `resolveCapability`
+  // grants it, just not this section.
+  it('403s the reserved owner role: it carries no club access', async () => {
+    await expect(load(eventFor(editorWithRole('owner')))).rejects.toSatisfy(
+      (err: unknown) => isHttpError(err) && err.status === 403,
+    );
+  });
+
+  it('403s an Instructor session', async () => {
+    await expect(load(eventFor(editorWithRole('Instructor')))).rejects.toSatisfy(
       (err: unknown) => isHttpError(err) && err.status === 403,
     );
   });

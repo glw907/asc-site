@@ -5,11 +5,14 @@ import type { AdminActionAuditRecord } from '@glw907/cairn-cms/sveltekit';
 import { actions } from '../routes/admin/club/settings/+page.server';
 import { fakeD1 } from './_fake-d1';
 
-const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
+const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'Club manager', capability: 'editor' };
 // `clubAdminAction`'s ownerOnly gate now reads the engine's own verified `capability`
-// (initiative 5 Task 2), not a `club_roles` DB row, so this fixture carries the `'owner'` role and
-// capability directly rather than relying on the fake DB response to distinguish it from `admin`.
-const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'owner', capability: 'owner' };
+// (initiative 5 Task 2), not a `club_roles` DB row, so this fixture carries owner capability
+// directly rather than relying on the fake DB response to distinguish it from `admin`. Named
+// `'Administrator'` (T2, docs/2026-07-19-asc-roles-adoption.md): the reserved `owner` role stays
+// declared but carries no club access, so a fixture exercising the granted ownerOnly path must use
+// the real granted owner-capability role name, not the phantom.
+const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'Administrator', capability: 'owner' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
 const CSRF_TOKEN = 'test-csrf-token';

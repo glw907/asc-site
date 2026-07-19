@@ -12,10 +12,10 @@ import { actions, load } from '../routes/admin/club/email/compose/+page.server';
 import type { SegmentOption } from '$admin-club/lib/segments';
 import { fakeD1 } from './_fake-d1';
 
-const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-// 'instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
+const admin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'Club manager', capability: 'editor' };
+// 'Instructor' carries no club role; clubAdminAction's gate now reads `editor.role` directly
 // (initiative 5 Task 2), not a `club_roles` row.
-const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'instructor', capability: 'none' };
+const noRole: Editor = { email: 'no-role@example.com', displayName: 'No Role', role: 'Instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
 const CSRF_TOKEN = 'test-csrf-token';

@@ -19,5 +19,8 @@ export function resolveClubDb(env: unknown): D1Database | undefined {
 /** The two role names with club access, named roles rather than owner CAPABILITY (see
  *  `club-action.ts`'s `clubAdminAction` doc comment for why that distinction matters). The one
  *  place this pair is written, so the `/admin/club` layout guard, `clubAdminAction`'s routine
- *  gate, and the navLayout tree's `roles` lists can never drift from each other. */
-export const CLUB_ROLES: Role[] = ['owner', 'club-admin'];
+ *  gate, and the navLayout tree's `roles` lists can never drift from each other. Renamed from
+ *  `['owner', 'club-admin']` by the roles-adoption pass's T2 (docs/2026-07-19-asc-roles-adoption.md);
+ *  the reserved `owner` role stays declared in `cairn.config.ts`'s vocabulary but is never granted
+ *  again, so it carries no club access here either. */
+export const CLUB_ROLES: Role[] = ['Administrator', 'Club manager'];

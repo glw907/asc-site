@@ -5,9 +5,12 @@ import type { Editor } from '@glw907/cairn-cms';
 import type { AdminActionAuditRecord, AdminActionEvent } from '@glw907/cairn-cms/sveltekit';
 import { clubAdminAction } from '$admin-club/lib/club-action';
 
-const clubAdmin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'club-admin', capability: 'editor' };
-const owner: Editor = { email: 'owner@example.com', displayName: 'Owner', role: 'owner', capability: 'owner' };
-const instructor: Editor = { email: 'instructor@example.com', displayName: 'Instructor', role: 'instructor', capability: 'none' };
+const clubAdmin: Editor = { email: 'admin@example.com', displayName: 'Admin', role: 'Club manager', capability: 'editor' };
+// 'Administrator' is the granted owner-capability name from the roles-adoption pass's T2
+// (docs/2026-07-19-asc-roles-adoption.md); the reserved `owner` role stays declared but is never
+// granted club access, so a fixture exercising the granted owner-capability path uses this name.
+const administrator: Editor = { email: 'admin-owner@example.com', displayName: 'Administrator', role: 'Administrator', capability: 'owner' };
+const instructor: Editor = { email: 'instructor@example.com', displayName: 'Instructor', role: 'Instructor', capability: 'none' };
 
 const CSRF_COOKIE_NAME = '__Host-cairn_csrf';
 const CSRF_TOKEN = 'test-csrf-token';
@@ -74,13 +77,13 @@ describe('clubAdminAction', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('lets an owner through the routine (non-ownerOnly) gate too', async () => {
+  it('lets an Administrator through the routine (non-ownerOnly) gate too', async () => {
     const handler = vi.fn(async ({ ctx }) => {
       ctx.audit({ action: 'do', entity: 'widget' });
       return { ok: true };
     });
     const action = clubAdminAction(handler, { action: 'do', entity: 'widget' });
-    const result = await action(postEvent(owner, { db: {} }));
+    const result = await action(postEvent(administrator, { db: {} }));
     expect(result).toEqual({ ok: true });
   });
 
@@ -118,14 +121,14 @@ describe('clubAdminAction', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('ownerOnly lets an owner through, and hands the handler the resolved db', async () => {
+  it('ownerOnly lets an Administrator through, and hands the handler the resolved db', async () => {
     const db = {};
     const handler = vi.fn(async ({ ctx }) => {
       ctx.audit({ action: 'do', entity: 'widget' });
       return { ok: true, sameDb: ctx.db === db };
     });
     const action = clubAdminAction(handler, { ownerOnly: true, action: 'do', entity: 'widget' });
-    const result = await action(postEvent(owner, { db }));
+    const result = await action(postEvent(administrator, { db }));
     expect(result).toEqual({ ok: true, sameDb: true });
   });
 });

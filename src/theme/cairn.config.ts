@@ -34,9 +34,9 @@ export const { renderMarkdown } = createRenderer(ascRegistry);
 // than segregated by provenance. The six screens a committee volunteer works routinely lead
 // (Club), the lower-frequency pairs get their own labeled groups (Outreach, Boats & Gear), and
 // configuration sinks to the trailing Site group. Every `roles` gate names the two declared
-// role names with club access (`owner`, `club-admin`); an `instructor` session (no `home`,
-// `none` capability) resolves neither a club group nor an engine screen. Icon picks stay inside
-// cairn's nine-name allowlist, matching the icons the site's routes carried before this tree
+// role names with club access (`Administrator`, `Club manager`); an `Instructor` session (no
+// `home`, `none` capability) resolves neither a club group nor an engine screen. Icon picks stay
+// inside cairn's nine-name allowlist, matching the icons the site's routes carried before this tree
 // existed. `{ screen: 'nav' }` is referenced here (not omitted, despite the design doc's phase-2
 // prose assuming no navMenu is configured): the adapter's `editor.nav` block below DOES
 // configure the site's nav-menu editor, so `navMenuConfigured` is true at construction and the
@@ -147,17 +147,33 @@ export const publicMediaResolver = makeMediaResolver(mediaManifest, resolvedAsse
 // on.
 export const mediaEnabled = resolvedAssets.enabled;
 
-// The site's role vocabulary (initiative 5,
-// docs/2026-07-14-admin-roles-navlayout-design.md#phase-1), the collapse target for the
-// retired `club_roles` table. `instructor` declares no `home`: no instructor-reachable
-// screen exists until class-management builds the roster, and the engine's signed-in
-// welcome view is the correct landing until then. `src/app.d.ts` augments
-// `CairnRolesRegister` with `typeof roles`, so `locals.editor.role` narrows to these
-// three names everywhere the site reads it.
+// The site's role vocabulary (pass A of admin-sidebar-2,
+// docs/2026-07-19-asc-roles-adoption.md T2; docs/2026-07-18-admin-sidebar-2-design.md decision 8):
+// five plain-function names, renamed from the initiative-5 pair (`owner`/`club-admin`) plus one
+// new club role and two new site roles. `owner: 'owner'` stays declared even though the site never
+// grants it again: `defineRoles` reserves and hard-requires the key (throws without it, and throws
+// unless it maps to owner capability -- `node_modules/@glw907/cairn-cms/dist/auth/roles.js`), so
+// the literal rename the spec first reached for is not achievable. It is a phantom the engine
+// forces, kept un-granted; `Administrator` is the real, granted owner-capability name from here on.
+// The last-owner guard stays safe across both names: `ownerLevelRoles(roles)` (not the literal
+// `'owner'` string) is the set it counts across, and it resolves to `{owner, Administrator}`
+// (`src/tests/roles-vocabulary.test.ts` pins this). `Webmaster` and `Publisher` are new, both
+// editor capability; `Instructor` (unchanged from initiative 5) declares no `home`: no
+// instructor-reachable screen exists until class-management builds the roster, and the engine's
+// signed-in welcome view is the correct landing until then. `src/app.d.ts` augments
+// `CairnRolesRegister` with `typeof roles`, so `locals.editor.role` narrows to these six names
+// everywhere the site reads it. DX-harvest finding filed alongside this change: the `ManageEditors`
+// grant screen lists every vocabulary key as a grantable role
+// (`node_modules/@glw907/cairn-cms/dist/sveltekit/editors-routes.js`'s `vocabularyList =
+// Object.keys(vocabulary).map(...)`), so the phantom `owner` appears beside `Administrator` as a
+// second, confusing owner-level option in both the add-editor and role-change selects.
 export const roles = defineRoles({
   owner: 'owner',
-  'club-admin': 'editor',
-  instructor: { capability: 'none' },
+  Administrator: 'owner',
+  'Club manager': 'editor',
+  Webmaster: 'editor',
+  Publisher: 'editor',
+  Instructor: { capability: 'none' },
 });
 
 export const cairn = defineAdapter({

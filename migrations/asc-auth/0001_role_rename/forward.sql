@@ -1,0 +1,27 @@
+-- asc-auth migration 0001: rename the two granted role names on the live `editor` table (AUTH_DB,
+-- database cairn-asc-auth) to match the roles-adoption pass's T2 plain-function vocabulary
+-- (docs/2026-07-19-asc-roles-adoption.md, docs/2026-07-18-admin-sidebar-2-design.md decision 8).
+-- Data UPDATE only: cairn's own 0001_roles.sql (node_modules/@glw907/cairn-cms/migrations/, applied
+-- to the live cairn-asc-auth database in initiative 5) already dropped the
+-- `role IN ('owner','editor')` CHECK constraint, so this migration needs no schema change. The
+-- frozen root-level migrations/0000_auth.sql still shows the old CHECK -- it is a seed, not the
+-- live shape (verified 2026-07-19).
+--
+-- `owner` -> `Administrator`, `club-admin` -> `Club manager`. Written general (a WHERE-scoped
+-- UPDATE, not a row-id list) even though the live table today holds only two `owner` rows and no
+-- `club-admin` rows (verified 2026-07-19), so a later `club-admin` grant made before this
+-- migration runs still carries forward correctly. Every other role value is untouched (no live row
+-- carries `instructor` today; T2's vocabulary renames it to `Instructor` for a future grant, with
+-- no existing row to migrate).
+--
+-- Deploy order (the plan's T2 "lockout-safe by construction" constraint): apply this ONLY after
+-- the code that declares the new `roles` vocabulary (`src/theme/cairn.config.ts`) has deployed and
+-- is serving. That vocabulary keeps declaring the reserved `owner: 'owner'` entry alongside
+-- `Administrator`, so a live row still reading `owner` keeps resolving to owner capability right up
+-- until this migration runs -- never a window where a live row's role name is absent from the
+-- vocabulary (which would fail it closed to `none` capability). Once this migration runs, that same
+-- row reads `Administrator` and keeps resolving to owner capability, now also carrying the club
+-- section's own role-gated access (`CLUB_ROLES`), which the phantom `owner` name never does after
+-- this pass (`src/admin-club/lib/club-db.ts`).
+UPDATE editor SET role = 'Administrator' WHERE role = 'owner';
+UPDATE editor SET role = 'Club manager' WHERE role = 'club-admin';

@@ -4,8 +4,8 @@
 // already uses. Initiative 5 Task 2 collapsed this onto the engine's own typed session: a club
 // role is no longer a separate `club_roles` grant, it is `locals.editor.role` itself, narrowed to
 // the site's declared vocabulary (`src/app.d.ts`'s `CairnRolesRegister` augmentation). A signed-in
-// editor whose role is not `'owner'` or `'club-admin'` gets a clean 403, never a redirect, since
-// they ARE signed in, just not into this section.
+// editor whose role is not `'Administrator'` or `'Club manager'` gets a clean 403, never a
+// redirect, since they ARE signed in, just not into this section.
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import { requireSession } from '@glw907/cairn-cms/sveltekit';

@@ -39,7 +39,8 @@ const wireClubAuditSink: Handle = ({ event, resolve }) => {
   return resolve(event);
 };
 
-// `{ roles }` wires the site's own vocabulary (owner/club-admin/instructor) into the guard;
-// omitting it silently falls back to cairn's DEFAULT_ROLES, resolving every session (including
-// a real club-admin) to 'none' capability and losing every engine content screen.
+// `{ roles }` wires the site's own vocabulary (Administrator/Club manager/Webmaster/Publisher/
+// Instructor, plus the reserved un-granted `owner`) into the guard; omitting it silently falls
+// back to cairn's DEFAULT_ROLES, resolving every session (including a real Club manager) to
+// 'none' capability and losing every engine content screen.
 export const handle = sequence(securityHeaders, wireClubAuditSink, createAuthGuard({ roles }));
