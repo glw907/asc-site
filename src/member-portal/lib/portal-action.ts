@@ -29,6 +29,10 @@ export interface PortalActionEvent {
   request: Request;
   cookies: { get(name: string): string | undefined; set(name: string, value: string, opts: { path: string; [key: string]: unknown }): void };
   platform?: { env: unknown };
+  /** SvelteKit's own client-IP resolver, present on the real `RequestEvent` the wrapper is called
+   *  with; the signing action records it on the signature row. Optional here so the narrow event
+   *  shape a test constructs need not supply it. */
+  getClientAddress?(): string;
 }
 
 /** What a `portalAction` handler receives: the signed-in member's own row, the resolved `CLUB_DB`
@@ -40,6 +44,10 @@ export interface PortalActionContext {
    *  household-write actions (leave-the-club, remove-a-member, set-anyone's-visibility) gate on
    *  this themselves; reading it here saves every such handler a repeat lookup. */
   isPrimary: boolean;
+  /** The bearer session id the wrapper resolved the member from. Most handlers ignore it; the
+   *  signing action needs it to trace the magic-link auth event backing the signature
+   *  (`$member-portal/lib/signatures.ts`'s `resolveSessionAuthEvent`). */
+  sessionId: string;
 }
 
 /** A length-checked constant-time compare (mirrors `$member-auth/lib/auth.ts`'s own private
@@ -93,6 +101,6 @@ export function portalAction<T>(handler: (args: { event: PortalActionEvent; form
       .first<{ primary_member_id: string | null }>();
     const isPrimary = household?.primary_member_id === member.id;
 
-    return handler({ event, form, ctx: { member, db, isPrimary } });
+    return handler({ event, form, ctx: { member, db, isPrimary, sessionId: sessionId as string } });
   };
 }

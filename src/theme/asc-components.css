@@ -1184,4 +1184,314 @@
       max-width: none;
     }
   }
+
+  /* ─── Signing moment (member-waivers T4, the ratified probe design) ──────────────────────── */
+  /* The one continuous signing moment: a hairline accordion that IS the progress, a framed
+     document sheet whose bottom edge is the signature strip, the portal's one filled navy Sign
+     button. Every value maps to theme.css tokens (both themes carry an override where it matters);
+     zero fireweed, zero gold, per the round-1 verdict. A reading measure keeps the legal text
+     comfortable. */
+  .signing-welcome {
+    margin-top: var(--spacing-xs);
+    max-width: 46rem;
+  }
+  .signing-welcome-body {
+    margin-top: var(--spacing-xs);
+    font-size: var(--text-step-0);
+    line-height: var(--leading-body);
+    color: var(--color-muted);
+  }
+  .signing-alert {
+    margin-top: var(--spacing-s);
+    max-width: 46rem;
+    border: 1px solid var(--color-error);
+    background: color-mix(in oklab, var(--color-error) 10%, transparent);
+    border-radius: var(--radius-field);
+    padding: var(--spacing-xs) var(--spacing-s);
+    font-size: var(--text-step--1);
+    color: var(--color-error);
+  }
+
+  .signing-list {
+    list-style: none;
+    margin: var(--spacing-m) 0 0;
+    padding: 0;
+    max-width: 46rem;
+  }
+  .signing-entry {
+    border-top: 1px solid var(--color-card-border);
+    padding: var(--spacing-s) 0;
+  }
+  .signing-entry:first-child {
+    border-top: none;
+  }
+
+  /* A signed entry collapses to a receipt line; an upcoming entry sits muted. */
+  .signing-receipt,
+  .signing-upcoming {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem var(--spacing-s);
+    align-items: baseline;
+  }
+  .signing-receipt-title {
+    font-weight: 600;
+    color: var(--color-base-content);
+  }
+  .signing-receipt-note {
+    font-size: var(--text-step--1);
+    color: var(--color-muted);
+  }
+  .signing-upcoming {
+    color: var(--color-muted);
+  }
+  .signing-upcoming-title {
+    font-weight: 600;
+  }
+  .signing-upcoming-note {
+    font-size: var(--text-step--1);
+  }
+
+  /* The current entry expands in place. */
+  .signing-eyebrow {
+    font-size: var(--text-step--2);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+  .signing-entry-title {
+    margin-top: 0.15rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--text-step-3);
+    line-height: var(--leading-tight);
+    color: var(--color-base-content);
+  }
+  .signing-minor-id {
+    margin-top: 0.35rem;
+    font-size: var(--text-step-0);
+    font-weight: 600;
+    color: var(--color-base-content);
+  }
+  .signing-minor-born {
+    font-weight: 400;
+    color: var(--color-muted);
+  }
+  .signing-framing {
+    margin-top: var(--spacing-xs);
+    max-width: 42rem;
+    font-size: var(--text-step-0);
+    line-height: var(--leading-body);
+    color: var(--color-muted);
+  }
+
+  /* The sheet: a framed object (an elevated surface + hairline + soft shadow) with the signature
+     strip as its bottom edge. `--color-base-100` is the "white sheet" in light and the elevated
+     dark surface in asc-dark, so the sheet never blinds a dark-mode reader. */
+  .signing-sheet {
+    margin-top: var(--spacing-s);
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-box);
+    background: var(--color-base-100);
+    box-shadow: var(--cairn-shadow);
+    overflow: hidden;
+  }
+  .signing-sheet-text {
+    padding: var(--spacing-m);
+  }
+
+  .signing-strip {
+    border-top: 1px solid var(--color-card-border);
+    background: var(--color-sage);
+    padding: var(--spacing-m);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-s);
+  }
+
+  .signing-attest {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+  .signing-attest-prompt {
+    margin-bottom: 0.1rem;
+    font-size: var(--text-step--1);
+    font-weight: 600;
+    color: var(--color-base-content);
+  }
+  .signing-attest-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-block: 0.35rem;
+    font-size: var(--text-step--1);
+    line-height: var(--leading-snug);
+    color: var(--color-base-content);
+  }
+
+  .signing-name-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 26rem;
+  }
+  .signing-name-label {
+    font-size: var(--text-step--1);
+    font-weight: 600;
+    color: var(--color-base-content);
+  }
+  .signing-name-input {
+    width: 100%;
+  }
+  .signing-name-helper {
+    font-size: var(--text-step--2);
+    line-height: var(--leading-snug);
+    color: var(--color-muted);
+  }
+
+  /* The portal's one filled button: flag navy, visible in both themes on its own. */
+  .signing-sign-btn {
+    align-self: flex-start;
+    min-height: 2.75rem;
+    border: 1px solid var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+    font-weight: 600;
+  }
+  .signing-sign-btn:hover {
+    background: color-mix(in oklab, var(--color-primary) 88%, black);
+    border-color: color-mix(in oklab, var(--color-primary) 88%, black);
+  }
+  .signing-sign-btn:disabled {
+    opacity: 0.6;
+  }
+  .signing-sign-btn:focus-visible,
+  .signing-name-input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Contact-confirm glance card and the completion coda: a quiet tinted panel, read-only rows,
+     the same filled confirm. */
+  .signing-contact,
+  .signing-done {
+    margin-top: var(--spacing-m);
+    max-width: 46rem;
+    border: 1px solid var(--color-card-border);
+    border-radius: var(--radius-box);
+    background: var(--color-base-200);
+    padding: var(--spacing-m);
+  }
+  .signing-contact:focus-visible,
+  .signing-done:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  .signing-contact-title,
+  .signing-done-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--text-step-2);
+    color: var(--color-base-content);
+  }
+  .signing-contact-line,
+  .signing-done-line {
+    margin-top: var(--spacing-xs);
+    font-size: var(--text-step-0);
+    line-height: var(--leading-body);
+    color: var(--color-muted);
+  }
+  .signing-contact-rows {
+    margin-top: var(--spacing-s);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .signing-contact-row {
+    display: grid;
+    grid-template-columns: 8rem 1fr;
+    gap: var(--spacing-s);
+    font-size: var(--text-step--1);
+  }
+  .signing-contact-row dt {
+    color: var(--color-muted);
+  }
+  .signing-contact-row dd {
+    margin: 0;
+    color: var(--color-base-content);
+  }
+  .signing-contact-form {
+    margin-top: var(--spacing-s);
+  }
+  .signing-contact-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-s);
+  }
+  .signing-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .signing-field-wide {
+    grid-column: 1 / -1;
+  }
+  .signing-field-label {
+    font-size: var(--text-step--1);
+    font-weight: 600;
+    color: var(--color-base-content);
+  }
+  .signing-field-label-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .signing-contact-actions {
+    margin-top: var(--spacing-m);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-s);
+    align-items: center;
+  }
+  .signing-done-title + .signing-done-line + a,
+  .signing-done a {
+    display: inline-block;
+    margin-top: var(--spacing-s);
+  }
+
+  /* Dark mode: a plain `.btn`'s border and fill collapse into the page ground in asc-dark (agent
+     memory: daisyui-plain-btn-dark-contrast), so the quiet secondary buttons in these sections get
+     a visible `--color-card-border`. The filled navy Sign button already stands on its own. */
+  [data-theme='asc-dark'] .signing-strip {
+    background: var(--color-base-200);
+  }
+  [data-theme='asc-dark'] .signing-contact-actions .btn:not(.signing-sign-btn),
+  [data-theme='asc-dark'] .signing-done a.btn {
+    border-color: var(--color-card-border);
+  }
+
+  @media (max-width: 40rem) {
+    .signing-sheet-text,
+    .signing-strip {
+      padding: var(--spacing-s);
+    }
+    .signing-sign-btn {
+      width: 100%;
+    }
+    .signing-contact-fields {
+      grid-template-columns: 1fr;
+    }
+    .signing-contact-row {
+      grid-template-columns: 1fr;
+      gap: 0.1rem;
+    }
+  }
 }
