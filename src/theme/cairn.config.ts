@@ -6,6 +6,7 @@ import { defineAdapter, defineConcept, defineRoles, fieldset, fields, githubApp,
 import { normalizeAssets, makeMediaResolver, readCommittedManifest } from '@glw907/cairn-cms/media';
 import type { NavLayout } from '@glw907/cairn-cms/sveltekit';
 import { CLUB_ROLES } from '$admin-club/lib/club-db';
+import { buildAccess } from './access.js';
 import { ascRegistry } from './markdown/components.js';
 import { ICON_PATHS } from './markdown/icons.js';
 import ContactForm from './components/ContactForm.svelte';
@@ -176,8 +177,18 @@ export const roles = defineRoles({
   Instructor: { capability: 'none' },
 });
 
+// The site's access map (pass A T3, docs/plans/2026-07-19-asc-roles-adoption.md;
+// src/theme/access.ts carries the map itself and the comprehensiveness/carve-out reasoning).
+// Built here, immediately after `roles`, rather than imported as a top-level constant from
+// access.ts: access.ts's own header comment explains the import-cycle crash that forces this
+// factory shape. `access` then flows to `defineAdapter`'s `access` member below and back out to
+// hooks.server.ts's `createAuthGuard`, the same "declared once in cairn.config.ts, consumed
+// through it" path `roles` already takes to its own other consumers.
+export const access = buildAccess(roles);
+
 export const cairn = defineAdapter({
   roles,
+  access,
   content: {
     posts: defineConcept({
       dir: 'src/content/posts',

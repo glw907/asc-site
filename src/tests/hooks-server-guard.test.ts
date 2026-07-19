@@ -4,6 +4,13 @@
 // would resolve to 'none' capability and lose every engine content screen. Mocking the guard
 // module and asserting its call args is cheaper and more honest than exercising `handle`
 // end-to-end (which would need a full D1-backed session and a fake platform.env).
+//
+// Extended for the roles-adoption pass's T3 (docs/plans/2026-07-19-asc-roles-adoption.md): the
+// guard must also receive the site's declared `access` map. A map wired onto only the adapter (or
+// only the guard) is the cairn access guide's own named silent-misconfiguration failure mode --
+// engine screens quietly fall back to any-editor-capability while a custom route's `requireAccess`
+// keeps enforcing correctly, so the map looks like it "mostly works." This assertion is what would
+// catch a future edit that drops `access` from this call.
 import { describe, expect, it, vi } from 'vitest';
 
 const createAuthGuard = vi.fn(() => async ({ event, resolve }: { event: unknown; resolve: (event: unknown) => unknown }) =>
@@ -20,11 +27,11 @@ describe('hooks.server.ts', () => {
   // markdown registry, icon set, several .svelte islands), which is slow to transform under a
   // full-suite run's contention even though it is fast in isolation.
   it(
-    'constructs the admin guard with the site role vocabulary',
+    'constructs the admin guard with the site role vocabulary and access map',
     async () => {
-      const { roles } = await import('$theme/cairn.config.js');
+      const { roles, access } = await import('$theme/cairn.config.js');
       await import('../hooks.server');
-      expect(createAuthGuard).toHaveBeenCalledWith({ roles });
+      expect(createAuthGuard).toHaveBeenCalledWith({ roles, access });
     },
     20000,
   );

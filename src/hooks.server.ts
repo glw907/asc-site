@@ -13,7 +13,7 @@ import type { Handle } from '@sveltejs/kit';
 import { createAuthGuard } from '@glw907/cairn-cms/sveltekit';
 import { resolveClubDb } from '$admin-club/lib/club-db';
 import { createClubAuditSink } from '$admin-club/lib/audit-sink';
-import { roles } from '$theme/cairn.config.js';
+import { roles, access } from '$theme/cairn.config.js';
 
 // The root `_headers` file covers static assets only: on Cloudflare, Worker-rendered (SSR)
 // responses never pass through it, so the same four headers are set here for every rendered
@@ -42,5 +42,8 @@ const wireClubAuditSink: Handle = ({ event, resolve }) => {
 // `{ roles }` wires the site's own vocabulary (Administrator/Club manager/Webmaster/Publisher/
 // Instructor, plus the reserved un-granted `owner`) into the guard; omitting it silently falls
 // back to cairn's DEFAULT_ROLES, resolving every session (including a real Club manager) to
-// 'none' capability and losing every engine content screen.
-export const handle = sequence(securityHeaders, wireClubAuditSink, createAuthGuard({ roles }));
+// 'none' capability and losing every engine content screen. `{ access }` wires the site's
+// permission map (src/theme/access.ts); the adapter's own `access` member (cairn.config.ts) is the
+// other required wiring -- a map passed to only one of the two is a silent misconfiguration (the
+// cairn access guide's own warning), not a startup error, so both must stay in sync here.
+export const handle = sequence(securityHeaders, wireClubAuditSink, createAuthGuard({ roles, access }));
