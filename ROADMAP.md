@@ -133,7 +133,9 @@ Second round on the admin sidebar, queued by Geoff 2026-07-18 as the next pass
 the brainstorm: the current split-desk tree likely has too many groups; the sidebar
 should open with every group collapsed except one, probably the common-operations
 group (which group stays open is a brainstorm question, not settled); and every item
-gets a unique icon. Brainstorm-first by mandate; Geoff's walkthrough remains the
+gets a unique icon. Also (Geoff, 2026-07-18): in ASC usage "Site" means the physical
+club grounds, not the website, so the current "Site" group heading is misleading and
+needs a different name. Brainstorm-first by mandate; Geoff's walkthrough remains the
 acceptance gate. Builds on the shipped navLayout seam; likely DX-harvest surface for
 cairn (collapsed-state defaults and per-item icons may need engine seams).
 
