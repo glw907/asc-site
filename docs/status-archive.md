@@ -4,6 +4,35 @@
 > STATUS.md's preamble). History only: nothing here is a live instruction, and entries
 > reflect what was true when written. The live rolling status is docs/STATUS.md.
 
+**[Superseded 2026-07-19: the build workflow completed and released — see STATUS.] IN
+FLIGHT (2026-07-18 evening): the waivers build workflow wf_07d3ab70-09b was running
+(T1–T4 landed; T5 escalated and was decomposed T5a/b/c under the recompute-at-unlock
+ruling) while the admin-sidebar-2 brainstorm ran live with Geoff (spec DRAFT
+docs/2026-07-18-admin-sidebar-2-design.md + cairn seams consumer brief). The full
+in-flight accounting is in that session's STATUS commit (57a4d7b); the landed truth is
+STATUS's 2026-07-19 entry.**
+
+**[Trimmed 2026-07-19; follow-ups carried into STATUS's pointer block.] THE
+MEMBER-DIRECTORY PASS IS BUILT AND PUBLISHED TO DEV (2026-07-18, Fable-conducted
+finish). T0–T7 all executed; what remained was REVIEW.** Landed: T2b committees seed
+APPLIED LIVE + VERIFIED (d41c7a8: 7 committees, 4 officer positions, 8 chair rows;
+"Membership & Events" confirmed; empty plain-director list; "Stanbro TL" fixed live to
+"TL Stanbro"); T3 directory query (b831de9: standingWindowFromPaidAt, partial
+visibility nulls email+phone+address together); T4 Compact A screen (c2b9f27, Opus:
+compact rows on sage wash, width-aware secondary, 27 view tests); T5 edit surfaces
+(3177afc: boat CRUD, household address, "what others see" preview); T6 admin CRUD
+(5c3fde8: /admin/club/committees, archive-not-delete); T6b portal committees page +
+delegation + public directive (08728b1, probe Geoff-RATIFIED: /my-account/committees
+request/cancel/leave + chair queues + board management, all predicates server-side
+with denial tests; public /committees renders live via committees-at-a-glance).
+Reviews via two workflows (wf_9276f60c, wf_77d050e4; 12 agents, 0 errors; fixes
+62256aa, d217669: 15-min email cooldown, archived-committee writes refused, no minted
+"pending chair"). Gate at publish: check 0/0 (916 files), 1614 tests, build green;
+pushed to main → dev; 8 baselines minted via the ci.yml update_snapshots dispatch
+(committees baseline is the fixture empty state). DX-harvest notes: shared portal
+section primitive (third hand-rolled hairline list), a --container-measure-list token
+(60rem literal in directory + committees); .portal-text-action landed in T6b.**
+
 **[Superseded 2026-07-18: the pass executed to completion — see STATUS.] ROLES & COMMITTEES
 BRAINSTORM: DONE 2026-07-17 (Fable-conducted).** Spec docs/2026-07-17-roles-committees-design.md
 committed and Geoff-approved; SUPERSEDES the directory spec's decision 6 (flat member_roles —

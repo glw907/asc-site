@@ -275,6 +275,32 @@ Dates are 2026-07-07/08 (the home convergence arc) unless noted.
   middot separation. The ruling originated on the portal but binds every future UI copy decision,
   not the portal alone.
 
+- **The signing moment: inline text, accordion as progress (Geoff, 2026-07-18, waivers
+  probe rounds 1-2, both fully verdicted same day; built by the waivers pass)**: the legal
+  text renders INLINE in the page, never a nested scroll region (NN/g and GOV.UK ground the
+  ruling: inner scrolls get overlooked and are awkward on touch; inline is also the most
+  conservative reading of full-text display for enforceability). The hairline document list
+  IS the progress: signed entries collapse to a receipt line ("Signed {date} as {name}"),
+  the current document expands with a quiet "Document i of N" eyebrow, upcoming entries sit
+  muted -- no wizard chrome. The document renders as a framed sheet whose bottom edge is the
+  signature strip (sage ground, typed name, filled flag-navy Sign -- the portal's first
+  filled button; the one weighty act earns it; zero fireweed, zero gold). The sheet omits
+  the document's own title (the entry heading carries it). Framing lines come verbatim from
+  docs/waivers/signing-framing-copy.md and never characterize legal effect.
+
+- **Household signing (same rounds)**: one Part Two entry PER CHILD with the full text each
+  (a signature sits adjacent to the exact text it adopts; bundling releases under one
+  signature is the pattern courts distrust); "type once, sign each" -- the first signature
+  is typed fresh, later documents prefill the editable name and carried-forward attestation,
+  one Sign click per document (flagged to the attorney); the AS 09.65.292 relationship
+  attestation is a quiet radio group in the strip, first child unselected. The
+  HOUSEHOLD-COMPLETE gate (spec decision 7 as amended 2026-07-18): no payment, no class
+  registration, no joined state until every member's signatures are in; an incomplete
+  household's moment ends at a WAITING state (who remains, cooldown-guarded nudge, payment
+  locked), and one resumption email deep-links payment when the last signature lands.
+  Contact-confirm (storage/mooring holders, once, after the last signature) is a
+  glance card: read-only rows, filled "This is current", quiet "Update it".
+
 ## Benchmark provenance
 
 Pinned by the owner 2026-07-08 ("that's our new design benchmark"): the home page at commit
