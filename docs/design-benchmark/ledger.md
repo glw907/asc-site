@@ -109,3 +109,21 @@ Fixed by the invisible-polish batches (`e07fc45..d3e73e7`) or the 2026-07-16 bas
   requirement-callout padding, facts-row descender room, passage-icon baseline, chip truncation
   at 390, results-table numeral alignment, dark-mode callout parity; fees-table margin; posts/
   tags empty states untestable against current fixtures) — RIGHT or N/A, no change.
+
+## Member-directory pass close (2026-07-18, fresh-context coherence read)
+
+Read over the CI-minted baselines (directory + committees, 390/1440, both themes), verifier
+fresh to the code:
+
+- **/my-account/directory: DESIGNED at all four renders** — weight-built hierarchy, honest
+  carets (no-content rows carry no affordance), even row rhythm, contrast pass in both
+  themes. Caveat logged: fixtures exercise no title chips, secondary datum, or expanded
+  panel; those surfaces are graded by the ratified T0 probes and Geoff's dev review, not by
+  these baselines.
+- **/my-account/committees: initially FAILED STRUCTURAL** — no designed empty state (blank
+  ground to the footer at zero committees, the true pre-seed state). FIXED same session
+  (`0e17796`): `.portal-committees-empty` in the directory's own muted register; baselines
+  re-minted (`7aae304`) now enshrine the designed state. Cosmetic catches (straight
+  apostrophes in both ledes) fixed in the same commit.
+- Pre-existing flags routed to the polish backlog: dark-mode header logo near-invisible in
+  site chrome; directory mail-icon optical alignment (settle by computed midline, not eye).
