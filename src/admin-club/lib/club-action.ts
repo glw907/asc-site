@@ -4,15 +4,22 @@
 // `load` first. Tasks 4/5 each hand-rolled the same three lines (resolve `CLUB_DB`, check the
 // role, `fail` cleanly) at the top of every action; this is the one place that check lives now,
 // so a new screen cannot forget it.
-// Initiative 5 Task 2: the role check reads the engine's own verified session
-// (`ctx.editor.role`/`ctx.editor.capability`, typed to the site's declared vocabulary via
-// `CairnRolesRegister`) instead of a `club_roles` query, since cairn 0.86.0's roles seam is now
-// the only role system this site carries.
+// The roles-adoption pass's T4 (docs/2026-07-19-asc-roles-adoption.md): the role decision reads
+// the site's `access` map via `canReach`, not the hardcoded `CLUB_ROLES` array — this wrapper
+// COMPOSES `canReach` rather than collapsing onto the engine's own `requireAccess`, because it
+// carries responsibilities `requireAccess` has no notion of (the `CLUB_DB` binding resolution,
+// the per-editor admin rate-limit below, an audited denial, and injecting the resolved `db` into
+// the handler `ctx`) and runs inside a form action (POST), not a load. Reading the map here means
+// a POST to `/admin/club/email/*` or `/admin/club/announce/*` admits Publisher through the map's
+// deeper keys with no bespoke per-action role list, while every other club POST stays
+// Administrator/Club manager through the `/admin/club` section default — the same enforcement the
+// layout guard's `requireAccess` call now performs for loads.
 import { fail } from '@sveltejs/kit';
 import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { adminAction } from '@glw907/cairn-cms/sveltekit';
 import type { AdminActionContext, AdminActionEvent } from '@glw907/cairn-cms/sveltekit';
-import { CLUB_ROLES, resolveClubDb } from './club-db';
+import { canReach, type AccessMap } from '@glw907/cairn-cms';
+import { resolveClubDb } from './club-db';
 import { checkRateLimit, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
 
 /** The narrow, explained bridge this module uses to read the site's own `RATE_LIMIT_ADMIN`
@@ -21,6 +28,14 @@ import { checkRateLimit, RATE_LIMIT_MESSAGE } from '$theme/rate-limit';
  *  binding is never expressible on it without a cast. */
 function resolveAdminRateLimit(env: unknown): RateLimit | undefined {
   return (env as { RATE_LIMIT_ADMIN?: RateLimit } | undefined)?.RATE_LIMIT_ADMIN;
+}
+
+/** The same narrow-bridge pattern as `resolveAdminRateLimit`, for `locals.cairnAccess`:
+ *  `AdminActionEvent.locals` is typed to `adminAction`'s own minimal need (`editor`/`auditSink`),
+ *  not the guard's full `EventBase.locals`, so the map the guard actually attaches at
+ *  `locals.cairnAccess` (`hooks.server.ts`) is never expressible on it without a cast. */
+function resolveCairnAccess(locals: unknown): AccessMap | undefined {
+  return (locals as { cairnAccess?: AccessMap } | undefined)?.cairnAccess;
 }
 
 /** What a `clubAdminAction` handler receives: the engine's own verified `editor`/`audit`, plus
@@ -55,11 +70,13 @@ export interface ClubActionOptions {
  *    own doc comment).
  * 2. `CLUB_DB` must resolve off `event.platform.env`, or the action fails closed (500) with an
  *    audited rejection: a missing binding is a deployment misconfiguration, not a normal denial.
- * 3. The acting editor's role, per the engine's own verified session, must be `'Administrator'`
- *    or `'Club manager'` (named roles, not capability, so a future editor-level role does not
- *    silently inherit club access); `opts.ownerOnly` additionally requires owner CAPABILITY
+ * 3. The acting editor must be admitted by the site's `access` map for this request's path
+ *    (`canReach(resolveCairnAccess(event.locals), ctx.editor, event.url.pathname)` — the same map the
+ *    layout guard's `requireAccess` reads for loads, so a POST and its section's load can never
+ *    disagree); `opts.ownerOnly` additionally requires owner CAPABILITY
  *    (`ctx.editor.capability === 'owner'`), the design's distinction between "may act in this
- *    section" and "may act as its owner". Either failure fails closed (403), audited.
+ *    section" and "may act as its owner", and stacks on top of the `canReach` check rather than
+ *    replacing it. Either failure fails closed (403), audited.
  * 4. The handler runs with `ctx` extended by the resolved `db`, so it never re-resolves it.
  */
 export function clubAdminAction<T>(
@@ -82,7 +99,7 @@ export function clubAdminAction<T>(
       ctx.audit({ action: opts.action, entity: opts.entity, detail: 'rejected: CLUB_DB not bound' });
       return fail(500, { error: 'CLUB_DB is not bound.' });
     }
-    const hasClubRole = CLUB_ROLES.includes(ctx.editor.role);
+    const hasClubRole = canReach(resolveCairnAccess(event.locals), ctx.editor, event.url.pathname);
     const satisfiesOwnerOnly = !opts.ownerOnly || ctx.editor.capability === 'owner';
     if (!hasClubRole || !satisfiesOwnerOnly) {
       ctx.audit({

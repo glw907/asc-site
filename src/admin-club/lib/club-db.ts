@@ -17,10 +17,14 @@ export function resolveClubDb(env: unknown): D1Database | undefined {
 }
 
 /** The two role names with club access, named roles rather than owner CAPABILITY (see
- *  `club-action.ts`'s `clubAdminAction` doc comment for why that distinction matters). The one
- *  place this pair is written, so the `/admin/club` layout guard, `clubAdminAction`'s routine
- *  gate, and the navLayout tree's `roles` lists can never drift from each other. Renamed from
- *  `['owner', 'club-admin']` by the roles-adoption pass's T2 (docs/2026-07-19-asc-roles-adoption.md);
- *  the reserved `owner` role stays declared in `cairn.config.ts`'s vocabulary but is never granted
- *  again, so it carries no club access here either. */
+ *  `club-action.ts`'s `clubAdminAction` doc comment for why that distinction matters). Renamed
+ *  from `['owner', 'club-admin']` by the roles-adoption pass's T2
+ *  (docs/2026-07-19-asc-roles-adoption.md); the reserved `owner` role stays declared in
+ *  `cairn.config.ts`'s vocabulary but is never granted again, so it carries no club access here
+ *  either. **Enforcement no longer reads this constant**: T4 moved the `/admin/club` layout guard
+ *  and `clubAdminAction`'s routine gate onto the site's `access` map (`requireAccess`/`canReach`),
+ *  so the map (`src/theme/access.ts`) is the single source of role truth for what those two
+ *  actually admit. This export's only remaining readers are the round-1 `navLayout` tree's
+ *  `roles:` visibility hints in `cairn.config.ts` (pass B, docs/2026-07-18-admin-sidebar-2-
+ *  design.md, removes those and may retire this constant with them). */
 export const CLUB_ROLES: Role[] = ['Administrator', 'Club manager'];

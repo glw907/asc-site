@@ -1,20 +1,18 @@
-// The club-role authorization gate for the whole /admin/club/* section. The engine's own admin
-// guard already resolved `locals.editor`, or redirected to login, before this layout load ever
-// runs; `requireSession` here is defense-in-depth, the same pattern every Club screen's own load
-// already uses. Initiative 5 Task 2 collapsed this onto the engine's own typed session: a club
-// role is no longer a separate `club_roles` grant, it is `locals.editor.role` itself, narrowed to
-// the site's declared vocabulary (`src/app.d.ts`'s `CairnRolesRegister` augmentation). A signed-in
-// editor whose role is not `'Administrator'` or `'Club manager'` gets a clean 403, never a
-// redirect, since they ARE signed in, just not into this section.
-import { error } from '@sveltejs/kit';
+// The authorization gate for the whole /admin/club/* section. The engine's own admin guard
+// already resolved `locals.editor`, or redirected to login, before this layout load ever runs;
+// `requireAccess` re-checks it anyway (defense-in-depth, the same pattern every Club screen's own
+// load already uses) and additionally reads `locals.cairnAccess` (the site's map,
+// `src/theme/access.ts`, wired into the guard by `hooks.server.ts`) for this request's path. The
+// roles-adoption pass's T4 (docs/2026-07-19-asc-roles-adoption.md) retired the hardcoded
+// `CLUB_ROLES.includes(editor.role)` check in favor of this: the map is now the single authority
+// for who reaches `/admin/club`, so enforcement here and the Publisher widening on
+// `/admin/club/email`/`/admin/club/announce` can never drift apart. A signed-in editor the map
+// does not admit for this path gets a clean 403, never a redirect, since they ARE signed in, just
+// not into this section.
 import type { LayoutServerLoad } from './$types';
-import { requireSession } from '@glw907/cairn-cms/sveltekit';
-import { CLUB_ROLES } from '$admin-club/lib/club-db';
+import { requireAccess } from '@glw907/cairn-cms/sveltekit';
 
 export const load: LayoutServerLoad = async (event) => {
-  const editor = requireSession(event);
-  if (!CLUB_ROLES.includes(editor.role)) {
-    error(403, 'Your account has no club role. Ask a club owner to grant one.');
-  }
+  requireAccess(event);
   return {};
 };
