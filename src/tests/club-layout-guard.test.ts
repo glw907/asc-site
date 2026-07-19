@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
-import { resolveCapability, type Editor, type Role } from '@glw907/cairn-cms';
-import { access, roles } from '$theme/cairn.config.js';
+import type { Editor } from '@glw907/cairn-cms';
+import { access } from '$theme/cairn.config.js';
+import { editorWithRole } from './_editor';
 import { load } from '../routes/admin/club/+layout.server';
 
 /** The exact event type the guard's `load` expects, read off the function itself rather than
@@ -17,14 +18,6 @@ function eventFor(editor: Editor | null, pathname = '/admin/club'): LayoutEvent 
     url: new URL(`https://x.dev${pathname}`),
     locals: { editor, cairnAccess: access },
   } as unknown as LayoutEvent;
-}
-
-// The layout guard reads `editor.role`, not `editor.capability`, so a hardcoded capability would
-// not itself break these assertions; deriving it for real (via the site's declared vocabulary,
-// the same resolution the auth guard performs) keeps this fixture from reading as a claim that an
-// instructor session carries editor capability, which it does not.
-function editorWithRole(role: Role): Editor {
-  return { email: `${role}@example.com`, displayName: role, role, capability: resolveCapability(roles, role) };
 }
 
 describe('/admin/club layout guard', () => {

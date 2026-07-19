@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { canReach, resolveCapability, type Editor, type Role } from '@glw907/cairn-cms';
-import { access, roles } from '$theme/cairn.config.js';
+import { canReach, type Role } from '@glw907/cairn-cms';
+import { access } from '$theme/cairn.config.js';
+import { editorWithRole } from './_editor';
 
 // The T5 drift guard (docs/plans/2026-07-19-asc-roles-adoption.md): reproduces the roles matrix
 // (docs/2026-07-18-admin-sidebar-2-design.md "Roles matrix") from the real `access` map and
@@ -10,12 +11,6 @@ import { access, roles } from '$theme/cairn.config.js';
 // Action-level enforcement (the Email/Announce send-action widening, the Money denial at the
 // action) is already covered by src/tests/club-action.test.ts; this file covers reachability of
 // the engine screens and club routes themselves.
-
-/** Resolve a role name to the `Editor` shape `canReach` reads, through the real capability lookup
- *  (`resolveCapability`), not a hand-picked capability string. */
-function editorOf(role: Role): Editor {
-  return { email: `${role}@example.com`, displayName: role, role, capability: resolveCapability(roles, role) };
-}
 
 const ADMINISTRATOR = 'Administrator';
 const CLUB_MANAGER = 'Club manager';
@@ -75,7 +70,7 @@ const CASES = FUNCTIONS.flatMap((target) =>
 
 describe('the roles matrix (drift guard against the real access map)', () => {
   it.each(CASES)('$role reaching $target is $expected', ({ role, target, expected }) => {
-    expect(canReach(access, editorOf(role), target)).toBe(expected);
+    expect(canReach(access, editorWithRole(role), target)).toBe(expected);
   });
 
   // The two documented non-map cases (plan constraint 2): neither is a valid `defineAccess` key
@@ -86,18 +81,18 @@ describe('the roles matrix (drift guard against the real access map)', () => {
   describe('the two non-map cases (engine floor, not map omission)', () => {
     it('admits every editor-capability role to help (unmappable, stays reachable by any editor)', () => {
       for (const role of [ADMINISTRATOR, CLUB_MANAGER, WEBMASTER, PUBLISHER] as const) {
-        expect(canReach(access, editorOf(role), 'help')).toBe(true);
+        expect(canReach(access, editorWithRole(role), 'help')).toBe(true);
       }
     });
 
     it('denies Instructor (none capability) help too', () => {
-      expect(canReach(access, editorOf(INSTRUCTOR), 'help')).toBe(false);
+      expect(canReach(access, editorWithRole(INSTRUCTOR), 'help')).toBe(false);
     });
 
     it('admits only Administrator to editors (canReach special-cases it to the owner-capability floor)', () => {
-      expect(canReach(access, editorOf(ADMINISTRATOR), 'editors')).toBe(true);
+      expect(canReach(access, editorWithRole(ADMINISTRATOR), 'editors')).toBe(true);
       for (const role of [CLUB_MANAGER, WEBMASTER, PUBLISHER, INSTRUCTOR] as const) {
-        expect(canReach(access, editorOf(role), 'editors')).toBe(false);
+        expect(canReach(access, editorWithRole(role), 'editors')).toBe(false);
       }
     });
   });
@@ -107,7 +102,7 @@ describe('the roles matrix (drift guard against the real access map)', () => {
   // check the same as Administrator, including the owner-only `editors` floor and the unmapped
   // `help` target.
   it('the phantom owner role passes every check (owner-capability floor, lockout safety)', () => {
-    const owner = editorOf('owner');
+    const owner = editorWithRole('owner');
     for (const target of [...FUNCTIONS, 'help', 'editors']) {
       expect(canReach(access, owner, target)).toBe(true);
     }

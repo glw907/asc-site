@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { canReach, resolveCapability, type Editor, type Role } from '@glw907/cairn-cms';
-import { access, roles } from '$theme/cairn.config.js';
+import { canReach } from '@glw907/cairn-cms';
+import { access } from '$theme/cairn.config.js';
+import { editorWithRole } from './_editor';
 
 // Spot-checks over the T3 access map (docs/plans/2026-07-19-asc-roles-adoption.md): the two named
 // carve-outs, the Publisher widening, and one no-rule target so the test states what the engine's
 // own default actually does rather than assuming it. Full role-by-function matrix coverage is T5,
 // driven off this same `access` value.
-function editorWithRole(role: Role): Editor {
-  return { email: `${role}@example.com`, displayName: role, role, capability: resolveCapability(roles, role) };
-}
 
 describe('the access map', () => {
   it('denies Publisher the documents screen (the Waiver-text carve-out)', () => {
