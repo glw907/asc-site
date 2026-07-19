@@ -103,6 +103,14 @@ earlier "sign in instead" dead end, unchanged. -->
     applyJoin.result && 'pivot' in applyJoin.result && applyJoin.result.pivot === 'renewal-link-sent',
   );
 
+  // The household-complete gate's own submit outcome (member-waivers T5c): the application is saved
+  // unpaid and no payment is taken until every household member has signed. The purchaser has been
+  // emailed their own sign-in link straight to the signing moment; this page confirms that quietly,
+  // carrying no household data.
+  const signRequired = $derived(
+    applyJoin.result && 'pivot' in applyJoin.result && applyJoin.result.pivot === 'sign-required',
+  );
+
   $effect(() => {
     const result = applyJoin.result;
     const url = result && 'url' in result ? result.url : undefined;
@@ -131,6 +139,15 @@ earlier "sign in instead" dead end, unchanged. -->
     <p class="mt-xs mb-0 text-step--1 text-base-content">
       If that email is on our file, a sign-in link is on its way. Renew from your account, and
       register for classes there too.
+    </p>
+  </div>
+{:else if signRequired}
+  <div class="mt-l max-w-measure-wide rounded-box border border-info bg-info/10 p-m">
+    <p class="m-0 font-semibold text-base-content">We&#8217;ve saved your application.</p>
+    <p class="mt-xs mb-0 text-step--1 text-base-content">
+      Before payment, a few documents need your signature. We&#8217;ve emailed you a sign-in link that
+      takes you straight to them; open it to read and sign. Your family&#8217;s membership is ready to
+      pay as soon as everyone has signed.
     </p>
   </div>
 {:else}

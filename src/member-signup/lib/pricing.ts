@@ -9,8 +9,11 @@ import type { JoinPricingResult, NormalizedJoinInput } from './types.js';
 /** How many class credits a household receives when it joins at each tier (the design's ruling
  *  3): two for family, one for either individual tier. Renewals never grant these again; that
  *  decision belongs to the caller (`reconcileJoin`'s `grant_credits` flag, Task 2), not this
- *  pure function, which always reports what the tier itself is worth. */
-const CREDIT_GRANT_AMOUNT: Record<MembershipTier, number> = {
+ *  pure function, which always reports what the tier itself is worth. Exported (member-waivers
+ *  T5c) so the shared join-checkout builder (`join-checkout.ts`) applies credits in the SAME
+ *  pick order this pricing function does, whether the checkout is built at submit or rebuilt at
+ *  the payment-resume unlock. */
+export const CREDIT_GRANT_AMOUNT: Record<MembershipTier, number> = {
   individual: 1,
   family: 2,
   'young-adult': 1,

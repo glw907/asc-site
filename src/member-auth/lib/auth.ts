@@ -56,6 +56,14 @@ export interface MemberLinkBranding {
   origin: string;
   siteName: string;
   from: string;
+  /** An optional post-confirm destination for the sign-in link (member-waivers T5c): when given,
+   *  it rides the confirm link as `?next=`, exactly as {@link mintMemberSignInLink}'s own `next`
+   *  does, and `/my-account/confirm` re-validates it against its closed allowlist
+   *  (`$member-portal/lib/return-path.ts`) before ever honoring it. Set server-side to a fixed
+   *  path only (the fresh-join door's `/my-account/sign?context=join`), never from user input, so
+   *  the enumeration-safety this function otherwise guards is untouched. Omitted, the link is
+   *  byte-identical to before this field existed. */
+  next?: string;
 }
 
 function escapeHtml(value: string): string {
@@ -139,7 +147,8 @@ export async function requestMemberLink(
     sqliteDatetimeAfter(MEMBER_TOKEN_TTL_MS, now),
   );
 
-  const link = `${branding.origin}/my-account/confirm?token=${encodeURIComponent(token)}`;
+  const nextParam = branding.next ? `&next=${encodeURIComponent(branding.next)}` : '';
+  const link = `${branding.origin}/my-account/confirm?token=${encodeURIComponent(token)}${nextParam}`;
   try {
     await sendEmail(buildMemberLinkMessage({ to: member.email, branding, link }));
   } catch (err) {

@@ -25,16 +25,25 @@ import type { D1Database, RateLimit } from '@cloudflare/workers-types';
 import { validateJoinInput } from '$member-signup/lib/validate.js';
 import { computeJoinPricing } from '$member-signup/lib/pricing.js';
 import { buildJoinStatements } from '$member-signup/lib/statements.js';
+import { buildJoinCheckoutArgs, type PersistedJoinApplication } from '$member-signup/lib/join-checkout.js';
 import type { JoinInput } from '$member-signup/lib/types.js';
 import type { MembershipTier } from '$admin-club/lib/member-types';
 import { getClassWithCounts, isPubliclyOpen } from '$admin-club/lib/classes-store';
 import { hasActiveOfferForClass } from '$admin-club/lib/offers';
 import { getCurrentSeason, getTierPrices } from '$admin-club/lib/club-settings';
 import { normalizeEmail } from '$admin-club/lib/member-normalize.js';
-import { MEMBERSHIP_TIER_LABEL, getMemberStanding } from '$member-auth/lib/standing';
+import { getMemberStanding } from '$member-auth/lib/standing';
 import { requestMemberLink } from '$member-auth/lib/auth';
 import type { EmailBindingEnv } from '$admin-club/lib/club-email';
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv, type CreateCheckoutResult } from '$admin-club/lib/payments';
+import { documents } from '$chassis/content';
+import { loadPublishedDocuments } from '$theme/documents';
+import {
+  deriveHouseholdRequirements,
+  loadHouseholdRequirements,
+  type HouseholdMemberInput,
+} from '$member-portal/lib/waiver-requirements';
+import { householdSignatureGate } from '$member-portal/lib/household-signature-gate';
 import { siteConfig } from '$theme/cairn.config';
 import { verifyTurnstile } from './turnstile';
 import { checkRateLimitKeys, RATE_LIMIT_MESSAGE } from './rate-limit';
@@ -89,7 +98,23 @@ export interface JoinEmailInUsePivot {
   pivot: 'email-in-use';
 }
 
-export type JoinApplyResult = CreateCheckoutResult | JoinRenewalLinkSentPivot | JoinEmailInUsePivot;
+/** The household-complete gate's own submit-time outcome (member-waivers T5c, spec rule 7's
+ *  amendment): the application's rows are persisted UNPAID, but a signable document applies, so no
+ *  checkout is created and nothing money-derived is stored. The purchaser has been sent their own
+ *  sign-in link deep-linking straight to the signing moment (`/my-account/sign?context=join`);
+ *  once every household member has signed, the SAME shared builder rebuilds the checkout at the
+ *  payment-resume unlock (`/my-account/finish-joining`). The page renders a quiet "check your
+ *  inbox to sign" confirmation carrying no household data, the same posture as the renewal
+ *  handoff. */
+export interface JoinSignRequiredPivot {
+  pivot: 'sign-required';
+}
+
+export type JoinApplyResult = CreateCheckoutResult | JoinRenewalLinkSentPivot | JoinEmailInUsePivot | JoinSignRequiredPivot;
+
+/** The fresh-join door's own deep link into the signing moment, ridden by the purchaser's sign-in
+ *  link (`?next=`, re-validated at `/my-account/confirm` against `return-path.ts`'s allowlist). */
+const JOIN_SIGN_NEXT = '/my-account/sign?context=join';
 
 interface JoinApplyEnv extends CreateCheckoutEnv {
   CLUB_DB?: D1Database;
@@ -151,15 +176,25 @@ async function findUnpaidMembershipForSeason(db: D1Database, householdId: string
  * of failing the `UNIQUE(household_id, season)` constraint). This path is reached only for a
  * household that has NEVER paid a membership (see {@link handleJoinApply}): a real returning
  * member instead gets the magic-link handoff ({@link JoinRenewalLinkSentPivot}).
+ *
+ * Like a fresh join, a retry does not itself decide checkout-vs-sign: it hands its rebuilt
+ * application to {@link finalizeJoin}, which gates on the household's signatures first (an
+ * abandoned join whose season now has published documents must sign before paying, just as a new
+ * one would). The rebuilt {@link PersistedJoinApplication} carries no class picks: the retry reuses
+ * only the membership row, matching this path's long-standing behavior of not re-adding classes on
+ * resubmit.
  */
 async function retryUnpaidJoin(
   db: D1Database,
   env: JoinApplyEnv,
   origin: string,
+  season: number,
   membershipId: string,
+  householdId: string,
   purchaserMemberId: string,
   tier: MembershipTier,
-): Promise<CreateCheckoutResult> {
+  purchaserEmail: string,
+): Promise<JoinApplyResult> {
   const prices = await getTierPrices(db);
   const duesCents = Math.round(prices[tier] * 100);
   const priceDollars = Math.round(duesCents / 100);
@@ -170,70 +205,84 @@ async function retryUnpaidJoin(
     .bind('public:join', 'retry', 'membership', membershipId, `tier=${tier}`)
     .run();
 
-  return createJoinCheckout(env, origin, {
-    refId: membershipId,
-    tier,
-    duesCents,
-    paidLines: [],
-    enrollmentIds: [],
-    coveredEnrollmentIds: [],
-    purchaserMemberId,
-    grantCredits: true,
+  const app: PersistedJoinApplication = { membershipId, tier, purchaserMemberId, grantCredits: true, duesCents, enrollments: [] };
+  return finalizeJoin(db, env, origin, season, app, {
+    householdId,
+    purchaserEmail,
+    roster: null,
   });
 }
 
-interface JoinCheckoutPlan {
-  refId: string;
-  tier: MembershipTier;
-  duesCents: number;
-  paidLines: Array<{ amountCents: number; name: string }>;
-  enrollmentIds: string[];
-  coveredEnrollmentIds: string[];
-  purchaserMemberId: string;
-  /** The design's own ruling: credits ride a household's FIRST membership only. Both of this
-   *  module's own checkout callers (a fresh join and the retry of an abandoned one) grant them;
-   *  a renewal never reaches this checkout builder at all now (the magic-link handoff hands
-   *  renewals to the portal's own `dues` checkout instead, `docs/2026-07-13-unified-signup-
-   *  design.md`'s "Renew and welcome-back"). */
-  grantCredits: boolean;
-}
-
-async function createJoinCheckout(env: JoinApplyEnv, origin: string, plan: JoinCheckoutPlan): Promise<CreateCheckoutResult> {
-  const tierLabel = MEMBERSHIP_TIER_LABEL[plan.tier];
-  const lines = [{ amountCents: plan.duesCents, name: `${tierLabel} Membership dues` }, ...plan.paidLines];
-  const totalCents = lines.reduce((sum, line) => sum + line.amountCents, 0);
-
+/** Build the checkout for a signature-complete application and hand the result straight back, the
+ *  submit-time (and no-published-documents) money moment. Wraps `createCheckout`'s own
+ *  `CheckoutUnavailableError` into an `invalid()` the public form renders, the same shape the
+ *  pre-T5c `createJoinCheckout` used. */
+async function createJoinCheckoutFromApp(env: JoinApplyEnv, origin: string, app: PersistedJoinApplication): Promise<CreateCheckoutResult> {
   try {
-    return await createCheckout(env, {
-      kind: 'join',
-      refId: plan.refId,
-      amountCents: totalCents,
-      description: `${tierLabel} Membership`,
-      origin,
-      successPath: '/payment/confirmation/',
-      cancelPath: '/join/apply/',
-      lines,
-      metadata: {
-        enrollment_ids: plan.enrollmentIds.join(','),
-        covered_enrollment_ids: plan.coveredEnrollmentIds.join(','),
-        grant_credits: plan.grantCredits ? '1' : '0',
-        purchaser_member_id: plan.purchaserMemberId,
-        // `reconcileJoin`'s own snapshotted-cents contract (`stripe-reconcile.ts`'s own header):
-        // the dues line and each paid enrollment's own class-fee line are built from these
-        // values at reconcile time, never a re-read of `classes.fee`/`price_paid`, so a settings
-        // or fee change between checkout and webhook delivery can never desync the ledger from
-        // what Stripe actually charged. `paid_fee_cents` is aligned one-to-one with the paid
-        // (uncovered) subset of `enrollment_ids`, in that same order -- true by construction
-        // here, since `plan.paidLines` is built from the identical pick order `plan.enrollmentIds`
-        // itself came from.
-        dues_cents: String(plan.duesCents),
-        paid_fee_cents: plan.paidLines.map((line) => line.amountCents).join(','),
-      },
-    });
+    return await createCheckout(env, buildJoinCheckoutArgs(app, origin));
   } catch (err) {
     if (err instanceof CheckoutUnavailableError) invalid(err.message);
     throw err;
   }
+}
+
+/**
+ * The household-complete gate at the submit money moment (member-waivers T5c, spec rule 7's
+ * amendment): a join is signature-complete only when NO applicable document is outstanding for any
+ * household member. When the season has no published documents at all (the shipped state, every
+ * real document still `status: draft`), the checkout is built immediately, byte-identical to the
+ * pre-T5c flow. When a document applies, the persisted rows stand, nothing money-derived is
+ * stored, and the purchaser is sent their own sign-in link deep-linking to the signing moment;
+ * every member then signs before {@link buildJoinCheckoutArgs} rebuilds the checkout at
+ * `/my-account/finish-joining`.
+ *
+ * A fresh join derives the gate in memory from `ctx.roster` (a brand-new household holds no
+ * signatures yet, so `deriveHouseholdRequirements` with an empty `signatures` list is exact and
+ * needs no read); a retry passes `roster: null` and the gate reads the persisted household. Either
+ * skips the derivation entirely when the season publishes nothing.
+ */
+async function finalizeJoin(
+  db: D1Database,
+  env: JoinApplyEnv,
+  origin: string,
+  season: number,
+  app: PersistedJoinApplication,
+  ctx: { householdId: string; purchaserEmail: string; roster: HouseholdMemberInput[] | null },
+): Promise<JoinApplyResult> {
+  const publishedDocuments = loadPublishedDocuments(documents, season);
+
+  let complete = true;
+  if (publishedDocuments.size > 0) {
+    const requirements = ctx.roster
+      ? deriveHouseholdRequirements({
+          season,
+          primaryMemberId: app.purchaserMemberId,
+          members: ctx.roster,
+          assetKinds: [],
+          publishedDocuments,
+          signatures: [],
+        })
+      : await loadHouseholdRequirements(db, publishedDocuments, ctx.householdId, season);
+    complete = requirements ? householdSignatureGate(requirements).complete : true;
+  }
+
+  if (complete) return createJoinCheckoutFromApp(env, origin, app);
+
+  // Documents apply: the application stays persisted and unpaid, nothing money-derived is stored,
+  // and the purchaser is emailed their own sign-in link deep-linking straight to the signing
+  // moment. `requestMemberLink` stays enumeration-safe (the member row was just written, so it
+  // resolves and sends); a missing `EMAIL` binding degrades silently, matching every other send
+  // path in this module.
+  const email = env.EMAIL;
+  if (email) {
+    await requestMemberLink(db, ctx.purchaserEmail, (message) => email.send(message), {
+      origin,
+      siteName: siteConfig.siteName,
+      from: FROM_ADDRESS,
+      next: JOIN_SIGN_NEXT,
+    });
+  }
+  return { pivot: 'sign-required' };
 }
 
 interface ClassFacts {
@@ -305,7 +354,7 @@ export async function handleJoinApply(input: JoinApplySubmission, env: unknown, 
 
     const season = await getCurrentSeason(db);
     const unpaid = await findUnpaidMembershipForSeason(db, known.household_id, season);
-    if (unpaid) return retryUnpaidJoin(db, platformEnv!, origin, unpaid.id, known.id, input.tier);
+    if (unpaid) return retryUnpaidJoin(db, platformEnv!, origin, season, unpaid.id, known.household_id, known.id, input.tier, claimedEmail);
 
     // A member row with no membership row at all (paid or unpaid) yet: nothing to reuse and no
     // paid history to send a renewal link for. Treated as a pivot rather than minting a second
@@ -333,21 +382,34 @@ export async function handleJoinApply(input: JoinApplySubmission, env: unknown, 
   const built = await buildJoinStatements(db, validated, pricing, { season, fullClassIds });
   await db.batch(built.statements);
 
-  const paidLines = pricing.paidPicks.map((pick) => {
-    const classId = nonFullPicks[pick.pickIndex].classId;
-    const name = classFacts.get(classId)?.name ?? 'Class';
-    return { amountCents: pick.amountCents, name: `${name} class fee` };
-  });
-  const coveredEnrollmentIds = pricing.coveredPicks.map((pickIndex) => built.enrollmentIds[pickIndex]);
-
-  return createJoinCheckout(platformEnv!, origin, {
-    refId: built.membershipId,
+  // The persisted, unpaid application, normalized for the ONE shared checkout builder
+  // (member-waivers T5c): each enrollment carries its class's live name and fee cents in pick
+  // order, so `buildJoinCheckoutArgs` derives byte-identical `reconcileJoin` metadata whether the
+  // checkout is built here (a signature-complete household) or rebuilt from these same rows at the
+  // payment-resume unlock. `built.enrollmentIds` is in the pick order of `nonFullPicks`, so
+  // enrollment `i` prices against `nonFullPicks[i]`'s own class.
+  const app: PersistedJoinApplication = {
+    membershipId: built.membershipId,
     tier: validated.tier,
-    duesCents: pricing.duesCents,
-    paidLines,
-    enrollmentIds: built.enrollmentIds,
-    coveredEnrollmentIds,
     purchaserMemberId: built.purchaserMemberId,
     grantCredits: true,
-  });
+    duesCents: pricing.duesCents,
+    enrollments: built.enrollmentIds.map((enrollmentId, index) => {
+      const classId = nonFullPicks[index].classId;
+      const facts = classFacts.get(classId);
+      return { enrollmentId, className: facts?.name ?? 'Class', feeCents: Math.round((facts?.fee ?? 0) * 100) };
+    }),
+  };
+
+  // The gate reads a brand-new household's requirements in memory (no signatures exist yet, so an
+  // empty `signatures` list is exact): the purchaser is the primary, and a fresh household holds
+  // no assets, so only 'all-members' documents and any minor's Part Two can apply. Member ids
+  // other than the purchaser's are not returned by `buildJoinStatements`, but completeness with
+  // no signatures is id-independent, so synthetic ids are safe here.
+  const roster: HouseholdMemberInput[] = [
+    { id: built.purchaserMemberId, name: validated.purchaser.name, birthdate: validated.purchaser.birthdate },
+    ...validated.members.map((member, index) => ({ id: `pending-${index}`, name: member.name, birthdate: member.birthdate })),
+  ];
+
+  return finalizeJoin(db, platformEnv!, origin, season, app, { householdId: built.householdId, purchaserEmail: claimedEmail, roster });
 }

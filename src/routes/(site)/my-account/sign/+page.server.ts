@@ -84,12 +84,16 @@ function resolveNext(url: URL): string | null {
   return isSafeNextPath(raw) ? raw : null;
 }
 
-/** The join/renewal household-complete loop's own money-moment paths (member-waivers T5b, spec
- *  rule 7's amendment): where the resumption email deep-links once the household finishes.
- *  `null` for `join`, whose own payment step is a later task's own wiring (this route's job stops
- *  at making the loop mechanism real; T5c decides what a completed join deep-links to). */
+/** The join/renewal household-complete loop's own money-moment paths (member-waivers T5b/T5c, spec
+ *  rule 7's amendment): where the resumption email deep-links once the household finishes. Renewal
+ *  resumes at `/my-account/renew` (its `dues` checkout); a join resumes at
+ *  `/my-account/finish-joining` (T5c's own join payment-resume door, which rebuilds the join
+ *  checkout from the persisted rows). `null` for the non-money contexts (class-signup, asset fees),
+ *  which never enter this household-complete loop. */
 function paymentPathFor(context: SigningContext): string | null {
-  return context === 'renewal' ? '/my-account/renew' : null;
+  if (context === 'renewal') return '/my-account/renew';
+  if (context === 'join') return '/my-account/finish-joining';
+  return null;
 }
 
 export const load: PageServerLoad = async (event) => {
@@ -210,11 +214,17 @@ export const load: PageServerLoad = async (event) => {
   const gate = householdSignatureGate(requirements);
   const remainingOtherAdultNames = gate.remaining.filter((r) => r.role === 'adult' && r.memberId !== member.id).map((r) => r.name);
 
+  // A completed join's own completion coda continues to the payment-resume door rather than back
+  // to the portal (member-waivers T5c): the magic link deep-links here with no `?next=`, so this
+  // is where a fresh join's payment step is named. Any other context (or an incomplete join, which
+  // renders the waiting state instead of the coda) keeps the ordinary `?next=` return.
+  const next = context === 'join' && gate.complete ? paymentPathFor('join') : resolveNext(event.url);
+
   return {
     csrf,
     degraded: false as const,
     context,
-    next: resolveNext(event.url),
+    next,
     season,
     moment,
     household: {

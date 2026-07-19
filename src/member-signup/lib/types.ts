@@ -120,6 +120,9 @@ export interface BuildJoinStatementsOptions {
 export interface BuildJoinStatementsResult {
   statements: D1PreparedStatement[];
   membershipId: string;
+  /** The new household's own id (member-waivers T5c): the fresh-join door's household-complete
+   *  gate scopes to it, and the payment-resume unlock reads the same household's rows back. */
+  householdId: string;
   enrollmentIds: string[];
   waitlistIds: string[];
   purchaserMemberId: string;
