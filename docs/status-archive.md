@@ -4,6 +4,21 @@
 > STATUS.md's preamble). History only: nothing here is a live instruction, and entries
 > reflect what was true when written. The live rolling status is docs/STATUS.md.
 
+**[Trimmed 2026-07-19; the packet-send follow-up carries in STATUS's pointer block.]
+THE FABLE WAIVERS SITTING IS DONE (2026-07-18): the T7 attorney-draft packet and the
+T4 signing-experience design both delivered.** The packet (docs/waivers/, all DRAFTs):
+the 2027 general release (Donahue-shaped, cold-water immersion named, AS 09.65.292
+Part Two), rules acknowledgement, mooring + dry-storage agreements (tackle split at
+the ball, assumed ground-tackle failure, no inspection language, no-bailment,
+unsecured-lot, Borough 72-hour covenant, contractual lien/abandonment, insurance both
+ways), three per-asset acknowledgements, youth medical field set, the signing framing
+copy, the Donahue pre-publish checklist, and board-packet.md (inventory, board
+decisions, attorney questions, discrepancy memo). Sources verified live: the MW
+join-form release never says "negligence" (the core defect cured); MSB006789 carries
+NO 72-hour language — it traces to the pre-2022 Borough permit, not publicly posted;
+the records-request path is in the board packet. All register/fact gates ran and
+folded. The probe rounds' verdicts live in docs/design-benchmark/decisions.md.**
+
 **[Superseded 2026-07-19: the build workflow completed and released — see STATUS.] IN
 FLIGHT (2026-07-18 evening): the waivers build workflow wf_07d3ab70-09b was running
 (T1–T4 landed; T5 escalated and was decomposed T5a/b/c under the recompute-at-unlock

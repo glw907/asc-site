@@ -8,6 +8,52 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
+**THE BOARD DEMO IS LIVE AND THE NEXT TWO PASSES ARE PLANNED (2026-07-19, the same
+Fable session's second workflow, `wf_56eff27d-526`, 6 agents 0 errors, + a CI-green
+fix round). MAIN IS GREEN (CI run 29700305089).** State at close:
+
+- **The board demo is ready on dev.** All 8 documents are PUBLISHED for season 2026
+  (Geoff's ruling: production go-live still gates on the attorney; dev is not
+  member-facing; the 2027 drafts stay the untouched attorney packet; inline season
+  lines corrected to 2026). The **[DEMO] Harbor family** is seeded live (two adults
+  on geoff.wright+demo-alex/+demo-jordan plus-addresses — magic links and nudge
+  emails land in Geoff's inbox — a minor, an unpaid 2026 family membership mid-join,
+  a mooring) in the PRISTINE unsigned state; the full loop was verified live on dev
+  end to end first (signing, per-child Part Two, waiting state, real nudge +
+  resumption emails, payment unlock, contact-confirm, evidence rows incl. auth
+  events, certificate) and then reset. Board handout shots:
+  docs/board-demo/2026-07-19/ (8 PNGs, committed). **AFTER THE BOARD MEETING:
+  `node scripts/import/demo-household.mjs --cleanup`** (removes every demo row and
+  prints the zero-count proof). E2e fixture households were seeded with acceptance
+  rows (portal-seed e985a72, signup-seed 1357881) so CI stays green with zero
+  baseline churn.
+- **KNOWN DEFECT, needs a small fix task:** live `asc-club` asset_types ids use
+  underscores (`rv_parking`, `boat_parking`, `small_boat`) while the
+  AssetKind/DocumentAudience vocabulary uses hyphens (`rv-parking`, `boat-parking`,
+  `small-boat-rack`) — the three DRY-storage document audiences can never match a
+  real holding, so those documents are silently never required (mooring matches and
+  was verified live). Fix by aligning one side (schema-evolvability favors migrating
+  the ids; check every FK/string reference). Minor note beside it: `documents.ts`'s
+  resolveDocumentVersion/loadDocumentVersion match document+version without season
+  (harmless while 2026/2027 bodies share titles).
+- **NEXT PASS: `asc-roles-adoption` (pass A)** — plan
+  docs/plans/2026-07-19-asc-roles-adoption.md (reviewed by the conductor; grounded
+  in cairn 0.88.0's shipped access seam: defineAccess/canReach/requireAccess, the
+  reserved-owner constraint, comprehensive-map deny-by-default). Resume prompt:
+  "Start pass A: read docs/plans/2026-07-19-asc-roles-adoption.md and
+  docs/2026-07-18-admin-sidebar-2-design.md, then invoke site-pass and execute T1–T5
+  with Sonnet implementers per task." **THEN: `asc-sidebar-build` (pass B)** — plan
+  docs/plans/2026-07-19-asc-sidebar-build.md; OPENS with the probe round for Geoff's
+  still-owed verdicts (open/closed defaults, 25-icon assignment, within-group
+  order). Resume prompt: "Start pass B: read
+  docs/plans/2026-07-19-asc-sidebar-build.md; run its T1 probe round with Geoff
+  first, then execute T2–T8." Both launch from ~/Projects/aksailingclub-org, fresh
+  sessions. After B: events-redesign, then the review-queue clear and mw-cutover per
+  ROADMAP.
+- **On Geoff's queue:** the board demo itself (sign in as +demo-alex via magic link,
+  or the shots); the attorney packet send (docs/waivers/, independent); the standing
+  pointer queue below.
+
 **THE WAIVERS BUILD IS LANDED AND RELEASED TO DEV (2026-07-19, Fable-conducted, Geoff's
 "proceed with a workflow to release"). Workflow `wf_07d3ab70-09b`: 37 agents + a lows
 fix round, 0 errors, ~5.1M subagent tokens.** What shipped (e1555f1..b21038d):
@@ -95,21 +141,10 @@ Geoff's remaining topics; then finalize the spec and plan the ASC pass (waits on
 cairn seams release)." After sidebar-2: events-redesign, then the review-queue clear
 and mw-cutover per ROADMAP.
 
-**THE FABLE WAIVERS SITTING IS DONE (2026-07-18): the T7 attorney-draft packet and the
-T4 signing-experience design both delivered.** The packet (docs/waivers/, all DRAFTs):
-the 2027 general release (Donahue-shaped, cold-water immersion named, AS 09.65.292
-Part Two), rules acknowledgement, mooring + dry-storage agreements (tackle split at
-the ball, assumed ground-tackle failure, no inspection language, no-bailment,
-unsecured-lot, Borough 72-hour covenant, contractual lien/abandonment, insurance both
-ways), three per-asset acknowledgements, youth medical field set, the signing framing
-copy, the Donahue pre-publish checklist, and board-packet.md (inventory, board
-decisions, attorney questions, discrepancy memo). Sources verified live: the MW
-join-form release never says "negligence" (the core defect cured); MSB006789 carries
-NO 72-hour language — it traces to the pre-2022 Borough permit, not publicly posted;
-the records-request path is in the board packet. All register/fact gates ran and
-folded. The probe rounds' verdicts now live in decisions.md (see the build entry).
-
 **STILL OPEN ON GEOFF'S QUEUE (pointers; full entries in docs/status-archive.md):**
+the attorney packet send (docs/waivers/, all DRAFTs; the sitting's full entry is in
+the archive — sources verified live, register/fact gates run, board-packet.md carries
+the Borough records-request path);
 member-directory before/afters (/my-account/directory, /my-account/committees, edit
 surfaces, public /committees); portal redesign before/after against mock D (PR #1,
 merge 510b266); the payments live smoke (docs/plans/2026-07-15-payments-live-smoke.md);
