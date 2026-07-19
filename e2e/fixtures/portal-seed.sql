@@ -18,9 +18,10 @@
 -- Every id is prefixed `portal-`, so this file only ever touches its own rows (scoped deletes
 -- below), safe to re-run against a warm workstation replica without disturbing signup-seed.sql's
 -- or membership-admin-seed.sql's own fixture rows. Deletes go child-before-parent through the FK
--- closure: transaction_lines -> transactions, then asset_payments -> asset_waitlist/
--- asset_assignments -> credit_grants/asset_types -> memberships -> (household's own
--- primary_member_id nulled) -> members -> households.
+-- closure: waiver_acceptances/transaction_lines -> transactions, then asset_payments ->
+-- asset_waitlist/asset_assignments -> credit_grants/asset_types -> memberships -> (household's
+-- own primary_member_id nulled) -> members -> households.
+DELETE FROM waiver_acceptances WHERE id LIKE 'portal-%';
 DELETE FROM transaction_lines WHERE id LIKE 'portal-%';
 DELETE FROM transactions WHERE id LIKE 'portal-%';
 DELETE FROM asset_payments WHERE id LIKE 'portal-%';
@@ -148,6 +149,51 @@ INSERT INTO transactions (id, kind, source, occurred_at, amount_total_cents, hou
 INSERT INTO transaction_lines (id, transaction_id, item, description, amount_cents)
   VALUES ('portal-tl-class', 'portal-tx-class', 'class-fee', 'Class fee', 15000);
 
+-- Signature rows for both real season-2026 documents T1 published (general-release,
+-- rules-acknowledgement; both `audience: all-members`, so `deriveHouseholdRequirements` requires
+-- one from EVERY adult member individually, never satisfiable by another adult's own signature --
+-- `waiver-requirements.ts`'s own rule 2). Before T1, this fixture carried none and the requirement
+-- engine derived nothing to sign; now that real documents are live, an unsigned household would
+-- grow a "documents need your signature" row on `/my-account` and the visual baselines above would
+-- drift out from under this file with no fixture change of their own.
+--
+-- Neither household owes a document at the asset-kind scope: `portal-at-mooring`/`portal-at-
+-- trailer`/`portal-at-rv` above are fixture-prefixed PLACEHOLDER ids, not the real `asset_types.id`
+-- values (`mooring`, `rv_parking`, `boat_parking`, `small_boat`) the requirement engine's own
+-- `AssetKind` cast matches a document's `audience` against (`waivers-seed.sql`'s own header names
+-- this identical gap for its own mooring fixture row, which deliberately uses the real id instead).
+-- So no household-scope document (the mooring/RV/boat-parking/rack acknowledgements, or the Dry
+-- Storage Agreement) is ever derived as a requirement here -- confirmed, not assumed, by
+-- `src/tests/portal-fixture-waiver-requirements.test.ts`, which loads this exact fixture shape and
+-- the real published corpus and asserts zero outstanding requirements for both households.
+--
+-- Sam Wright has no email on file (this file's own household comment above): `person_email` is a
+-- fixture placeholder distinct from Geoff Wright's own, since the schema's `NOT NULL` demands some
+-- value and the requirement engine matches a signature by `member_id`, never by this column.
+INSERT INTO waiver_acceptances
+  (id, document_id, version, season, kind, content_hash, content_snapshot, person_name, person_email, context, signed_at, member_id, minor_member_id)
+VALUES
+  ('portal-wa-primary-release', 'general-release', 1, 2026, 'release',
+   '0000000000000000000000000000000000000000000000000000000000000000',
+   '(fixture) the season-2026 general-release text.',
+   'Geoff Wright', 'e2e-member@aksailingclub.org', 'renewal', '2026-06-01 00:00:00',
+   'portal-mem-primary', NULL),
+  ('portal-wa-primary-rules', 'rules-acknowledgement', 1, 2026, 'acknowledgement',
+   '0000000000000000000000000000000000000000000000000000000000000000',
+   '(fixture) the season-2026 rules-acknowledgement text.',
+   'Geoff Wright', 'e2e-member@aksailingclub.org', 'renewal', '2026-06-01 00:00:00',
+   'portal-mem-primary', NULL),
+  ('portal-wa-second-release', 'general-release', 1, 2026, 'release',
+   '0000000000000000000000000000000000000000000000000000000000000000',
+   '(fixture) the season-2026 general-release text.',
+   'Sam Wright', 'e2e-member-second@aksailingclub.org', 'renewal', '2026-06-01 00:00:00',
+   'portal-mem-second', NULL),
+  ('portal-wa-second-rules', 'rules-acknowledgement', 1, 2026, 'acknowledgement',
+   '0000000000000000000000000000000000000000000000000000000000000000',
+   '(fixture) the season-2026 rules-acknowledgement text.',
+   'Sam Wright', 'e2e-member-second@aksailingclub.org', 'renewal', '2026-06-01 00:00:00',
+   'portal-mem-second', NULL);
+
 -- A SECOND deterministic household (T5, portal-redesign): the landing's `in-season-clear` state
 -- needs a household with a paid, in-window standing but ZERO real "Needs your attention" rows --
 -- the Wright household above always carries the trailered-parking outstanding fee on purpose (the
@@ -177,3 +223,19 @@ INSERT INTO transactions (id, kind, source, occurred_at, amount_total_cents, hou
   VALUES ('portal-tx-clear-dues', 'charge', 'stripe', '2026-05-17 00:00:00', 25000, 'portal-hh-clear');
 INSERT INTO transaction_lines (id, transaction_id, item, description, amount_cents, membership_id)
   VALUES ('portal-tl-clear-dues', 'portal-tx-clear-dues', 'dues', 'Membership dues', 25000, 'portal-ms-clear-2026');
+
+-- Both real season-2026 documents for the household's own sole member, for the identical reason
+-- as the Wright household's own waiver_acceptances rows above.
+INSERT INTO waiver_acceptances
+  (id, document_id, version, season, kind, content_hash, content_snapshot, person_name, person_email, context, signed_at, member_id, minor_member_id)
+VALUES
+  ('portal-wa-clear-release', 'general-release', 1, 2026, 'release',
+   '0000000000000000000000000000000000000000000000000000000000000000',
+   '(fixture) the season-2026 general-release text.',
+   'Alex Sterling', 'e2e-member-clear@aksailingclub.org', 'renewal', '2026-06-01 00:00:00',
+   'portal-mem-clear', NULL),
+  ('portal-wa-clear-rules', 'rules-acknowledgement', 1, 2026, 'acknowledgement',
+   '0000000000000000000000000000000000000000000000000000000000000000',
+   '(fixture) the season-2026 rules-acknowledgement text.',
+   'Alex Sterling', 'e2e-member-clear@aksailingclub.org', 'renewal', '2026-06-01 00:00:00',
+   'portal-mem-clear', NULL);
