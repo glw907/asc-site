@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Trailered Boat Parking Rules
 
-**Season: 2027.** I sign this each season with my trailered boat space, alongside
+**Season: 2026.** I sign this each season with my trailered boat space, alongside
 the Dry Storage Agreement. My space sits on Matanuska-Susitna Borough land that the
 Club manages, and my use of it is subject to the Borough instruments described in
 that agreement.

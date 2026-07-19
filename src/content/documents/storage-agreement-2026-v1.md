@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Dry Storage Agreement
 
-**Season: 2027.** This agreement is between Alaska Sailing Club, Inc. ("the Club")
+**Season: 2026.** This agreement is between Alaska Sailing Club, Inc. ("the Club")
 and the member signing below ("I," "me"). It covers the seasonal storage space and
 the property I identify in my signature record—an RV space on Trailer Row, a
 trailered boat space, or a rack space—and I sign it each season with my storage
@@ -19,7 +19,7 @@ directors, volunteers, and members.
 
 ## 1. The assignment
 
-The Club licenses me one storage space for the 2027 season. The space is personal
+The Club licenses me one storage space for the 2026 season. The space is personal
 to me: it is not transferable, it does not pass to a new owner if I sell what is
 stored there, and it requires that I hold Active Participating Member status, keep
 my fees current, and follow the rules for my storage kind.

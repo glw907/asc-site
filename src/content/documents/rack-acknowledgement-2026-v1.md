@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Rack Storage Rules
 
-**Season: 2027.** I sign this each season with my rack space, alongside the Dry
+**Season: 2026.** I sign this each season with my rack space, alongside the Dry
 Storage Agreement.
 
 **I have read these rules, and I agree to follow all of them:**

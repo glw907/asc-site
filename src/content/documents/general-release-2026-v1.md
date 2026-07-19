@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Release of Liability and Assumption of Risk
 
-**Season: 2027.** I sign this document once per season, for myself. If I am a parent
+**Season: 2026.** I sign this document once per season, for myself. If I am a parent
 or guardian signing for a minor in my household, Part Two also applies, and I sign it
 separately for each child.
 

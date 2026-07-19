@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Trailer Row Use Guidelines
 
-**Season: 2027.** I sign this each season with my long-term RV space, alongside the
+**Season: 2026.** I sign this each season with my long-term RV space, alongside the
 Dry Storage Agreement. Signing these guidelines is a condition of holding a Trailer
 Row space.
 
@@ -48,4 +48,4 @@ Participating Member status, paid dues, and compliance with club bylaws and rule
 
 I agree that typing my legal name and clicking Sign creates a binding electronic
 signature, and that this acknowledgement satisfies the signed-guidelines
-requirement for the 2027 season.
+requirement for the 2026 season.

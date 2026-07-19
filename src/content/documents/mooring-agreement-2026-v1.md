@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Mooring Agreement
 
-**Season: 2027.** This agreement is between Alaska Sailing Club, Inc. ("the Club")
+**Season: 2026.** This agreement is between Alaska Sailing Club, Inc. ("the Club")
 and the member signing below ("I," "me"). It covers one seasonal mooring assignment
 for the boat I identify in my signature record, and I sign it each season with my
 mooring fee. In the release and indemnity sections, "the Club" includes its
@@ -18,7 +18,7 @@ officers, directors, volunteers, and members.
 
 ## 1. The assignment
 
-The Club assigns me one mooring for the 2027 season, administered by the
+The Club assigns me one mooring for the 2026 season, administered by the
 Harbormaster. The assignment is personal to me: it is not transferable, it does not
 carry over to a new owner if I sell my boat, and it requires that I hold Active
 Participating Member status and keep the mooring in active use through the season.

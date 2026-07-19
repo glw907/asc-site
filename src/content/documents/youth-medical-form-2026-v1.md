@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Youth Medical & Emergency Form
 
-**Season: 2027. One form per child, completed fresh each season** (medical facts
+**Season: 2026. One form per child, completed fresh each season** (medical facts
 change; last year's form is never carried forward). A parent or guardian completes
 and signs it at youth class signup, and instructors for the child's class can view
 it for the duration of the class.

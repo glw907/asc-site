@@ -3,12 +3,12 @@
   "test-release@2025v2": "b4b80eb03bc840297bc8181769c5e01c41f1dbe41d1a7168d3b89f543d72d0b9",
   "test-acknowledgement@2025v1": "96a937979a66599c2afa7d1932c459b92a2fa68456d1c01a18b509f65bd868d1",
   "test-mooring-ack@2025v1": "62d034fa2ba18e78bf01f6db91eda8ccaf537465325931dbc4d27b4a67339e1d",
-  "general-release@2026v1": "d8ae64eecaab37943510221e156d8715c4b602eba95bde8ce13aa7b5d852cc07",
-  "rules-acknowledgement@2026v1": "23141dcf8ed4073ce2b595bec1f4ba3bd50274084c5ddbda928352668fa262cc",
-  "mooring-agreement@2026v1": "4a436761a83f0117c385a674fa302a6d9a44ed896b33eff8b9d656907e97452b",
-  "storage-agreement@2026v1": "3573c7d98e4ba6bf97f5e586512a2d61a097bcb9601194dfb0a416a3e8ea6ae8",
-  "boat-parking-acknowledgement@2026v1": "266aa46725249e7732eacf68fdf22c0aa5ff3c8014afa98f97aff5f13558a45f",
-  "rack-acknowledgement@2026v1": "83c2d85d72d9884a8b0c062108ee15f3ce90c7009afb103de0ba74b1dcf7c5fa",
-  "rv-acknowledgement@2026v1": "8ea38f2f7f79d09e7cd1fb613f635b992df4a41eb2df74c44d7f39e664f85f11",
-  "youth-medical-form@2026v1": "fc434314ba7b3200a47a0f01a98b255a5ef7eb3b9a21bc021b518b40eea171b1"
+  "general-release@2026v1": "5ca3eeaaf41aabd48e4e00b2ab6d16e8ae254fada919b7ac96c2682edfb0a6fa",
+  "rules-acknowledgement@2026v1": "7bc9c01c82a7a973849169167602e8244eda6524d5968de19a3c9119ddc557f8",
+  "mooring-agreement@2026v1": "9a8ac633fb7b8c6ea80cb48d7dc06110829ef4200979375717fd2a625ccf417a",
+  "storage-agreement@2026v1": "469a460eaa0f941679f9b66b4b44aecb478136165a05aa349763e83426fe8edc",
+  "boat-parking-acknowledgement@2026v1": "07c5c015cff612e242c45e36bb8a14838c84066d6eeda0164bfb4f347cc18bea",
+  "rack-acknowledgement@2026v1": "15b4b2f406338bb06e8bd7e8b1d607bb02b48edf8e28412c3bb9bb7cc137e600",
+  "rv-acknowledgement@2026v1": "afe4399e3be2ed15c06b88dc44332d996cf803e61ce5e2c6a09234782849fd14",
+  "youth-medical-form@2026v1": "183e4e42403d947c9bf6f15d4ff59a0c2762b9bf2017a040bac35c2c1f220273"
 }

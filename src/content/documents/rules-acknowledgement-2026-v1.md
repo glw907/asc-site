@@ -10,7 +10,7 @@ status: published
 
 # Alaska Sailing Club—Club Rules Acknowledgement
 
-**Season: 2027.** I sign this document once per season.
+**Season: 2026.** I sign this document once per season.
 
 The Rules of the Alaska Sailing Club are published on the club site as **Member
 Expectations**. The full text of the current rules is presented to me with this
