@@ -3,8 +3,9 @@
 In-flight arc log for the waivers sitting's T4 signing-experience design (plan
 `docs/plans/2026-07-17-member-waivers.md`, T7 sitting). One line per probe with Geoff's
 verdict; distilled into `decisions.md` at settle, then this file is removed. The probe
-pages live in the session scratchpad (`scratchpad/signing-probe/`), not the repo, per the
-directory-pass convention. The document text in the probe is the real
+pages live in the session scratchpad, not the repo, per the directory-pass convention
+(this arc's copy, with rendered screenshots: `/tmp/claude-1000/-home-glw907-Projects-
+aksailingclub-org/cff8dadd-4587-4c30-b928-4c18497b4c33/scratchpad/signing-probe/`). The document text in the probe is the real
 `docs/waivers/2027-general-release.md` draft, full length, so legal register and text
 length are the true article; contact-confirm values are placeholder.
 
