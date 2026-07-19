@@ -134,12 +134,20 @@ SPEC'D same day, live with Geoff beside the waivers build: the ratified contract
 docs/2026-07-18-admin-sidebar-2-design.md (purpose-first 4-group tree, Signups
 retired, bulletins/notifications re-unified, full relabel sweep, five plain-function
 roles incl. Webmaster and Publisher, action-count badges with collapsed-header sums,
-25 unique icons). TWO SEQUENCED UNITS: a cairn engine pass first (four seams:
-default-collapsed, icon vocabulary + engine-ref overrides, badge seam, per-concept
-role gating — the spec's consumer-brief section is the contract), then the ASC pass
-rides the bump. Probe-round verdicts still owed (open/closed defaults, icons,
-within-group order); the probe is static HTML and can run before the engine pass.
-Geoff's walkthrough remains the acceptance gate.
+25 unique icons). THE CAIRN ENGINE PASS IS DONE (v0.88.0, 2026-07-19, Geoff's own cairn session): all
+four seams shipped — defineAccess(roles, map) + canReach as the single authority for
+requireAccess route gates AND sidebar visibility; NavLayoutSection.collapsed;
+NavLayoutEngineRef.icon + the allowlist widened 9→27; the attention dependency
+(role-scoped pills, collapsed-header sums, zero-drop, no count leakage). ASC-side
+work now splits into TWO PASSES (Geoff, 2026-07-19): (A) `asc-roles-adoption` — the
+^0.88.0 bump, the five plain-function roles with the grant-row rename migration, the
+defineAccess permission map per the spec's matrix, requireAccess on club routes,
+Publisher send-action widening, the Waiver text carve-out, denial tests, and the
+matrix tested from the map (plan: docs/plans/2026-07-19-asc-roles-adoption.md); then
+(B) `asc-sidebar-build` — the ratified tree/labels/collapse/icons/attention wiring,
+Signups retirement, bulletins re-unification, the class-waitlist screen and compose
+deep link, opening with the probe round for the still-owed verdicts (defaults, icons,
+order). Geoff's walkthrough remains the acceptance gate for B.
 
 ### Payments hardening & live smoke `payments-live-smoke`
 The deliberate live-Stripe smoke that has been queued since pass 2.1, plus Turnstile
