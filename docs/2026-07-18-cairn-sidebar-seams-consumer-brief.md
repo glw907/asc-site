@@ -67,8 +67,15 @@ works best").
   view of it. Read/unread semantics are the pass's call; ASC's items are
   queue-backed (they clear when the work clears), which may make read-state
   unnecessary.
-- Notifications follow visibility: an entry the session cannot reach contributes
-  nothing to any count, sum, or list.
+- Notifications are role-scoped by construction (Geoff, 2026-07-18): the number and
+  type of pending items varies with the session's roles, and the engine must
+  support that, not assume one shared set. Items resolve per session against the
+  permission map; an entry the session cannot reach contributes nothing to any
+  count, sum, or list; and counts are treated as information in their own right — a
+  role that cannot act on a queue must not learn its size. Nothing about counts may
+  be computed once and shared across sessions with different reach, and the seam's
+  shape should let the site scope items finer than role where its own model needs
+  it (e.g., a committee chair seeing only their committee's pending requests).
 - Acceptance: pill on item, summed on collapsed header, absent at zero, gone when
   the group opens (the item pill remains), screen-reader text present; if a
   notification surface ships, it lists exactly the reachable pending items.
