@@ -25,6 +25,7 @@ import type { DocumentAudience, SignableDocument } from '$theme/documents';
 import { computeAge } from './age-gate';
 import { getHouseholdInfo, listHouseholdMembers } from './household';
 import { listHouseholdAssignments } from './assets';
+import { householdSignatureGate } from './household-signature-gate';
 
 /** The four holdable asset kinds (`asset_types.id`, `migrations/asc-club/0007_assets_email`): the
  *  audience vocabulary minus the three non-asset audiences. */
@@ -352,4 +353,24 @@ export async function loadHouseholdRequirements(
     publishedDocuments,
     signatures,
   });
+}
+
+/**
+ * Whether a household's signatures are complete for `season` -- the money-moment hard gate shared
+ * by the renewal and join-resume doors (member-waivers T5b/T5c): `true` when the household is
+ * unresolvable, or when the season carries no published documents at all
+ * ({@link loadHouseholdRequirements} then returns every adult with an empty `requirements` array
+ * and `householdSignatureGate` reads that as complete -- the shipped state today, since every real
+ * document is still `status: draft`), so this never blocks a real money moment until the attorney
+ * actually publishes a document.
+ */
+export async function householdSignaturesComplete(
+  db: D1Database,
+  publishedDocuments: Map<string, SignableDocument>,
+  householdId: string,
+  season: number,
+): Promise<boolean> {
+  const requirements = await loadHouseholdRequirements(db, publishedDocuments, householdId, season);
+  if (!requirements) return true;
+  return householdSignatureGate(requirements).complete;
 }

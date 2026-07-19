@@ -51,6 +51,7 @@ import {
   recordContactConfirmation,
   recordSignature,
   resolveSessionAuthEvent,
+  type SignerRelationship,
   type SigningContext,
 } from '$member-portal/lib/signatures';
 import { nudgeRecentlySent, resumptionAlreadySent, sendWaiverNudgeEmail, sendWaiverResumptionEmail } from '$member-portal/lib/waiver-notify';
@@ -304,7 +305,7 @@ export const actions: Actions = {
     const document = resolvePublishedDocument(season, documentId);
     if (!document) return fail(400, { error: 'That document is no longer available to sign.' });
 
-    let minor: { memberId: string; relationship: 'parent' | 'legal-guardian' | 'agency-representative' | 'power-of-attorney' | 'qualifying-relative' } | undefined;
+    let minor: { memberId: string; relationship: SignerRelationship } | undefined;
     if (minorMemberId) {
       if (!isSignerRelationship(relationshipRaw)) {
         return fail(400, { error: 'Choose how you are related to this child before you sign.' });

@@ -21,8 +21,7 @@ import { getCurrentSeason, getTierPrices } from '$admin-club/lib/club-settings';
 import { portalAction, type PortalActionContext, type PortalActionEvent } from '$member-portal/lib/portal-action';
 import { documents } from '$chassis/content';
 import { loadPublishedDocuments } from '$theme/documents';
-import { loadHouseholdRequirements } from '$member-portal/lib/waiver-requirements';
-import { householdSignatureGate } from '$member-portal/lib/household-signature-gate';
+import { householdSignaturesComplete } from '$member-portal/lib/waiver-requirements';
 import { buildJoinCheckoutArgs, loadJoinApplication } from '$member-signup/lib/join-checkout';
 import { createCheckout, CheckoutUnavailableError, type CreateCheckoutEnv } from '$admin-club/lib/payments';
 
@@ -44,17 +43,6 @@ async function findUnpaidJoinMembership(db: D1Database, householdId: string, sea
     .first<{ id: string }>();
 }
 
-/** Whether the household's own signatures are complete for `season` (the money-moment hard gate):
- *  `true` when the season carries no published documents at all (the shipped state today), so this
- *  never blocks a real join until the attorney publishes a document. Mirrors `/my-account/renew`'s
- *  own `householdSignaturesComplete`. */
-async function householdSignaturesComplete(db: D1Database, householdId: string, season: number): Promise<boolean> {
-  const publishedDocuments = loadPublishedDocuments(documents, season);
-  const requirements = await loadHouseholdRequirements(db, publishedDocuments, householdId, season);
-  if (!requirements) return true;
-  return householdSignatureGate(requirements).complete;
-}
-
 export const load: PageServerLoad = async (event) => {
   const csrf = issueMemberCsrfToken(event);
   const { member } = await event.parent();
@@ -70,7 +58,7 @@ export const load: PageServerLoad = async (event) => {
   if (!unpaid) redirect(303, '/my-account');
 
   // The hard gate: an incomplete household never sees a pay screen, it goes back to sign.
-  if (!(await householdSignaturesComplete(db, member.householdId, season))) redirect(303, SIGN_REDIRECT);
+  if (!(await householdSignaturesComplete(db, loadPublishedDocuments(documents, season), member.householdId, season))) redirect(303, SIGN_REDIRECT);
 
   const prices = await getTierPrices(db);
   const app = await loadJoinApplication(db, unpaid.id, prices);
@@ -98,7 +86,7 @@ async function payJoin(event: PortalActionEvent, ctx: PortalActionContext) {
 
   // Re-check the gate here, never trusting that the page that rendered this form is the one still
   // open: no money proceeds until the household's own signatures are complete.
-  if (!(await householdSignaturesComplete(ctx.db, ctx.member.householdId, season))) redirect(303, SIGN_REDIRECT);
+  if (!(await householdSignaturesComplete(ctx.db, loadPublishedDocuments(documents, season), ctx.member.householdId, season))) redirect(303, SIGN_REDIRECT);
 
   const prices = await getTierPrices(ctx.db);
   const app = await loadJoinApplication(ctx.db, unpaid.id, prices);
