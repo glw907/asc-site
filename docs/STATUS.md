@@ -28,14 +28,30 @@ crashed bootstrap). **Flag for the existing apology-send queue item: the live
 `email_log` holds 471 failed vs 279 sent, latest failures 2026-07-14 08:15 UTC** —
 real rows, seen during the walk. A rough starting component collection is drafted
 from the walk (`docs/2026-07-20-admin-toolkit-starting-collection.md`) — explicitly
-pre-research hypotheses. **NEXT: the design-research survey opens the effort (Geoff's
-ruling: grounded in research, not impressions), grading the starting collection; then
-the Members pass functional brainstorm.** Resume prompt: "Continue the admin toolkit
-effort: read ROADMAP.md's admin-screen-passes entry,
-docs/2026-07-20-admin-toolkit-catalog.md, and the starting collection, then run the
-design-research survey (deep-research on admin data-table/form UX evidence and the
-Carbon/Polaris/Atlassian decisions), grade the collection against it, and open the
-Members pass functional brainstorm with Geoff." Launch fresh from
+pre-research hypotheses.
+
+**THE DESIGN-RESEARCH SURVEY IS DONE AND THE COLLECTION IS GRADED (2026-07-20, same
+day, Fable-conducted: a 106-agent deep-research workflow with adversarial source
+verification + two component-inventory sweeps across eight design systems + a daisy
+availability audit).** The deliverable is
+`docs/2026-07-20-admin-toolkit-research-survey.md` (verdicts on every collection
+entry, E/C/G evidence tiers, daisy assembly per component; inventory appendices
+beside it). Headlines: verified evidence exists in exactly three areas (zebra =
+preference-only, no performance harm; infinite scroll banned for admin lists with
+bounded-default-plus-explicit-action the winner; top-aligned form labels at medium
+confidence) — everything else is labeled convention from the eight-system convergent
+core. The Chip entry split in three (StatusChip/TagChip/CountBadge per the
+Polaris/Atlassian/Spectrum status-vs-category discipline); additions: EmptyState,
+ConfirmDialog, Toast+Alert feedback tiers, CapacityMeter. Two Geoff rulings folded
+in: daisyUI-first assembly, avoid building new things — audit confirmed zero new CSS
+systems needed; first engine change is a blessed-set daisy safelist in cairn's admin
+CSS build (stats/table-zebra/table-xs/toast are currently tree-shaken out).
+**NEXT: the Members pass functional brainstorm with Geoff** (purpose and common use
+cases first, UI/UX flows from that; stop-1 reactions + the survey's "What the Members
+pass inherits" section are the standing inputs). Resume prompt: "Open the Members
+pass functional brainstorm (superpowers:brainstorming): read
+docs/2026-07-20-admin-toolkit-research-survey.md and the catalog's stop 1, then
+brainstorm the screen's purpose and use cases with Geoff." Launch fresh from
 ~/Projects/aksailingclub-org.
 
 **PASS B `asc-sidebar-build` IS BUILD-COMPLETE AND SHIPPED TO DEV; GEOFF'S WALKTHROUGH

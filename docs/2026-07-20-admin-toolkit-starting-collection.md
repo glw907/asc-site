@@ -1,5 +1,9 @@
 # Cairn admin toolkit — rough starting collection (draft, 2026-07-20)
 
+> **GRADED 2026-07-20:** the research survey ran and graded every entry; the verdicts
+> live in `docs/2026-07-20-admin-toolkit-research-survey.md`, which supersedes this file
+> as the working reference. This file stays as the pre-research hypothesis record.
+>
 > Drafted straight from the walkthrough evidence
 > (`docs/2026-07-20-admin-toolkit-catalog.md`), BEFORE the design-research survey that
 > opens the effort. Every entry is a hypothesis: the research phase (published UX
