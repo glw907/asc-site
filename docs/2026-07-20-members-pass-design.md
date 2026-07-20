@@ -82,16 +82,37 @@ where the toolkit touches them.
 
 ## Toolkit births
 
-This pass hardens the first toolkit set, each assembled from daisyUI per the survey:
+This pass builds the first toolkit set kit-first (Geoff's ruling, 2026-07-20): the
+components come before the screen, each with its own contract, tests, and a probe
+page rendered with live data for Geoff's verdict; the screen then assembles them,
+and assembling it is the test.
 
-- **AdminTable** — compact density (`table-xs`/`table-sm`), zebra option,
-  empty-state slot.
-- **ListToolbar** — the designed search/filter/action band with filter pills.
+The contracts are designed **general-purpose, not ASC-shaped** (Geoff's ruling, same
+sitting): this is a cairn admin toolkit with ASC as its first consumer, and for the
+convergent genres the general contract already exists — the surveyed systems'
+agreement encodes thousands of consuming teams' needs, so copying that shape is
+standardization, not speculation. Concretely, each component carries the convergent
+contract even where Members does not exercise it:
+
+- **AdminTable** — named density tiers (`table-xs`/`table-sm`), zebra option,
+  empty-state slot, and headroom for a future selection column.
+- **ListToolbar** — search, promoted filters plus overflow disclosure, primary
+  action, applied-filter pills (Members promotes four filters and uses no overflow).
 - **ExpandableRow** — the expand-in-place genre; Classes inherits it for rosters.
-- **StatusChip** — the Current/Overdue/Former vocabulary is its first client; fixed
-  semantic colors, owned padding and truncation, a legend surface.
+- **StatusChip** — the full tone vocabulary (neutral/info/success/warning/danger),
+  owned padding and truncation, a legend surface; Current/Overdue/Former is its
+  first client, not its ceiling.
 - **Pagination** — `join` + `btn`.
 - **Formatters** — MoneyAmount, CivilDate, age-from-birthdate.
+
+Generality shapes the contract; a consumer still gates publication. The components
+are born in this repo's theme layer, Members shakes them for one pass, and they
+harvest into cairn afterward with the generality already in the bones — cairn is a
+versioned package, so a wrong contract published there costs a breaking change
+across sites, where a wrong contract here costs one refactor. Genres with no
+external contract to copy (MoveDialog, SettingCluster) and the unbuilt additions
+(ConfirmDialog, feedback tiers, CapacityMeter, EmptyState beyond the table slot)
+wait for their consuming passes.
 
 The engine item rides first: the blessed-set daisy safelist in cairn's admin CSS
 build, so `table-zebra`, `table-xs`, `stats`, and `toast` exist in the admin bundle
