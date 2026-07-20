@@ -233,9 +233,10 @@ function digitsOnly(value: string): string {
 function groupBy<T, K>(rows: T[], keyOf: (row: T) => K): Map<K, T[]> {
   const map = new Map<K, T[]>();
   for (const row of rows) {
-    const list = map.get(keyOf(row)) ?? [];
-    list.push(row);
-    map.set(keyOf(row), list);
+    const key = keyOf(row);
+    const list = map.get(key);
+    if (list) list.push(row);
+    else map.set(key, [row]);
   }
   return map;
 }
