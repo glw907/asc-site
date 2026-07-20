@@ -57,6 +57,18 @@ The first harvest wave is expected after the next screen pass (Classes or Assets
 proves which contracts held. Each wave shrinks ASC's local surface: the site swaps
 local copies for the `admin-toolkit` subpath imports and deletes them.
 
+## Ruling: cairn dogfoods the toolkit (Geoff, 2026-07-20)
+
+Cairn's own admin screens strive to use the component library wherever a toolkit
+component fits, rather than keeping parallel bespoke implementations. This makes
+the engine itself a standing consumer: every cairn admin surface exercises the
+contracts, engine needs pull components through graduation (the "engine pull"
+trigger above), and a daisy upgrade or contract change is proven against cairn's
+own screens before any site feels it. Practically, each harvest wave should
+include an adoption sweep of cairn's existing admin screens for the components
+that wave publishes; new engine admin surfaces reach for the toolkit first and
+add bespoke markup only where no component fits.
+
 ## Engine item: the daisy absorption ritual (Geoff, 2026-07-20)
 
 Cairn owns the daisyUI dependency for admin surfaces, so cairn gets a scheduled
