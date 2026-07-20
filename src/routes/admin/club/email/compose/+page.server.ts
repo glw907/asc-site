@@ -25,14 +25,41 @@ const SAMPLE_RECIPIENT_LIMIT = 8;
 
 const DENIED_MESSAGE = 'A club role is required to send club email.';
 
+/**
+ * Resolve the `segment` deep-link query param (the "Email class members" nav entry, T5) to an
+ * initial segment-picker value. An exact match against a real picker option's key wins first; the
+ * literal sentinel `class` preselects the picker's own first class option (current-season classes
+ * sort before older ones, {@link listSegmentOptions}) since the segment vocabulary has no single
+ * "all class members" key, only one `class:<id>` per class. Any other value, or `class` when the
+ * picker has no class option at all, falls back to no preselection -- never an error, the same
+ * empty-picker state the plain compose screen already renders.
+ */
+function resolvePresetSegmentKey(param: string | null, options: readonly SegmentOption[]): SegmentKey | null {
+  if (!param) return null;
+  const exact = options.find((option) => option.key === param);
+  if (exact) return exact.key;
+  if (param === 'class') {
+    const firstClass = options.find((option) => option.key.startsWith('class:'));
+    return firstClass ? (firstClass.key as SegmentKey) : null;
+  }
+  return null;
+}
+
 export const load: PageServerLoad = async (event) => {
   const editor = requireSession(event);
   const db = resolveClubDb(event.platform?.env);
   if (!db) {
-    return { blasts: [] as EmailBlastRow[], segmentOptions: [] as SegmentOption[], editorEmail: editor.email, error: 'CLUB_DB is not bound.' };
+    return {
+      blasts: [] as EmailBlastRow[],
+      segmentOptions: [] as SegmentOption[],
+      editorEmail: editor.email,
+      error: 'CLUB_DB is not bound.',
+      presetSegmentKey: null as SegmentKey | null,
+    };
   }
   const [blasts, segmentOptions] = await Promise.all([listBlasts(db), listSegmentOptions(db)]);
-  return { blasts, segmentOptions, editorEmail: editor.email, error: null as string | null };
+  const presetSegmentKey = resolvePresetSegmentKey(event.url.searchParams.get('segment'), segmentOptions);
+  return { blasts, segmentOptions, editorEmail: editor.email, error: null as string | null, presetSegmentKey };
 };
 
 /** The three fields every action here reads off the compose form; `body` is deliberately not

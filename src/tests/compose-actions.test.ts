@@ -25,8 +25,12 @@ type LoadEvent = Parameters<typeof load>[0];
 type ActionEvent = Parameters<typeof actions.review>[0];
 type LoadResult = Exclude<Awaited<ReturnType<typeof load>>, void>;
 
-function loadEventFor(editor: Editor | null, db: unknown): LoadEvent {
-  return { locals: { editor }, platform: { env: { CLUB_DB: db } } } as unknown as LoadEvent;
+function loadEventFor(editor: Editor | null, db: unknown, search = ''): LoadEvent {
+  return {
+    locals: { editor },
+    platform: { env: { CLUB_DB: db } },
+    url: new URL(`https://x.dev/admin/club/email/compose${search}`),
+  } as unknown as LoadEvent;
 }
 
 function postEvent(
@@ -95,6 +99,45 @@ describe('/admin/club/email/compose load', () => {
     expect(result.error).toBe('CLUB_DB is not bound.');
     expect(result.blasts).toEqual([]);
     expect(result.segmentOptions).toEqual([]);
+    expect(result.presetSegmentKey).toBeNull();
+  });
+
+  it('carries no preselection with no `segment` query param', async () => {
+    const { db } = fakeD1();
+    const result = (await load(loadEventFor(admin, db))) as LoadResult;
+    expect(result.presetSegmentKey).toBeNull();
+  });
+
+  it("preselects the deep-link `segment` param when it exactly names a real picker option", async () => {
+    const { db } = fakeD1();
+    const result = (await load(loadEventFor(admin, db, '?segment=lapsed'))) as LoadResult;
+    expect(result.presetSegmentKey).toBe('lapsed');
+  });
+
+  it('the `class` sentinel (the "Email class members" nav entry, T5) preselects the picker own first class option, current season first', async () => {
+    const { db } = fakeD1({
+      firstResults: { "'current_season'": { value: '2026' } },
+      allResults: {
+        'FROM classes c': [
+          { id: 'cls-new', name: 'Keelboat 101', season: 2026 },
+          { id: 'cls-old', name: 'Dinghy Basics', season: 2024 },
+        ],
+      },
+    });
+    const result = (await load(loadEventFor(admin, db, '?segment=class'))) as LoadResult;
+    expect(result.presetSegmentKey).toBe('class:cls-new');
+  });
+
+  it('the `class` sentinel falls back to no preselection when the picker has no class option', async () => {
+    const { db } = fakeD1();
+    const result = (await load(loadEventFor(admin, db, '?segment=class'))) as LoadResult;
+    expect(result.presetSegmentKey).toBeNull();
+  });
+
+  it('a `segment` param naming no real option falls back to no preselection, never an error', async () => {
+    const { db } = fakeD1();
+    const result = (await load(loadEventFor(admin, db, '?segment=class:no-such-class'))) as LoadResult;
+    expect(result.presetSegmentKey).toBeNull();
   });
 });
 

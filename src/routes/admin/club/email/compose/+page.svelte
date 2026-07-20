@@ -11,6 +11,7 @@ count-acknowledging gate). Every form here posts through this route's three acti
 gate; nothing here trusts a count this component computed on its own.
 -->
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { enhance } from '$app/forms';
   import type { SubmitFunction } from '@sveltejs/kit';
   import type { ActionData, PageData } from './$types';
@@ -27,8 +28,15 @@ gate; nothing here trusts a count this component computed on its own.
    *  recipient, `portal_url`/`committee_email` from the send-time env, see `bulk-email.ts`). */
   const PREVIEW_SAMPLE_VARS = { person_name: 'Sample Member', portal_url: '/my-account', committee_email: 'membership-committee@aksailingclub.org' };
 
-  let step: 'landing' | 'compose' | 'review' = $state('landing');
-  let segmentKey = $state('');
+  // A deep link's `segment` param (the "Email class members" nav entry, T5) preselects the picker
+  // and lands directly on the compose step; the server-resolved `presetSegmentKey` seeds this
+  // component's own state once, at mount (`untrack` marks that on purpose -- a later navigation to
+  // a different `segment` param remounts this route from a different sidebar entry, it does not
+  // update these in place). The two-step review/send resolve still runs server-side from scratch
+  // either way (see this route's own `+page.server.ts` header).
+  const initialPreset = untrack(() => data.presetSegmentKey);
+  let step: 'landing' | 'compose' | 'review' = $state(initialPreset ? 'compose' : 'landing');
+  let segmentKey = $state(initialPreset ?? '');
   let subject = $state('');
   let body = $state('');
   let bodyField: HTMLTextAreaElement | undefined = $state();
