@@ -56,8 +56,11 @@ functional brainstorm (purpose and common use cases documented first; UI/UX flow
 that). Ordering per Geoff 2026-07-20: Members first, probably followed by Classes or
 Assets; Money deliberately later, once the table and form vocabulary exists. Toolkit
 components and written standards are harvested into cairn as each pass lands, so the
-process compounds; an early pass carries the UX-research survey (table density,
-striping, form layout) the rest inherit. Evidence base and per-screen reactions:
+process compounds. The effort OPENS with the design-research survey (table density,
+striping, form layout — published UX literature plus mature admin design systems),
+which grades the rough starting component collection already drafted from the
+walkthrough (`docs/2026-07-20-admin-toolkit-starting-collection.md`); the Members pass
+follows with both in hand. Evidence base and per-screen reactions:
 `docs/2026-07-20-admin-toolkit-catalog.md` (walkthrough of 2026-07-20, all screens
 captured against a live-data copy). Supersedes the catalog-then-build framing of
 `docs/2026-07-20-admin-toolkit-catalog-kickoff.md`.

@@ -26,11 +26,17 @@ walkthrough harness (real `asc-club` copied into the local replica via
 committed (signup-seed clear list missed the 0027–0030 children — warm replicas
 crashed bootstrap). **Flag for the existing apology-send queue item: the live
 `email_log` holds 471 failed vs 279 sent, latest failures 2026-07-14 08:15 UTC** —
-real rows, seen during the walk. **NEXT: the Members pass functional brainstorm.**
-Resume prompt: "Start the Members admin pass: read ROADMAP.md's admin-screen-passes
-entry and docs/2026-07-20-admin-toolkit-catalog.md, then open the functional
-brainstorm with Geoff (superpowers:brainstorming) on the Members screen's purpose and
-use cases before any visual work." Launch fresh from ~/Projects/aksailingclub-org.
+real rows, seen during the walk. A rough starting component collection is drafted
+from the walk (`docs/2026-07-20-admin-toolkit-starting-collection.md`) — explicitly
+pre-research hypotheses. **NEXT: the design-research survey opens the effort (Geoff's
+ruling: grounded in research, not impressions), grading the starting collection; then
+the Members pass functional brainstorm.** Resume prompt: "Continue the admin toolkit
+effort: read ROADMAP.md's admin-screen-passes entry,
+docs/2026-07-20-admin-toolkit-catalog.md, and the starting collection, then run the
+design-research survey (deep-research on admin data-table/form UX evidence and the
+Carbon/Polaris/Atlassian decisions), grade the collection against it, and open the
+Members pass functional brainstorm with Geoff." Launch fresh from
+~/Projects/aksailingclub-org.
 
 **PASS B `asc-sidebar-build` IS BUILD-COMPLETE AND SHIPPED TO DEV; GEOFF'S WALKTHROUGH
 IS THE OPEN GATE (2026-07-19, Fable-conducted: T1 probe round settled in-session, 5
