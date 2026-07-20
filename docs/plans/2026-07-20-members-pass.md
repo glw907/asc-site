@@ -22,6 +22,11 @@ consumer and their test.
   doctrine, action discipline, copy register, formatters, the daisy assemblies).
 - Component contracts are general-purpose, never ASC-shaped (spec's toolkit
   section); daisyUI-first, no new CSS systems.
+- Stay upgrade-friendly to daisyUI (Geoff, 2026-07-20): components compose daisy
+  class names and semantics as-is — never fork or copy daisy CSS, never restyle
+  daisy internals (the @layer lesson stands); each toolkit component's README
+  entry lists the exact daisy classes it leans on, so a daisy upgrade's blast
+  radius is grep-auditable. The safelist (Task 1) is the one compile-side seam.
 - Overdue retains full member benefits everywhere; only Former loses them.
 - No `roles:`-style regressions: access derives from the existing map; any new
   admin action is audited through the existing audit sink.
@@ -237,7 +242,15 @@ never silently resolved.
 **Acceptance:** all reviewers clean or findings dispositioned; STATUS's top entry
 carries the pass accounting and the next action (Classes or Assets brainstorm);
 the harvest note names which contracts are ready for cairn and which need a
-second consumer first.
+second consumer first. The harvest note also files the **daisy absorption
+process** as a cairn engine item (Geoff's ruling): cairn owns the daisyUI
+dependency for admin surfaces, so cairn gets a scheduled update ritual —
+automated bump PRs (Dependabot/Renovate on `daisyui`), and a documented cadence
+per release: read the daisy changelog, rebuild, verify the blessed-set classes
+still compile, run the visual suite, and note new daisy components worth
+adopting into the toolkit. The toolkit READMEs' per-component class inventories
+are the audit surface that makes each upgrade's blast radius mechanical to
+check.
 
 ---
 
