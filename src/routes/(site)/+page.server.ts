@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { buildSeoMeta } from '@glw907/cairn-cms/delivery';
-import { posts, notifications, ORIGIN, SITE_DESCRIPTION } from '$chassis/content';
+import { posts, bulletins, ORIGIN, SITE_DESCRIPTION } from '$chassis/content';
 import { mediaManifest, publicMediaResolver, siteConfig } from '$theme/cairn.config';
 import { homeImages } from '$theme/home-images';
 import { loadSeasonMonths } from '$theme/season-data';
@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ platform }) => {
   const season = db ? await loadSeasonMonths(db) : [];
   return {
     news: newsCards(posts.all().slice(0, 3), posts, mediaManifest, publicMediaResolver),
-    notification: activeNotification(notifications, new Date().toISOString().slice(0, 10)),
+    notification: activeNotification(bulletins, new Date().toISOString().slice(0, 10)),
     images,
     season,
     seo: buildSeoMeta({

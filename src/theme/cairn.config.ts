@@ -1,5 +1,5 @@
-// ASC's adapter: the single seam the engine consumes. Three concepts (posts, pages, and the
-// site-declared notifications concept), a render that runs the engine's directive registry
+// ASC's adapter: the single seam the engine consumes. The site's content concepts (posts, pages,
+// bulletins, fragments, and documents), a render that runs the engine's directive registry
 // (Task 3: the club-grounds chrome and the callout/passage/cards components), and the GitHub App
 // backend against the asc-site repo.
 import { defineAdapter, defineConcept, defineRoles, fieldset, fields, githubApp, createRenderer, parseSiteConfig } from '@glw907/cairn-cms';
@@ -104,7 +104,6 @@ export const navLayout: NavLayout = [
       { screen: 'bulletins' },
       { screen: 'pages' },
       { screen: 'fragments' },
-      { screen: 'notifications' },
       { screen: 'documents' },
     ],
   },
@@ -263,6 +262,16 @@ export const cairn = defineAdapter({
     // stays the id verbatim and matches the live URLs exactly with no redirect needed. A future
     // bulletin created through the editor gets a full day-granularity id instead, a reasonable
     // step up, not a mismatch to paper over.
+    //
+    // `detail` and `expires` restore production's single-concept model (pass-B sidebar T3,
+    // docs/2026-07-18-admin-sidebar-2-design.md decision 4): the live Hugo site's own `bulletins`
+    // already carries a short detail line and an expiry the home banner reads to pick the latest
+    // still-current bulletin (`$theme/active-notification`'s `activeNotification`); the earlier
+    // migration split that into this feed concept plus an invented `notifications` banner
+    // concept, which duplicated entries and has now retired. Both fields are optional, matching
+    // production's own optional treatment (a bulletin with neither still publishes its page, it
+    // just never claims the banner), so the two already-migrated entries keep validating with no
+    // backfill owed.
     bulletins: defineConcept({
       dir: 'src/content/bulletins',
       label: 'Bulletins',
@@ -271,12 +280,17 @@ export const cairn = defineAdapter({
       fields: fieldset({
         title: fields.text({ label: 'Title', required: true }),
         date: fields.date({ label: 'Date', required: true }),
+        detail: fields.text({ label: 'Detail line', help: 'A short line shown on the home banner alongside the title.' }),
+        expires: fields.date({
+          label: 'Expires',
+          help: 'The home banner shows this bulletin through this date, then stops. Leave unset and it never claims the banner.',
+        }),
       }),
     }),
     // The member-waivers document model (member-waivers T1,
     // docs/2026-07-17-member-waivers-design.md "Ratified decisions" 1/4/6): signable documents as
     // season-versioned markdown, one file per version, edited through the admin like any other
-    // content. `routing: 'embedded'` (the same choice notifications and fragments make): a
+    // content. `routing: 'embedded'` (the same choice fragments already makes): a
     // document has no public page of its own, and reaches a member only through the signing flow
     // that reads its full text (T4). `document` is the stable id a document keeps across versions
     // (e.g. "general-release"); `version`/`season`/`status` are what `$theme/documents.ts`'s
@@ -303,24 +317,6 @@ export const cairn = defineAdapter({
         }),
         season: fields.number({ label: 'Season', required: true, integer: true }),
         status: fields.select({ label: 'Status', required: true, options: ['draft', 'published'] }),
-      }),
-    }),
-    // The site-declared notifications concept: a time-boxed announcement rendered as the home
-    // banner strip (Task 3 wires the read). `routing: 'embedded'` means no per-entry public
-    // page and no sitemap entry; the entry is data the theme reads and places itself.
-    notifications: defineConcept({
-      dir: 'src/content/notifications',
-      label: 'Notifications',
-      singular: 'Notification',
-      routing: 'embedded',
-      fields: fieldset({
-        title: fields.text({ label: 'Title', required: true }),
-        body: fields.textarea({ label: 'Body', required: true }),
-        expires: fields.date({
-          label: 'Expires',
-          required: true,
-          help: 'The banner shows through the end of this date, then stops rendering.',
-        }),
       }),
     }),
   },

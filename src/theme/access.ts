@@ -43,13 +43,9 @@ import { defineAccess, type AccessMap, type RolesDeclaration } from '@glw907/cai
  */
 export function buildAccess(roles: RolesDeclaration): AccessMap {
   return defineAccess(roles, {
-    // Communication (roles matrix): publish-and-notify is Publisher's whole remit. `notifications`
-    // stays mapped for the pass-A window even though pass B retires the concept in favor of the
-    // restored `bulletins` model (sequencing note): leaving it unmapped in the meantime would
-    // silently reopen it to Webmaster through the zero-config default.
+    // Communication (roles matrix): publish-and-notify is Publisher's whole remit.
     posts: ['Administrator', 'Club manager', 'Publisher'],
     bulletins: ['Administrator', 'Club manager', 'Publisher'],
-    notifications: ['Administrator', 'Club manager', 'Publisher'],
     // Website (roles matrix): Publisher gets no access to Pages -- an explicit exclusion, not an
     // oversight (design decision 8).
     pages: ['Administrator', 'Club manager', 'Webmaster'],

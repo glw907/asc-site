@@ -27,7 +27,6 @@ const ROLES = [ADMINISTRATOR, CLUB_MANAGER, WEBMASTER, PUBLISHER, INSTRUCTOR] as
 const FUNCTIONS = [
   'posts',
   'bulletins',
-  'notifications',
   'pages',
   'fragments',
   'documents',
@@ -51,7 +50,6 @@ const FUNCTIONS = [
 const ADMITTED: Record<(typeof FUNCTIONS)[number], readonly Role[]> = {
   posts: [ADMINISTRATOR, CLUB_MANAGER, PUBLISHER],
   bulletins: [ADMINISTRATOR, CLUB_MANAGER, PUBLISHER],
-  notifications: [ADMINISTRATOR, CLUB_MANAGER, PUBLISHER],
   pages: [ADMINISTRATOR, CLUB_MANAGER, WEBMASTER],
   fragments: [ADMINISTRATOR, CLUB_MANAGER, WEBMASTER],
   documents: [ADMINISTRATOR, CLUB_MANAGER],

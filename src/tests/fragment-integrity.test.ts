@@ -25,7 +25,7 @@ function readContentFile(relativePath: string): string {
   return readFileSync(path.join(REPO_ROOT, relativePath), 'utf8');
 }
 
-const CONTENT_CONCEPT_DIRS = ['posts', 'pages', 'bulletins', 'notifications', 'fragments'];
+const CONTENT_CONCEPT_DIRS = ['posts', 'pages', 'bulletins', 'fragments'];
 
 /** Every `::include{fragment="<id>"}` reference across the whole content corpus, with the file it came from. */
 function findIncludeReferences(): { file: string; fragmentId: string }[] {

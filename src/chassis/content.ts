@@ -23,13 +23,6 @@ const bulletinsRaw = import.meta.glob('/src/content/bulletins/*.md', {
   import: 'default',
   eager: true,
 }) as Record<string, string>;
-// Notifications route as 'embedded': no per-entry public page, read by the home template as the
-// banner strip instead (see cairn.config.ts's routing declaration).
-const notificationsRaw = import.meta.glob('/src/content/notifications/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string>;
 // Fragments also route 'embedded' (see cairn.config.ts's routing declaration): a fragment has no
 // public page of its own, and reaches a reader only through the `::include` directive of an entry
 // that carries it.
@@ -50,7 +43,6 @@ const indexes = createSiteIndexes(cairn, siteConfig, {
   posts: postsRaw,
   pages: pagesRaw,
   bulletins: bulletinsRaw,
-  notifications: notificationsRaw,
   fragments: fragmentsRaw,
   documents: documentsRaw,
 });
@@ -59,7 +51,6 @@ export const site = indexes.site;
 export const posts = indexes.posts;
 export const pages = indexes.pages;
 export const bulletins = indexes.bulletins;
-export const notifications = indexes.notifications;
 export const fragments = indexes.fragments;
 export const documents = indexes.documents;
 

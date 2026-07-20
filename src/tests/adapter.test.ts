@@ -3,9 +3,8 @@ import { composeRuntime, extractVocabulary } from '@glw907/cairn-cms';
 import { createContentRoutes } from '@glw907/cairn-cms/sveltekit';
 import { cairn, siteConfig } from '$theme/cairn.config';
 
-// The adapter's own shape, pinned so a later pass cannot silently drift the URL contract, the
-// curated tag vocabulary, or the notifications concept's routing while migrating content
-// (Task 2) or building the theme (Task 3).
+// The adapter's own shape, pinned so a later pass cannot silently drift the URL contract or the
+// curated tag vocabulary while migrating content (Task 2) or building the theme (Task 3).
 describe('the ASC adapter', () => {
   it('declares a dated posts concept on the feed route shape', () => {
     expect(cairn.content.posts.routing).toBe('feed');
@@ -17,9 +16,9 @@ describe('the ASC adapter', () => {
     expect(cairn.content.pages.dir).toBe('src/content/pages');
   });
 
-  it('declares the site-owned notifications concept as embedded (no public page)', () => {
-    expect(cairn.content.notifications.routing).toBe('embedded');
-    expect(cairn.content.notifications.dir).toBe('src/content/notifications');
+  it('declares the dated bulletins concept on the feed route shape', () => {
+    expect(cairn.content.bulletins.routing).toBe('feed');
+    expect(cairn.content.bulletins.dir).toBe('src/content/bulletins');
   });
 
   it('curates the five club-taxonomy tag values as the site vocabulary', () => {

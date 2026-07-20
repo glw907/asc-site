@@ -1,35 +1,37 @@
 import { describe, it, expect } from 'vitest';
 import type { ContentIndex, ContentSummary, ContentEntry } from '@glw907/cairn-cms/delivery';
-import { activeNotification, parseBoldSegments, type NotificationFields } from '$theme/active-notification';
+import { activeNotification, parseBoldSegments, type BulletinBannerFields } from '$theme/active-notification';
 
-/** A minimal fake ContentIndex, just the two methods activeNotification actually reads. */
+/** A minimal fake ContentIndex, just the two methods activeNotification actually reads. Entries
+ *  come pre-sorted newest-first, matching `createContentIndex`'s own sort for a dated concept
+ *  like `bulletins`. */
 function fakeIndex(
-  entries: Array<{ id: string; title: string; body: string; expires: string }>,
-): ContentIndex<NotificationFields> {
+  entries: Array<{ id: string; title: string; detail: string; expires: string }>,
+): ContentIndex<BulletinBannerFields> {
   const byId = new Map(
     entries.map((e) => [
       e.id,
       {
-        concept: 'notifications',
+        concept: 'bulletins',
         id: e.id,
         slug: e.id,
-        permalink: `/notifications/${e.id}`,
+        permalink: `/bulletins/${e.id}`,
         title: e.title,
         tags: [],
         excerpt: '',
         wordCount: 0,
         draft: false,
         fields: {},
-        frontmatter: { body: e.body, expires: e.expires },
+        frontmatter: { detail: e.detail, expires: e.expires },
         body: '',
-      } satisfies ContentEntry<NotificationFields>,
+      } satisfies ContentEntry<BulletinBannerFields>,
     ]),
   );
   const summaries: ContentSummary[] = entries.map((e) => ({
-    concept: 'notifications',
+    concept: 'bulletins',
     id: e.id,
     slug: e.id,
-    permalink: `/notifications/${e.id}`,
+    permalink: `/bulletins/${e.id}`,
     title: e.title,
     tags: [],
     excerpt: '',
@@ -40,45 +42,45 @@ function fakeIndex(
   return {
     all: () => summaries,
     byId: (id) => byId.get(id),
-  } as ContentIndex<NotificationFields>;
+  } as ContentIndex<BulletinBannerFields>;
 }
 
 describe('activeNotification', () => {
   it('returns the entry whose expiry has not yet passed', () => {
-    const notifications = fakeIndex([
-      { id: 'a', title: 'Membership open', body: 'Join today.', expires: '2026-04-30' },
+    const bulletins = fakeIndex([
+      { id: 'a', title: 'Membership open', detail: 'Join today.', expires: '2026-04-30' },
     ]);
-    expect(activeNotification(notifications, '2026-03-01')).toEqual({
+    expect(activeNotification(bulletins, '2026-03-01')).toEqual({
       title: 'Membership open',
       body: 'Join today.',
     });
   });
 
   it('returns undefined once the entry has expired, matching an honest silence', () => {
-    const notifications = fakeIndex([
-      { id: 'a', title: 'Membership open', body: 'Join today.', expires: '2026-04-30' },
+    const bulletins = fakeIndex([
+      { id: 'a', title: 'Membership open', detail: 'Join today.', expires: '2026-04-30' },
     ]);
-    expect(activeNotification(notifications, '2026-07-06')).toBeUndefined();
+    expect(activeNotification(bulletins, '2026-07-06')).toBeUndefined();
   });
 
   it('treats the expiry date itself as still current (inclusive)', () => {
-    const notifications = fakeIndex([
-      { id: 'a', title: 'Membership open', body: 'Join today.', expires: '2026-04-30' },
+    const bulletins = fakeIndex([
+      { id: 'a', title: 'Membership open', detail: 'Join today.', expires: '2026-04-30' },
     ]);
-    expect(activeNotification(notifications, '2026-04-30')).toBeDefined();
+    expect(activeNotification(bulletins, '2026-04-30')).toBeDefined();
   });
 
   it('returns undefined when there are no entries at all', () => {
     expect(activeNotification(fakeIndex([]), '2026-07-06')).toBeUndefined();
   });
 
-  it('returns the first still-current entry when more than one exists', () => {
-    const notifications = fakeIndex([
-      { id: 'a', title: 'Older, still current', body: 'A', expires: '2026-12-31' },
-      { id: 'b', title: 'Newer, still current', body: 'B', expires: '2026-12-31' },
+  it('returns the first still-current entry when more than one exists (newest-first order)', () => {
+    const bulletins = fakeIndex([
+      { id: 'a', title: 'Newer, still current', detail: 'A', expires: '2026-12-31' },
+      { id: 'b', title: 'Older, still current', detail: 'B', expires: '2026-12-31' },
     ]);
-    expect(activeNotification(notifications, '2026-07-06')).toEqual({
-      title: 'Older, still current',
+    expect(activeNotification(bulletins, '2026-07-06')).toEqual({
+      title: 'Newer, still current',
       body: 'A',
     });
   });

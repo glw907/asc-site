@@ -1,5 +1,5 @@
-// A concept's routability (excludes the `embedded` notifications concept) read the canonical way,
-// through the engine's own resolved descriptors (`siteDescriptors`), the same source
+// A concept's routability (excludes `embedded` concepts, e.g. fragments and documents) read the
+// canonical way, through the engine's own resolved descriptors (`siteDescriptors`), the same source
 // `@glw907/cairn-cms/delivery`'s `sitemapView` reads for the sitemap. `createPublicRoutes.entries()`
 // has no equivalent routable-only view (unlike the sitemap, which does via `sitemapView`), so
 // `(site)/[...path]/+page.server.ts` filters its own prerender entries and guards its own load

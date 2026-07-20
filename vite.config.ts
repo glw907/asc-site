@@ -17,7 +17,6 @@ export default defineConfig({
         posts: '/src/content/posts/*.md',
         pages: '/src/content/pages/*.md',
         bulletins: '/src/content/bulletins/*.md',
-        notifications: '/src/content/notifications/*.md',
         fragments: '/src/content/fragments/*.md',
         documents: '/src/content/documents/*.md',
       },

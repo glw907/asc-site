@@ -21,7 +21,6 @@ function opts(role: 'owner' | 'Administrator' | 'Club manager' | 'Instructor', c
       { id: 'pages', label: 'Pages' },
       { id: 'bulletins', label: 'Bulletins' },
       { id: 'fragments', label: 'Fragments' },
-      { id: 'notifications', label: 'Notifications' },
     ],
     navMenuLabel: 'Navigation',
     editor: {

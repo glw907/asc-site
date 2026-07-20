@@ -211,22 +211,6 @@
       "links": []
     },
     {
-      "id": "2026-03-membership-open",
-      "concept": "notifications",
-      "title": "Membership open for 2026",
-      "permalink": "/notifications/2026-03-membership-open",
-      "draft": false,
-      "links": []
-    },
-    {
-      "id": "2026-07-test-banner-review",
-      "concept": "notifications",
-      "title": "Test notification",
-      "permalink": "/notifications/2026-07-test-banner-review",
-      "draft": false,
-      "links": []
-    },
-    {
       "id": "articles-of-incorporation",
       "concept": "pages",
       "title": "Articles of Incorporation",

@@ -1,6 +1,8 @@
 ---
 title: "Membership Open for 2026"
 date: 2026-03-02
+detail: "Memberships open for 2026 • Class signup coming soon for members first"
+expires: 2026-04-30
 ---
 Membership signups are open! New members can [join here](/join/); returning members can renew through [My Account](/my-account/).
 
