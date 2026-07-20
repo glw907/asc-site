@@ -33,7 +33,13 @@ const NEAR_EXPIRY_HOURS = 24;
 
 /** The three ruled attention sources (design decision 7), each also one of the Overview strip's
  *  own cards and one nav entry's badge (`href`s match `src/theme/cairn.config.ts`'s `navLayout`
- *  exactly: `/admin/club/asset-requests`, `/admin/club/committees`, `/admin/club/classes/waitlist`). */
+ *  exactly: `/admin/club/asset-requests`, `/admin/club/committees`, `/admin/club/classes/waitlist`).
+ *
+ *  Confidentiality invariant (pass-B security review): the engine drops an item only when the
+ *  session's resolved nav cannot see its `href`, and an href the access map has NO rule for is
+ *  visible to every editor capability. Every href returned here must therefore stay covered by an
+ *  access-map key (today all three inherit `/admin/club`); an unmapped href would leak its count
+ *  to every editor. */
 export interface AttentionCounts {
   /** Pending asset requests awaiting a decision. */
   pendingAssetRequests: number;

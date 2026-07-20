@@ -39,3 +39,28 @@ site's route manifest at config time, but the guide could ship a testing recipe 
 every site-entry href resolves against the app's route table, SvelteKit's `$app/paths`
 or a glob over `src/routes`), or the SvelteKit adapter could cross-check at server
 start where the manifest is knowable.
+
+## 4. Resolved nav entries expose no effective icon NAME for engine defaults (testability gap)
+
+A resolved engine-ref entry carries `iconName` only when the site declared an override; an
+entry riding an engine default resolves to a Svelte component with no exported name, and
+`ENGINE_NAV_ICONS`/`ENGINE_CONCEPT_DATED_ICON` are internal to `dist/components`. ASC's
+"25 distinct icons" ratified requirement therefore tests against a hand-mirrored table of
+the engine defaults, which a future cairn bump can silently invalidate (the svelte-reviewer
+flagged the false-green surface). Either export the name map, or carry the effective icon
+name on the resolved entry, and the consumer test becomes real.
+
+## 5. Admin routes are styleable only from cairn's own compiled class inventory (major DX gap)
+
+`cairn-admin.css` is compiled inside the package from cairn's own screens' class usage; a
+site's `/admin/**` pages load ONLY that sheet (the site's Tailwind/daisyUI build serves the
+`(site)` group). Any daisy or utility class a site's admin markup uses that cairn's screens
+never used is silently dead: ASC's Overview needs-attention strip declared daisyUI
+`stats stats-vertical lg:stats-horizontal` + `stat-value`/`stat-desc`/`text-warning` and
+NONE of those exist in the sheet, so the strip rendered as an unstyled stack (and the
+nonzero-count warning tint never rendered) from the membership-admin pass until pass B
+caught it in a coherence capture. Site-side workaround: Svelte scoped `<style>` blocks on
+package tokens (`--cairn-card-border`, `--cairn-warning-ink`, `--color-muted`), applied to
+the strip in pass B. Engine-side fixes worth weighing: publish the class inventory (or a
+safelist contract) a site may rely on, document the scoped-style idiom as THE supported
+path for site-authored admin screens, or let a site append its own compiled admin sheet.

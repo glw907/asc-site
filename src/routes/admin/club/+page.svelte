@@ -21,20 +21,69 @@ the board of every paid join). Pass B T7 reshapes the strip to the three ruled a
   {nothingPending ? 'Nothing needs attention right now.' : 'A few things need a look.'}
 </p>
 
-<div class="stats stats-vertical lg:stats-horizontal mt-6 w-full rounded-box border border-[var(--cairn-card-border)] bg-base-100 shadow-[var(--cairn-shadow)]">
-  <a href="/admin/club/asset-requests" class="stat">
+<!-- Scoped styles, not daisyUI stats: admin routes load only cairn's compiled cairn-admin.css,
+     which carries no .stats/.stat/.stat-value classes (or responsive variants), so the earlier
+     daisy markup rendered as an unstyled stack. Scoped CSS ships with the page regardless. -->
+<div class="strip mt-6 rounded-box border border-[var(--cairn-card-border)] bg-base-100 shadow-[var(--cairn-shadow)]">
+  <a href="/admin/club/asset-requests" class="cell">
     <div class={HEADER_CELL}>Asset requests</div>
-    <div class="stat-value text-xl" class:text-warning={data.pendingAssetRequests > 0}>{data.pendingAssetRequests}</div>
-    <div class="stat-desc">Awaiting a decision</div>
+    <div class="value" class:pending={data.pendingAssetRequests > 0}>{data.pendingAssetRequests}</div>
+    <div class="desc">Awaiting a decision</div>
   </a>
-  <a href="/admin/club/committees" class="stat">
+  <a href="/admin/club/committees" class="cell">
     <div class={HEADER_CELL}>Committees</div>
-    <div class="stat-value text-xl" class:text-warning={data.pendingCommitteeRequests > 0}>{data.pendingCommitteeRequests}</div>
-    <div class="stat-desc">Pending join requests</div>
+    <div class="value" class:pending={data.pendingCommitteeRequests > 0}>{data.pendingCommitteeRequests}</div>
+    <div class="desc">Pending join requests</div>
   </a>
-  <a href="/admin/club/classes/waitlist" class="stat">
+  <a href="/admin/club/classes/waitlist" class="cell">
     <div class={HEADER_CELL}>Class waitlist</div>
-    <div class="stat-value text-xl" class:text-warning={data.classWaitlistAttention > 0}>{data.classWaitlistAttention}</div>
-    <div class="stat-desc">Offers expiring soon, or seats to fill</div>
+    <div class="value" class:pending={data.classWaitlistAttention > 0}>{data.classWaitlistAttention}</div>
+    <div class="desc">Offers expiring soon, or seats to fill</div>
   </a>
 </div>
+
+<style>
+  .strip {
+    display: grid;
+    overflow: hidden;
+  }
+  .cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 1.25rem;
+    color: inherit;
+    text-decoration: none;
+    border-top: 1px solid var(--cairn-card-border);
+    transition: background-color 0.15s;
+  }
+  .cell:first-child {
+    border-top: none;
+  }
+  .cell:hover {
+    background: color-mix(in oklab, var(--color-base-content) 4%, transparent);
+  }
+  .value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .value.pending {
+    color: var(--cairn-warning-ink);
+  }
+  .desc {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+  }
+  @media (min-width: 40rem) {
+    .strip {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .cell {
+      border-top: none;
+    }
+    .cell + .cell {
+      border-left: 1px solid var(--cairn-card-border);
+    }
+  }
+</style>
