@@ -33,6 +33,30 @@ Publication remains consumer-gated (the kit-first ruling): components are born i
 the ASC theme layer, Members shakes them, and they move to cairn with the generality
 already proven. The subpath ruling settles where they land, not when.
 
+## Ruling: harvest cadence is wave-by-graduation, not per-pass and not end-of-series (Geoff, 2026-07-20)
+
+A component graduates into cairn when its second consuming screen has used it with
+the contract unchanged, or when cairn's own admin screens want it (engine pull beats
+calendar). Each graduating cohort batches into one cairn release under the normal
+release doctrine, so the series produces a few harvest releases, not one per pass
+and not a single big-bang harvest at the end. The grounds:
+
+- The cost asymmetry: a wrong contract published in cairn is a breaking change
+  across every consumer; the same mistake in ASC's theme layer is one local
+  refactor. One consumer exercises only part of a general contract; the second
+  screen is the shakedown that earns publication.
+- Iteration speed: a local tweak is a commit; a published tweak is a release plus a
+  dependency bump on every site. Components stay local while their churn rate is
+  high.
+- Against end-of-series: Money is deliberately late, a big-bang harvest is a large
+  hard-to-review pass, and waiting delays the harvest's real payoff (cairn's own
+  admin adopting the toolkit).
+
+Consequence for this pass: the Members set stays in the ASC theme layer at close.
+The first harvest wave is expected after the next screen pass (Classes or Assets)
+proves which contracts held. Each wave shrinks ASC's local surface: the site swaps
+local copies for the `admin-toolkit` subpath imports and deletes them.
+
 ## Engine item: the daisy absorption ritual (Geoff, 2026-07-20)
 
 Cairn owns the daisyUI dependency for admin surfaces, so cairn gets a scheduled
