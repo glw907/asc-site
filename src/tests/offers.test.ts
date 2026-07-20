@@ -7,6 +7,7 @@ import {
   expireStaleOffers,
   hasActiveOfferForClass,
   hashOfferToken,
+  listOutstandingOffers,
   offerSpot,
 } from '$admin-club/lib/offers';
 
@@ -536,6 +537,47 @@ describe('expireStaleOffers', () => {
     const result = await expireStaleOffers(db);
     expect(result).toEqual({ expiredCount: 0 });
     expect(calls.some((c) => c.sql.startsWith('UPDATE'))).toBe(false);
+  });
+});
+
+describe('listOutstandingOffers (the cross-class Class waitlist screen\'s own read)', () => {
+  it('maps every unresolved row across classes, most-urgent (soonest expiry) first', async () => {
+    const { db, calls } = fakeD1({
+      allResults: {
+        'FROM class_offers WHERE resolved IS NULL': [
+          {
+            token_hash: 'hash-a',
+            waitlist_id: 'wait-a',
+            class_id: 'class-a',
+            offered_by: 'admin@example.com',
+            offered_at: '2026-07-01 00:00:00',
+            expires_at: '2026-07-02 00:00:00',
+            resolved: null,
+            resolved_at: null,
+          },
+          {
+            token_hash: 'hash-b',
+            waitlist_id: 'wait-b',
+            class_id: 'class-b',
+            offered_by: 'admin@example.com',
+            offered_at: '2026-07-01 00:00:00',
+            expires_at: '2026-07-05 00:00:00',
+            resolved: null,
+            resolved_at: null,
+          },
+        ],
+      },
+    });
+    await expect(listOutstandingOffers(db)).resolves.toEqual([
+      expect.objectContaining({ classId: 'class-a', waitlistId: 'wait-a', expiresAt: '2026-07-02 00:00:00' }),
+      expect.objectContaining({ classId: 'class-b', waitlistId: 'wait-b', expiresAt: '2026-07-05 00:00:00' }),
+    ]);
+    expect(calls[0].sql).toContain('ORDER BY expires_at ASC');
+  });
+
+  it('returns an empty list when nothing is outstanding', async () => {
+    const { db } = fakeD1({ allResults: { 'FROM class_offers WHERE resolved IS NULL': [] } });
+    await expect(listOutstandingOffers(db)).resolves.toEqual([]);
   });
 });
 

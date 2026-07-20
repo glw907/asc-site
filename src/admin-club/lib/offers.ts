@@ -125,6 +125,19 @@ export async function listOffersForClass(db: D1Database, classId: string): Promi
   return results.map(toOfferRow);
 }
 
+/** Every unresolved offer across every class, soonest-to-expire first: the cross-class Class
+ *  waitlist screen's own need (Task 4), which shows every current-season class's active offer
+ *  state in one place. A single query beats calling `listOffersForClass` once per class, both
+ *  because it is one round trip instead of N and because that call also returns each class's
+ *  full resolved history, which this cross-class overview never renders (only the per-class
+ *  detail page shows history chips). */
+export async function listOutstandingOffers(db: D1Database): Promise<OfferRow[]> {
+  const { results } = await db
+    .prepare(`SELECT ${RAW_ROW_COLUMNS} FROM class_offers WHERE resolved IS NULL ORDER BY expires_at ASC`)
+    .all<OfferRawRow>();
+  return results.map(toOfferRow);
+}
+
 function randomBase64Url(byteLength: number): string {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);

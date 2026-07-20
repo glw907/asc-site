@@ -42,6 +42,18 @@ describe('the access map', () => {
     expect(canReach(access, editorWithRole('Publisher'), 'media')).toBe(true);
   });
 
+  it('admits Administrator and Club manager to the cross-class Class waitlist screen, via the ' +
+    '/admin/club section default (no deeper key added: its roles already match, T4)', () => {
+    expect(canReach(access, editorWithRole('Administrator'), '/admin/club/classes/waitlist')).toBe(true);
+    expect(canReach(access, editorWithRole('Club manager'), '/admin/club/classes/waitlist')).toBe(true);
+  });
+
+  it('denies Publisher, Webmaster, and Instructor the Class waitlist screen', () => {
+    expect(canReach(access, editorWithRole('Publisher'), '/admin/club/classes/waitlist')).toBe(false);
+    expect(canReach(access, editorWithRole('Webmaster'), '/admin/club/classes/waitlist')).toBe(false);
+    expect(canReach(access, editorWithRole('Instructor'), '/admin/club/classes/waitlist')).toBe(false);
+  });
+
   it('denies Instructor (none capability) every mapped target regardless of the map', () => {
     expect(canReach(access, editorWithRole('Instructor'), 'posts')).toBe(false);
     expect(canReach(access, editorWithRole('Instructor'), 'media')).toBe(false);
