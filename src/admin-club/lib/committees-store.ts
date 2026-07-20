@@ -199,6 +199,20 @@ export async function removeCommitteeMember(db: D1Database, id: string): Promise
   await db.prepare('DELETE FROM committee_members WHERE id = ?1').bind(id).run();
 }
 
+/** How many `committee_members` rows are `pending`, club-wide -- the admin attention badge's own
+ *  read (pass-B sidebar-build T7, `$theme/admin-attention.ts`). Every cairn editor session that
+ *  can reach `/admin/club/committees` is already `Administrator` or `Club manager`
+ *  (`src/theme/access.ts`'s `/admin/club` section default, the only gate this screen inherits) --
+ *  a full club role, not a narrower one. The roles spec's own committee-chair scope
+ *  (`$member-portal/lib/committees.ts`'s `canManageCommittee`) is a MEMBER-identity concept keyed
+ *  by `members.id`, with no bridge to a cairn `Editor` (no `memberId` field on `Editor`), so no
+ *  editor session that can ever see this count is narrower than club-wide -- this plain club-wide
+ *  count is honest for both roles that reach it. */
+export async function countPendingCommitteeMembers(db: D1Database): Promise<number> {
+  const row = await db.prepare("SELECT COUNT(*) AS n FROM committee_members WHERE status = 'pending'").first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
 /** Every `member_positions` row, sort order first, joined out to the member's own name. */
 export async function listMemberPositions(db: D1Database): Promise<MemberPositionRow[]> {
   const { results } = await db

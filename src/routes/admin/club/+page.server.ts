@@ -2,39 +2,21 @@
 // needs-attention strip (design doc: "pending asset requests + offers nearing expiry, each a
 // count clicking through to its inbox — the dashboard spec's every-number-drills rule"). The
 // signup-review card retired (pass B T2: joins are automatic and self-serve, the board is
-// notified of every paid join by `board_join_notice`, so the queue reviewed nothing). This ships
-// WITH the asset-request review inbox (its front door); the fuller reporting dashboard grows
-// around it later, per the design doc's own note.
+// notified of every paid join by `board_join_notice`, so the queue reviewed nothing). Pass B T7
+// reshapes the strip to the three ruled attention sources (design decision 7) and reads them from
+// `$theme/admin-attention.ts`'s `loadAttentionCounts`, the same function `cairn.server.ts`'s
+// `attention` dependency calls for the sidebar badges -- one source of truth, consumed twice, so
+// the strip and the badges can never disagree.
 import type { PageServerLoad } from './$types';
 import { requireSession } from '@glw907/cairn-cms/sveltekit';
 import { resolveClubDb } from '$admin-club/lib/club-db';
-import { listPendingAssetRequests } from '$member-portal/lib/assets';
+import { loadAttentionCounts, type AttentionCounts } from '$theme/admin-attention';
 
-/** Offers nearing expiry: unresolved, expiring within the next 24 hours — the admin's own early
- *  warning that a claim window is about to close with no chaser sent (a cron-driven reminder is
- *  filed forward, per the adversarial review's own job-runner recommendation; this count is the
- *  strip's honest substitute today, a read with no side effect). */
-const NEAR_EXPIRY_HOURS = 24;
+const ZERO_COUNTS: AttentionCounts = { pendingAssetRequests: 0, pendingCommitteeRequests: 0, classWaitlistAttention: 0 };
 
 export const load: PageServerLoad = async (event) => {
   requireSession(event);
   const db = resolveClubDb(event.platform?.env);
-  if (!db) return { pendingRequests: 0, offersNearExpiry: 0 };
-
-  const now = new Date();
-  const soon = new Date(now.getTime() + NEAR_EXPIRY_HOURS * 60 * 60 * 1000);
-  const toSqliteDatetime = (d: Date) => d.toISOString().slice(0, 19).replace('T', ' ');
-
-  const [pendingRequests, nearExpiryRow] = await Promise.all([
-    listPendingAssetRequests(db),
-    db
-      .prepare('SELECT COUNT(*) AS n FROM class_offers WHERE resolved IS NULL AND expires_at > ?1 AND expires_at <= ?2')
-      .bind(toSqliteDatetime(now), toSqliteDatetime(soon))
-      .first<{ n: number }>(),
-  ]);
-
-  return {
-    pendingRequests: pendingRequests.length,
-    offersNearExpiry: nearExpiryRow?.n ?? 0,
-  };
+  if (!db) return ZERO_COUNTS;
+  return loadAttentionCounts(db);
 };

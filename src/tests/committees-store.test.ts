@@ -3,6 +3,7 @@ import { fakeD1 } from './_fake-d1';
 import {
   addCommitteeMember,
   approveCommitteeMember,
+  countPendingCommitteeMembers,
   createCommittee,
   createMemberPosition,
   listCommitteeMembers,
@@ -95,6 +96,19 @@ describe('listCommitteeMembers', () => {
       { id: 'cm-1', committeeId: 'c-1', committeeName: 'Fleet', memberId: 'm-1', memberName: 'Kaija Larsen', role: 'chair', status: 'active' },
       { id: 'cm-2', committeeId: 'c-1', committeeName: 'Fleet', memberId: 'm-2', memberName: 'Bart Hawkins', role: 'member', status: 'pending' },
     ]);
+  });
+});
+
+describe('countPendingCommitteeMembers', () => {
+  it('counts pending rows club-wide, from the status column alone', async () => {
+    const { db, calls } = fakeD1({ firstResults: { "FROM committee_members WHERE status = 'pending'": { n: 3 } } });
+    await expect(countPendingCommitteeMembers(db)).resolves.toBe(3);
+    expect(calls[0].sql).toContain("WHERE status = 'pending'");
+  });
+
+  it('reads zero when no row is pending', async () => {
+    const { db } = fakeD1({ firstResults: { "FROM committee_members WHERE status = 'pending'": null } });
+    await expect(countPendingCommitteeMembers(db)).resolves.toBe(0);
   });
 });
 
