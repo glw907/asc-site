@@ -4,6 +4,68 @@
 > STATUS.md's preamble). History only: nothing here is a live instruction, and entries
 > reflect what was true when written. The live rolling status is docs/STATUS.md.
 
+**[Trimmed 2026-07-19 at the pass-B close.]**
+
+**PASS A `asc-roles-adoption` IS SHIPPED TO DEV, THE LIVE GRANT ROWS ARE MIGRATED,
+AND MAIN IS GREEN (2026-07-19, Fable-conducted, 5 Sonnet implementer dispatches +
+2 reviewers + simplifier + a CI round, commits 7a0f597..ae67e5d, CI run 29707448071
+green).** What shipped:
+
+- **cairn `^0.88.0` (installed 0.88.1)**; the bump forced one adaptation (0.88's
+  `ResolveNavLayoutOptions.editor` replaced the loose capability/role pair — a breaking
+  type change inside an "additive" release, harvested).
+- **The five-role vocabulary**: Administrator (owner capability), Club manager,
+  Webmaster, Publisher (editor), Instructor (none), plus the engine-forced phantom
+  `owner` (declared, never granted; documented on the `defineRoles` block).
+  **Migration `migrations/asc-auth/0001_role_rename` APPLIED LIVE post-deploy and
+  verified**: both grant rows now read `Administrator`, verify-forward zero rows,
+  re-run proven idempotent. Lockout-safe by the canReach owner bypass (owner capability
+  short-circuits true), verified against the shipped engine, not assumed.
+- **The access map** (`src/theme/access.ts`, a `buildAccess(roles)` factory — the
+  guide's two-file pattern is a real ES-module cycle, harvested) implementing the
+  spec's roles matrix comprehensively; wired into BOTH `createAuthGuard` and the
+  adapter. Publisher picker-trace: no vocabulary/fragments grants needed (closed
+  taxonomy, SSR-only pickers — evidence in the map's comments).
+- **Enforcement reads the map**: `/admin/club` layout guard adopts `requireAccess`;
+  `clubAdminAction` composes `canReach` on the request path (Email/Announce admit
+  Publisher via deeper keys, no bespoke branch) and now FAILS CLOSED (audited 500) if
+  the map is ever unattached — both reviewers' one substantive finding; ten
+  route-action test fixtures had silently exercised canReach's permissive no-map
+  fallback and now inject the real map.
+- **The matrix drift-guard** (`src/tests/roles-matrix.test.ts`): the spec's matrix
+  reproduced from the composed map via one declarative table, mutation-proven
+  (a removed cell fails by name). 145 files / 1894 tests, check 0/0, build green.
+- **Security gate**: web-auth-security-reviewer — no exploitable defect; path-trick
+  sweep of the Publisher widening clean (trailing/dot/percent/case all verified
+  against the shipped matcher); phantom-owner grant confers nothing (editors screen
+  is owner-gated). cloudflare-workers-reviewer: SQL safe/idempotent, bindings clean.
+- **DX harvest**: docs/2026-07-19-roles-adoption-harvest-findings.md (4 findings:
+  reserved-owner rename + ManageEditors phantom listing, the access-guide import
+  cycle, the changelog's missing `Consumers must:`, the canReach permissive-fallback
+  trap for site-side action gates).
+- **The CI round (the plan's "baselines untouched" claim was wrong twice, both
+  fixed by evidence, not guesswork):** (1) the e2e admin-session helper minted role
+  `'owner'` — post-rename that phantom resolves no club nav groups, so the sidebar
+  test and rollup baselines broke; it now mints `Administrator` and converges the
+  local AUTH_DB replica onto the live shape (cairn's 0001_roles.sql CHECK drop —
+  the frozen 0000_auth.sql seed still carries it). (2) The 0.88 engine's own admin
+  chrome changed: group headers took the collapse-seam button form (label a few px
+  left) and Fragments gained its layers glyph from the widened icon set (it had
+  shared the document glyph — the exact collision the seam fixes). Diagnosed from
+  CI's own PNGs via the NEW failure-artifact upload in ci.yml (added this round —
+  pixel diffs are now diagnosable with evidence); the two 1440 rollup baselines
+  re-minted via the update_snapshots dispatch (ae67e5d, exactly 2 files), read and
+  verified by the conductor's eyes. Admin chrome only; no member-facing surface
+  changed.
+- **NEXT: `asc-sidebar-build` (pass B)** — plan docs/plans/2026-07-19-asc-sidebar-build.md;
+  OPENS with the probe round for Geoff's still-owed verdicts (open/closed defaults,
+  25-icon assignment, within-group order). Resume prompt: "Start pass B: read
+  docs/plans/2026-07-19-asc-sidebar-build.md; run its T1 probe round with Geoff first,
+  then execute T2–T8." Launch from ~/Projects/aksailingclub-org, fresh session. Pass B
+  consumes this pass's map (deletes the round-1 `roles:` nav hints, retires
+  `notifications` and its map key). After B: events-redesign, then the review-queue
+  clear and mw-cutover per ROADMAP.
+
 **[Trimmed 2026-07-19 at the pass-A close; the signing-moment before/after carries in
 STATUS's pointer block. THE WAIVERS BUILD IS LANDED AND RELEASED TO DEV (2026-07-19,
 Fable-conducted, workflow `wf_07d3ab70-09b`: 37 agents + a lows fix round, 0 errors,

@@ -8,65 +8,54 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
-**PASS A `asc-roles-adoption` IS SHIPPED TO DEV, THE LIVE GRANT ROWS ARE MIGRATED,
-AND MAIN IS GREEN (2026-07-19, Fable-conducted, 5 Sonnet implementer dispatches +
-2 reviewers + simplifier + a CI round, commits 7a0f597..ae67e5d, CI run 29707448071
-green).** What shipped:
+**PASS B `asc-sidebar-build` IS BUILD-COMPLETE AND SHIPPED TO DEV; GEOFF'S WALKTHROUGH
+IS THE OPEN GATE (2026-07-19, Fable-conducted: T1 probe round settled in-session, 5
+Sonnet implementer dispatches + simplifier + 2 reviewers + a fresh-context coherence
+read, commits 68a656f..1fe85db + the CI baseline-regen commit).** What shipped:
 
-- **cairn `^0.88.0` (installed 0.88.1)**; the bump forced one adaptation (0.88's
-  `ResolveNavLayoutOptions.editor` replaced the loose capability/role pair — a breaking
-  type change inside an "additive" release, harvested).
-- **The five-role vocabulary**: Administrator (owner capability), Club manager,
-  Webmaster, Publisher (editor), Instructor (none), plus the engine-forced phantom
-  `owner` (declared, never granted; documented on the `defineRoles` block).
-  **Migration `migrations/asc-auth/0001_role_rename` APPLIED LIVE post-deploy and
-  verified**: both grant rows now read `Administrator`, verify-forward zero rows,
-  re-run proven idempotent. Lockout-safe by the canReach owner bypass (owner capability
-  short-circuits true), verified against the shipped engine, not assumed.
-- **The access map** (`src/theme/access.ts`, a `buildAccess(roles)` factory — the
-  guide's two-file pattern is a real ES-module cycle, harvested) implementing the
-  spec's roles matrix comprehensively; wired into BOTH `createAuthGuard` and the
-  adapter. Publisher picker-trace: no vocabulary/fragments grants needed (closed
-  taxonomy, SSR-only pickers — evidence in the map's comments).
-- **Enforcement reads the map**: `/admin/club` layout guard adopts `requireAccess`;
-  `clubAdminAction` composes `canReach` on the request path (Email/Announce admit
-  Publisher via deeper keys, no bespoke branch) and now FAILS CLOSED (audited 500) if
-  the map is ever unattached — both reviewers' one substantive finding; ten
-  route-action test fixtures had silently exercised canReach's permissive no-map
-  fallback and now inject the real map.
-- **The matrix drift-guard** (`src/tests/roles-matrix.test.ts`): the spec's matrix
-  reproduced from the composed map via one declarative table, mutation-proven
-  (a removed cell fails by name). 145 files / 1894 tests, check 0/0, build green.
-- **Security gate**: web-auth-security-reviewer — no exploitable defect; path-trick
-  sweep of the Publisher widening clean (trailing/dot/percent/case all verified
-  against the shipped matcher); phantom-owner grant confers nothing (editors screen
-  is owner-gated). cloudflare-workers-reviewer: SQL safe/idempotent, bindings clean.
-- **DX harvest**: docs/2026-07-19-roles-adoption-harvest-findings.md (4 findings:
-  reserved-owner rename + ManageEditors phantom listing, the access-guide import
-  cycle, the changelog's missing `Consumers must:`, the canReach permissive-fallback
-  trap for site-side action gates).
-- **The CI round (the plan's "baselines untouched" claim was wrong twice, both
-  fixed by evidence, not guesswork):** (1) the e2e admin-session helper minted role
-  `'owner'` — post-rename that phantom resolves no club nav groups, so the sidebar
-  test and rollup baselines broke; it now mints `Administrator` and converges the
-  local AUTH_DB replica onto the live shape (cairn's 0001_roles.sql CHECK drop —
-  the frozen 0000_auth.sql seed still carries it). (2) The 0.88 engine's own admin
-  chrome changed: group headers took the collapse-seam button form (label a few px
-  left) and Fragments gained its layers glyph from the widened icon set (it had
-  shared the document glyph — the exact collision the seam fixes). Diagnosed from
-  CI's own PNGs via the NEW failure-artifact upload in ci.yml (added this round —
-  pixel diffs are now diagnosable with evidence); the two 1440 rollup baselines
-  re-minted via the update_snapshots dispatch (ae67e5d, exactly 2 files), read and
-  verified by the conductor's eyes. Admin chrome only; no member-facing surface
-  changed.
-- **NEXT: `asc-sidebar-build` (pass B)** — plan docs/plans/2026-07-19-asc-sidebar-build.md;
-  OPENS with the probe round for Geoff's still-owed verdicts (open/closed defaults,
-  25-icon assignment, within-group order). Resume prompt: "Start pass B: read
-  docs/plans/2026-07-19-asc-sidebar-build.md; run its T1 probe round with Geoff first,
-  then execute T2–T8." Launch from ~/Projects/aksailingclub-org, fresh session. Pass B
-  consumes this pass's map (deletes the round-1 `roles:` nav hints, retires
-  `notifications` and its map key). After B: events-redesign, then the review-queue
-  clear and mw-cutover per ROADMAP.
+- **The ratified four-group tree** (Club, Events & Classes, Communication, Website) with
+  the T1-probe verdicts: 25 distinct glyphs (Fragments keeps engine `layers`; overrides
+  bell/key-round/file-pen), Club order with Money sixth, Help UNREFERENCED so it lives
+  in the engine's fallback foot ("foot is perfect"), role-dependent open defaults via
+  `navFilter` (`src/theme/nav-defaults.ts`: Admin/CM open Club+Communication; Publisher
+  Communication; Webmaster Communication+Website). All verdicts distilled into
+  docs/design-benchmark/decisions.md ("Admin sidebar round 2").
+- **Every `roles:` nav gate deleted** — visibility derives from the access map alone.
+  **The Webmaster widening (Geoff-ruled 2026-07-19)**: Webmaster gained the whole
+  Communication group (posts/bulletins/Email/Announce, sends included) in access.ts,
+  the matrix drift-guard, and the design doc's matrix. The Email-class-members deep
+  link spills to Publisher/Webmaster (a collapsed one-door E&C group) — ruled KEEP.
+- **Retirements**: Signups screen fully gone (route/store/tests/strip card; DB rows
+  kept); `notifications` concept retired — bulletins re-unified to production's shape
+  (detail + expires fields; home banner reads latest unexpired bulletin).
+- **New surfaces**: the cross-class Class waitlist screen (/admin/club/classes/waitlist,
+  read-only, `listOutstandingOffers`); compose deep link ?segment=class (sentinel
+  preselects first class segment; two-step server re-resolve untouched).
+- **Attention badges** on the three ruled queues (asset requests, committees, class
+  waitlist) via the 0.88 `attention` dep; the Overview strip reads the SAME
+  `$theme/admin-attention.ts` counts (never-disagree test). Strip restyled with scoped
+  CSS: the daisy stats classes NEVER existed in cairn-admin.css (harvest finding 5).
+- **Gates**: security reviewer CLEAN (enforcement verified map-based with nav gates
+  gone; counts provably role-filtered; two Low invariant notes, one now a comment);
+  svelte-reviewer CLEAN (5 minor notes); coherence read PASS "designed, not assembled"
+  (ledger entry; 2 engine-chrome nits harvested). check 0/0, 1900 tests, build green.
+- **DX harvest**: docs/2026-07-19-sidebar-build-harvest-findings.md — 7 cairn findings
+  (Help-foot idiom docs, navFilter collapsed-rewrite blessing, dangling-href gap,
+  icon-name testability, the admin-CSS class-inventory gap (major), shell collapsed-
+  group spacing, "New Posts" plural copy).
+- **ON GEOFF'S QUEUE: the pass-B walkthrough on dev** — per role (Administrator sees
+  Club+Communication open with badge pills; Publisher/Webmaster the reduced trees),
+  the two new class surfaces, one Bulletins, no Signups, Help in the foot. Two
+  ratified-but-flagged nits to eyeball: Members/Committees glyph twinning at 16px,
+  "Announce" the lone verb (both stand unless reopened).
+- **NEXT PASS: `events-redesign`** (ROADMAP: from-scratch events page, its own
+  template). OPENS WITH A FUNCTIONAL BRAINSTORM with Geoff (what the page must do for
+  members and visitors) before any visual work; probe-iteration process governs; the
+  current page's timeline/chips/season machinery is requirements evidence, not a design
+  to preserve. Resume prompt: "Start the events-redesign pass: read ROADMAP.md's
+  events-redesign entry and docs/STATUS.md, then open the functional brainstorm with
+  Geoff (superpowers:brainstorming) before any visual work." Launch fresh from
+  ~/Projects/aksailingclub-org.
 
 **THE BOARD DEMO IS LIVE AND THE NEXT TWO PASSES ARE PLANNED (2026-07-19, the same
 Fable session's second workflow, `wf_56eff27d-526`, 6 agents 0 errors, + a CI-green
@@ -96,8 +85,9 @@ fix round).** State at close:
   the ids; check every FK/string reference). Minor note beside it: `documents.ts`'s
   resolveDocumentVersion/loadDocumentVersion match document+version without season
   (harmless while 2026/2027 bodies share titles).
-- **Pass sequencing**: pass A (`asc-roles-adoption`) shipped — the entry above; pass B
-  (`asc-sidebar-build`) is next, its resume prompt in that entry.
+- **Pass sequencing**: passes A (`asc-roles-adoption`, archived entry) and B
+  (`asc-sidebar-build`, the entry above) both shipped 2026-07-19; `events-redesign` is
+  next, its resume prompt in the pass-B entry.
 - **On Geoff's queue:** the board demo itself (sign in as +demo-alex via magic link,
   or the shots); the attorney packet send (docs/waivers/, independent); the standing
   pointer queue below.
