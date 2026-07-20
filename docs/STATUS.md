@@ -46,13 +46,21 @@ ConfirmDialog, Toast+Alert feedback tiers, CapacityMeter. Two Geoff rulings fold
 in: daisyUI-first assembly, avoid building new things — audit confirmed zero new CSS
 systems needed; first engine change is a blessed-set daisy safelist in cairn's admin
 CSS build (stats/table-zebra/table-xs/toast are currently tree-shaken out).
-**NEXT: the Members pass functional brainstorm with Geoff** (purpose and common use
-cases first, UI/UX flows from that; stop-1 reactions + the survey's "What the Members
-pass inherits" section are the standing inputs). Resume prompt: "Open the Members
-pass functional brainstorm (superpowers:brainstorming): read
-docs/2026-07-20-admin-toolkit-research-survey.md and the catalog's stop 1, then
-brainstorm the screen's purpose and use cases with Geoff." Launch fresh from
-~/Projects/aksailingclub-org.
+**THE MEMBERS BRAINSTORM IS DONE (same session): spec
+docs/2026-07-20-members-pass-design.md (c07d3a3), plan
+docs/plans/2026-07-20-members-pass.md.** The rulings: search-first household rows
+with expand-in-place panel (contacts, members with ages, holdings, classes, paid
+states; actions Open household / Email household / Add member — money stays on the
+desk); standing collapses to **Current / Overdue / Former** with the reminder
+sequence's +30 stated-final touch as the Former boundary (rolling paid_at+1yr,
+never season), grace RETIRED (Overdue keeps full member benefits until Former),
+"renewal candidates" retired as a concept; kit-first toolkit build to GENERAL
+contracts (Geoff: this is a general-purpose admin toolkit, ASC is first consumer —
+generality shapes the contract, a consumer gates publication into cairn); roster
+ages filed as Classes evidence. **NEXT: execute the plan, T1 first (cairn daisy
+safelist, one-executor check on cairn-cms before touching it).** Resume prompt:
+"Execute docs/plans/2026-07-20-members-pass.md task by task via site-implementer
+dispatches; T1 is the cairn safelist." Launch from ~/Projects/aksailingclub-org.
 
 **PASS B `asc-sidebar-build` IS BUILD-COMPLETE AND SHIPPED TO DEV; GEOFF'S WALKTHROUGH
 IS THE OPEN GATE (2026-07-19, Fable-conducted: T1 probe round settled in-session, 5
