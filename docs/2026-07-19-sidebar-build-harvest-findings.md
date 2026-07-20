@@ -27,3 +27,15 @@ which works but stretches the seam's "filter" framing — the doc comment descri
 hiding items, not rewriting presentation state. Worth either a doc note blessing the
 rewrite (the shell honors whatever `collapsed` the filtered items carry) or a dedicated
 per-request hook. ASC pass B is the living consumer example.
+
+## 3. A dangling navLayout href passes every gate silently (validation gap)
+
+`resolveNavLayout`/`resolveEntry` validate an entry's href against built-in admin views
+(the parseAdminPath collision authority) but never against route existence. Deleting a
+route while its nav entry stays declared leaves a sidebar link that 404s live, and
+check/test/build all stay green (proven in pass B T2: the Signups route deletion left
+the round-1 nav entry dangling and the full gate passed). The engine cannot know a
+site's route manifest at config time, but the guide could ship a testing recipe (assert
+every site-entry href resolves against the app's route table, SvelteKit's `$app/paths`
+or a glob over `src/routes`), or the SvelteKit adapter could cross-check at server
+start where the manifest is knowable.
