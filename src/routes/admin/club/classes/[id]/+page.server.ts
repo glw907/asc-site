@@ -19,6 +19,7 @@ import {
   getClass,
   getClassWithCounts,
   getWaitlistMemberNames,
+  listClassesWithCounts,
   listEnrollments,
   listInstructors,
   listWaitlist,
@@ -31,6 +32,7 @@ import {
   type WaitlistRow,
 } from '$admin-club/lib/classes-store';
 import { cancelActiveOffer, expireStaleOffers, listOffersForClass, offerSpot, type OfferRow } from '$admin-club/lib/offers';
+import { transferEnrollment } from '$admin-club/lib/class-transfer';
 import { adminDropEnrollment } from '$member-portal/lib/classes';
 import { parseClassForm } from '../class-form-input';
 
@@ -50,6 +52,7 @@ export const load: PageServerLoad = async (event) => {
       waitlist: [] as WaitlistRow[],
       waitlistMemberNames: {} as Record<string, string>,
       offers: [] as OfferRow[],
+      classesInSeason: [] as ClassWithCounts[],
       error: 'CLUB_DB is not bound.',
     };
   }
@@ -69,7 +72,12 @@ export const load: PageServerLoad = async (event) => {
   // own load convention, matching `announce/+page.server.ts`'s identical Map-to-array habit).
   const memberIds = [...new Set(waitlist.map((entry) => entry.memberId).filter((id): id is string => id !== null))];
   const waitlistMemberNames = Object.fromEntries(await getWaitlistMemberNames(db, memberIds));
-  return { class: row, instructors, enrollments, waitlist, waitlistMemberNames, offers, error: null as string | null };
+  // The Move… destination picker's own candidates (Task 5): every other class in the same
+  // season, including the current one -- the page's own template excludes it by id, so the
+  // load stays a plain, reusable season-scoped read rather than a bespoke "every class but
+  // this one" query.
+  const classesInSeason = row ? await listClassesWithCounts(db, row.season) : [];
+  return { class: row, instructors, enrollments, waitlist, waitlistMemberNames, offers, classesInSeason, error: null as string | null };
 };
 
 const DENIED_MESSAGE = 'A club role is required to manage classes.';
@@ -220,6 +228,41 @@ export const actions: Actions = {
       return { ok: true, dropped: true as const };
     },
     { action: 'drop', entity: 'enrollment', deniedMessage: DENIED_MESSAGE },
+  ),
+
+  // The roster's own Move… action (Task 5): a same-price transfer proceeds on its own; a fee
+  // mismatch refuses unless the form's own `confirmFeeMismatch` checkbox already agreed to it
+  // (the page's own dialog blocks the submit until then, this is the server-side backstop).
+  transfer: clubAdminAction(
+    async ({ event, form, ctx }) => {
+      const id = routeId(event);
+      const enrollmentId = form.get('enrollmentId');
+      const destinationClassId = form.get('destinationClassId');
+      if (typeof enrollmentId !== 'string' || !enrollmentId.trim()) {
+        ctx.audit({ action: 'transfer', entity: 'enrollment', entityId: id, detail: 'rejected: missing enrollmentId' });
+        return fail(400, { error: 'An enrollment is required.' });
+      }
+      if (typeof destinationClassId !== 'string' || !destinationClassId.trim()) {
+        ctx.audit({ action: 'transfer', entity: 'enrollment', entityId: enrollmentId, detail: 'rejected: missing destinationClassId' });
+        return fail(400, { error: 'A destination class is required.' });
+      }
+      const platformEnv = event.platform?.env;
+      const origin = platformEnv?.PUBLIC_ORIGIN;
+      const result = await transferEnrollment(ctx.db, {
+        enrollmentId,
+        destinationClassId,
+        actorEmail: ctx.editor.email,
+        confirmFeeMismatch: form.get('confirmFeeMismatch') === 'true',
+        notify: platformEnv && origin ? { env: platformEnv, origin } : undefined,
+      });
+      if ('error' in result) {
+        ctx.audit({ action: 'transfer', entity: 'enrollment', entityId: enrollmentId, detail: `rejected: ${result.error}` });
+        return fail(400, { error: result.error });
+      }
+      ctx.audit({ action: 'transfer', entity: 'enrollment', entityId: enrollmentId, detail: `to=${destinationClassId}` });
+      return { ok: true, transferred: true as const };
+    },
+    { action: 'transfer', entity: 'enrollment', deniedMessage: DENIED_MESSAGE },
   ),
 
   // The roster's own manual (check/cash/comp) payment action (Task 4, the design doc's own

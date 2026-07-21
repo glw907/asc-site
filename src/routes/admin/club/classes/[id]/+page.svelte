@@ -6,10 +6,14 @@ doc exactly -- roster, waitlist & offers, details (the edit form), instructors, 
 built on the graduated toolkit (`PageHeader`, `AdminTable`, `StatusChip`) the same way Task 3's
 list rebuild is, plus this route's own `recordPayment` action (manual cash/check/comp: always the
 class's own fee, never an admin-typed amount, see `classes-store.ts`'s `buildClassPayment`).
-Move… on a roster row is Task 5's own control; it renders disabled here, a placeholder Task 5
-wires. Every corrective action (Drop, Cancel offer, Delete) stays a quiet `btn-ghost` control with
-no alarm color, per the pass's own global constraint -- Delete in particular moves off the header
-into a demoted, confirm-gated danger zone rather than a floating top-right red link.
+Move… on a roster row opens the destination picker (Task 5, `class-transfer.ts`'s
+`transferEnrollment`): same season, the current class excluded, each candidate showing its own
+fraction (over-capacity destinations are allowed, per the pass's own soft-capacity ruling). A fee
+mismatch shows the exact difference and requires the explicit "I understand" confirmation before
+the submit button un-disables; the flow never charges or refunds anything itself. Every corrective
+action (Drop, Move…, Cancel offer, Delete) stays a quiet `btn-ghost` control with no alarm color,
+per the pass's own global constraint -- Delete in particular moves off the header into a demoted,
+confirm-gated danger zone rather than a floating top-right red link.
 -->
 <script lang="ts">
   import { untrack } from 'svelte';
@@ -59,6 +63,27 @@ into a demoted, confirm-gated danger zone rather than a floating top-right red l
     paymentMemo = '';
     paymentDialog?.showModal();
   }
+
+  // -- transfer (Move…) dialog --
+  let transferDialog: HTMLDialogElement | undefined = $state();
+  let transferTarget: EnrollmentRow | null = $state(null);
+  let transferDestinationId = $state('');
+  let transferConfirmMismatch = $state(false);
+  function openTransferDialog(enrollment: EnrollmentRow) {
+    transferTarget = enrollment;
+    transferDestinationId = '';
+    transferConfirmMismatch = false;
+    transferDialog?.showModal();
+  }
+
+  /** The picker's own candidates: every other class in the same season, the current one
+   *  excluded (`+page.server.ts`'s own load comment on why it reads the whole season rather
+   *  than a bespoke "every class but this one" query). */
+  const transferCandidates = $derived(data.class ? data.classesInSeason.filter((candidate) => candidate.id !== data.class!.id) : []);
+  const transferDestination = $derived(transferCandidates.find((candidate) => candidate.id === transferDestinationId) ?? null);
+  const transferFeeMismatch = $derived(
+    data.class !== null && transferDestination !== null && transferDestination.fee !== data.class.fee,
+  );
 
   // One resolved offer, or none, per waitlist entry, plus the display name and member/applicant
   // distinction the route's own load resolved separately (`waitlistMemberNames`, keyed by member
@@ -170,8 +195,7 @@ into a demoted, confirm-gated danger zone rather than a floating top-right red l
                 Record payment
               </button>
             {/if}
-            <!-- Task 5 wires the transfer flow; this control renders as a placeholder here. -->
-            <button type="button" class="btn btn-ghost btn-xs" disabled title="Coming with the transfer flow">
+            <button type="button" class="btn btn-ghost btn-xs" onclick={() => openTransferDialog(enrollment)} disabled={transferCandidates.length === 0}>
               Move&hellip;
             </button>
             <form method="post" action="?/dropEnrollment">
@@ -334,6 +358,61 @@ into a demoted, confirm-gated danger zone rather than a floating top-right red l
           <div class="modal-action">
             <button type="button" class="btn btn-sm" onclick={() => paymentDialog?.close()}>Cancel</button>
             <button type="submit" class="btn btn-primary btn-sm">Record payment</button>
+          </div>
+        </form>
+      {/if}
+    </div>
+  </dialog>
+
+  <dialog bind:this={transferDialog} class="modal" aria-labelledby="transfer-dialog-title">
+    <div class="modal-box">
+      <h2 id="transfer-dialog-title" class="text-lg font-bold">Move {transferTarget?.memberName}</h2>
+      {#if transferTarget}
+        <form method="post" action="?/transfer" class="flex flex-col gap-3" use:enhance={closeDialogOnSettle(() => transferDialog)}>
+          <CsrfField />
+          <input type="hidden" name="enrollmentId" value={transferTarget.id} />
+          <input type="hidden" name="confirmFeeMismatch" value={transferConfirmMismatch ? 'true' : 'false'} />
+          <label class="flex flex-col gap-1 text-sm" for="transfer-destination">
+            Move to
+            <select
+              id="transfer-destination"
+              class="select select-sm"
+              name="destinationClassId"
+              bind:value={transferDestinationId}
+              onchange={() => (transferConfirmMismatch = false)}
+              required
+            >
+              <option value="" disabled>Choose a class</option>
+              {#each transferCandidates as candidate (candidate.id)}
+                <option value={candidate.id}>
+                  {candidate.name} ({candidate.dropIn ? 'drop-in' : `${candidate.enrolledCount}/${candidate.capacity}`})
+                </option>
+              {/each}
+            </select>
+          </label>
+          {#if transferFeeMismatch && transferDestination && data.class}
+            <div class="alert alert-warning text-sm" role="alert">
+              <div>
+                <p class="m-0">
+                  {data.class.name} is {formatDollars(data.class.fee)}; {transferDestination.name} is
+                  {formatDollars(transferDestination.fee)}. The difference settles outside this flow.
+                </p>
+                <label class="mt-2 flex items-center gap-2">
+                  <input type="checkbox" class="checkbox checkbox-sm" bind:checked={transferConfirmMismatch} />
+                  I understand the fee differs and want to move anyway.
+                </label>
+              </div>
+            </div>
+          {/if}
+          <div class="modal-action">
+            <button type="button" class="btn btn-sm" onclick={() => transferDialog?.close()}>Cancel</button>
+            <button
+              type="submit"
+              class="btn btn-primary btn-sm"
+              disabled={!transferDestinationId || (transferFeeMismatch && !transferConfirmMismatch)}
+            >
+              Move
+            </button>
           </div>
         </form>
       {/if}

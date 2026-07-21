@@ -7,7 +7,7 @@
 // (`enrollments.ts`, `offers.ts`) instead resolve identity from a raw email or a bearer token.
 import type { D1Database } from '@cloudflare/workers-types';
 import { getClassWithCounts, isPubliclyOpen, type ClassTrack } from '$admin-club/lib/classes-store';
-import { hasActiveOfferForClass, offerSpot } from '$admin-club/lib/offers';
+import { hasActiveOfferForClass, triggerFreedSpotOffer } from '$admin-club/lib/offers';
 import { sendClubEmail, type EmailBindingEnv } from '$admin-club/lib/club-email';
 import { getCurrentSeason } from '$admin-club/lib/club-settings';
 import { getMemberStanding } from '$member-auth/lib/standing';
@@ -294,30 +294,26 @@ export async function withdrawFromClass(
     if (!reversed.ok) console.error('member-portal: withdrawal credit reversal failed', reversed.error);
   }
 
-  // The freed-spot rule, re-checked after the drop: a nonempty queue gets the auto-offer: the
-  // first waitlisted entry by position, matching the admin's own manual offer's own ordering
-  // convention (`listWaitlist`'s `ORDER BY position ASC`).
-  const nextInLine = await db
-    .prepare('SELECT id FROM class_waitlist WHERE class_id = ?1 ORDER BY position ASC LIMIT 1')
-    .bind(enrollment.class_id)
-    .first<{ id: string }>();
-
-  let autoOfferedTo: string | null = null;
-  if (nextInLine) {
-    const offer = await offerSpot(db, {
-      classId: enrollment.class_id,
-      waitlistId: nextInLine.id,
-      actorEmail: 'system:auto-offer',
-      notify: args.notify,
-    });
-    if ('token' in offer) autoOfferedTo = nextInLine.id;
-    else console.error('member-portal: auto-offer after withdrawal failed', offer.error);
-  }
+  // The freed-spot rule, re-checked after the drop: a nonempty queue gets the auto-offer, through
+  // `offers.ts`'s own shared `triggerFreedSpotOffer` (the same lookup-and-offer pair the transfer
+  // flow's freed source spot also triggers, `class-transfer.ts`'s own header).
+  const autoOfferedTo = await triggerFreedSpotOffer(db, enrollment.class_id, {
+    actorEmail: 'system:auto-offer',
+    notify: args.notify,
+  });
 
   if (args.notify?.env.EMAIL) {
+    // Only re-derive "was anyone actually waiting" when the auto-offer above did not report a
+    // success: `triggerFreedSpotOffer`'s own `null` collapses "the queue was empty" and "an
+    // offer attempt failed" into one result (a caller-agnostic contract), so this admin-notify
+    // email's own three-way message re-checks the queue itself rather than widening that shared
+    // return type just for this one caller's wording.
+    const queueHadEntry = autoOfferedTo
+      ? true
+      : (await db.prepare('SELECT 1 AS n FROM class_waitlist WHERE class_id = ?1 LIMIT 1').bind(enrollment.class_id).first<{ n: number }>()) !== null;
     const detail = autoOfferedTo
       ? `The freed spot was automatically offered to the next waitlisted entry.`
-      : nextInLine
+      : queueHadEntry
         ? `A waitlist entry exists but the auto-offer failed; check the class's own Offer control.`
         : `No one was waiting; the class is open to the public again.`;
     await sendClubEmail(db, args.notify.env, {

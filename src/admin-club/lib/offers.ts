@@ -313,6 +313,34 @@ export async function offerSpot(
   return { token, expiresAt };
 }
 
+/**
+ * The freed-spot auto-offer: after a spot opens up at `classId` (a drop, or a same-price
+ * transfer's freed source spot), offer it to the first waitlisted entry by position, matching
+ * the admin's own manual offer ordering. Both the drop path
+ * (`$member-portal/lib/classes.ts`'s `withdrawFromClass`, behind the admin's own `dropEnrollment`
+ * action) and the transfer flow (`class-transfer.ts`) trigger through this one function, never a
+ * second copy of the lookup-and-offer pair. Returns the waitlist entry id the spot was offered
+ * to, or `null` when the queue was empty (nothing to do) or the offer attempt itself failed
+ * (logged, never thrown -- the caller's own state change already committed by the time this
+ * runs, so a failed auto-offer must never undo it).
+ */
+export async function triggerFreedSpotOffer(
+  db: D1Database,
+  classId: string,
+  args: { actorEmail: string; notify?: { env: EmailBindingEnv & DiscordBindingEnv; origin: string } },
+): Promise<string | null> {
+  const nextInLine = await db
+    .prepare('SELECT id FROM class_waitlist WHERE class_id = ?1 ORDER BY position ASC LIMIT 1')
+    .bind(classId)
+    .first<{ id: string }>();
+  if (!nextInLine) return null;
+
+  const offer = await offerSpot(db, { classId, waitlistId: nextInLine.id, actorEmail: args.actorEmail, notify: args.notify });
+  if ('token' in offer) return nextInLine.id;
+  console.error('admin/club: auto-offer after a freed spot failed', offer.error);
+  return null;
+}
+
 /** {@link previewOffer}'s success shape: just enough for the public claim page to show the class
  *  and expiry before the visitor decides, without resolving anything itself. */
 export interface OfferPreview {
