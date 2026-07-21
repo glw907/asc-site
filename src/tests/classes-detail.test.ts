@@ -16,7 +16,12 @@ describe('buildClassPayment', () => {
   it('flips fee_paid and writes a ledger charge for the class\'s own fee', async () => {
     const { db, calls } = fakeD1({
       firstResults: {
-        'FROM class_enrollments e JOIN classes c': { fee_paid: 0, fee: 100, class_name: 'Fleet Tune-Up Weekend' },
+        'FROM class_enrollments e JOIN classes c': {
+          fee_paid: 0,
+          fee: 100,
+          class_name: 'Fleet Tune-Up Weekend',
+          household_id: 'hh-1',
+        },
       },
     });
 
@@ -34,6 +39,7 @@ describe('buildClassPayment', () => {
     expect(txInsert?.args).toContain(10000);
     expect(txInsert?.args).toContain('check');
     expect(txInsert?.args).toContain('Walk-up');
+    expect(txInsert?.args).toContain('hh-1');
 
     const lineInsert = calls.find((c) => c.sql.startsWith('INSERT INTO transaction_lines'));
     expect(lineInsert?.args).toContain('class-fee');

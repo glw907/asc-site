@@ -543,11 +543,12 @@ export async function buildClassPayment(
 ): Promise<ClassPaymentResult> {
   const row = await db
     .prepare(
-      `SELECT e.fee_paid AS fee_paid, c.fee AS fee, c.name AS class_name
-       FROM class_enrollments e JOIN classes c ON c.id = e.class_id WHERE e.id = ?1`,
+      `SELECT e.fee_paid AS fee_paid, c.fee AS fee, c.name AS class_name, m.household_id AS household_id
+       FROM class_enrollments e JOIN classes c ON c.id = e.class_id JOIN members m ON m.id = e.member_id
+       WHERE e.id = ?1`,
     )
     .bind(input.enrollmentId)
-    .first<{ fee_paid: 0 | 1; fee: number; class_name: string }>();
+    .first<{ fee_paid: 0 | 1; fee: number; class_name: string; household_id: string }>();
   if (!row) return { ok: false, error: 'No such enrollment.' };
   if (row.fee_paid === 1) return { ok: false, error: 'This enrollment is already paid.' };
 
@@ -563,6 +564,7 @@ export async function buildClassPayment(
       // header), so the one-liner is inlined here rather than creating a circular import for it.
       occurredAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
       amountTotalCents: amountCents,
+      householdId: row.household_id,
       memo: input.memo ?? null,
     },
     [{ item: 'class-fee', description: `${row.class_name} fee`, amountCents, enrollmentId: input.enrollmentId }],
