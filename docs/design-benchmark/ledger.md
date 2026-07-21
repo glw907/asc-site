@@ -182,3 +182,40 @@ not blockers: the 390 expand-chevron cell sits outside the zebra tint (faint sea
 search focus ring reads near-black rather than the primary-colored recipe (defensible;
 route to the StatusChip probe round's palette sitting); tall-column whitespace in the
 1440 panel is inherent to top-aligned columns and correct.
+
+## Classes surfaces rebuild, Classes pass close (2026-07-21, fresh-context coherence reads)
+
+Three cold reads over fixture-grounded captures (list with a panel expanded, detail full
+page, detail with the Move… dialog open; 390 + 1440). Reads 1 and 2 ran inside the
+release workflow (wf_297581a0-a05); read 3 ran as a direct Opus dispatch after the second
+fix round.
+
+**First read: FAIL** (4 tells): the list expand panel's roster StatusChips stranded
+off-screen at 390 (the ExpandableRow panel-follows-summary-width contract, hit again at
+its second consumer); the detail roster's per-row actions off-screen at 390; the date
+range's en dash rendered tight against the year ("Jun 20, 2026– Jun 22"); the waitlist
+line's middot tight against "waiting". Root causes: the summary row exceeding the 390
+viewport (fixed with the Members screen's own `*-narrow-hide` column-drop idiom on both
+surfaces), and Svelte trimming a literal leading space at an `{#if}` block boundary
+(fixed with `&nbsp;` at the boundary; recipe filed as harvest finding 15).
+
+**Second read (cold, Opus): FAIL** (2 tells): a stray UA disc bullet on the
+`.divide-list` empty-state rows ("No instructor assigned yet." / "No one is on the
+waitlist.") — introduced by the review round's own divide-y replacement (populated rows
+are flex, the empty-state `<li>` was a plain list-item); and the panel roster's
+Paid/Owing chip drifting ~600px from its member name at 1440 (`space-between` across the
+full panel width). Fixed: `list-style: none` on `.divide-list`; a 32rem cap on the panel
+roster list. The read also cleared the transfer dialog (its translucency was a
+capture-timing artifact, verified against the settled render).
+
+**Third read (cold, Opus): PASS — "designed, not assembled" at both widths.** Both fixes
+verified in the grader's own captures (empty states rendered deliberately, chips paired
+inside the cap); whole-surface checks clean: StatusChips compile (green/amber dots, no
+plain-text degradation), grammatical number correct everywhere ("5 classes", "1 class"
+path tested), corrective actions uniformly quiet ghost buttons with Delete demoted to
+the confirm-gated danger zone, calm over-capacity fractions, tabular-nums and real
+dashes. Minor observations recorded, not blockers: the pre-existing `ClassForm` label
+column wraps at 1440 (out of the rebuilt scope; a future Events/forms pass owns it); the
+ExpandableRow sticky-cell zebra seam at 390 (inherited, documented intentional); the
+Hidden badge clips under the 10rem name ellipsis at 390 (row opens to reveal state); the
+1440 name-to-chip gap is bounded and reads as column pairing.

@@ -66,21 +66,21 @@ many: string }` exported from the subpath barrel; `Pagination`'s and `ListToolba
 `itemLabel` prop widened to `string | ItemLabel` (a plain string keeps today's
 invariant behavior, so no cairn caller changes).
 
-- [ ] **Step 1: one-executor check.** `pgrep -f cairn-cms`, `git -C ~/Projects/cairn-cms
+- [x] **Step 1: one-executor check.** `pgrep -f cairn-cms`, `git -C ~/Projects/cairn-cms
   status` (warm uncommitted changes = stop and investigate), journal mtimes. Geoff's
   own cairn session was mid-flight 2026-07-20 evening; 0.89.0 on the registry says it
   landed, but verify the tree is clean and no executor is live before touching it.
-- [ ] **Step 2: port the fix.** Port ASC's local `itemNoun`/`ItemLabel`
+- [x] **Step 2: port the fix.** Port ASC's local `itemNoun`/`ItemLabel`
   (`src/admin-club/toolkit/format.ts`, commit a9a2c8d) into cairn's admin-toolkit as an
   additive union: count lines and range lines pick the grammatical number ("1 class",
   "6 classes"); a string `itemLabel` behaves exactly as before. Tests cover the
   one/many pick, the string passthrough, and the count-line composition. Reference doc
   gains the type and the prop widening.
-- [ ] **Step 3: cairn gates.** cairn's own full gate green (including
+- [x] **Step 3: cairn gates.** cairn's own full gate green (including
   `check:admin-css-classes`).
-- [ ] **Step 4: publish.** Invoke the `cairn-release` skill; 0.89.1, patch. CHANGELOG
+- [x] **Step 4: publish.** Invoke the `cairn-release` skill; 0.89.1, patch. CHANGELOG
   entry notes the widened prop and the new exports, "no consumer action required."
-- [ ] **Step 5: harvest note (ASC repo).** Record the process finding: the graduation
+- [x] **Step 5: harvest note (ASC repo).** Record the process finding: the graduation
   wave missed a post-harvest consumer fix; wave-by-graduation needs a "diff the local
   copies at graduation time" step.
 
@@ -103,7 +103,7 @@ four `src/tests/toolkit-*.test.ts` files. Delete `src/admin-club/toolkit/format.
 `$admin-club/toolkit/ExpandableRow.svelte` (its second consumer arrives in Task 3; it
 graduates in a later cairn wave).
 
-- [ ] **Step 1: bump and swap.** Update the range, `npm install`, replace every
+- [x] **Step 1: bump and swap.** Update the range, `npm install`, replace every
   `$admin-club/toolkit/{format,StatusChip,AdminTable,Pagination,ListToolbar}` import
   with the subpath. The graduated contracts drifted from the local copies (cairn
   re-expressed `ListToolbar` substantially — segmented filters, count presentation);
@@ -111,11 +111,11 @@ graduates in a later cairn wave).
   the `{ one, many }` `itemLabel` pairs stay (Task 1 made them legal), the Members
   screen's search/filter/count behavior is the fixed point. `ExpandableRow`'s own
   imports repoint to the subpath.
-- [ ] **Step 2: retire duplicated tests.** Local unit tests that pin graduated-component
+- [x] **Step 2: retire duplicated tests.** Local unit tests that pin graduated-component
   internals retire (cairn's suite owns those contracts); tests of ASC-specific behavior
   (ExpandableRow, member-format, screen-level assembly) stay and pass. README shrinks
   to ExpandableRow plus a pointer to cairn's admin-toolkit reference.
-- [ ] **Step 3: gate + visual proof.** Full gate green; the Members screen renders
+- [x] **Step 3: gate + visual proof.** Full gate green; the Members screen renders
   identically — `npm run test:e2e` against the existing CI-canonical baselines must
   pass locally-rendered comparisons or, if the swap legitimately shifts rendering,
   stop and surface the diff for review before any baseline talk.
@@ -141,11 +141,11 @@ Test: `src/tests/classes-list.test.ts` (new), screen assembly tests.
 its roster (name, age, `fee_paid`) and waitlist summary (count, next entry, active
 offer + expiry) in one load; a named form action `offerNext` on the list route.
 
-- [ ] **Step 1: server load.** Season filter defaults to `settings.current_season`;
+- [x] **Step 1: server load.** Season filter defaults to `settings.current_season`;
   a `?season=` param reaches history; per-season row counts are small, so rosters and
   waitlist summaries load eagerly with the list (batched queries, no N+1 loop —
   D1 `batch` or joined queries). Stale offers sweep on load, as detail does today.
-- [ ] **Step 2: the screen.** `PageHeader` (title, season meta, New class as the one
+- [x] **Step 2: the screen.** `PageHeader` (title, season meta, New class as the one
   action) — the toolbar carries the season filter and the count line with
   `{ one: 'class', many: 'classes' }`. `AdminTable` compact zebra; each row an
   `ExpandableRow`: name, track, dates, enrolled fraction, waitlist count,
@@ -157,7 +157,7 @@ offer + expiry) in one load; a named form action `offerNext` on the list route.
   contextual **Offer next seat** (only when seats open AND waitlist nonempty AND no
   active offer) posting `offerNext`, which calls `offerSpot()` for the head of the
   queue. `EmptyState` explains what fills the surface with New class as its action.
-- [ ] **Step 3: tests + gate.** Loader tests: season scoping, eager roster shape,
+- [x] **Step 3: tests + gate.** Loader tests: season scoping, eager roster shape,
   offer-marker derivation, `offerNext` guard conditions (rejects when full, when an
   offer is live, when the waitlist is empty). Screen tests: column kill, contextual
   action visibility, drop-in and hidden markers. Full gate green.
@@ -183,21 +183,21 @@ three guard violations; gate green.
 `fee_paid`, writes the `money_ledger` row through the existing ledger vocabulary,
 writes the audit row); the roster row shape Task 5's Move… hangs from.
 
-- [ ] **Step 1: structure.** `PageHeader` with the class name (breadcrumb finally
+- [x] **Step 1: structure.** `PageHeader` with the class name (breadcrumb finally
   carries it), season, dates, fraction in the meta line. Sections: roster, waitlist &
   offers, details (edit form), instructors, danger zone.
-- [ ] **Step 2: roster.** `AdminTable`: name, age, enrolled date, paid `StatusChip`;
+- [x] **Step 2: roster.** `AdminTable`: name, age, enrolled date, paid `StatusChip`;
   quiet per-row actions — Record payment (unpaid rows only), Move… (Task 5 wires it),
   Drop (confirm step; reuses `dropEnrollment`, which already runs the freed-spot
   logic). Empty roster gets `EmptyState`.
-- [ ] **Step 3: waitlist & offers.** Queue in position order, member vs applicant
+- [x] **Step 3: waitlist & offers.** Queue in position order, member vs applicant
   entries visibly distinguished, active offer with expiry, offer/cancel actions on the
   existing machinery; stale-offer sweep on load stays.
-- [ ] **Step 4: edit form + instructors.** The form rebuilds on the event-detail idiom
+- [x] **Step 4: edit form + instructors.** The form rebuilds on the event-detail idiom
   (paired columns, real date inputs, Save placement); Delete demotes to a quiet
   danger-zone placement with confirm. Instructors section restyles to match the page;
   assign/unassign behavior untouched.
-- [ ] **Step 5: tests + gate.** `recordPayment` tests: flag set, ledger row written,
+- [x] **Step 5: tests + gate.** `recordPayment` tests: flag set, ledger row written,
   audit row written, refuses an already-paid row. Assembly tests for section presence
   and unpaid-only action visibility. Full gate green.
 
@@ -220,7 +220,7 @@ floating red Delete; gate green.
 **Interfaces produced:** `transferEnrollment(db, { enrollmentId, destinationClassId,
 actor, confirmFeeMismatch })` — the single store function the UI action wraps.
 
-- [ ] **Step 1: store function, test-first.** Behavior under test before UI: moves the
+- [x] **Step 1: store function, test-first.** Behavior under test before UI: moves the
   enrollment to the destination class preserving `fee_paid`, `stripe_ref`,
   `guardian_contact`, `interests`, and the original `enrolled_at`; refuses a fee
   mismatch unless `confirmFeeMismatch` is set (the error names the exact difference);
@@ -231,11 +231,11 @@ actor, confirmFeeMismatch })` — the single store function the UI action wraps.
   Destination may be over capacity (admin override is normal). Cover: same-fee move,
   mismatch refusal, mismatch + confirm, duplicate refusal, carry of all four fields,
   freed-spot trigger, audit/ledger rows.
-- [ ] **Step 2: UI.** Move… on a roster row opens the destination picker: current
+- [x] **Step 2: UI.** Move… on a roster row opens the destination picker: current
   season, same class excluded, each candidate showing its fraction (over-capacity
   allowed, shown calm). Fee mismatch shows the difference and requires the explicit
   confirm before the action submits with `confirmFeeMismatch`.
-- [ ] **Step 3: gate.** Full gate green.
+- [x] **Step 3: gate.** Full gate green.
 
 **Acceptance:** a paid student moves between same-price classes with the payment
 following and the source's freed spot auto-offering; the mismatch path warns with the
@@ -249,14 +249,14 @@ exact difference and proceeds only on confirm; all store tests pass; gate green.
 `docs/design-benchmark/probes/2026-07-21-classes/`; Modify `docs/STATUS.md`,
 `docs/design-benchmark/ledger.md`, `docs/2026-07-21-classes-pass-harvest-findings.md`.
 
-- [ ] **Step 1: probes.** Committed probe pages for the verdicts that need Geoff's
+- [x] **Step 1: probes.** Committed probe pages for the verdicts that need Geoff's
   eyes: list row anatomy and density, the over-capacity voice (2-3 variants), expand
   panel composition. The three open Members probe items (StatusChip palette mapping,
   the never-paid `'none'` copy, the search focus ring) ride the same review page set.
-- [ ] **Step 2: reviewer fan-out.** `web-auth-security-reviewer` (new form actions:
+- [x] **Step 2: reviewer fan-out.** `web-auth-security-reviewer` (new form actions:
   `offerNext`, `recordPayment`, transfer), `svelte-reviewer`, `daisyui-a11y-reviewer`;
   findings triaged and fixed.
-- [ ] **Step 3: design-probe + coherence.** `scripts/design-probe.mjs` clean for the
+- [x] **Step 3: design-probe + coherence.** `scripts/design-probe.mjs` clean for the
   pass's surfaces; fresh-context whole-page coherence read (not a context that built
   it) at 390 and 1440 on both surfaces — the expert-tells question; fix round if it
   fails; verdict to the ledger.

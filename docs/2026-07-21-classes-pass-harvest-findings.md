@@ -141,3 +141,37 @@
     task's own new instance was rewritten to a `gap-2` flex row instead (which does
     compile) rather than perpetuating the class; Task 3's own pre-existing instance was
     left alone (out of this task's file list) and is filed here for a future fix pass.
+
+## Filed at the Task 6 release round (2026-07-21)
+
+13. **ExpandableRow's narrow-width contract recurred at its second consumer.** The
+    Classes list hit the exact Members-pass failure again: the expanded panel's width
+    follows the summary table's computed width (`<td colspan>` can never be narrower),
+    so a summary row wider than a phone viewport drags the panel past the right edge
+    and strands the roster's StatusChips off-screen. The fix was the same
+    `*-narrow-hide` column-drop idiom Members already carries. Two consumers, two
+    independent rediscoveries of the same constraint, both caught only by a
+    fresh-context coherence read at 390. When ExpandableRow graduates, the contract
+    must graduate with it: either documented loudly (panel width = summary width; the
+    consumer owns keeping the summary inside the viewport) or mitigated in the
+    component itself.
+
+14. **Fresh evidence for finding 2 (the consumer-side admin-CSS check): two more
+    silent non-compiles in one pass.** Hand-written `divide-y
+    divide-[var(--cairn-card-border)]` separators compiled to nothing (lists rendered
+    with no dividers, all gates green; caught by the daisy-a11y reviewer's built-sheet
+    sweep, confirmed by grep), and finding 12's `ml-1` was the same trap earlier in
+    the pass. The same dead `divide-*` pattern sits latent in
+    `classes/waitlist/+page.svelte`, `members/[id]/+page.svelte`, and
+    `money/+page.svelte` (site-side follow-up filed in STATUS). An exported
+    `check:admin-css-classes` a consumer could run over its own `src/routes/admin/**`
+    would have caught all of these mechanically at build time.
+
+15. **Svelte's control-flow leading-whitespace trim breaks composed count lines.** A
+    literal leading space directly inside an `{#if}` block boundary is dropped, so
+    idioms like `waiting{#if next} &middot; next: {next}{/if}` render "waiting· next"
+    -- two instances in one screen, each caught only by a cold read's micro-typography
+    check ("Jun 20, 2026– Jun 22" was the other). The repo already dodges this ad hoc
+    (span-wrapped spaces elsewhere); the toolkit's count-line documentation should
+    carry the recipe explicitly (`&nbsp;` at the block boundary, or a span wrap) so
+    composed summary lines stop rediscovering it.
