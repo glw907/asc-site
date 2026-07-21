@@ -150,3 +150,35 @@ than by breakage"). Ranked cosmetic nits, triaged:
 
 Coverage caveats (unexercised in this set, covered by CI baselines + Geoff's walkthrough):
 collapsed-header sum pills, the Waiver text label, the E&C singleton's expanded state.
+
+## Members screen rebuild, Members pass close (2026-07-20, fresh-context coherence reads)
+
+Two reads over live-data replica captures (149 households / 288 members; default, search,
+and expanded-panel states at 390 + 1440, both admin themes; 12 shots per read).
+
+**First read: FAIL** (8 tells): the 390 blocker (expanded panel trapped in the table's
+horizontal scroll with its desktop 4-column grid), hard-clipped names with the expand
+affordance off-viewport at 390, StatusChip's badge-ghost melting into the zebra stripe in
+light, the unstyled browser-yellow search `<mark>`, the UA double focus ring on the
+autofocused search, placeholder clipping at 1440, a flow-wrapped (not composed) toolbar,
+and the list-narrowing transition painting ghost rows below the card's closed border.
+
+**Fix round (`8bacfac`)** resolved all eight plus the daisy-a11y reviewer's four warnings.
+Root causes worth remembering: the ghost rows were the root layout's `startViewTransition`
+firing on same-route filter navigations (now guarded by route-id equality); the Overdue
+chip's `bg-warning/15`/`text-warning-content` never compiled in the packaged
+`cairn-admin.css` and rendered as plain text with every mechanical gate green; a
+`<td colspan>` panel can never be narrower than the table's computed columns, so the 390
+fix hides the Standing/Phone summary columns at narrow width (panel carries both) rather
+than a `display: block` escape (empirically a dead end, documented in ExpandableRow).
+
+**Cold re-read (Opus, fresh context): PASS — "designed, not assembled" at both widths in
+both themes.** All eight tells verified resolved in the grader's own captures; the 390
+panel genuinely stacks into legible single-column sections (verified on a 4-member,
+6-enrollment household). One new minor tell: "1 households" from the shared count-line
+functions — fixed same session (`a9a2c8d`, `itemLabel` became an `{ one, many }` pair
+through `format.ts`'s `itemNoun`, singular-tested on both surfaces). Open nits recorded,
+not blockers: the 390 expand-chevron cell sits outside the zebra tint (faint seam); the
+search focus ring reads near-black rather than the primary-colored recipe (defensible;
+route to the StatusChip probe round's palette sitting); tall-column whitespace in the
+1440 panel is inherent to top-aligned columns and correct.
