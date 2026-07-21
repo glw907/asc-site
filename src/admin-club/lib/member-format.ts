@@ -47,9 +47,16 @@ export const VISIBILITY_CHIP: Record<DirectoryVisibility, ChipStyle> = {
  * quietest ghost chip short of `none`, which is dimmer still (a household that has simply never
  * paid is a different fact from one that used to be current).
  */
+// `overdue` reads `badge-warning` (a solid, compiled fill), not `bg-warning/15 text-warning-content`
+// (the Members pass coherence round's own a11y finding): neither `bg-warning/15` nor
+// `text-warning-content` compiles in the packaged `cairn-admin.css` (only bare, unmodified
+// `bg-warning` does), so the pair silently rendered as plain, uncolored body text on an admin
+// route -- no warning tint at all, and no contrast pairing to check. `badge-warning` is in the
+// safelist (`StatusChip`'s own header comment verifies the same four colored `badge-<tone>`
+// modifiers), and daisyUI ships its `warning`/`warning-content` pair pre-checked for contrast.
 export const HOUSEHOLD_STANDING_CHIP: Record<HouseholdStandingStatus, ChipStyle> = {
   current: { label: 'Current', cls: 'badge-sm border-transparent bg-primary/10 font-medium text-primary' },
-  overdue: { label: 'Overdue', cls: 'badge-sm border-transparent bg-warning/15 font-medium text-warning-content' },
+  overdue: { label: 'Overdue', cls: 'badge-warning badge-sm font-medium' },
   former: { label: 'Former', cls: 'badge-ghost badge-sm font-medium' },
   none: { label: 'No membership', cls: 'badge-ghost badge-sm font-medium opacity-60' },
 };

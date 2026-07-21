@@ -79,7 +79,7 @@ accessible name — the toolkit's "legend hook." The tone-to-domain mapping (whi
 context so a future legend/key component can reuse the identical color without duplicating the
 mapping.
 
-**daisyUI assembly:** `badge badge-ghost` (shape only — no tone reads through the badge fill) plus
+**daisyUI assembly:** `badge badge-outline` (shape only — no tone reads through the badge fill) plus
 a `status status-<tone>` dot for the actual color signal, and `badge-xs`/`badge-sm` +
 `status-xs`/`status-sm` for the two sizes. **Verified against the built `cairn-admin.css`
 (0.88.3):** `badge-info`, `badge-warning`, `badge-neutral`, and `badge-primary` compile, but
@@ -91,7 +91,15 @@ plus a gap. Padding, truncation, and min/max width (the "chip-overflow kill" —
 literal "text overflows the pills" reaction, `docs/2026-07-20-admin-toolkit-catalog.md`) are the
 component's own scoped CSS, per the compiled-CSS constraint above.
 
-**Exact class inventory:** `badge`, `badge-ghost`, `badge-xs`, `badge-sm`, `status`,
+**`badge-outline`, not `badge-ghost` (the Members pass coherence round).** `badge-ghost` compiles to
+an explicit `background-color`/`border-color` of `--color-base-200` — one of `AdminTable`'s own two
+zebra stripe colors — so a ghost chip melts into whichever row shares that exact color and only
+reads as a pill on the other stripe. `badge-outline` has no fill (`--badge-bg: transparent`) and no
+`--badge-color` custom property is ever set here (no `badge-<tone>` modifier class is applied), so
+its `border-color: currentColor` resolves to the inherited text color instead — a border that reads
+the same against either zebra stripe, or no zebra at all.
+
+**Exact class inventory:** `badge`, `badge-outline`, `badge-xs`, `badge-sm`, `status`,
 `status-neutral`, `status-info`, `status-success`, `status-warning`, `status-error`, `status-xs`,
 `status-sm`.
 
@@ -187,6 +195,27 @@ methodology `StatusChip`/`Pagination`'s own header comments explain). Row cursor
 trigger cell's fixed width, and the panel cell's padding/line-wrap-back-on are this component's own
 scoped CSS, per the compiled-CSS constraint above.
 
+**Narrow-viewport contract (the Members pass coherence round):** `AdminTable`'s own horizontal-
+scroll fallback (see that component's own section above) means a summary row wider than its
+viewport scrolls rather than wraps. The trigger cell is `position: sticky; right: 0` with its own
+opaque background (`--color-base-100`, not the zebra stripe's alternating color, the standard
+frozen-column tradeoff), so the expand control stays inside the visible viewport at every scroll
+position, including the unscrolled one — a narrow screen never strands the trigger off-screen with
+no visible cue that a row expands.
+
+The panel cell stays a genuine `<td colspan>`, deliberately not `display: block`: a spanning cell
+un-tabled that way still resolves its width against an anonymous fixup row the browser generates for
+a block-display child of a `<tbody>`, and that anonymous row's own width is *still* driven by the
+table's real column widths (verified empirically — `width: 100%` on the un-tabled cell kept
+measuring the summary rows' own narrower first-two-column width, not the scroll wrapper's full
+width, at every viewport tried). A caller whose panel needs to collapse to fewer columns at a narrow
+width instead needs the table itself to never require horizontal scroll in the first place: Members'
+own `+page.svelte` hides its lower-priority summary columns (Standing, Phone — both already shown in
+full inside the panel) under a `max-width` breakpoint, so the whole row, panel included, fits the
+viewport with nothing to scroll, and the panel's own responsive grid (`auto-fit, minmax(12rem,
+1fr)`) collapses correctly because the real `<td colspan>` it lives in now measures the viewport's
+own width.
+
 **Exact class inventory:** `btn`, `btn-ghost`, `btn-xs`.
 
 Tests: `src/tests/toolkit-table.test.ts`.
@@ -240,27 +269,40 @@ consumer supplies; this component never rewrites a label.
 
 The band itself never wraps — its two children (the controls cluster and the primary action) stay
 on one flex line, so the primary action always stays pinned at the band's top-right corner. The
-controls cluster (search plus every promoted filter) wraps its own children internally at a narrow
-viewport, so filters spill onto their own line rather than colliding with the action or the edge of
-the screen.
+controls cluster (search plus every promoted filter) is a CSS grid, not a wrapped flex row (the
+Members pass coherence round): `grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr))` gives
+every promoted `<select>` one shared column track (`width: 100%` inside its own cell, replacing the
+select's own organic, option-text-driven width), and the search box spans two of those tracks
+(`grid-column: span 2`) so it stays wide enough for a longer placeholder without losing the shared
+grid. A second wrapped line's controls land under the first line's own column boundaries as a
+result, instead of an independently sized, misaligned row — `auto-fill` still keeps the column
+count viewport-driven, with no media query of this component's own.
 
 **daisyUI assembly:** `input`/`input-sm` (search), `select`/`select-sm` (every filter, promoted or
 overflow), `btn`/`btn-sm`/`btn-primary`/`btn-outline` (the primary action and the overflow
-trigger), `dropdown`/`dropdown-content`/`menu` (the overflow disclosure — the same assembly the
-survey's RowActions entry names for a row's own overflow menu), `badge`/`badge-neutral`/`badge-sm`
-(the pills). **Verified against the built `cairn-admin.css`:** every one of these already compiles
-from cairn's own admin usage — none of it needed a safelist addition, unlike `StatusChip`'s
-`status-*` family or `Pagination`'s `join-item`. The overflow disclosure's trigger and content are
-a plain `<button>` plus a plain `<div>` (no `tabindex` on either): the trigger is already
-focusable as a real button, and the content holds only real, already-focusable controls
-(`<select>`), so nothing here needs the tabindex-on-a-non-interactive-element idiom daisyUI's own
-docs show for a menu of plain, non-native items. Pill layout, the pill's own remove control, and
-the count line's muted color (`var(--color-muted)`, matching `Pagination`'s own range line) are
+trigger), `dropdown`/`dropdown-content`/`dropdown-open`/`menu` (the overflow disclosure — the same
+assembly the survey's RowActions entry names for a row's own overflow menu), `badge`/`badge-neutral`
+/`badge-sm` (the pills). **Verified against the built `cairn-admin.css`:** every one of these
+already compiles from cairn's own admin usage — none of it needed a safelist addition, unlike
+`StatusChip`'s `status-*` family or `Pagination`'s `join-item`. The overflow disclosure carries real
+toggle semantics (the Members pass coherence round): a `$state` boolean drives `class:dropdown-open`
+on the wrapping `.dropdown` (daisyUI's own already-compiled open/close rule, layered on top of the
+bare `:focus-within` daisyUI gives every `.dropdown` for free) plus `aria-expanded`/`aria-controls`
+on the trigger button, so the disclosure reports its real state and opens on a click, not only a
+focus move — present in the contract even though Members promotes every filter and never exercises
+it. The trigger and content are a plain `<button>` plus a plain `<div>` (no `tabindex` on either):
+the trigger is already focusable as a real button, and the content holds only real, already-
+focusable controls (`<select>`), so nothing here needs the tabindex-on-a-non-interactive-element
+idiom daisyUI's own docs show for a menu of plain, non-native items. The search box strips the
+browser's own `type="search"` chrome (`appearance: none`): left in place, some engines draw a
+second, separately positioned focus ring for a native search input on top of `.input`'s own themed
+one, reading as a doubled outline. Pill layout, the pill's own remove control, the controls grid,
+and the count line's muted color (`var(--color-muted)`, matching `Pagination`'s own range line) are
 this component's own scoped CSS, per the compiled-CSS constraint above.
 
 **Exact class inventory:** `input`, `input-sm`, `select`, `select-sm`, `btn`, `btn-sm`,
-`btn-primary`, `btn-outline`, `dropdown`, `dropdown-content`, `menu`, `badge`, `badge-neutral`,
-`badge-sm`.
+`btn-primary`, `btn-outline`, `dropdown`, `dropdown-content`, `dropdown-open`, `menu`, `badge`,
+`badge-neutral`, `badge-sm`.
 
 Tests: `src/tests/toolkit-toolbar.test.ts` (component rendering) and the same file's
 `computeAppliedFilters`/`computeCountLine` suites (the applied/removed pill round-trip, the

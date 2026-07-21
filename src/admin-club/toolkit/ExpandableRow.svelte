@@ -21,6 +21,26 @@ expands it in place"); the explicit trailing button is the one control carrying 
 the accessible name, which is why summary cells should stay non-interactive (plain text, a
 `StatusChip`, and similar) -- an interactive control nested inside the row would double-handle the
 click. Per-row actions belong in the panel, never inline in a summary cell, for the same reason.
+
+**The trigger cell is `position: sticky; right: 0`** (the Members pass coherence round).
+`AdminTable`'s own horizontal-scroll fallback means a summary row wider than its viewport scrolls
+rather than wraps (that component's own contract); without this, a narrow viewport strands the
+trigger off-screen with no visible cue that a row even expands. Sticky keeps the trigger inside the
+visible viewport at every scroll position, including the unscrolled one, with no JS of its own --
+the caller never opts into this, it is unconditional. The sticky cell carries its own opaque
+background (`--color-base-100`) rather than the zebra stripe's own alternating color: a pinned
+column showing a small, constant seam against the scrolling content underneath it is the standard
+frozen-column pattern, not a bug.
+
+The panel cell stays a genuine `<td colspan>` -- deliberately, not `display: block` -- because a
+spanning cell removed from table layout still resolves its width against an anonymous fixup row
+the browser generates for a block-display child of a `<tbody>`, and that anonymous row's own width
+is *still* driven by the table's real column widths (verified empirically: `width: 100%` on the
+un-tabled cell kept measuring the summary rows' own narrower first-two-column width, not the table
+wrap's full width, at every viewport). A caller that wants the panel's own internal grid to collapse
+at a narrow width needs the table itself to never need horizontal scroll in the first place -- see
+Members' own `+page.svelte` for the pattern (hiding lower-priority summary columns under a
+breakpoint so the whole row, panel included, fits the viewport with nothing to scroll).
 -->
 <script lang="ts" generics="T">
   import type { Snippet } from 'svelte';
@@ -85,6 +105,11 @@ click. Per-row actions belong in the panel, never inline in a summary cell, for 
     width: 1px;
     white-space: nowrap;
     text-align: right;
+    /* Always reachable, even when the row is wider than the viewport: see this component's own
+       header comment above. */
+    position: sticky;
+    right: 0;
+    background-color: var(--color-base-100);
   }
 
   .toolkit-expandable-row-chevron {

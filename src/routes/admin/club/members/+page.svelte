@@ -211,7 +211,11 @@ everything the panel renders.
     </p>
   {/if}
   {#if data.error}
-    <p class="px-6 py-10 text-center text-sm text-warning">{data.error}</p>
+    <!-- text-error, not text-warning: the latter doesn't compile in the packaged cairn-admin.css
+         (only bg-warning's bare, unmodified form does), so it silently rendered as plain body
+         text; text-error compiles and matches the form-error banner above it, which is the more
+         accurate read for a failed load anyway. -->
+    <p class="px-6 py-10 text-center text-sm text-error">{data.error}</p>
   {:else}
     <div class="members-toolbar-band border-b border-[var(--cairn-card-border)] p-6">
       <ListToolbar
@@ -224,9 +228,12 @@ everything the panel renders.
         count={data.households.length}
         itemLabel="households"
       />
+      <!-- Reads as the toolbar's own scope line, not a separately floated afterthought: matches
+           the count line's own type scale/color and sits at the same vertical rhythm ListToolbar's
+           internal `gap` uses between its own stacked lines. -->
       <label class="members-archived-toggle">
-        <input type="checkbox" class="checkbox checkbox-sm" bind:checked={includeArchived} />
-        <span class="text-sm text-muted">Include archived</span>
+        <input type="checkbox" class="checkbox checkbox-sm members-archived-checkbox" bind:checked={includeArchived} />
+        <span>Include archived</span>
       </label>
     </div>
 
@@ -234,8 +241,8 @@ everything the panel renders.
       {#snippet header()}
         <th class={HEADER_CELL}>Household</th>
         <th class={HEADER_CELL}>Members</th>
-        <th class="{HEADER_CELL} w-32">Standing</th>
-        <th class="{HEADER_CELL} w-32">Phone</th>
+        <th class="{HEADER_CELL} w-32 members-narrow-hide">Standing</th>
+        <th class="{HEADER_CELL} w-32 members-narrow-hide">Phone</th>
         <th class="sr-only">Details</th>
       {/snippet}
       {#snippet empty()}
@@ -260,26 +267,26 @@ everything the panel renders.
                 <span class="text-muted">No members on file</span>
               {/each}
             </td>
-            <td>
+            <td class="members-narrow-hide">
               <StatusChip
                 tone={HOUSEHOLD_STANDING_TONE[row.standing]}
                 label={HOUSEHOLD_STANDING_CHIP[row.standing].label}
                 legend={row.standing === 'former' && row.lastSeason ? `Last active ${row.lastSeason}` : undefined}
               />
             </td>
-            <td class="text-sm">{primary?.phone ?? '—'}</td>
+            <td class="text-sm members-narrow-hide">{primary?.phone ?? '—'}</td>
           {/snippet}
           {#snippet panel(datum: HouseholdListRow)}
             {@const contact = primaryContact(datum)}
             <div class="household-panel">
               <div class="household-panel-grid">
                 <section>
-                  <h3 class={HEADER_CELL}>Contacts</h3>
+                  <h2 class={HEADER_CELL}>Contacts</h2>
                   <p class="text-sm">{contact?.email ?? 'No email on file'}</p>
                   <p class="text-sm">{contact?.phone ?? 'No phone on file'}</p>
                 </section>
                 <section>
-                  <h3 class={HEADER_CELL}>Members</h3>
+                  <h2 class={HEADER_CELL}>Members</h2>
                   <ul class="household-panel-list">
                     {#each datum.members as member (member.id)}
                       <li class="text-sm">
@@ -291,7 +298,7 @@ everything the panel renders.
                   </ul>
                 </section>
                 <section>
-                  <h3 class={HEADER_CELL}>Holdings</h3>
+                  <h2 class={HEADER_CELL}>Holdings</h2>
                   <ul class="household-panel-list">
                     {#each datum.holdings as holding (holding.id)}
                       <li class="text-sm">
@@ -308,7 +315,7 @@ everything the panel renders.
                   </ul>
                 </section>
                 <section>
-                  <h3 class={HEADER_CELL}>Classes</h3>
+                  <h2 class={HEADER_CELL}>Classes</h2>
                   <ul class="household-panel-list">
                     {#each datum.enrollments as enrollment (enrollment.id)}
                       <li class="text-sm">
@@ -349,9 +356,9 @@ everything the panel renders.
   {/if}
 </OfficeList>
 
-<dialog bind:this={addHouseholdDialog} class="modal">
+<dialog bind:this={addHouseholdDialog} class="modal" aria-labelledby="add-household-dialog-title">
   <div class="modal-box">
-    <h2 class="text-lg font-bold">Add a household</h2>
+    <h2 id="add-household-dialog-title" class="text-lg font-bold">Add a household</h2>
     <p class="py-2 text-sm text-muted">The walk-up-join entry point: a household and its first, primary member. Record a payment from the new desk afterward.</p>
     <form method="post" action="?/addHousehold" class="flex flex-col gap-3">
       <CsrfField />
@@ -385,19 +392,75 @@ everything the panel renders.
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    margin-top: 0.75rem;
+    /* Matches ListToolbar's own internal `gap` (0.625rem) so this reads as one more line of the
+       toolbar's own vertical rhythm, not a separately floated afterthought; the label's own type
+       scale/color below matches the count line's for the same reason. */
+    margin-top: 0.625rem;
     width: fit-content;
     cursor: pointer;
+    font-size: 0.8125rem;
+    color: var(--color-muted);
+  }
+
+  /* daisyUI's own `--radius-selector` renders `.checkbox` closer to a full circle than a checkbox
+     at this small size; a checkbox reads its own semantics through a visibly square (if rounded)
+     box, never a circle, which is a radio's own shape language. */
+  .members-archived-checkbox {
+    border-radius: 0.25rem;
   }
 
   .members-name-cell {
     font-weight: 600;
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .members-cell {
     max-width: 22rem;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* At a phone width the household-name and members cells otherwise clip mid-word at the
+     viewport's own edge before either cell's `max-width` above is ever reached (the table's real
+     row is wider than the screen, and the outer scroll containers use overlay scrollbars with no
+     visible affordance) -- narrowing both here moves the truncation boundary inside the visible
+     viewport, so the ellipsis these two cells already carry actually renders.
+
+     Standing and Phone drop out of the summary row entirely at this width (both already show in
+     full inside the expanded panel): a `<td colspan>` panel is real table layout, so its own width
+     can never be narrower than the summary rows' widest computed column sum (`ExpandableRow`'s own
+     header comment explains why `display: block` doesn't get around this). Dropping these two
+     columns is what lets the *whole* row, panel included, fit the viewport with nothing left to
+     scroll -- the fix for the coherence round's 390 blocker, not just a phone-cell truncation
+     tweak -- and the household/members cells below get the freed-up width back rather than staying
+     as cramped as they'd need to be with five columns still fighting for the same space. */
+  @media (max-width: 640px) {
+    .members-name-cell {
+      max-width: 9rem;
+    }
+
+    .members-cell {
+      max-width: 9rem;
+    }
+
+    .members-narrow-hide {
+      display: none;
+    }
+  }
+
+  /* A quiet search-match highlight in the admin theme's own vocabulary, never the browser default
+     yellow `<mark>` (glaring in dark, off-palette in light): a light tint of the admin theme's own
+     primary color, with the surrounding text's own color left untouched (a measured 9.9:1+
+     contrast in both admin themes, well past AA) so the tint never overrides a color a reader
+     already relies on to read the row. */
+  .members-cell mark {
+    background-color: color-mix(in oklab, var(--color-primary) 20%, transparent);
+    color: inherit;
+    font-weight: 600;
+    border-radius: 0.2rem;
+    padding: 0 0.15rem;
   }
 
   .household-panel {

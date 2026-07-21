@@ -23,23 +23,26 @@ so a filter's vocabulary (and its casing) is entirely the consumer's choice.
 
 Assembles from daisyUI 5 primitives already compiled into the packaged `cairn-admin.css`, none of
 them newly safelisted: `input`/`input-sm`, `select`/`select-sm`, `btn`/`btn-sm`/`btn-primary`/
-`btn-outline`, `dropdown`/`dropdown-content`/`menu` (the overflow disclosure, the same assembly
-the survey's RowActions entry names for a row's own overflow menu), and `badge`/`badge-neutral`/
-`badge-sm` for the pills. **Verified against the built `cairn-admin.css`:** every one of these
-already compiles from cairn's own admin usage (the same methodology `StatusChip`'s own header
-comment explains), so this component needs no safelist addition. Pill layout, the pill's own
-remove control, and the count line's muted color live in this component's own scoped CSS, per the
-compiled-CSS constraint the toolkit README documents -- an unverified Tailwind utility string
-would compile to nothing on an `/admin/**` route.
+`btn-outline`, `dropdown`/`dropdown-content`/`dropdown-open`/`menu` (the overflow disclosure, the
+same assembly the survey's RowActions entry names for a row's own overflow menu, now driven by a
+real `$state` toggle rather than the bare `:focus-within` daisyUI gives every `.dropdown` for free
+-- see this file's own script section), and `badge`/`badge-neutral`/`badge-sm` for the pills.
+**Verified against the built `cairn-admin.css`:** every one of these already compiles from cairn's
+own admin usage (the same methodology `StatusChip`'s own header comment explains), so this
+component needs no safelist addition. Pill layout, the controls grid, and the count line's muted
+color live in this component's own scoped CSS, per the compiled-CSS constraint the toolkit README
+documents -- an unverified Tailwind utility string would compile to nothing on an `/admin/**` route.
 
 The band's two children -- the controls cluster and the primary action -- share one flex line
-whenever both fit; the controls cluster wraps its own search box and filter selects internally
-first, so a wide viewport never wraps the band itself. Only once the controls cluster's own
-first-line content plus the action's own width can no longer share the line does the action drop
-to a line of its own, where an `auto` left margin still pushes it to the band's right edge (a lone
-flex item on its own line still resolves an `auto` margin against that line, independent of the
-other line's content) -- the fix for a narrow viewport, where a fixed-width action sharing a line
-with even one shrunk-down control would otherwise overlap it rather than wrap cleanly.
+whenever both fit; the controls cluster is a CSS grid, not a wrapped flex row (the Members pass
+coherence round -- see this component's own `.toolkit-toolbar-controls` section below), so a wide
+viewport never wraps the band itself and a wrapped narrower one keeps every control's columns
+aligned across lines. Only once the controls cluster's own first-line content plus the action's own
+width can no longer share the line does the action drop to a line of its own, where an `auto` left
+margin still pushes it to the band's right edge (a lone flex item on its own line still resolves an
+`auto` margin against that line, independent of the other line's content) -- the fix for a narrow
+viewport, where a fixed-width action sharing a line with even one shrunk-down control would
+otherwise overlap it rather than wrap cleanly.
 -->
 <script module lang="ts">
   /** One option in a `ListToolbarFilter`'s own vocabulary. */
@@ -165,6 +168,14 @@ with even one shrunk-down control would otherwise overlap it rather than wrap cl
     const filter = filters.find((candidate) => candidate.id === pillId);
     filter?.onChange(filter.defaultValue ?? 'all');
   }
+
+  // The overflow disclosure's own open state (the Members pass coherence round): a real toggle
+  // rather than the bare `:focus-within` daisyUI already gives `.dropdown` for free, so the
+  // trigger can carry `aria-expanded`/`aria-controls` that actually reflects whether the content
+  // is showing, and a click (not just a focus move) opens and closes it.
+  let overflowOpen = $state(false);
+  const uid = $props.id();
+  const overflowId = `${uid}-overflow`;
 </script>
 
 <div class="toolkit-toolbar">
@@ -182,7 +193,7 @@ with even one shrunk-down control would otherwise overlap it rather than wrap cl
       />
       {#each promotedFilters as filter (filter.id)}
         <select
-          class="select select-sm"
+          class="select select-sm toolkit-toolbar-select"
           aria-label={filter.label}
           value={filter.value}
           onchange={(event) => filter.onChange((event.currentTarget as HTMLSelectElement).value)}
@@ -193,9 +204,15 @@ with even one shrunk-down control would otherwise overlap it rather than wrap cl
         </select>
       {/each}
       {#if overflowFilters.length > 0}
-        <div class="dropdown">
-          <button type="button" class="btn btn-sm btn-outline">{overflowLabel}</button>
-          <div class="dropdown-content menu toolkit-toolbar-overflow">
+        <div class="dropdown" class:dropdown-open={overflowOpen}>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            aria-expanded={overflowOpen}
+            aria-controls={overflowId}
+            onclick={() => (overflowOpen = !overflowOpen)}
+          >{overflowLabel}</button>
+          <div id={overflowId} class="dropdown-content menu toolkit-toolbar-overflow">
             {#each overflowFilters as filter (filter.id)}
               <label class="toolkit-toolbar-overflow-field">
                 <span>{filter.label}</span>
@@ -263,17 +280,35 @@ with even one shrunk-down control would otherwise overlap it rather than wrap cl
     gap: 0.75rem;
   }
 
+  /* A grid, not a wrapped flex row (the Members pass coherence round): every promoted select
+     shares one repeating column track, so a second wrapped line's controls land under the same
+     column boundaries the first line established instead of an organically-sized, misaligned
+     row. `auto-fill` keeps the track count viewport-driven (fewer, wider columns on a narrow
+     screen; more on a wide one) without any media query of this component's own. */
   .toolkit-toolbar-controls {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
     flex: 1 1 auto;
-    flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
   }
 
+  /* Two columns wide: long enough to show the whole placeholder ("Search by name, standing, or
+     phone") without clipping, while still landing on the same column grid every other control
+     uses. */
   .toolkit-toolbar-search {
-    width: 12rem;
+    grid-column: span 2;
+    width: 100%;
+    /* Strips the browser's own `type="search"` chrome (a clear button, and on some engines a
+       second, separately-drawn focus ring that layers on top of `.input`'s own themed one,
+       reading as a doubled outline): `.input:focus`'s outline below then becomes the only ring a
+       reader sees. */
+    appearance: none;
+  }
+
+  .toolkit-toolbar-select {
+    width: 100%;
   }
 
   .toolkit-toolbar-primary {

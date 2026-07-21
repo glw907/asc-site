@@ -135,6 +135,24 @@ describe('ListToolbar', () => {
     expect(body).toContain('aria-label="Standing"');
   });
 
+  it('gives the overflow disclosure real toggle semantics: aria-expanded and aria-controls point at a matching id, closed on first render', () => {
+    const { body } = render(ListToolbar, {
+      props: {
+        search: '',
+        onSearch: () => {},
+        filters: [standingFilter({ promoted: false })],
+        count: 149,
+        itemLabel: 'households',
+      },
+    });
+    const trigger = body.match(/<button[^>]*aria-controls="([^"]+)"[^>]*>More filters<\/button>/);
+    expect(trigger).not.toBeNull();
+    const [, controlsId] = trigger!;
+    expect(body).toContain(`aria-expanded="false" aria-controls="${controlsId}"`);
+    expect(body).toContain(`id="${controlsId}"`);
+    expect(body).not.toContain('dropdown-open');
+  });
+
   it('renders exactly one primary action, right-aligned in its own toolbar-primary class', () => {
     const { body } = render(ListToolbar, {
       props: {

@@ -14,6 +14,14 @@ dot instead, because `badge-error`/`badge-success` do not compile in the package
 `badge-neutral`/`badge-primary` do), while every `status-<tone>` modifier the safelist lists does.
 A dot-carries-color design also sidesteps auditing five separate badge-fill/text contrast pairs.
 
+**`badge-outline`, not `badge-ghost` (the Members pass coherence round).** `badge-ghost` compiles
+to an explicit `background-color`/`border-color` of `--color-base-200` -- one of `AdminTable`'s own
+two zebra stripe colors -- so a ghost chip melts into whichever row happens to share that exact
+color and only reads as a pill on the other stripe. `badge-outline` has no fill at all (`--badge-bg:
+transparent`) and no `--badge-color` custom property is ever set here (no `badge-<tone>` modifier
+class is applied), so its `border-color: currentColor` resolves to the inherited text color -- a
+border that reads the same, consistently, against either zebra stripe or no zebra at all.
+
 Padding, truncation, and the min/max width live in this component's own scoped CSS rather than as
 Tailwind utility classes: `/admin/**` routes load only cairn's precompiled `cairn-admin.css` (no
 Tailwind build of this site's own source ever touches an admin route), so an arbitrary utility
@@ -65,7 +73,7 @@ minimum width to keep a column's chips a consistent size.
 </script>
 
 <span
-  class="badge badge-ghost {size === 'xs' ? 'badge-xs' : 'badge-sm'} status-chip"
+  class="badge badge-outline {size === 'xs' ? 'badge-xs' : 'badge-sm'} status-chip"
   title={legend}
   aria-label={legend ? `${label}: ${legend}` : undefined}
 >
