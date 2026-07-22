@@ -260,10 +260,10 @@ exact difference and proceeds only on confirm; all store tests pass; gate green.
   pass's surfaces; fresh-context whole-page coherence read (not a context that built
   it) at 390 and 1440 on both surfaces — the expert-tells question; fix round if it
   fails; verdict to the ledger.
-- [ ] **Step 4: baselines + deploy.** CI-canonical baseline regeneration via
+- [x] **Step 4: baselines + deploy.** CI-canonical baseline regeneration via
   `gh workflow run ci.yml -f update_snapshots=true` (read the log, not the
   conclusion); push; dev deploy green.
-- [ ] **Step 5: records.** STATUS entry (trim rule applies), harvest findings filed,
+- [x] **Step 5: records.** STATUS entry (trim rule applies), harvest findings filed,
   budgets scored (tokens + interaction points). Geoff's queue gains: the Classes
   before/after on dev and the probe verdicts.
 

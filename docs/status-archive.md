@@ -6,6 +6,55 @@
 
 **[Trimmed 2026-07-20 at the Members pass close.]**
 
+**PASS B `asc-sidebar-build` IS BUILD-COMPLETE AND SHIPPED TO DEV; GEOFF'S WALKTHROUGH
+IS THE OPEN GATE (2026-07-19, Fable-conducted: T1 probe round settled in-session, 5
+Sonnet implementer dispatches + simplifier + 2 reviewers + a fresh-context coherence
+read, commits 68a656f..1fe85db + the CI baseline-regen commit).** What shipped:
+
+- **The ratified four-group tree** (Club, Events & Classes, Communication, Website) with
+  the T1-probe verdicts: 25 distinct glyphs (Fragments keeps engine `layers`; overrides
+  bell/key-round/file-pen), Club order with Money sixth, Help UNREFERENCED so it lives
+  in the engine's fallback foot ("foot is perfect"), role-dependent open defaults via
+  `navFilter` (`src/theme/nav-defaults.ts`: Admin/CM open Club+Communication; Publisher
+  Communication; Webmaster Communication+Website). All verdicts distilled into
+  docs/design-benchmark/decisions.md ("Admin sidebar round 2").
+- **Every `roles:` nav gate deleted** — visibility derives from the access map alone.
+  **The Webmaster widening (Geoff-ruled 2026-07-19)**: Webmaster gained the whole
+  Communication group (posts/bulletins/Email/Announce, sends included) in access.ts,
+  the matrix drift-guard, and the design doc's matrix. The Email-class-members deep
+  link spills to Publisher/Webmaster (a collapsed one-door E&C group) — ruled KEEP.
+- **Retirements**: Signups screen fully gone (route/store/tests/strip card; DB rows
+  kept); `notifications` concept retired — bulletins re-unified to production's shape
+  (detail + expires fields; home banner reads latest unexpired bulletin).
+- **New surfaces**: the cross-class Class waitlist screen (/admin/club/classes/waitlist,
+  read-only, `listOutstandingOffers`); compose deep link ?segment=class (sentinel
+  preselects first class segment; two-step server re-resolve untouched).
+- **Attention badges** on the three ruled queues (asset requests, committees, class
+  waitlist) via the 0.88 `attention` dep; the Overview strip reads the SAME
+  `$theme/admin-attention.ts` counts (never-disagree test). Strip restyled with scoped
+  CSS: the daisy stats classes NEVER existed in cairn-admin.css (harvest finding 5).
+- **Gates**: security reviewer CLEAN (enforcement verified map-based with nav gates
+  gone; counts provably role-filtered; two Low invariant notes, one now a comment);
+  svelte-reviewer CLEAN (5 minor notes); coherence read PASS "designed, not assembled"
+  (ledger entry; 2 engine-chrome nits harvested). check 0/0, 1900 tests, build green.
+- **DX harvest**: docs/2026-07-19-sidebar-build-harvest-findings.md — 7 cairn findings
+  (Help-foot idiom docs, navFilter collapsed-rewrite blessing, dangling-href gap,
+  icon-name testability, the admin-CSS class-inventory gap (major), shell collapsed-
+  group spacing, "New Posts" plural copy).
+- **ON GEOFF'S QUEUE: the pass-B walkthrough on dev** — per role (Administrator sees
+  Club+Communication open with badge pills; Publisher/Webmaster the reduced trees),
+  the two new class surfaces, one Bulletins, no Signups, Help in the foot. Two
+  ratified-but-flagged nits to eyeball: Members/Committees glyph twinning at 16px,
+  "Announce" the lone verb (both stand unless reopened).
+- **NEXT PASS: `events-redesign`** (ROADMAP: from-scratch events page, its own
+  template). OPENS WITH A FUNCTIONAL BRAINSTORM with Geoff (what the page must do for
+  members and visitors) before any visual work; probe-iteration process governs; the
+  current page's timeline/chips/season machinery is requirements evidence, not a design
+  to preserve. Resume prompt: "Start the events-redesign pass: read ROADMAP.md's
+  events-redesign entry and docs/STATUS.md, then open the functional brainstorm with
+  Geoff (superpowers:brainstorming) before any visual work." Launch fresh from
+  ~/Projects/aksailingclub-org.
+
 **THE ADMIN TOOLKIT WALKTHROUGH IS DONE AND THE INITIATIVE SHAPE IS SETTLED
 (2026-07-20, Fable-conducted "I drive, you react" walk with Geoff over a live-data
 local replica).** The settle: the admin screens get redesigned **one by one, each a

@@ -8,6 +8,64 @@
 > entries beyond the top two or three to the archive — this file is @-imported into every
 > session's context, so its length is a per-session token tax.
 
+**THE CLASSES PASS IS BUILT, RELEASED TO DEV, AND COHERENCE-PASSED ("designed, not
+assembled", third cold read); GEOFF'S BEFORE/AFTER AND THE PROBE VERDICTS ARE THE
+OPEN GATES (2026-07-21, crash-recovered session, Fable-conducted on Geoff's workflow
+opt-in "continue with a workflow to release"; workflow wf_297581a0-a05 13 agents 0
+errors + 5 direct dispatches; commits ecde24c..cbb79f5; cairn 0.89.1).** What shipped:
+
+- **Tasks 1–5** (the crashed session had executed 1–4 and left Task 5 warm,
+  complete, and gate-green — recovery lost nothing): cairn 0.89.1 (itemNoun/
+  ItemLabel graduated), the toolkit subpath swap (five local copies deleted,
+  ExpandableRow kept local), the season-scoped list rebuild (roster expand panels,
+  offerNext with its three guards), the detail rebuild (roster, waitlist & offers,
+  edit form on the event-detail idiom, instructors, demoted danger zone,
+  recordPayment), and the transfer flow (transferEnrollment on the shared
+  triggerFreedSpotOffer — same-price moves the payment, mismatch warns + explicit
+  confirm, no Stripe surgery; the portal withdrawal path now shares the same
+  freed-spot function).
+- **The release round**: 13 findings, every medium adversarially verified (0
+  refuted); 3 confirmed mediums fixed — the recordPayment DOUBLE-CHARGE race (now
+  claimOffer's compare-and-set; accepted-at-club-scale residual: a D1 failure
+  between the flip and the ledger batch leaves paid-without-ledger, the far-rarer
+  inverse of the double-click it kills), the transfer picker offering
+  already-enrolled destinations with the server refusal invisible behind the modal,
+  and dead divide-y utilities (the silent-non-compile trap AGAIN — two more
+  instances this pass, harvest finding 14). 7 lows fixed, 3 skipped with reasons.
+  The cross-class waitlist's blank member names fixed (finding 11's follow-up).
+- **Coherence: FAIL (4 tells) → fix → cold FAIL (2 tells) → fix → cold PASS** —
+  full verdicts in the ledger. Carry-worthy root causes: ExpandableRow's
+  panel-follows-summary-width contract recurred at its second consumer (harvest
+  13); Svelte trims a literal leading space at an {#if} boundary (harvest 15).
+- **Probes committed** (docs/design-benchmark/probes/2026-07-21-classes/): list row
+  anatomy/density, the over-capacity voice x3, expand-panel composition, and the
+  riders page carrying the three open Members items (StatusChip palette, the
+  never-paid 'none' copy, the search focus ring). **GEOFF'S VERDICTS OWED.**
+- **Gates**: check 0/0, 2000 tests, build green; design-probe clean (the same 5
+  pre-existing site findings, none from this pass); CI green INCLUDING the visual
+  suite against the EXISTING baselines — baselined rendering provably unchanged,
+  so no update_snapshots dispatch (the regen rule binds only when rendering
+  changes); deploy green, dev live.
+- **Series ruling (Geoff, mid-pass)**: admin-screen-passes covers the ENTIRE admin
+  surface until fully polished, order flexible — ROADMAP's entry now carries the
+  remaining-screen map; season-rollover gained the sweep-the-ops-dashboard's-
+  year-cycling-logic note.
+- **Budgets**: ~1.9M subagent tokens (workflow 1.32M + five direct dispatches);
+  conductor questions to Geoff: 0. Guard lesson reconfirmed: the bytes-based
+  runaway alarm false-fired on the probe agent (embedded CSS + screenshots);
+  stall-only detection is the right shape.
+- **ON GEOFF'S QUEUE**: the Classes before/after on dev (/admin/club/classes — the
+  list with a panel expanded, a detail page, the Move… dialog, at 390 and 1440)
+  and the probe verdicts above.
+- **NEXT PASS — ASSETS (first under the whole-surface series ruling)**: opens with
+  the functional brainstorm. RESUME PROMPT: "Start the Assets pass: read
+  ROADMAP.md's admin-screen-passes entry and docs/STATUS.md, then open the
+  functional brainstorm with Geoff (superpowers:brainstorming) before any visual
+  work. The asset_types underscore-vs-hyphen defect rides the pass; opening cairn
+  task candidates: ExpandableRow's graduation (second consumer landed) and the
+  destination-picker pattern." Launch from ~/Projects/aksailingclub-org.
+
+
 **THE MEMBERS PASS IS BUILT, COHERENCE-PASSED, AND LIVE ON DEV; GEOFF'S BEFORE/AFTER
 AND THE TOOLKIT PROBE VERDICTS ARE THE OPEN GATES (2026-07-20, Fable-conducted on
 Geoff's workflow opt-in "push all the way to release": workflow wf_4225bb28-e0f, 18
@@ -66,75 +124,10 @@ published).** What shipped:
 - **ON GEOFF'S QUEUE**: the Members before/after on dev (/admin/club/members — the
   search-first screen, an expanded panel, the 390 view) and the toolkit probe pages
   above.
-- **NEXT PASS — CLASSES: SPEC APPROVED, PLAN APPROVED, READY TO EXECUTE IN A FRESH
-  SESSION (2026-07-21)**: spec docs/2026-07-21-classes-pass-design.md (the functional
-  rulings), plan docs/plans/2026-07-21-classes-pass.md (6 tasks). Geoff's standing
-  emphasis for the pass: the component library improves as we go (now a plan global
-  constraint; harvest file docs/2026-07-21-classes-pass-harvest-findings.md already
-  carries 5 prep findings). Key prep discovery: cairn 0.89.0's graduated
-  Pagination/ListToolbar MISS the itemNoun fix (would regress "1 households"), so
-  Task 1 patches cairn (0.89.1, additive string|ItemLabel) before Task 2 swaps the
-  subpath imports (delete 5 local copies, keep ExpandableRow local, adopt
-  PageHeader/EmptyState). ONE-EXECUTOR: at 2026-07-21 prep the cairn repo showed live
-  session signals (showcase workerd + a probe-screenshot viewer; tree clean at the
-  0.89.0 cut) — Task 1 re-runs the check before touching cairn. RESUME PROMPT:
-  "Execute the classes pass: read docs/plans/2026-07-21-classes-pass.md and
-  docs/2026-07-21-classes-pass-design.md, then execute task-by-task per the plan
-  header (cairn-implementer dispatches, diff review + full gate between tasks;
-  Task 1's one-executor check on cairn-cms first)." Launch from
-  ~/Projects/aksailingclub-org. Conductor: Opus (finished-plan execution; the
-  brainstorm/plan sitting was the Fable work and is done).
-
-**PASS B `asc-sidebar-build` IS BUILD-COMPLETE AND SHIPPED TO DEV; GEOFF'S WALKTHROUGH
-IS THE OPEN GATE (2026-07-19, Fable-conducted: T1 probe round settled in-session, 5
-Sonnet implementer dispatches + simplifier + 2 reviewers + a fresh-context coherence
-read, commits 68a656f..1fe85db + the CI baseline-regen commit).** What shipped:
-
-- **The ratified four-group tree** (Club, Events & Classes, Communication, Website) with
-  the T1-probe verdicts: 25 distinct glyphs (Fragments keeps engine `layers`; overrides
-  bell/key-round/file-pen), Club order with Money sixth, Help UNREFERENCED so it lives
-  in the engine's fallback foot ("foot is perfect"), role-dependent open defaults via
-  `navFilter` (`src/theme/nav-defaults.ts`: Admin/CM open Club+Communication; Publisher
-  Communication; Webmaster Communication+Website). All verdicts distilled into
-  docs/design-benchmark/decisions.md ("Admin sidebar round 2").
-- **Every `roles:` nav gate deleted** — visibility derives from the access map alone.
-  **The Webmaster widening (Geoff-ruled 2026-07-19)**: Webmaster gained the whole
-  Communication group (posts/bulletins/Email/Announce, sends included) in access.ts,
-  the matrix drift-guard, and the design doc's matrix. The Email-class-members deep
-  link spills to Publisher/Webmaster (a collapsed one-door E&C group) — ruled KEEP.
-- **Retirements**: Signups screen fully gone (route/store/tests/strip card; DB rows
-  kept); `notifications` concept retired — bulletins re-unified to production's shape
-  (detail + expires fields; home banner reads latest unexpired bulletin).
-- **New surfaces**: the cross-class Class waitlist screen (/admin/club/classes/waitlist,
-  read-only, `listOutstandingOffers`); compose deep link ?segment=class (sentinel
-  preselects first class segment; two-step server re-resolve untouched).
-- **Attention badges** on the three ruled queues (asset requests, committees, class
-  waitlist) via the 0.88 `attention` dep; the Overview strip reads the SAME
-  `$theme/admin-attention.ts` counts (never-disagree test). Strip restyled with scoped
-  CSS: the daisy stats classes NEVER existed in cairn-admin.css (harvest finding 5).
-- **Gates**: security reviewer CLEAN (enforcement verified map-based with nav gates
-  gone; counts provably role-filtered; two Low invariant notes, one now a comment);
-  svelte-reviewer CLEAN (5 minor notes); coherence read PASS "designed, not assembled"
-  (ledger entry; 2 engine-chrome nits harvested). check 0/0, 1900 tests, build green.
-- **DX harvest**: docs/2026-07-19-sidebar-build-harvest-findings.md — 7 cairn findings
-  (Help-foot idiom docs, navFilter collapsed-rewrite blessing, dangling-href gap,
-  icon-name testability, the admin-CSS class-inventory gap (major), shell collapsed-
-  group spacing, "New Posts" plural copy).
-- **ON GEOFF'S QUEUE: the pass-B walkthrough on dev** — per role (Administrator sees
-  Club+Communication open with badge pills; Publisher/Webmaster the reduced trees),
-  the two new class surfaces, one Bulletins, no Signups, Help in the foot. Two
-  ratified-but-flagged nits to eyeball: Members/Committees glyph twinning at 16px,
-  "Announce" the lone verb (both stand unless reopened).
-- **NEXT PASS: `events-redesign`** (ROADMAP: from-scratch events page, its own
-  template). OPENS WITH A FUNCTIONAL BRAINSTORM with Geoff (what the page must do for
-  members and visitors) before any visual work; probe-iteration process governs; the
-  current page's timeline/chips/season machinery is requirements evidence, not a design
-  to preserve. Resume prompt: "Start the events-redesign pass: read ROADMAP.md's
-  events-redesign entry and docs/STATUS.md, then open the functional brainstorm with
-  Geoff (superpowers:brainstorming) before any visual work." Launch fresh from
-  ~/Projects/aksailingclub-org.
 
 **STILL OPEN ON GEOFF'S QUEUE (pointers; full entries in docs/status-archive.md):**
+the pass-B sidebar walkthrough per role (four-group tree, badges, the two class
+surfaces, Help in the foot; full entry moved to the archive);
 the attorney packet send (docs/waivers/, all DRAFTs; the sitting's full entry is in
 the archive — sources verified live, register/fact gates run, board-packet.md carries
 the Borough records-request path);
